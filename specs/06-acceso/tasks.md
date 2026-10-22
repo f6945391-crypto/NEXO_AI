@@ -163,8 +163,36 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 - **Depende de:** T-005, T-010
 - **Contenido:** `WEB-v2 / Acceso / 01 Entrada` y `02 Primer ingreso`, según el diseño. La zona horaria puede venir preseleccionada, pero hay que elegirla. Si entra un colaborador, la web le indica que su cuenta se usa desde el móvil. *(Revisado el 22 de octubre de 2026: «Conectar Google» pasó a T-022, para no esperar a las credenciales de Google y tener pantallas antes.)*
 - **Hecho cuando:** entrar y completar el primer ingreso funciona contra la API; no se puede enviar el primer ingreso sin elegir zona horaria; un colaborador ve el aviso del móvil
-- **Prueba:** `acceso.zona-horaria-requiere-eleccion`
-- **Estado:** pendiente
+- **Prueba:** `acceso.zona-horaria-requiere-eleccion` · también `acceso.recorrido-web`
+- **Estado:** hecha · 22 de octubre de 2026. 6 pruebas de extremo a extremo con Playwright contra la API real; 69 en total. Revisado a mano en el navegador con la base de desarrollo
+- **Notas de implementación:**
+  - **Intermediario de sesión:** las acciones de servidor de Next.js hablan con la API y guardan los dos tokens en cookies `httpOnly` y `SameSite=Strict`. El navegador no puede leer el token de renovación, y una prueba lo comprueba. Cuando el acceso caduca, las páginas redirigen a `/sesion/renovar`, porque Next.js no permite escribir cookies al renderizar.
+  - **Rutas:** `/entrar`, `/primer-ingreso`, `/solo-movil` (aviso al colaborador), `/` (inicio provisional hasta que lleguen las secciones) y `/sesion/renovar`.
+  - **Zona horaria (REQ-ACC-05):** el selector empieza vacío; «Usar la de este equipo» la propone, pero hace falta pulsarlo o elegir otra. Cada opción muestra su desfase, por ejemplo «America/Lima · GMT-5».
+  - **Base propia para estas pruebas:** `nexoai_e2e_prueba`. `e2e/arrancar-api.mjs` la vacía, la migra, crea las cuentas de `e2e/cuentas.json` y arranca la API en el puerto 3102. Así no se pisa con las pruebas de la API, que Turborepo ejecuta a la vez.
+  - **Diseño:** los cuadros `WEB-v2 / Acceso / 01–02` solo existen en Figma, y Figma no estaba disponible (el conector necesita autorización). Las pantallas se construyeron con la especificación, `design/tokens.json` y las reglas de `design/CONTEXTO.md`. **Falta contrastarlas con los cuadros** (INC-15).
+  - Se desactivó el `AGENTS.md` que Next.js escribía en `apps/web` (`agentRules: false`), y la API arrancada a mano ahora carga el `.env`.
+
+### T-023 · Armazón web de tres columnas
+
+- **Habilita:** `design/ARQUITECTURA-VISUAL-WEB.md` §2, §3, §7 y §8 · R-32, R-36, R-40, R-42, R-43 · P-11. Añadida el 22 de octubre de 2026 a pedido del equipo, para tener la forma de la aplicación visible antes que las secciones
+- **Depende de:** T-011
+- **Contenido:**
+  - Navegación de 72 px con Agenda, Tareas y Actividad, y Ajustes al pie. Ajustes se abre encima, se cierra con una equis y ofrece solo cerrar sesión (R-43, R-45).
+  - Conversación de 528 px con su barra de entrada, el blanco inicial con tres ejemplos pulsables, y el estado «en espera» cuando el asistente no está disponible (R-42).
+  - Lienzo de 840 px con la cabecera de cada sección, sus niveles o franjas, y sus estados vacíos.
+  - Lienzo expandido (72 / 0 / 1368).
+  - **Sin asistente detrás** (fase 2). Un mensaje enviado queda en la conversación como «en espera», con la garantía de que no se envió ni se creó nada. No se simulan respuestas.
+- **Hecho cuando:** una persona con sesión ve las tres columnas; cambia de sección y cambia el lienzo; escribe o elige un ejemplo y ve su mensaje en espera; expande y contrae el lienzo; cierra sesión desde Ajustes
+- **Prueba:** `web.armazon`
+- **Estado:** hecha · 22 de octubre de 2026. 70 pruebas en el monorepo. Revisada a mano en el navegador
+- **Notas de implementación:**
+  - Componente cliente `src/app/aplicacion/aplicacion.tsx`; secciones, cortes y ejemplos en `secciones.ts`; iconos geométricos provisionales en `iconos.tsx`, declarados como tales (diseño §7).
+  - **La conversación no persiste.** Un mensaje enviado vive solo en la pantalla, porque el asistente y la cola de Operaciones (T-012) todavía no existen. El aviso lo dice: «No se ha enviado a nadie ni se ha creado nada».
+  - El lienzo de Agenda dice que hace falta el permiso de calendario (REQ-ACC-08), porque la agenda se muestra a partir de Google (AD-10).
+  - En pantallas de menos de 1440 px se estrechan la conversación y el lienzo; por debajo de unos 710 px aparece desplazamiento horizontal. La web es para escritorio.
+  - Pendiente del diseño: el vaciado de la conversación con su advertencia (§5), el blanco «fuera del plan» y la regla del clic a media conversación (§7). No hacen falta mientras no haya propuestas que confirmar.
+  - **Las pruebas de la web no corren si hay un `next dev` abierto en `apps/web`**: Next.js 16 no admite dos a la vez sobre el mismo proyecto.
 
 ### T-022 · Pantalla «Conectar Google» en la web
 

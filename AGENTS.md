@@ -57,11 +57,12 @@ Requisitos: Node.js 22.12 o posterior (`.nvmrc`), Python 3.12 y Docker. pnpm no 
 | `npx pnpm@12.10.1 test` | Solo las pruebas |
 | `node apps/api/dist/main.js` | Arranca la API compilada (`PUERTO`, 3000 por defecto) |
 | `npx pnpm@12.10.1 --filter @nexoai/web dev` | Arranca la web en http://localhost:3001 (`API_URL` apunta a la API) |
+| `npx pnpm@12.10.1 --filter @nexoai/web test` | Pruebas de extremo a extremo: arrancan la API real sobre `nexoai_e2e_prueba` (puerto 3102) y la web (puerto 3101). **Antes, cierra cualquier `next dev` de `apps/web`**: Next.js no admite dos a la vez |
 | `npx pnpm@12.10.1 audit --audit-level high` | Auditoría de dependencias. También corre en la integración continua |
 | `python tools/trazabilidad.py` | Regenera `specs/trazabilidad.md` desde los `spec.md` |
 | `python tools/trazabilidad.py --check` | Verifica la sincronía entre especificaciones y trazabilidad; sale con 1 si hay problemas |
 
-**Stack:** TypeScript en todo el monorepo (pnpm + Turborepo). API en NestJS + Prisma, cola con BullMQ, agente con LangGraph.js, web con Next.js, móvil con Expo, pruebas con Vitest y Playwright. El detalle está en `PROPUESTA-TECNICA.md` §4. **Las versiones están fijadas exactas** en cada `package.json`; antes de cambiar la configuración de una herramienta, lee la documentación de la versión instalada (por ejemplo, `node_modules/turbo/docs`), que puede diferir de lo que conoces.
+**Stack:** TypeScript en todo el monorepo (pnpm + Turborepo). API en NestJS + Prisma, cola con BullMQ, agente con LangGraph.js, web con Next.js, móvil con Expo, pruebas con Vitest y Playwright. El detalle está en `PROPUESTA-TECNICA.md` §4. **Las versiones están fijadas exactas** en cada `package.json`; antes de cambiar la configuración de una herramienta, lee la documentación de la versión instalada, que puede diferir de lo que conoces: `node_modules/turbo/docs` y, **antes de escribir código de la web**, `apps/web/node_modules/next/dist/docs/` (Next.js 16 cambió APIs y convenciones).
 
 **Versiones nuevas:** la última con al menos dos semanas desde su publicación, **salvo que sea una corrección de seguridad**, que entra en cuanto exista. Antes de fijar una versión, se pasa la auditoría.
 

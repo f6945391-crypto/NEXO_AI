@@ -16,6 +16,10 @@
     "test": {
       "dependsOn": ["^build", "generar"],
       "env": ["DATABASE_URL_PRUEBA", "JWT_SECRETO"]
+    },
+    "@nexoai/web#test": {
+      "dependsOn": ["^build", "@nexoai/api#build"],
+      "env": ["DATABASE_URL_PRUEBA", "JWT_SECRETO", "CI"]
     }
   }
 }

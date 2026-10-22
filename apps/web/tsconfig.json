@@ -8,6 +8,7 @@
     "allowJs": false,
     "noEmit": true,
     "isolatedModules": true,
+    "resolveJsonModule": true,
     "incremental": true,
     "declaration": false,
     "plugins": [{ "name": "next" }],

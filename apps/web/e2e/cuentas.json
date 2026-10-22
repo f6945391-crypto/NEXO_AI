@@ -1,0 +1,30 @@
+{
+  "_nota": "Cuentas de prueba de extremo a extremo. Las crea e2e/arrancar-api.mjs en una base que se vacía en cada ejecución.",
+  "contrasenaTemporal": "temporal-de-prueba-e2e",
+  "contrasenaNueva": "contrasena-nueva-e2e",
+  "sinElegirZona": {
+    "correo": "sin-zona@nexoai.test",
+    "rol": "gerente",
+    "plan": "empresarial"
+  },
+  "recorridoCompleto": {
+    "correo": "recorrido@nexoai.test",
+    "rol": "gerente",
+    "plan": "empresarial"
+  },
+  "credencialesErroneas": {
+    "correo": "errores@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "colaborador": {
+    "correo": "colaborador-e2e@nexoai.test",
+    "rol": "colaborador",
+    "plan": "empresarial"
+  },
+  "armazon": {
+    "correo": "armazon@nexoai.test",
+    "rol": "gerente",
+    "plan": "empresarial"
+  }
+}
