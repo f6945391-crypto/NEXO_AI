@@ -8,6 +8,7 @@ const entorno = fileURLToPath(new URL('../../.env', import.meta.url));
 if (existsSync(entorno)) process.loadEnvFile(entorno);
 // La aplicación bajo prueba usa la base de prueba, nunca la de desarrollo.
 if (process.env.DATABASE_URL_PRUEBA) process.env.DATABASE_URL = process.env.DATABASE_URL_PRUEBA;
+process.env.JWT_SECRETO ??= 'solo-para-pruebas';
 
 // SWC compila los decoradores con sus metadatos, que NestJS necesita para inyectar dependencias.
 export default defineConfig({

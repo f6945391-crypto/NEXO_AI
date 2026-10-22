@@ -23,6 +23,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://nexoai:nexoai@localhost:5432/nexoai_prueba
       DATABASE_URL_PRUEBA: postgresql://nexoai:nexoai@localhost:5432/nexoai_prueba
+      JWT_SECRETO: solo-para-la-integracion-continua
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

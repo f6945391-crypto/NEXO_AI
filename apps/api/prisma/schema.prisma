@@ -16,6 +16,8 @@ datasource db {
 enum Rol {
   usuario_personal
   gerente
+  // D-17: solo sus tareas asignadas, en el móvil (REQ-ACC-13)
+  colaborador
 
   @@map("rol")
 }
@@ -53,11 +55,30 @@ model PerfilUsuario {
   debeCambiarContrasena Boolean  @default(true) @map("debe_cambiar_contrasena")
   creadoEn              DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
 
-  organizacion     Organizacion      @relation(fields: [organizacionId], references: [id])
-  eventosAuditoria EventoAuditoria[]
+  organizacion       Organizacion       @relation(fields: [organizacionId], references: [id])
+  eventosAuditoria   EventoAuditoria[]
+  sesionesRenovacion SesionRenovacion[]
 
   @@index([organizacionId])
   @@map("perfil_usuario")
+}
+
+// Token de renovación rotativo (specs/06-acceso/plan.md §3, T-004). Se guarda solo su hash.
+// Todas las rotaciones de un mismo ingreso comparten `familia`: reutilizar un token ya rotado revoca la familia.
+// No lleva organizacion_id: se consulta antes de conocer la organización, al renovar.
+model SesionRenovacion {
+  id         String    @id @default(uuid()) @db.Uuid
+  perfilId   String    @map("perfil_id") @db.Uuid
+  hashToken  String    @unique @map("hash_token")
+  familia    String    @db.Uuid
+  expiraEn   DateTime  @map("expira_en") @db.Timestamptz(3)
+  revocadaEn DateTime? @map("revocada_en") @db.Timestamptz(3)
+  creadaEn   DateTime  @default(now()) @map("creada_en") @db.Timestamptz(3)
+
+  perfil PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+
+  @@index([familia])
+  @@map("sesion_renovacion")
 }
 
 // Registro de acciones (propuesta técnica §9). Tabla de sistema.

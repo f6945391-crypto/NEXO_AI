@@ -27,5 +27,5 @@ export async function ejecutarSql(sql: string): Promise<void> {
 }
 
 export async function vaciarTablas(): Promise<void> {
-  await ejecutarSql('TRUNCATE evento_auditoria, perfil_usuario, organizacion CASCADE');
+  await ejecutarSql('TRUNCATE sesion_renovacion, evento_auditoria, perfil_usuario, organizacion CASCADE');
 }

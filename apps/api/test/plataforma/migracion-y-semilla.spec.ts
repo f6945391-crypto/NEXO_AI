@@ -18,14 +18,15 @@ describe('plataforma.migracion-y-semilla', () => {
 
   beforeEach(vaciarTablas);
 
-  it('la migración deja las tres tablas de la fase 1 consultables', async () => {
+  it('las migraciones dejan las tablas de la fase 1 consultables', async () => {
     expect(await prisma.organizacion.count()).toBe(0);
     expect(await prisma.perfilUsuario.count()).toBe(0);
     expect(await prisma.eventoAuditoria.count()).toBe(0);
+    expect(await prisma.sesionRenovacion.count()).toBe(0);
   });
 
-  it('la semilla deja una organización y sus dos cuentas: tres filas', async () => {
-    expect(await sembrar(prisma)).toEqual({ creada: true });
+  it('la semilla deja una organización y sus cuentas de desarrollo', async () => {
+    expect(await sembrar(prisma)).toEqual({ creadas: CUENTAS_DESARROLLO.length });
 
     const organizaciones = await prisma.organizacion.findMany();
     const perfiles = await prisma.perfilUsuario.findMany({ orderBy: { correo: 'asc' } });
@@ -38,7 +39,7 @@ describe('plataforma.migracion-y-semilla', () => {
 
   it('la semilla es idempotente', async () => {
     await sembrar(prisma);
-    expect(await sembrar(prisma)).toEqual({ creada: false });
+    expect(await sembrar(prisma)).toEqual({ creadas: 0 });
     expect(await prisma.perfilUsuario.count()).toBe(CUENTAS_DESARROLLO.length);
   });
 });

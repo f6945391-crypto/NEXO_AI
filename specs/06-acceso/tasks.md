@@ -73,8 +73,15 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 - **Depende de:** T-003
 - **Contenido:** `POST /auth/ingreso`, `/auth/renovar` y `/auth/salida`; argon2id; verificación contra un hash ficticio cuando el correo no existe; error único `CREDENCIALES_INVALIDAS`; JWT de 15 minutos y renovación rotativa de 30 días con detección de reutilización; límite de 5 intentos por minuto. **Añadido por D-17:** el rol `colaborador` (migración nueva y contrato `Rol`), una cuenta de colaborador en la semilla, y `RolGuard`, que deniega por defecto al colaborador toda ruta no marcada con `@PermitidoPara('colaborador')`
 - **Hecho cuando:** un ingreso correcto devuelve rol y plan; un correo inexistente y una contraseña errónea dan la misma respuesta; reutilizar un token ya rotado revoca su familia; un colaborador recibe `ROL_NO_PERMITIDO` en cualquier ruta no marcada para su rol
-- **Pruebas:** `acceso.ingreso-devuelve-rol`, `acceso.error-no-revela-correo`, `acceso.colaborador-solo-ve-lo-suyo`
-- **Estado:** pendiente
+- **Pruebas:** `acceso.ingreso-devuelve-rol`, `acceso.error-no-revela-correo`, `acceso.colaborador-solo-ve-lo-suyo` · también `acceso.sesion-rotativa`, `acceso.limite-de-intentos`
+- **Estado:** hecha · 22 de octubre de 2026. 15 pruebas nuevas, 35 en total. Con la denegación del colaborador desactivada, su prueba falla. La migración `20261022010000_rol_colaborador_y_sesiones` está aplicada en desarrollo, y la semilla incluye `colaborador@nexoai.test`
+- **Notas de implementación:**
+  - Rutas: `POST /auth/ingreso`, `POST /auth/renovar`, `POST /auth/salida` y `GET /auth/sesion` («quién soy»).
+  - Todos los errores tienen la forma `ErrorApi { codigo, mensaje }` de `packages/contratos`.
+  - Dos guardas globales: `AutenticacionGuard`, que exige token salvo en las rutas `@Publico()`, y `RolGuard`, que deniega por defecto al colaborador. El contexto se lee con `@Contexto()`.
+  - Dos ajustes respecto al plan, anotados en él (§5.1): el limitador cuenta en memoria y no en Redis, y los tokens viajan en el cuerpo de la respuesta (la cookie de la web llega en T-011).
+  - Las pruebas que inician sesión usan un correo distinto cada una, porque el limitador cuenta por correo e IP durante todo el archivo.
+  - Variable nueva: `JWT_SECRETO`. En el `.env` local ya hay un valor aleatorio.
 
 ### T-005 · Primer ingreso
 

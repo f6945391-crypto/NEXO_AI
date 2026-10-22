@@ -18,19 +18,28 @@ export const CUENTAS_DESARROLLO = [
     plan: 'empresarial',
     contrasenaTemporal: 'desarrollo-gerente-temporal',
   },
+  {
+    correo: 'colaborador@nexoai.test',
+    rol: 'colaborador',
+    plan: 'empresarial',
+    contrasenaTemporal: 'desarrollo-colaborador-temporal',
+  },
 ] as const;
 
-export async function sembrar(prisma: PrismaClient): Promise<{ creada: boolean }> {
+// Idempotente por cuenta: crea la organización si falta y solo las cuentas que no existan todavía.
+export async function sembrar(prisma: PrismaClient): Promise<{ creadas: number }> {
   const existente = await prisma.organizacion.findFirst({ where: { nombre: ORGANIZACION_DESARROLLO } });
-  if (existente) return { creada: false };
+  const organizacionId = existente?.id ?? (await crearOrganizacion(prisma, ORGANIZACION_DESARROLLO));
 
-  const organizacionId = await crearOrganizacion(prisma, ORGANIZACION_DESARROLLO);
+  let creadas = 0;
   for (const cuenta of CUENTAS_DESARROLLO) {
+    if (await prisma.perfilUsuario.findUnique({ where: { correo: cuenta.correo } })) continue;
     await crearCuenta(
       prisma,
       { organizacionId, correo: cuenta.correo, rol: cuenta.rol, plan: cuenta.plan },
       cuenta.contrasenaTemporal,
     );
+    creadas++;
   }
-  return { creada: true };
+  return { creadas };
 }
