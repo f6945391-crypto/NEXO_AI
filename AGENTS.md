@@ -58,7 +58,9 @@ Requisitos: Node.js 22.12 o posterior (`.nvmrc`), Python 3.12 y Docker. pnpm no 
 | `node apps/api/dist/main.js` | Arranca la API compilada (`PUERTO`, 3000 por defecto) |
 | `npx pnpm@12.10.1 --filter @nexoai/web dev` | Arranca la web en http://localhost:3001 (`API_URL` apunta a la API) |
 | `npx pnpm@12.10.1 --filter @nexoai/web test` | Pruebas de extremo a extremo: arrancan la API real sobre `nexoai_e2e_prueba` (puerto 3102) y la web (puerto 3101). **Antes, cierra cualquier `next dev` de `apps/web`**: Next.js no admite dos a la vez |
-| `npx pnpm@12.10.1 audit --audit-level high` | Auditoría de dependencias. También corre en la integración continua |
+| `npx pnpm@12.10.1 --filter @nexoai/movil web` | Arranca el móvil en el navegador, en http://localhost:3201 |
+| `npx pnpm@12.10.1 --filter @nexoai/movil start` | Arranca el móvil para abrirlo con Expo Go en un teléfono (`EXPO_PUBLIC_API_URL` con la IP del equipo) |
+| `npx pnpm@12.10.1 audit --audit-level high` | Auditoría de dependencias. También corre en la integración continua. Las excepciones, solo para vulnerabilidades **sin versión corregida** y con motivo escrito, van en `pnpm-workspace.yaml` (`auditConfig`) |
 | `python tools/trazabilidad.py` | Regenera `specs/trazabilidad.md` desde los `spec.md` |
 | `python tools/trazabilidad.py --check` | Verifica la sincronía entre especificaciones y trazabilidad; sale con 1 si hay problemas |
 
@@ -76,7 +78,7 @@ Requisitos: Node.js 22.12 o posterior (`.nvmrc`), Python 3.12 y Docker. pnpm no 
 |---|---|
 | `apps/api` | NestJS: un módulo por módulo de dominio, y el proceso trabajador como segundo punto de entrada. Pruebas en `test/`, cada `describe` con el nombre de la prueba que figura en `tasks.md` |
 | `apps/web` | Next.js 16 con App Router: páginas en `src/app`, pruebas de Playwright en `e2e/`, cada `describe` con el nombre de su prueba |
-| `apps/movil` | Cliente móvil (T-020) |
+| `apps/movil` | Expo SDK 57 con React Native: código en `src`, tokens en `src/tokens.ts`, pruebas de Playwright sobre Expo web en `e2e/` |
 | `packages/contratos` | Esquemas zod: la única definición de cada petición, respuesta y herramienta (AD-08) |
 | `tools/` | Herramientas del método, como `trazabilidad.py` |
 

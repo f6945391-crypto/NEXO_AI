@@ -7,3 +7,12 @@ allowBuilds:
   '@swc/core': true
   '@prisma/engines': true
   prisma: true
+
+# Excepciones de auditoría (22 de octubre de 2026, T-020). Solo vulnerabilidades sin versión corregida
+# publicada, en herramientas de desarrollo que no entran en ninguna aplicación. Revisar en cada SDK de Expo.
+#   GHSA-86w9-cpqp-85rv  node-forge <=1.4.0  · vía la CLI de Expo (firma de código)
+#   GHSA-vfj7-8cjw-p6xm  braces <=3.0.3      · vía Metro, el empaquetador de React Native
+auditConfig:
+  ignoreGhsas:
+    - GHSA-86w9-cpqp-85rv
+    - GHSA-vfj7-8cjw-p6xm

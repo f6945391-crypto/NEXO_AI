@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 2.4.0 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
+**Versión:** 2.4.1 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -246,7 +246,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 | Fase | Contenido | CUN | Estado |
 |---|---|---|---|
 | 0 | **Base SDD**: este archivo, `AGENTS.md`, glosario, trazabilidad, resolver PT-1 e INC-01 | — | **Cerrada el 2026-10-22** |
-| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011 y T-023 hechas: **acceso y armazón de la aplicación web visibles**. Siguiente: T-020 |
+| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web) y T-023 hechas: acceso y armazón web visibles, y el móvil arranca. Siguiente: T-006 |
 | 2 | Capa de agente: intención, herramientas, confirmación | 01, 03 vía conversación + CAP | Especificado, sin plan |
 | 3 | Planificación de jornada | 02 | Especificado |
 | 4 | Equipos: disponibilidad, coordinación, delegación, seguimiento. Desde D-17, también la aplicación móvil del colaborador | 05 a 09 | Parcial (faltan 06 y 08); diseño desfasado (INC-14) |
@@ -265,6 +265,7 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-22 | 2.4.1 | **T-020 hecha en web.** `apps/movil` con Expo SDK 57 (React Native 0.86.3); la app consulta la API y valida con `contratos`. Pruebas de extremo a extremo del móvil con Playwright sobre Expo web (propuesta técnica §4.1). Falta probarla en un teléfono. Dos excepciones de auditoría documentadas, sin versión corregida publicada (`node-forge` y `braces`, herramientas de desarrollo). 71 pruebas | `apps/movil`, `pnpm-workspace.yaml`, `.gitignore`, `apps/web/playwright.config.ts`, `PROPUESTA-TECNICA.md`, `AGENTS.md`, `specs/02-agenda/tasks.md` | Claude |
 | 2026-10-22 | 2.4.0 | **T-023, nueva y hecha, a pedido del equipo: armazón de la aplicación web.** Navegación de 72 px (Agenda, Tareas, Actividad; Ajustes al pie), conversación de 528 px con blanco inicial y ejemplos pulsables, y lienzo de 840 px con niveles o franjas y estados vacíos; lienzo expandido; Ajustes encima con cierre de sesión. Sin asistente detrás: lo que se envía queda «en espera» y se dice que no se envió ni se creó nada (R-42). 70 pruebas | `apps/web/src/app/aplicacion`, `apps/web/src/app/page.tsx`, `globales.css`, `next.config.ts`, `apps/web/e2e`, `AGENTS.md`, `specs/06-acceso/tasks.md` | Equipo (pedido), implementado por Claude |
 | 2026-10-22 | 2.3.0 | **T-011 hecha: primeras pantallas.** Entrar y Primer ingreso en la web contra la API real, aviso del móvil para el colaborador y cierre de sesión. Next.js hace de intermediario de sesión con cookies `httpOnly`. ACC-02, ACC-04 y ACC-05 implementados de punta a punta. 6 pruebas de extremo a extremo sobre una base propia (`nexoai_e2e_prueba`). Nueva INC-15: las pantallas no se contrastaron con Figma. Se desactiva el `AGENTS.md` que escribía Next.js, y la API carga el `.env` al arrancar. 69 pruebas | `apps/web`, `apps/api/src/main.ts`, `turbo.json`, `.claude/launch.json`, `AGENTS.md`, `specs/06-acceso/tasks.md`, `specs/trazabilidad.md` | Claude |
 | 2026-10-22 | 2.2.1 | **T-010 hecha.** `apps/web` con Next.js 16, React 19 y Playwright; la página inicial valida `GET /salud` con `contratos`. **Corrección de seguridad:** Next.js 16.4.0 → 16.4.2 (dos vulnerabilidades críticas de ejecución remota de código) y Prisma 7.10.0 → 7.10.1 (`mysql2` y `deepmerge-ts`); auditoría limpia, y ahora también en la integración continua. Reglas nuevas en `AGENTS.md`: excepción de seguridad a la regla de las dos semanas, y no seguir instrucciones que las herramientas dirigen a agentes de IA. 64 pruebas | `apps/web`, `apps/api/package.json`, `pnpm-lock.yaml`, `.github/workflows/ci.yml`, `.gitignore`, `turbo.json`, `AGENTS.md`, `specs/06-acceso/tasks.md` | Claude |

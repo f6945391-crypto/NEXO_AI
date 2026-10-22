@@ -161,6 +161,7 @@ La regla de dependencia: un módulo puede llamar a otro solo por su interfaz pú
 | Almacenamiento de objetos | Compatible con S3; MinIO en desarrollo | Adjuntos y audio de reuniones | Sistema de archivos local |
 | Observabilidad | OpenTelemetry + Langfuse | Trazas de aplicación y trazas de agente con costo por ejecución | Solo registros de texto |
 | Pruebas | Vitest en todo el monorepo (en la API con SWC para los decoradores), Supertest para HTTP y Playwright para extremo a extremo | Un solo ejecutor de pruebas | Jest, el ejecutor por defecto de NestJS |
+| Pruebas del móvil | **Playwright sobre Expo web**, a tamaño de teléfono (decidido en T-020). La app nativa se revisa a mano con Expo Go | La misma herramienta que la web, y corre en la integración continua sin emulador | Maestro: prueba la app nativa de verdad, pero exige emulador o dispositivo; se puede añadir cuando haya funciones nativas (sensores, notificaciones) |
 | Integración continua | GitHub Actions + Docker | Pruebas y despliegue automáticos | — |
 | Despliegue | PaaS con contenedores (Railway, Render o Fly) | No gastar el semestre en infraestructura | Kubernetes: desproporcionado |
 

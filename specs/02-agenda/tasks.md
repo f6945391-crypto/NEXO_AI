@@ -105,7 +105,14 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** `apps/movil` con Expo, consumiendo `packages/contratos`; elegir la herramienta de pruebas de extremo a extremo para móvil, que el plan no fija (Maestro, o Playwright sobre Expo web)
 - **Hecho cuando:** la aplicación arranca en el simulador y en web; la herramienta elegida está anotada en `PROPUESTA-TECNICA.md` §4.1
 - **Prueba:** `movil.arranca`
-- **Estado:** pendiente
+- **Estado:** hecha en web · 22 de octubre de 2026. **Falta probarla en un teléfono o simulador**: este equipo no tiene emulador. Se hace con Expo Go (`npx pnpm@12.10.1 --filter @nexoai/movil start`), poniendo en `EXPO_PUBLIC_API_URL` la IP del equipo en la red local
+- **Notas de implementación:**
+  - **Expo SDK 57.0.27**, con React Native 0.86.3 y React 19.2.3. Se descartó el SDK 58 porque su React Native 0.88.0 tiene una semana.
+  - El móvil usa React 19.2.3 y la web 19.3.0. No es un problema: pnpm instala cada aplicación por separado.
+  - Pruebas de extremo a extremo: **Playwright sobre Expo web** a 390×844, anotado en la propuesta técnica §4.1.
+  - **Excepciones de auditoría:** `node-forge` (GHSA-86w9-cpqp-85rv) y `braces` (GHSA-vfj7-8cjw-p6xm), dos vulnerabilidades altas **sin versión corregida publicada**, en herramientas de desarrollo de Expo y Metro que no entran en la app. Están en `pnpm-workspace.yaml` con su motivo, para revisarlas en cada SDK.
+  - Se creó a mano, sin el generador de plantillas de Expo, para que no entraran archivos sin revisar.
+  - Las pruebas de la web y del móvil esperan hasta 20 s por cada comprobación: en `verificar` corren a la vez que las de la API y compilan cada ruta en su primera visita.
 
 ### T-021 · Agenda en el móvil: Hoy y cancelar
 

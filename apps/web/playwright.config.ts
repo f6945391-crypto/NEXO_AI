@@ -10,6 +10,9 @@ export default defineConfig({
   reporter: 'list',
   // Las pruebas comparten la base y el límite de intentos de la API: de una en una.
   workers: 1,
+  // En modo desarrollo Next.js compila cada ruta en su primera visita, y en `verificar` corre a la vez que
+  // las pruebas de la API y del móvil: 5 s no alcanzan.
+  expect: { timeout: 20_000 },
   use: {
     baseURL: `http://localhost:${PUERTO_WEB}`,
     channel: process.env.CI ? undefined : 'chrome',

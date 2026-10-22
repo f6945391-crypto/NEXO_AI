@@ -13,3 +13,5 @@ apps/api/src/generado/
 next-env.d.ts
 playwright-report/
 test-results/
+.expo/
+apps/movil/dist/
