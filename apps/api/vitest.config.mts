@@ -6,6 +6,8 @@ import { defineConfig } from 'vitest/config';
 // Variables del .env de la raíz; las ya definidas, como las de la integración continua, no se sobrescriben.
 const entorno = fileURLToPath(new URL('../../.env', import.meta.url));
 if (existsSync(entorno)) process.loadEnvFile(entorno);
+// La aplicación bajo prueba usa la base de prueba, nunca la de desarrollo.
+if (process.env.DATABASE_URL_PRUEBA) process.env.DATABASE_URL = process.env.DATABASE_URL_PRUEBA;
 
 // SWC compila los decoradores con sus metadatos, que NestJS necesita para inyectar dependencias.
 export default defineConfig({

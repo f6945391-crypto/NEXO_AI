@@ -79,4 +79,7 @@ Requisitos: Node.js 22.12 o posterior (`.nvmrc`), Python 3.12 y Docker. pnpm no 
 - Nada de `$queryRaw` de Prisma fuera del repositorio de búsqueda semántica.
 - No modificar una migración ya aplicada; se crea una nueva, con `prisma migrate diff`, o con `prisma migrate dev` contra la base de desarrollo.
 - No ejecutar `prisma init`: instala instrucciones para agentes de IA que no son de este proyecto.
+- El código de dominio accede a datos solo con `prismaService.deOrganizacion(contexto.organizacionId)`. Usar `sinAislar` exige justificarlo en el `plan.md` del área.
+- Toda tabla nueva con `organizacionId` se añade a `MODELOS_CON_ORGANIZACION`; si no, falla `plataforma.aislamiento-entre-organizaciones`.
+- Nada de escrituras anidadas sobre tablas de la organización (`create: { relacion: { create: … } }`): no pasan por el filtro.
 - Las pruebas con base de datos usan solo `DATABASE_URL_PRUEBA` y vacían sus tablas con `vaciarTablas()`. Nunca apuntan a la base de desarrollo.

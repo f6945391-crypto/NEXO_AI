@@ -49,7 +49,13 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 - **Contenido:** `ContextoSolicitud` con `{ perfilId, organizacionId, rol, plan }`; extensión del cliente Prisma que filtra por organización en toda tabla que la tenga
 - **Hecho cuando:** una consulta hecha con el contexto de la organización A no devuelve filas de la B, en ninguna tabla con `organizacion_id`
 - **Prueba:** `plataforma.aislamiento-entre-organizaciones`
-- **Estado:** pendiente
+- **Estado:** hecha · 22 de octubre de 2026. 10 pruebas sobre las tres tablas: lecturas, condiciones explícitas sobre otra organización, escrituras masivas, actualizar o borrar por id ajeno, creación, cambio de organización y transacciones. Con el filtro desactivado fallan 7, así que las pruebas sí detectan un filtro roto
+- **Notas de implementación:**
+  - `aislarPorOrganizacion()` en `src/plataforma/aislamiento.ts` es una extensión de consultas de Prisma. Añade la condición con `AND`, que vale también para las búsquedas por clave única.
+  - Las tablas filtradas están en una lista explícita, `MODELOS_CON_ORGANIZACION`. Una prueba lee `schema.prisma` y falla si una tabla con `organizacionId` no está en ella.
+  - `PrismaService` ofrece `deOrganizacion(id)`, el acceso normal, y `sinAislar`, solo para lo que ocurre antes de conocer la organización, como el ingreso.
+  - El filtro no cubre las escrituras anidadas ni el SQL crudo; los cubren reglas de `AGENTS.md`.
+  - `ContextoSolicitud` está definido en `src/identidad/contexto.ts`. Quien lo rellena a partir del JWT es T-004.
 
 ---
 

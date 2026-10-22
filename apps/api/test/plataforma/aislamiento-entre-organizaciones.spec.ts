@@ -1,0 +1,122 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { crearCuenta, crearOrganizacion } from '../../src/identidad/alta-cuentas';
+import {
+  aislarPorOrganizacion,
+  ErrorDeAislamiento,
+  MODELOS_CON_ORGANIZACION,
+  type PrismaDeOrganizacion,
+} from '../../src/plataforma/aislamiento';
+import type { PrismaClient } from '../../src/plataforma/prisma';
+import { clientePrueba, vaciarTablas } from '../utilidades/base-prueba';
+
+// P-04 · T-003: con el contexto de la organización A no se lee ni se escribe nada de la B, en ninguna tabla.
+
+type Fila = { id: string; organizacionId?: string };
+type Delegado = {
+  findMany(args?: object): Promise<Fila[]>;
+  findFirst(args?: object): Promise<Fila | null>;
+  findUnique(args: object): Promise<Fila | null>;
+  count(args?: object): Promise<number>;
+};
+
+const delegadoDe = (cliente: object, modelo: string): Delegado =>
+  (cliente as Record<string, Delegado>)[modelo[0]!.toLowerCase() + modelo.slice(1)]!;
+
+const campoDe = (modelo: string) => (modelo === 'Organizacion' ? 'id' : 'organizacionId');
+
+const TODOS = ['Organizacion', ...MODELOS_CON_ORGANIZACION];
+
+describe('plataforma.aislamiento-entre-organizaciones', () => {
+  let base: PrismaClient;
+  let deA: PrismaDeOrganizacion;
+  let orgA: string;
+  let orgB: string;
+  let perfilA: string;
+  let perfilB: string;
+
+  beforeAll(() => {
+    base = clientePrueba();
+  });
+
+  afterAll(async () => {
+    await base.$disconnect();
+  });
+
+  beforeEach(async () => {
+    await vaciarTablas();
+    orgA = await crearOrganizacion(base, 'Organización A');
+    orgB = await crearOrganizacion(base, 'Organización B');
+    perfilA = (await crearCuenta(base, { organizacionId: orgA, correo: 'a@nexoai.test', rol: 'gerente', plan: 'empresarial' })).perfilId;
+    perfilB = (await crearCuenta(base, { organizacionId: orgB, correo: 'b@nexoai.test', rol: 'gerente', plan: 'empresarial' })).perfilId;
+    deA = aislarPorOrganizacion(base, orgA);
+  });
+
+  it('cubre toda tabla del esquema que tenga organizacionId', () => {
+    const esquema = readFileSync(resolve(__dirname, '../../prisma/schema.prisma'), 'utf8');
+    const conOrganizacion = [...esquema.matchAll(/^model (\w+) \{([\s\S]*?)^\}/gm)]
+      .filter(([, , cuerpo]) => /^\s+organizacionId\s/m.test(cuerpo!))
+      .map(([, nombre]) => nombre);
+    expect(conOrganizacion.sort()).toEqual([...MODELOS_CON_ORGANIZACION].sort());
+  });
+
+  it.each(TODOS)('%s: las lecturas solo devuelven filas propias', async (modelo) => {
+    const campo = campoDe(modelo);
+    const propias = await delegadoDe(base, modelo).count({ where: { [campo]: orgA } });
+    const ajena = await delegadoDe(base, modelo).findFirst({ where: { [campo]: orgB } });
+    expect(propias).toBeGreaterThan(0);
+    expect(ajena).not.toBeNull();
+
+    const delegado = delegadoDe(deA, modelo);
+    const filas = await delegado.findMany();
+    expect(filas).toHaveLength(propias);
+    expect(filas.every((f) => (campo === 'id' ? f.id : f.organizacionId) === orgA)).toBe(true);
+    expect(await delegado.count()).toBe(propias);
+    expect(await delegado.findUnique({ where: { id: ajena!.id } })).toBeNull();
+    expect(await delegado.findFirst({ where: { id: ajena!.id } })).toBeNull();
+  });
+
+  it('una condición explícita sobre otra organización no se salta el filtro', async () => {
+    expect(await deA.perfilUsuario.findMany({ where: { organizacionId: orgB } })).toEqual([]);
+    expect(await deA.perfilUsuario.findMany({ where: { OR: [{ organizacionId: orgB }, { id: perfilB }] } })).toEqual([]);
+  });
+
+  it('las escrituras masivas solo alcanzan filas propias', async () => {
+    const actualizadas = await deA.perfilUsuario.updateMany({ data: { debeCambiarContrasena: false } });
+    expect(actualizadas.count).toBe(1);
+    expect((await base.perfilUsuario.findUniqueOrThrow({ where: { id: perfilB } })).debeCambiarContrasena).toBe(true);
+
+    const eventosDeB = await base.eventoAuditoria.count({ where: { organizacionId: orgB } });
+    await deA.eventoAuditoria.deleteMany();
+    expect(await base.eventoAuditoria.count({ where: { organizacionId: orgA } })).toBe(0);
+    expect(await base.eventoAuditoria.count({ where: { organizacionId: orgB } })).toBe(eventosDeB);
+  });
+
+  it('una fila ajena no se puede actualizar ni borrar por su id', async () => {
+    await expect(deA.perfilUsuario.update({ where: { id: perfilB }, data: { debeCambiarContrasena: false } })).rejects.toThrow();
+    await expect(deA.perfilUsuario.delete({ where: { id: perfilB } })).rejects.toThrow();
+    expect(await base.perfilUsuario.count({ where: { id: perfilB } })).toBe(1);
+  });
+
+  it('crear asigna la organización del contexto y rechaza cualquier otra', async () => {
+    const creado = await deA.eventoAuditoria.create({ data: { accion: 'prueba' } as never });
+    expect(creado.organizacionId).toBe(orgA);
+
+    await expect(deA.eventoAuditoria.create({ data: { accion: 'prueba', organizacionId: orgB } })).rejects.toThrow(ErrorDeAislamiento);
+    await expect(
+      deA.eventoAuditoria.create({ data: { accion: 'prueba', organizacion: { connect: { id: orgB } } } as never }),
+    ).rejects.toThrow(ErrorDeAislamiento);
+    await expect(deA.organizacion.create({ data: { nombre: 'Otra' } })).rejects.toThrow(ErrorDeAislamiento);
+  });
+
+  it('una fila no puede cambiar de organización', async () => {
+    await expect(deA.perfilUsuario.update({ where: { id: perfilA }, data: { organizacionId: orgB } })).rejects.toThrow(ErrorDeAislamiento);
+    expect((await base.perfilUsuario.findUniqueOrThrow({ where: { id: perfilA } })).organizacionId).toBe(orgA);
+  });
+
+  it('el filtro también vale dentro de una transacción', async () => {
+    const dentro = await deA.$transaction(async (tx) => tx.perfilUsuario.findMany());
+    expect(dentro.map((p) => p.id)).toEqual([perfilA]);
+  });
+});
