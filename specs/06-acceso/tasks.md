@@ -150,7 +150,12 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 - **Contenido:** `apps/web` con Next.js, consumiendo `packages/contratos`; Playwright configurado
 - **Hecho cuando:** la web compila, importa un esquema de `contratos` y una prueba de Playwright abre su página inicial
 - **Prueba:** `web.arranca`
-- **Estado:** pendiente
+- **Estado:** hecha · 22 de octubre de 2026. La página inicial consulta `GET /salud` y valida la respuesta con `SaludRespuesta` de `contratos`. 64 pruebas en el monorepo
+- **Notas de implementación:**
+  - Next.js 16 (Turbopack, App Router), React 19 y TypeScript 7. Next compila y comprueba tipos con TypeScript 7 sin problema.
+  - Playwright usa en local el Chrome instalado y en la integración continua instala Chromium.
+  - **Seguridad:** la versión elegida al principio, Next.js 16.4.0, tenía dos vulnerabilidades críticas de ejecución remota de código y una de denegación de servicio. La auditoría encontró también dos altas en dependencias de Prisma 7.10.0 (`mysql2` y `deepmerge-ts`). Se subió a **Next.js 16.4.2** y **Prisma 7.10.1**, y la auditoría queda limpia. La integración continua ahora audita en cada ejecución.
+  - Next.js imprime instrucciones dirigidas a agentes de IA (ejecutar `next upgrade --agent=security`). No se siguieron: se comprobó la vulnerabilidad con la auditoría y se corrigió fijando la versión. Queda la regla en `AGENTS.md`.
 
 ### T-011 · Pantallas de acceso en la web
 

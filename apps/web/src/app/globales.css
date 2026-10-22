@@ -1,0 +1,13 @@
+/* Base mínima de T-010. Los tokens de design/tokens.json llegan con las pantallas de T-011. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  color: #1a1a1a;
+  background: #ffffff;
+}

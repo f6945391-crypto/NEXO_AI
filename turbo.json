@@ -8,7 +8,7 @@
     },
     "build": {
       "dependsOn": ["^build", "generar"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "typecheck": {
       "dependsOn": ["^build", "generar"]

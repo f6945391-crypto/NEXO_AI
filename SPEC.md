@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 2.2.0 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
+**Versión:** 2.2.1 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -149,7 +149,7 @@ Estado por columna: **—** no existe · **borrador** · **vigente** · **parcia
 | Comunicaciones | `specs/04-comunicaciones/spec.md` | 04 | Móvil + web | P | CUN04-01…15 (15) | vigente | — | — | — | — | — |
 | Encargo | `specs/04-comunicaciones/spec.md` §9 | 07, 09 | Web + móvil | E | ENC-01…13 (7 vigentes, 6 retirados por D-17) | vigente | parcial (Encargos, Correo) | — | — | — | — |
 | Equipos | `specs/05-equipos/spec.md` | 05 | Web | E | CUN05-01…16 (16) | vigente | desfasado (INC-07) | — | — | — | — |
-| Acceso | `specs/06-acceso/spec.md` | — (sistema) | Web (móvil pendiente) | Todos | ACC-01…14 (14) | vigente | parcial | aprobado, revisado por D-17 | T-001…T-011, T-022 (T-001 a T-005 hechas) | 2 de 14 REQ implementados, 4 en curso | 6 de 14 REQ con prueba |
+| Acceso | `specs/06-acceso/spec.md` | — (sistema) | Web (móvil pendiente) | Todos | ACC-01…14 (14) | vigente | parcial | aprobado, revisado por D-17 | T-001…T-011, T-022 (T-001 a T-005 y T-010 hechas) | 2 de 14 REQ implementados, 4 en curso | 6 de 14 REQ con prueba |
 | **Total** | | | | | **135 (129 vigentes)** | | | | | | |
 
 **Glosario:** `specs/glosario.md`. Una definición por término, y tres conflictos de vocabulario abiertos (INC-12).
@@ -245,7 +245,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 | Fase | Contenido | CUN | Estado |
 |---|---|---|---|
 | 0 | **Base SDD**: este archivo, `AGENTS.md`, glosario, trazabilidad, resolver PT-1 e INC-01 | — | **Cerrada el 2026-10-22** |
-| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 22 tareas, T-001 a T-005 hechas. Siguiente: T-010 |
+| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 22 tareas, T-001 a T-005 y T-010 hechas. Siguiente: T-011 |
 | 2 | Capa de agente: intención, herramientas, confirmación | 01, 03 vía conversación + CAP | Especificado, sin plan |
 | 3 | Planificación de jornada | 02 | Especificado |
 | 4 | Equipos: disponibilidad, coordinación, delegación, seguimiento. Desde D-17, también la aplicación móvil del colaborador | 05 a 09 | Parcial (faltan 06 y 08); diseño desfasado (INC-14) |
@@ -253,7 +253,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 
 **Orden acordado el 2026-10-22, para tener pantallas antes:** T-004 → T-005 → T-010 → T-011 (primeras pantallas web) → T-020 (el móvil arranca) → T-006 → T-016 → T-012 → resto de agenda. La parte de Google (T-007, T-008, T-013, T-022) entra cuando estén las credenciales de Google Cloud.
 
-**Siguiente paso concreto:** T-010, el andamiaje de la web, y después T-011, las primeras pantallas: entrar y primer ingreso. La duración por defecto (H-AG-01) tiene que estar decidida antes de T-017.
+**Siguiente paso concreto:** T-011, las primeras pantallas: entrar y primer ingreso, contra la API real. La duración por defecto (H-AG-01) tiene que estar decidida antes de T-017.
 
 ---
 
@@ -264,6 +264,7 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-22 | 2.2.1 | **T-010 hecha.** `apps/web` con Next.js 16, React 19 y Playwright; la página inicial valida `GET /salud` con `contratos`. **Corrección de seguridad:** Next.js 16.4.0 → 16.4.2 (dos vulnerabilidades críticas de ejecución remota de código) y Prisma 7.10.0 → 7.10.1 (`mysql2` y `deepmerge-ts`); auditoría limpia, y ahora también en la integración continua. Reglas nuevas en `AGENTS.md`: excepción de seguridad a la regla de las dos semanas, y no seguir instrucciones que las herramientas dirigen a agentes de IA. 64 pruebas | `apps/web`, `apps/api/package.json`, `pnpm-lock.yaml`, `.github/workflows/ci.yml`, `.gitignore`, `turbo.json`, `AGENTS.md`, `specs/06-acceso/tasks.md` | Claude |
 | 2026-10-22 | 2.2.0 | **T-005 hecha.** Primer ingreso: guarda global que bloquea todo salvo completarlo o salir; contraseña nueva de al menos 12 caracteres y distinta de la temporal; zona horaria IANA con nombre, sin desfases fijos; cierre de las sesiones abiertas con la temporal; tokens nuevos sin la marca de pendiente. ACC-04 y ACC-05 en curso (falta la interfaz, T-011). Una prueba detectó que `Intl.supportedValuesOf` rechazaba nombres vigentes como `America/Argentina/Buenos_Aires`, y se corrigió el criterio. 63 pruebas | `apps/api/src/identidad`, `apps/api/test/acceso`, `apps/api/test/utilidades`, `packages/contratos`, `specs/06-acceso/tasks.md`, `specs/trazabilidad.md` | Claude |
 | 2026-10-22 | 2.1.0 | **T-004 hecha.** Ingreso, renovación rotativa con detección de reutilización, salida y «quién soy»; error único que no revela si el correo existe; límite de 5 intentos por minuto; guardas globales de autenticación y de rol, con el colaborador denegado por defecto. Rol `colaborador` y tabla `sesion_renovacion` (segunda migración). ACC-03 implementado; ACC-02 y ACC-13 en curso (falta la interfaz). Dos ajustes al plan de acceso §5.1: limitador en memoria y tokens en el cuerpo. 35 pruebas | `apps/api` (prisma, src/identidad, src/plataforma, test/acceso), `packages/contratos`, `.env.example`, `.github/workflows/ci.yml`, `turbo.json`, `specs/06-acceso/plan.md`, `tasks.md`, `specs/trazabilidad.md` | Claude |
 | 2026-10-22 | 2.0.0 | **D-17: el colaborador tiene cuenta.** Rol propio limitado a sus tareas, en el móvil; el correo solo avisa; la respuesta vuelve al líder como propuesta, y su decisión vuelve al colaborador. Reemplaza `REPLANTEO.md` §4.7, acota §4.8 y R-28. **Requisitos:** 5 nuevos (CUN07-16, 17; CUN05-16; ACC-13, 14), 6 retirados (ENC-04, 06, 07, 08, 11, 13) y 9 reescritos (CUN07-11 a 15, ENC-03, 09, 12; CUN05-12, 13). Abiertas D-18 (precio del colaborador) y DP-03 (el aviso sale desde la plataforma); INC-14 (el diseño va por detrás); INC-06 resuelta. **Nuevo orden de tareas** para tener pantallas antes: T-011 ya no incluye Google, que pasa a la nueva T-022 | `SPEC.md`, `REPLANTEO.md` (notas), `specs/03-tareas`, `04-comunicaciones`, `05-equipos`, `06-acceso` (spec, plan, tasks), `specs/glosario.md`, `specs/trazabilidad.md`, `tools/trazabilidad.py` | Equipo (D-17 y orden), redactado por Claude |
