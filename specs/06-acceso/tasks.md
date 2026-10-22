@@ -105,7 +105,8 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 - **Contenido:** `GET /perfil`; esquema estricto de `Perfil`; ninguna ruta de cambio de correo, plan, rol ni baja
 - **Hecho cuando:** el perfil se lee; intentar enviar correo, plan o rol por cualquier ruta se rechaza; no hay rutas de baja
 - **Prueba:** `acceso.cuenta-no-autogestionable`
-- **Estado:** pendiente
+- **Estado:** hecha · 22 de octubre de 2026. 4 pruebas en la API; 75 en total
+- **Notas de implementación:** `GET /perfil` devuelve correo, rol, plan, zona horaria y organización, y también lo puede leer el colaborador (REQ-ACC-13). No hay ninguna ruta de escritura sobre el perfil; una prueba lo comprueba enumerando las rutas, y `PATCH`, `PUT`, `POST` y `DELETE` sobre `/perfil` responden 404. La web muestra el perfil en Ajustes, solo lectura. Cambiar la zona horaria (el resto de REQ-ACC-10) es T-009.
 
 ---
 

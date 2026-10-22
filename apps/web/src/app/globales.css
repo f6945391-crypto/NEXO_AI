@@ -509,3 +509,22 @@ body {
   color: var(--texto-suave);
   cursor: pointer;
 }
+
+/* Perfil en Ajustes (T-006): solo lectura */
+.perfil {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--espaciado-8) var(--espaciado-16);
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+}
+
+.perfil dt {
+  color: var(--texto-suave);
+}
+
+.perfil dd {
+  margin: 0;
+  color: var(--texto-fuerte);
+  overflow-wrap: anywhere;
+}

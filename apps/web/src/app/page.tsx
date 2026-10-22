@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { obtenerSesion } from '../lib/sesion';
+import { obtenerPerfil, obtenerSesion } from '../lib/sesion';
 import { Aplicacion } from './aplicacion/aplicacion';
 
 // La aplicación: navegación, conversación y lienzo (T-023). El colaborador trabaja desde el móvil.
@@ -10,5 +10,5 @@ export default async function Inicio() {
   if (sesion.estado === 'pendiente') redirect('/primer-ingreso');
   if (sesion.sesion.rol === 'colaborador') redirect('/solo-movil');
 
-  return <Aplicacion rol={sesion.sesion.rol} plan={sesion.sesion.plan} />;
+  return <Aplicacion rol={sesion.sesion.rol} plan={sesion.sesion.plan} perfil={await obtenerPerfil()} />;
 }

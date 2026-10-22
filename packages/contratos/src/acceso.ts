@@ -51,6 +51,18 @@ export const SesionActual = z.strictObject({
 });
 export type SesionActual = z.infer<typeof SesionActual>;
 
+// GET /perfil — REQ-ACC-10 (lectura), REQ-ACC-12 · T-006. Estricto: no hay ruta que lo modifique,
+// y la zona horaria se cambia con una Operación (T-009).
+export const Perfil = z.strictObject({
+  perfilId: z.uuid(),
+  correo: z.string(),
+  rol: Rol,
+  plan: Plan,
+  zonaHoraria: z.string().nullable(),
+  organizacion: z.strictObject({ nombre: z.string() }),
+});
+export type Perfil = z.infer<typeof Perfil>;
+
 // Zona horaria IANA con nombre (P-05).
 // - La forma descarta los desfases fijos («+05:00», «GMT-5») y el prefijo Etc/ («Etc/GMT+5»), que
 //   Intl.DateTimeFormat sí admite.

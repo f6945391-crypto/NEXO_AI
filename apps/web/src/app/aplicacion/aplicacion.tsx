@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, type FormEvent } from 'react';
-import type { Plan, Rol } from '@nexoai/contratos';
+import type { Perfil, Plan, Rol } from '@nexoai/contratos';
 import { salir } from '../acciones';
 import {
   IconoActividad,
@@ -31,7 +31,9 @@ function horaActual(): string {
   return new Intl.DateTimeFormat('es', { hour: '2-digit', minute: '2-digit', timeZoneName: 'shortOffset' }).format(new Date());
 }
 
-export function Aplicacion({ plan }: { rol: Rol; plan: Plan }) {
+const NOMBRE_PLAN: Record<Plan, string> = { gratuito: 'Gratuito', personal: 'Personal', empresarial: 'Empresarial' };
+
+export function Aplicacion({ plan, perfil }: { rol: Rol; plan: Plan; perfil: Perfil | null }) {
   const [seccion, setSeccion] = useState<Seccion>('agenda');
   const [corte, setCorte] = useState(0);
   const [expandido, setExpandido] = useState(false);
@@ -200,6 +202,18 @@ export function Aplicacion({ plan }: { rol: Rol; plan: Plan }) {
                 <IconoCerrar />
               </button>
             </header>
+            {perfil && (
+              <dl className="perfil">
+                <dt>Correo</dt>
+                <dd>{perfil.correo}</dd>
+                <dt>Organización</dt>
+                <dd>{perfil.organizacion.nombre}</dd>
+                <dt>Plan</dt>
+                <dd>{NOMBRE_PLAN[perfil.plan]}</dd>
+                <dt>Zona horaria</dt>
+                <dd>{perfil.zonaHoraria?.replaceAll('_', ' ') ?? '—'}</dd>
+              </dl>
+            )}
             <p className="explicacion">Tu correo, tu plan y tu cuenta los gestiona tu organización.</p>
             <form action={salir}>
               <button type="submit" className="boton">

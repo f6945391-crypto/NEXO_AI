@@ -46,6 +46,9 @@ test.describe('web.armazon', () => {
     // Ajustes se abre encima, se cierra con una equis y permite cerrar sesión (R-43, R-45).
     await page.getByRole('button', { name: 'Ajustes' }).click();
     await expect(page.getByRole('dialog', { name: 'Ajustes' })).toBeVisible();
+    // El perfil, solo lectura (T-006).
+    await expect(page.getByRole('dialog')).toContainText(cuentas.armazon.correo);
+    await expect(page.getByRole('dialog')).toContainText('Empresarial');
     await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
     await expect(page.getByRole('dialog')).toBeHidden();
     await page.getByRole('button', { name: 'Ajustes' }).click();

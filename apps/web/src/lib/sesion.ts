@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { ErrorApi, SesionActual, type IngresoRespuesta } from '@nexoai/contratos';
+import { ErrorApi, Perfil, SesionActual, type IngresoRespuesta } from '@nexoai/contratos';
 
 // Intermediario de sesión (specs/06-acceso/plan.md §5.1, ajuste de T-004). Next.js guarda los dos tokens
 // en cookies httpOnly y es el único que habla con la API: el navegador nunca ve el token de renovación.
@@ -71,6 +71,15 @@ export async function obtenerSesion(): Promise<EstadoSesion> {
   if (respuesta.estado === 200) return { estado: 'activa', sesion: SesionActual.parse(respuesta.cuerpo) };
   if (codigoDeError(respuesta.cuerpo) === 'PRIMER_INGRESO_PENDIENTE') return { estado: 'pendiente' };
   return hayRenovacion ? { estado: 'caducada' } : { estado: 'ninguna' };
+}
+
+// GET /perfil con el token de acceso de la cookie (T-006). Nulo si no se pudo leer.
+export async function obtenerPerfil(): Promise<Perfil | null> {
+  const acceso = (await cookies()).get(COOKIE_ACCESO)?.value;
+  if (!acceso) return null;
+  const respuesta = await llamarApi('/perfil', { token: acceso });
+  const perfil = Perfil.safeParse(respuesta.cuerpo);
+  return respuesta.estado === 200 && perfil.success ? perfil.data : null;
 }
 
 // Destino tras entrar o completar el primer ingreso, según el rol (REQ-ACC-02, H-ACC-05, H-ACC-06).
