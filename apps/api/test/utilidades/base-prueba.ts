@@ -1,4 +1,6 @@
 import { Client } from 'pg';
+import type { AltaCuenta } from '@nexoai/contratos';
+import { crearCuenta, type CuentaCreada } from '../../src/identidad/alta-cuentas';
 import { crearClientePrisma, type PrismaClient } from '../../src/plataforma/prisma';
 
 // Toda prueba con base de datos usa DATABASE_URL_PRUEBA. Vaciar solo se permite sobre una base *_prueba.
@@ -24,6 +26,21 @@ export async function ejecutarSql(sql: string): Promise<void> {
   } finally {
     await cliente.end();
   }
+}
+
+// Cuenta con el primer ingreso ya completado (T-005), para pruebas que necesitan rutas protegidas.
+export async function crearCuentaLista(
+  prisma: PrismaClient,
+  datos: AltaCuenta,
+  contrasena: string,
+  zonaHoraria = 'America/Lima',
+): Promise<CuentaCreada> {
+  const cuenta = await crearCuenta(prisma, datos, contrasena);
+  await prisma.perfilUsuario.update({
+    where: { id: cuenta.perfilId },
+    data: { debeCambiarContrasena: false, zonaHoraria },
+  });
+  return cuenta;
 }
 
 export async function vaciarTablas(): Promise<void> {

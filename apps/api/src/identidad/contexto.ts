@@ -7,4 +7,6 @@ export interface ContextoSolicitud {
   organizacionId: string;
   rol: Rol;
   plan: Plan;
+  // REQ-ACC-04: mientras sea verdadero, solo se puede completar el primer ingreso o salir (T-005).
+  primerIngresoPendiente: boolean;
 }

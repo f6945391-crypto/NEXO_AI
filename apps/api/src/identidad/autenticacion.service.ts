@@ -6,6 +6,7 @@ import type { PerfilUsuario } from '../generado/prisma/client';
 import { errorApi } from '../plataforma/errores';
 import { PrismaService } from '../plataforma/prisma.service';
 import { calcularHash, verificarContrasena } from './contrasenas';
+import type { ContextoSolicitud } from './contexto';
 
 // specs/06-acceso/plan.md §5.1 y §6 · T-004
 export const DURACION_ACCESO_SEGUNDOS = 15 * 60;
@@ -66,6 +67,42 @@ export class AutenticacionService {
     return this.emitir(sesion.perfil, sesion.familia);
   }
 
+  // REQ-ACC-04, REQ-ACC-05 · H-ACC-02 · T-005. Cambiar la contraseña cierra todas las sesiones abiertas
+  // con la temporal, y la respuesta trae tokens nuevos ya sin el primer ingreso pendiente.
+  async completarPrimerIngreso(
+    contexto: ContextoSolicitud,
+    contrasenaNueva: string,
+    zonaHoraria: string,
+  ): Promise<IngresoRespuesta> {
+    const datos = this.prisma.deOrganizacion(contexto.organizacionId);
+    const perfil = await datos.perfilUsuario.findUniqueOrThrow({ where: { id: contexto.perfilId } });
+
+    if (!perfil.debeCambiarContrasena && perfil.zonaHoraria !== null) {
+      throw errorApi(409, 'PRIMER_INGRESO_YA_COMPLETADO', 'El primer ingreso ya está completado.');
+    }
+    if (await verificarContrasena(perfil.hashContrasena, contrasenaNueva)) {
+      throw errorApi(400, 'CONTRASENA_NO_VALIDA', 'La contraseña nueva tiene que ser distinta de la temporal.');
+    }
+
+    const actualizado = await datos.perfilUsuario.update({
+      where: { id: perfil.id },
+      data: { hashContrasena: await calcularHash(contrasenaNueva), debeCambiarContrasena: false, zonaHoraria },
+    });
+    await this.prisma.sinAislar.sesionRenovacion.updateMany({
+      where: { perfilId: perfil.id, revocadaEn: null },
+      data: { revocadaEn: new Date() },
+    });
+    await datos.eventoAuditoria.create({
+      data: {
+        organizacionId: perfil.organizacionId,
+        perfilId: perfil.id,
+        accion: 'primer-ingreso.completado',
+        detalle: { zonaHoraria },
+      },
+    });
+    return this.emitir(actualizado, randomUUID());
+  }
+
   async salir(tokenRenovacion: string): Promise<void> {
     const sesion = await this.prisma.sinAislar.sesionRenovacion.findUnique({
       where: { hashToken: hashDeToken(tokenRenovacion) },
@@ -87,8 +124,9 @@ export class AutenticacionService {
       },
     });
 
+    const primerIngresoPendiente = perfil.debeCambiarContrasena || perfil.zonaHoraria === null;
     const tokenAcceso = await this.jwt.signAsync(
-      { sub: perfil.id, org: perfil.organizacionId, rol: perfil.rol, plan: perfil.plan },
+      { sub: perfil.id, org: perfil.organizacionId, rol: perfil.rol, plan: perfil.plan, pi: primerIngresoPendiente },
       { expiresIn: DURACION_ACCESO_SEGUNDOS },
     );
 
@@ -98,7 +136,7 @@ export class AutenticacionService {
       accesoExpiraEn: new Date(Date.now() + DURACION_ACCESO_SEGUNDOS * 1000).toISOString(),
       rol: perfil.rol,
       plan: perfil.plan,
-      primerIngresoPendiente: perfil.debeCambiarContrasena || perfil.zonaHoraria === null,
+      primerIngresoPendiente,
     };
   }
 

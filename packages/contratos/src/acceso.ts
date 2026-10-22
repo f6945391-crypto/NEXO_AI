@@ -47,5 +47,33 @@ export const SesionActual = z.strictObject({
   organizacionId: z.uuid(),
   rol: Rol,
   plan: Plan,
+  primerIngresoPendiente: z.boolean(),
 });
 export type SesionActual = z.infer<typeof SesionActual>;
+
+// Zona horaria IANA con nombre (P-05).
+// - La forma descarta los desfases fijos («+05:00», «GMT-5») y el prefijo Etc/ («Etc/GMT+5»), que
+//   Intl.DateTimeFormat sí admite.
+// - Que exista lo decide Intl.DateTimeFormat. No se usa Intl.supportedValuesOf porque devuelve los nombres
+//   antiguos de ICU y deja fuera los vigentes, como America/Argentina/Buenos_Aires o Asia/Kolkata.
+function zonaReconocida(zona: string): boolean {
+  try {
+    new Intl.DateTimeFormat('es', { timeZone: zona });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export const ZonaHoraria = z
+  .string()
+  .regex(/^(UTC|(?!Etc\/)[A-Z][A-Za-z_]+(\/[A-Z][A-Za-z0-9_-]+)+)$/, 'Zona horaria con nombre, por ejemplo America/Lima')
+  .refine(zonaReconocida, 'Zona horaria desconocida');
+export type ZonaHoraria = z.infer<typeof ZonaHoraria>;
+
+// POST /auth/primer-ingreso — REQ-ACC-04, REQ-ACC-05 · H-ACC-02 · T-005
+export const PrimerIngresoSolicitud = z.strictObject({
+  contrasenaNueva: z.string().min(12, 'Al menos 12 caracteres').max(200),
+  zonaHoraria: ZonaHoraria,
+});
+export type PrimerIngresoSolicitud = z.infer<typeof PrimerIngresoSolicitud>;

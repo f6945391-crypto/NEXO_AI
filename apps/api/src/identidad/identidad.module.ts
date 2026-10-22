@@ -5,7 +5,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { requerirVariable } from '../plataforma/entorno';
 import { AutenticacionController } from './autenticacion.controller';
 import { AutenticacionService } from './autenticacion.service';
-import { AutenticacionGuard, RolGuard } from './guardas';
+import { AutenticacionGuard, PrimerIngresoGuard, RolGuard } from './guardas';
 
 // specs/06-acceso/plan.md §2. El limitador guarda sus contadores en memoria: basta mientras haya un
 // solo proceso que atiende HTTP (AD-01). Si se escala a varios, pasa a Redis.
@@ -17,7 +17,9 @@ import { AutenticacionGuard, RolGuard } from './guardas';
   controllers: [AutenticacionController],
   providers: [
     AutenticacionService,
+    // Se ejecutan en este orden.
     { provide: APP_GUARD, useClass: AutenticacionGuard },
+    { provide: APP_GUARD, useClass: PrimerIngresoGuard },
     { provide: APP_GUARD, useClass: RolGuard },
   ],
 })

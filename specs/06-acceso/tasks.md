@@ -89,8 +89,14 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 - **Depende de:** T-004
 - **Contenido:** `PrimerIngresoGuard` global; `POST /auth/primer-ingreso` con contraseña nueva (mínimo 12 caracteres, distinta de la temporal) y zona horaria IANA validada
 - **Hecho cuando:** con el primer ingreso pendiente, toda ruta salvo `primer-ingreso` y `salida` responde `PRIMER_INGRESO_PENDIENTE`; al completarlo, el acceso se libera
-- **Prueba:** `acceso.primer-ingreso-bloquea-hasta-completar`
-- **Estado:** pendiente
+- **Prueba:** `acceso.primer-ingreso-bloquea-hasta-completar` · también `contratos.zona-horaria`, `contratos.primer-ingreso`
+- **Estado:** hecha · 22 de octubre de 2026. 14 pruebas en la API y 6 en contratos; 63 en total. Con la guarda desactivada, su prueba falla
+- **Notas de implementación:**
+  - El token de acceso lleva la marca `pi` (primer ingreso pendiente). `PrimerIngresoGuard` va entre la autenticación y el rol. La única ruta autenticada permitida mientras está pendiente es la marcada con `@PermitidoDurantePrimerIngreso()`; salir no necesita sesión.
+  - Al completarlo: se guardan la contraseña nueva y la zona, **se cierran todas las sesiones abiertas con la contraseña temporal** y la respuesta trae tokens nuevos sin la marca.
+  - **Zona horaria:** se acepta lo que reconoce `Intl.DateTimeFormat`, siempre que tenga forma de zona con nombre. Se rechazan los desfases fijos y `Etc/`. No se usa `Intl.supportedValuesOf` porque deja fuera nombres vigentes como `America/Argentina/Buenos_Aires`; lo detectó una prueba.
+  - **Decisión menor que no estaba en la especificación:** una vez completado, repetir el primer ingreso responde `409 PRIMER_INGRESO_YA_COMPLETADO`. Esta ruta no sirve para cambiar la contraseña en general, algo que ningún requisito pide.
+  - La parte de interfaz de REQ-ACC-05 (que la zona se elija y no se deduzca) se prueba en T-011.
 
 ### T-006 · Perfil y cuenta no autogestionable
 

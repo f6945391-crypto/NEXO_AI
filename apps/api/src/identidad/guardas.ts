@@ -4,7 +4,12 @@ import { JwtService } from '@nestjs/jwt';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { SesionActual, type Rol } from '@nexoai/contratos';
 import { errorApi } from '../plataforma/errores';
-import { CLAVE_PERMITIDO_PARA, CLAVE_PUBLICO, type SolicitudConContexto } from './decoradores';
+import {
+  CLAVE_DURANTE_PRIMER_INGRESO,
+  CLAVE_PERMITIDO_PARA,
+  CLAVE_PUBLICO,
+  type SolicitudConContexto,
+} from './decoradores';
 
 function esPublica(reflector: Reflector, ctx: ExecutionContext): boolean {
   return reflector.getAllAndOverride<boolean>(CLAVE_PUBLICO, [ctx.getHandler(), ctx.getClass()]) === true;
@@ -31,6 +36,7 @@ export class AutenticacionGuard implements CanActivate {
         organizacionId: carga.org,
         rol: carga.rol,
         plan: carga.plan,
+        primerIngresoPendiente: carga.pi,
       });
     } catch {
       throw errorApi(401, 'NO_AUTENTICADO', 'La sesión no es válida o ha caducado.');
@@ -39,7 +45,25 @@ export class AutenticacionGuard implements CanActivate {
   }
 }
 
-// Global, después de AutenticacionGuard. Deniega por defecto al colaborador (REQ-ACC-13).
+// Global, después de AutenticacionGuard. Con el primer ingreso pendiente solo se puede completarlo;
+// salir es @Publico() y no pasa por aquí (REQ-ACC-04, T-005).
+@Injectable()
+export class PrimerIngresoGuard implements CanActivate {
+  constructor(private readonly reflector: Reflector) {}
+
+  canActivate(ctx: ExecutionContext): boolean {
+    if (esPublica(this.reflector, ctx)) return true;
+    if (!ctx.switchToHttp().getRequest<SolicitudConContexto>().contexto?.primerIngresoPendiente) return true;
+    const permitida = this.reflector.getAllAndOverride<boolean>(CLAVE_DURANTE_PRIMER_INGRESO, [
+      ctx.getHandler(),
+      ctx.getClass(),
+    ]);
+    if (permitida) return true;
+    throw errorApi(403, 'PRIMER_INGRESO_PENDIENTE', 'Antes de continuar, cambia tu contraseña y elige tu zona horaria.');
+  }
+}
+
+// Global, después de PrimerIngresoGuard. Deniega por defecto al colaborador (REQ-ACC-13).
 @Injectable()
 export class RolGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}

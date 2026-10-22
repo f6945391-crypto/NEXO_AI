@@ -1,6 +1,7 @@
 import { Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
 import {
   IngresoSolicitud,
+  PrimerIngresoSolicitud,
   TokenRenovacionSolicitud,
   type IngresoRespuesta,
   type SesionActual,
@@ -8,7 +9,7 @@ import {
 import { ValidarCon } from '../plataforma/errores';
 import { AutenticacionService } from './autenticacion.service';
 import type { ContextoSolicitud } from './contexto';
-import { Contexto, PermitidoPara, Publico } from './decoradores';
+import { Contexto, PermitidoDurantePrimerIngreso, PermitidoPara, Publico } from './decoradores';
 import { LimiteIngresoGuard } from './guardas';
 
 // REQ-ACC-02, REQ-ACC-03, REQ-ACC-12 · T-004
@@ -37,6 +38,18 @@ export class AutenticacionController {
   @HttpCode(204)
   salir(@Body(new ValidarCon(TokenRenovacionSolicitud)) cuerpo: TokenRenovacionSolicitud): Promise<void> {
     return this.autenticacion.salir(cuerpo.tokenRenovacion);
+  }
+
+  // REQ-ACC-04, REQ-ACC-05 · T-005
+  @PermitidoDurantePrimerIngreso()
+  @PermitidoPara('colaborador')
+  @Post('primer-ingreso')
+  @HttpCode(200)
+  completarPrimerIngreso(
+    @Contexto() contexto: ContextoSolicitud,
+    @Body(new ValidarCon(PrimerIngresoSolicitud)) cuerpo: PrimerIngresoSolicitud,
+  ): Promise<IngresoRespuesta> {
+    return this.autenticacion.completarPrimerIngreso(contexto, cuerpo.contrasenaNueva, cuerpo.zonaHoraria);
   }
 
   @PermitidoPara('colaborador')

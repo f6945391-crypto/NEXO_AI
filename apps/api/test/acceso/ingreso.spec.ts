@@ -5,9 +5,9 @@ import { ErrorApi, IngresoRespuesta, SesionActual, type Plan, type Rol } from '@
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { AppModule } from '../../src/app.module';
-import { crearCuenta, crearOrganizacion } from '../../src/identidad/alta-cuentas';
+import { crearOrganizacion } from '../../src/identidad/alta-cuentas';
 import type { PrismaClient } from '../../src/plataforma/prisma';
-import { clientePrueba, vaciarTablas } from '../utilidades/base-prueba';
+import { clientePrueba, crearCuentaLista, vaciarTablas } from '../utilidades/base-prueba';
 
 // Ruta sin @PermitidoPara: sirve para comprobar que el colaborador queda fuera por defecto (REQ-ACC-13).
 @Controller('ruta-de-prueba')
@@ -27,7 +27,10 @@ describe('T-004 · ingreso y sesión', () => {
 
   const http = () => request(app.getHttpServer());
   const ingresar = (correo: string, contrasena = CONTRASENA) => http().post('/auth/ingreso').send({ correo, contrasena });
-  const alta = (correo: string, rol: Rol, plan: Plan) => crearCuenta(prisma, { organizacionId, correo, rol, plan }, CONTRASENA);
+  // Por defecto con el primer ingreso ya completado, para llegar a las rutas protegidas.
+  // El primer ingreso pendiente lo prueba test/acceso/primer-ingreso.spec.ts.
+  const alta = (correo: string, rol: Rol, plan: Plan) =>
+    crearCuentaLista(prisma, { organizacionId, correo, rol, plan }, CONTRASENA);
 
   beforeAll(async () => {
     const modulo = await Test.createTestingModule({ imports: [AppModule], controllers: [RutaDePruebaController] }).compile();
@@ -58,10 +61,10 @@ describe('T-004 · ingreso y sesión', () => {
       const cuerpo = IngresoRespuesta.parse(respuesta.body);
       expect(cuerpo.rol).toBe(rol);
       expect(cuerpo.plan).toBe(plan);
-      expect(cuerpo.primerIngresoPendiente).toBe(true);
+      expect(cuerpo.primerIngresoPendiente).toBe(false);
 
       const sesion = await http().get('/auth/sesion').set('Authorization', `Bearer ${cuerpo.tokenAcceso}`).expect(200);
-      expect(SesionActual.parse(sesion.body)).toEqual({ perfilId, organizacionId, rol, plan });
+      expect(SesionActual.parse(sesion.body)).toEqual({ perfilId, organizacionId, rol, plan, primerIngresoPendiente: false });
     });
 
     it('el correo no distingue mayúsculas', async () => {

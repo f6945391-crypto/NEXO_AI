@@ -15,6 +15,9 @@ export const CodigoError = z.enum([
   'SESION_INVALIDA',
   'ROL_NO_PERMITIDO',
   'DEMASIADOS_INTENTOS',
+  'PRIMER_INGRESO_PENDIENTE',
+  'PRIMER_INGRESO_YA_COMPLETADO',
+  'CONTRASENA_NO_VALIDA',
 ]);
 export type CodigoError = z.infer<typeof CodigoError>;
 
