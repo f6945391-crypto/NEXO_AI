@@ -61,7 +61,12 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** funciones puras `detectarConflictos()` y `generarAlternativas()` en el dominio de agenda, sin base de datos ni red
 - **Hecho cuando:** una tabla de casos cubre cada punto de DP-02: misma duración, banda horaria, mismo día primero por cercanía, sin fin de semana, máximo tres, máximo siete días, y que los eventos de todo el día no bloquean
 - **Prueba:** `alternativas.dp02`
-- **Estado:** pendiente
+- **Estado:** hecha · 22 de octubre de 2026. 11 pruebas unitarias. Con la regla del fin de semana desactivada fallan 3
+- **Notas de implementación:**
+  - `src/agenda/dominio/conflictos.ts` contiene `detectarConflictos()` y `generarAlternativas()`; `tiempo.ts` maneja la hora local de cualquier zona IANA sin librerías externas.
+  - Dos eventos que solo se tocan no chocan. Los cancelados, los de todo el día y el propio evento que se modifica tampoco.
+  - Tres detalles que DP-02 no decía y se añadieron a la decisión (plan §9, punto 7): horarios cada 15 minutos, alternativas sin solaparse entre sí y nunca en el pasado.
+  - Una prueba cruza el cambio de horario de verano de Madrid (25 de octubre) y comprueba que el lunes a las 10:00 son las 09:00 UTC.
 
 ---
 

@@ -199,5 +199,6 @@ Se generan con `generarAlternativas(eventos, rangoPedido, banda, zonaHoraria)`:
 4. **Se saltan el sábado y el domingo**, como en el cuadro `CUN-01 / Móvil / FA-01 / 01 Conflicto detectado`.
 5. **Hasta tres alternativas**, como en ese mismo cuadro, buscando como mucho siete días adelante.
 6. Los eventos de todo el día no bloquean (H-AG-03).
+7. **Añadido al implementarla (T-016):** los horarios candidatos van **cada 15 minutos**, las alternativas **no se solapan entre sí** y **nunca se propone un horario que ya pasó**.
 
 **Para revertirla o cambiarla:** es una función pura con sus parámetros. Cambiar el criterio es cambiar esta lista y sus pruebas unitarias, sin tocar ninguna otra pieza.

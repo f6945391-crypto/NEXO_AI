@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 2.5.0 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
+**Versión:** 2.5.1 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -143,7 +143,7 @@ Estado por columna: **—** no existe · **borrador** · **vigente** · **parcia
 | Área | Archivo | CUN | Plataforma | Plan | REQ | Spec | Diseño | Plan técnico | Tareas | Código | Pruebas |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | Captura | `specs/01-captura/spec.md` | 01, 03 | Móvil | G / P | CAP-01…24 (24) | vigente | parcial | — | — | — | — |
-| Agenda | `specs/02-agenda/spec.md` | 01 | Móvil | G | CUN01-01…12 (12) | vigente | parcial (jerarquía anterior) | aprobado | T-012…T-021 | — | — |
+| Agenda | `specs/02-agenda/spec.md` | 01 | Móvil | G | CUN01-01…12 (12) | vigente | parcial (jerarquía anterior) | aprobado | T-012…T-021 (T-016 y T-020 hechas) | 2 REQ en curso (cálculo de conflictos y alternativas) | 2 de 12 REQ con prueba |
 | Jornada | `specs/02-jornada/spec.md` | 02 | Móvil | P | CUN02-01…24 (24) | vigente | — | — | — | — | — |
 | Tareas / delegación | `specs/03-tareas/spec.md` | 07, 09 | Web (gerente) + móvil (colaborador) | E | CUN07-01…17 (17) | vigente | parcial (jerarquía anterior) | — | — | — | — |
 | Comunicaciones | `specs/04-comunicaciones/spec.md` | 04 | Móvil + web | P | CUN04-01…15 (15) | vigente | — | — | — | — | — |
@@ -207,7 +207,7 @@ Bloquean requisitos o tareas. Cuando una se resuelve: se tacha aquí, se anota e
 | ~~D-17~~ | **Resuelta el 2026-10-22 por el equipo: el colaborador tiene cuenta.** Reemplaza `REPLANTEO.md` §4.7 (el colaborador sin cuenta) y en parte §4.8. (a) **Rol propio, `colaborador`**, limitado a sus tareas asignadas, sus hilos y su perfil, sin las funciones del Plan Personal. (b) **Plataforma: móvil**, donde llegan las notificaciones; la web queda para más adelante. (c) **El correo solo avisa**: toda respuesta se da en la aplicación, y no hay botones, enlaces de formulario ni respuestas por correo. (d) Lo que el colaborador responde llega al líder como propuesta (R-16); el líder confirma o modifica la tarea, y el resultado vuelve al colaborador como notificación. Afecta a `03-tareas` §7, al encargo de `04-comunicaciones`, a `05-equipos` §3 y a `06-acceso` | Fase 4; rol en T-004 |
 | D-18 | **Precio del colaborador.** El argumento de costo de §4.7 vuelve: cada colaborador ocupa ahora una cuenta. ¿Asiento a precio completo, asiento reducido o incluido en el plan? No bloquea el desarrollo | Modelo comercial |
 | **DP-03** | **Provisional, revisable.** El correo de aviso al colaborador sale desde la dirección de la plataforma, no desde el Gmail del gerente. Así la delegación no necesita `gmail.send`, que solo queda para el correo asistido (CUN-04) | REQ-CUN07-16 |
-| **DP-02** | **Provisional, revisable.** Alternativas ante un conflicto: misma duración, dentro de la banda horaria, el mismo día primero y por cercanía a la hora pedida, sin sábado ni domingo, hasta tres y como mucho siete días adelante. Sale del cuadro `CUN-01 / Móvil / FA-01 / 01`. **Para cambiarla:** es una función pura; basta con su lista en `specs/02-agenda/plan.md` §9 y sus pruebas | REQ-CUN01-05 |
+| **DP-02** | **Provisional, revisable.** Alternativas ante un conflicto: misma duración, dentro de la banda horaria, el mismo día primero y por cercanía a la hora pedida, sin sábado ni domingo, hasta tres y como mucho siete días adelante; cada 15 minutos, sin solaparse entre sí y nunca en el pasado (añadido en T-016). Sale del cuadro `CUN-01 / Móvil / FA-01 / 01`. **Para cambiarla:** es una función pura; basta con su lista en `specs/02-agenda/plan.md` §9 y sus pruebas | REQ-CUN01-05 |
 | — | **Hallazgos de agenda** H-AG-03 a H-AG-08: eventos de todo el día, recurrentes, eventos donde se es invitado, calendario principal, comprobar de nuevo al confirmar, caducidad de las propuestas | `specs/02-agenda/plan.md` §9 |
 | — | **Hallazgos de acceso** H-ACC-01 a H-ACC-05: alta de cuentas, política de contraseña, duración de la sesión, efecto del cambio de zona horaria, vista por rol | `specs/06-acceso/plan.md` §8 |
 | — | Atributos nuevos de EN-02: disparo por lugar, recurrencia y vigencia | REQ-CAP-15, REQ-CAP-17 |
@@ -246,7 +246,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 | Fase | Contenido | CUN | Estado |
 |---|---|---|---|
 | 0 | **Base SDD**: este archivo, `AGENTS.md`, glosario, trazabilidad, resolver PT-1 e INC-01 | — | **Cerrada el 2026-10-22** |
-| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023 y T-006 hechas: acceso y armazón web visibles, y el móvil arranca. Siguiente: T-016 |
+| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023, T-006 y T-016 hechas: acceso y armazón web visibles, y el móvil arranca. Siguiente: T-012 |
 | 2 | Capa de agente: intención, herramientas, confirmación | 01, 03 vía conversación + CAP | Especificado, sin plan |
 | 3 | Planificación de jornada | 02 | Especificado |
 | 4 | Equipos: disponibilidad, coordinación, delegación, seguimiento. Desde D-17, también la aplicación móvil del colaborador | 05 a 09 | Parcial (faltan 06 y 08); diseño desfasado (INC-14) |
@@ -265,6 +265,7 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-22 | 2.5.1 | **T-016 hecha.** Funciones puras `detectarConflictos()` y `generarAlternativas()` según DP-02, con manejo propio de la hora local por zona IANA. Se precisa DP-02: horarios cada 15 minutos, alternativas sin solaparse entre sí y nunca en el pasado. CUN01-02 y CUN01-05 en curso (falta la Operación, T-017 y T-018). 11 pruebas unitarias; 86 en total | `apps/api/src/agenda/dominio`, `specs/02-agenda/plan.md`, `tasks.md`, `specs/trazabilidad.md` | Claude |
 | 2026-10-22 | 2.5.0 | **T-006 hecha.** `GET /perfil`, solo lectura y también para el colaborador; ninguna ruta para cambiar correo, plan, rol o dar de baja. ACC-12 implementado, ACC-10 en curso (falta cambiar la zona, T-009). La web muestra el perfil en Ajustes. 75 pruebas | `apps/api/src/identidad/perfil.controller.ts`, `apps/api/test/acceso/perfil.spec.ts`, `packages/contratos`, `apps/web`, `specs/06-acceso/tasks.md`, `specs/trazabilidad.md` | Claude |
 | 2026-10-22 | 2.4.1 | **T-020 hecha en web.** `apps/movil` con Expo SDK 57 (React Native 0.86.3); la app consulta la API y valida con `contratos`. Pruebas de extremo a extremo del móvil con Playwright sobre Expo web (propuesta técnica §4.1). Falta probarla en un teléfono. Dos excepciones de auditoría documentadas, sin versión corregida publicada (`node-forge` y `braces`, herramientas de desarrollo). 71 pruebas | `apps/movil`, `pnpm-workspace.yaml`, `.gitignore`, `apps/web/playwright.config.ts`, `PROPUESTA-TECNICA.md`, `AGENTS.md`, `specs/02-agenda/tasks.md` | Claude |
 | 2026-10-22 | 2.4.0 | **T-023, nueva y hecha, a pedido del equipo: armazón de la aplicación web.** Navegación de 72 px (Agenda, Tareas, Actividad; Ajustes al pie), conversación de 528 px con blanco inicial y ejemplos pulsables, y lienzo de 840 px con niveles o franjas y estados vacíos; lienzo expandido; Ajustes encima con cierre de sesión. Sin asistente detrás: lo que se envía queda «en espera» y se dice que no se envió ni se creó nada (R-42). 70 pruebas | `apps/web/src/app/aplicacion`, `apps/web/src/app/page.tsx`, `globales.css`, `next.config.ts`, `apps/web/e2e`, `AGENTS.md`, `specs/06-acceso/tasks.md` | Equipo (pedido), implementado por Claude |
