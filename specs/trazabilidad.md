@@ -12,10 +12,10 @@
 | 01-captura | 24 | 24 | 0 | 0 | 0 | 0 |
 | 02-agenda | 12 | 12 | 0 | 0 | 0 | 0 |
 | 02-jornada | 24 | 24 | 0 | 0 | 0 | 0 |
-| 03-tareas | 15 | 15 | 0 | 0 | 0 | 0 |
-| 04-comunicaciones | 28 | 28 | 0 | 0 | 0 | 0 |
-| 05-equipos | 15 | 15 | 0 | 0 | 0 | 0 |
-| 06-acceso | 12 | 11 | 0 | 1 | 0 | 0 |
+| 03-tareas | 17 | 17 | 0 | 0 | 0 | 0 |
+| 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
+| 05-equipos | 16 | 16 | 0 | 0 | 0 | 0 |
+| 06-acceso | 14 | 13 | 0 | 1 | 0 | 0 |
 
 ## Requisitos
 
@@ -91,11 +91,13 @@
 | REQ-CUN07-08 | 03-tareas | CUN-07 FA-01 | 4 | — | — | pendiente |
 | REQ-CUN07-09 | 03-tareas | regla de producto R-42; `SPEC.md` P-11 | 4 | — | — | pendiente |
 | REQ-CUN07-10 | 03-tareas | RN-INF-02; regla de producto R-19 | 4 | — | — | pendiente |
-| REQ-CUN07-11 | 03-tareas | decisión D-13 | 4 | — | — | pendiente |
+| REQ-CUN07-11 | 03-tareas | CUN-09; RN-OP-04; decisión D-17 | 4 | — | — | pendiente |
 | REQ-CUN07-12 | 03-tareas | regla de producto R-16; RN-ER-03; espíritu de RN-OP-04 | 4 | — | — | pendiente |
 | REQ-CUN07-13 | 03-tareas | regla de producto R-18 | 4 | — | — | pendiente |
-| REQ-CUN07-14 | 03-tareas | propuesta técnica §7.2, idempotencia por clave de operación | 4 | — | — | pendiente |
+| REQ-CUN07-14 | 03-tareas | propuesta técnica §7.2, idempotencia por clave de operación; AD-09 | 4 | — | — | pendiente |
 | REQ-CUN07-15 | 03-tareas | decisión D-14; regla de producto R-17 | 4 | — | — | pendiente |
+| REQ-CUN07-16 | 03-tareas | RN-ER-02; decisión D-17; DP-03 | 4 | — | — | pendiente |
+| REQ-CUN07-17 | 03-tareas | decisión D-17; RN-ER-02 | 4 | — | — | pendiente |
 | REQ-CUN04-01 | 04-comunicaciones | CUN-04 flujo principal | 5 | — | — | pendiente |
 | REQ-CUN04-02 | 04-comunicaciones | CUN-04 excepciones; RN-ER-03 | 5 | — | — | pendiente |
 | REQ-CUN04-03 | 04-comunicaciones | RN-ER-03; propuesta técnica §7.2, herramienta `comunicaciones.preparar` | 5 | — | — | pendiente |
@@ -113,17 +115,17 @@
 | REQ-CUN04-15 | 04-comunicaciones | regla de producto R-42; `SPEC.md` P-11 | 5 | — | — | pendiente |
 | REQ-ENC-01 | 04-comunicaciones | CUN-04, CUN-07 | 4 | — | — | pendiente |
 | REQ-ENC-02 | 04-comunicaciones | CUN-04, CUN-07 | 4 | — | — | pendiente |
-| REQ-ENC-03 | 04-comunicaciones | CUN-04, CUN-07 | 4 | — | — | pendiente |
-| REQ-ENC-04 | 04-comunicaciones | CUN-04, CUN-07 | 4 | — | — | pendiente |
+| REQ-ENC-03 | 04-comunicaciones | CUN-04, CUN-07; D-17 | 4 | — | — | pendiente |
+| REQ-ENC-04 | 04-comunicaciones | CUN-04, CUN-07; D-17 | 4 | — | — | retirado |
 | REQ-ENC-05 | 04-comunicaciones | CUN-04, CUN-07 | 4 | — | — | pendiente |
-| REQ-ENC-06 | 04-comunicaciones | CUN-04, CUN-07 | 4 | — | — | pendiente |
-| REQ-ENC-07 | 04-comunicaciones | CUN-04, CUN-07 | 4 | — | — | pendiente |
-| REQ-ENC-08 | 04-comunicaciones | CUN-04, CUN-07 | 4 | — | — | pendiente |
+| REQ-ENC-06 | 04-comunicaciones | CUN-04, CUN-07; D-17 | 4 | — | — | retirado |
+| REQ-ENC-07 | 04-comunicaciones | CUN-04, CUN-07; D-17 | 4 | — | — | retirado |
+| REQ-ENC-08 | 04-comunicaciones | CUN-04, CUN-07; D-17 | 4 | — | — | retirado |
 | REQ-ENC-09 | 04-comunicaciones | CUN-04, CUN-07; R-16; R-18 | 4 | — | — | pendiente |
 | REQ-ENC-10 | 04-comunicaciones | CUN-04, CUN-07 | 4 | — | — | pendiente |
-| REQ-ENC-11 | 04-comunicaciones | CUN-04, CUN-07 | 4 | — | — | pendiente |
-| REQ-ENC-12 | 04-comunicaciones | CUN-04, CUN-07 | 4 | — | — | pendiente |
-| REQ-ENC-13 | 04-comunicaciones | CUN-04, CUN-07 | 4 | — | — | pendiente |
+| REQ-ENC-11 | 04-comunicaciones | CUN-04, CUN-07; D-17 | 4 | — | — | retirado |
+| REQ-ENC-12 | 04-comunicaciones | CUN-04, CUN-07; D-17 | 4 | — | — | pendiente |
+| REQ-ENC-13 | 04-comunicaciones | CUN-04, CUN-07; D-17 | 4 | — | — | retirado |
 | REQ-CUN05-01 | 05-equipos | CUN-05 flujo principal, pasos 1 y 2 | 4 | — | — | pendiente |
 | REQ-CUN05-02 | 05-equipos | CUN-05 flujo principal, paso 3; RN-OP-02 | 4 | — | — | pendiente |
 | REQ-CUN05-03 | 05-equipos | RN-INF-01, RN-CAL-01 punto 1 | 4 | — | — | pendiente |
@@ -139,15 +141,18 @@
 | REQ-CUN05-13 | 05-equipos | regla de producto R-13; propuesta técnica §9, minimización | 4 | — | — | pendiente |
 | REQ-CUN05-14 | 05-equipos | regla de producto R-14; RN-OP-01 | 4 | — | — | pendiente |
 | REQ-CUN05-15 | 05-equipos | REQ-CUN05-12 y 14 | 4 | — | — | pendiente |
+| REQ-CUN05-16 | 05-equipos | decisión D-17; RN-OP-02; R-14 | 4 | — | — | pendiente |
 | REQ-ACC-01 | 06-acceso | Requisito del sistema | 1 | T-002 | acceso.sin-registro-abierto | implementado |
 | REQ-ACC-02 | 06-acceso | Requisito del sistema | 1 | T-004, T-011 | — | pendiente |
 | REQ-ACC-03 | 06-acceso | Requisito del sistema | 1 | T-004, T-011 | — | pendiente |
 | REQ-ACC-04 | 06-acceso | Requisito del sistema | 1 | T-005, T-011 | — | pendiente |
 | REQ-ACC-05 | 06-acceso | Requisito del sistema; RN-CAL-01 | 1 | T-005, T-011 | — | pendiente |
-| REQ-ACC-06 | 06-acceso | Requisito del sistema | 1 | T-007, T-011 | — | pendiente |
+| REQ-ACC-06 | 06-acceso | Requisito del sistema | 1 | T-007, T-022 | — | pendiente |
 | REQ-ACC-07 | 06-acceso | Requisito del sistema | 1 | T-007 | — | pendiente |
 | REQ-ACC-08 | 06-acceso | Requisito del sistema | 1 | T-008 | — | pendiente |
 | REQ-ACC-09 | 06-acceso | Requisito del sistema | 1 | T-008 | — | pendiente |
 | REQ-ACC-10 | 06-acceso | Requisito del sistema | 1 | T-006, T-009 | — | pendiente |
 | REQ-ACC-11 | 06-acceso | Requisito del sistema | 1 | T-009 | — | pendiente |
 | REQ-ACC-12 | 06-acceso | Requisito del sistema; R-45 | 1 | T-006 | — | pendiente |
+| REQ-ACC-13 | 06-acceso | Requisito del sistema; D-17 | 1 | T-004 | — | pendiente |
+| REQ-ACC-14 | 06-acceso | Requisito del sistema; D-17 | 1 | T-007 | — | pendiente |

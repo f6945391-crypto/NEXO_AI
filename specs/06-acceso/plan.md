@@ -3,7 +3,7 @@
 **Especificación:** `specs/06-acceso/spec.md` (REQ-ACC-01 a 12)
 **Fase:** 1
 **Decisiones que aplica:** AD-01, AD-02, AD-08, AD-09 · P-04, P-05, P-07, P-08
-**Estado:** **aprobado** por el equipo el 22 de octubre de 2026, con sus hallazgos H-ACC-01 a H-ACC-05 tal como están
+**Estado:** **aprobado** por el equipo el 22 de octubre de 2026, con sus hallazgos H-ACC-01 a H-ACC-05 tal como están · **Revisado el 22 de octubre de 2026 por D-17**: rol colaborador (§5.5), ACC-13 y ACC-14, H-ACC-06
 
 Este plan dice **dónde y cómo** se cumple cada requisito. No añade comportamiento. Lo que la especificación no decide está en §8 como hallazgo y vuelve a ella.
 
@@ -34,7 +34,7 @@ Este plan dice **dónde y cómo** se cumple cada requisito. No añade comportami
 | Tabla | Campos principales | Notas |
 |---|---|---|
 | `organizacion` | `id`, `nombre`, `creada_en` | Cliente que crea las cuentas (R-45) |
-| `perfil_usuario` (EN-01) | `id`, `organizacion_id`, `correo` único, `hash_contrasena`, `rol` (`usuario_personal` · `gerente`), `plan` (`gratuito` · `personal` · `empresarial`), `zona_horaria` (IANA, nula hasta el primer ingreso), `debe_cambiar_contrasena`, `creado_en` | Rol y plan los fija la organización y no hay ruta para cambiarlos (ACC-12) |
+| `perfil_usuario` (EN-01) | `id`, `organizacion_id`, `correo` único, `hash_contrasena`, `rol` (`usuario_personal` · `gerente` · `colaborador`, este último desde D-17), `plan` (`gratuito` · `personal` · `empresarial`), `zona_horaria` (IANA, nula hasta el primer ingreso), `debe_cambiar_contrasena`, `creado_en` | Rol y plan los fija la organización y no hay ruta para cambiarlos (ACC-12) |
 | `sesion_renovacion` | `id`, `perfil_id`, `hash_token`, `familia`, `expira_en`, `revocada_en` | Token de renovación rotativo. Si se reutiliza uno ya rotado, se revoca toda la familia |
 | `consentimiento_integracion` | `id`, `perfil_id`, `proveedor` (`google`), `alcance`, `estado` (`concedido` · `revocado` · `caducado`), `token_cifrado`, `concedido_en`, `cambiado_en`, `aviso_emitido_en` | **Una fila por alcance**: calendario y correo se revocan por separado (propuesta §9) |
 | `evento_auditoria` | `id`, `organizacion_id`, `perfil_id`, `accion`, `detalle` (jsonb), `ocurrido_en` | Ingreso, primer ingreso, cambio de contraseña, conexión y revocación, cambio de zona horaria |
@@ -92,6 +92,13 @@ Es una **Operación** (AD-09):
 - **ACC-08:** el decorador `@RequiereGoogle('calendar.events')` comprueba el consentimiento antes de que el servicio haga nada. Si falta, devuelve `PERMISO_GOOGLE_FALTANTE { alcance, paraQue, comoConceder }` sin llamar a Google.
 - **ACC-09:** el puerto `ClienteGoogle` es el único que llama a Google. Ante `invalid_grant` o un 401 que no se arregla renovando el token, marca el consentimiento como `revocado` o `caducado` y deja de intentar. Si `aviso_emitido_en` está vacío, emite el aviso y lo rellena; si ya estaba lleno, no avisa otra vez. Los trabajos en cola comprueban el estado antes de llamar.
 
+### 5.5 El rol colaborador (ACC-13, ACC-14) · añadido por D-17
+
+- **Se deniega por defecto.** Una guarda global, `RolGuard`, rechaza con `ROL_NO_PERMITIDO` toda ruta que no declare `@PermitidoPara('colaborador')`. Así una ruta nueva nunca queda abierta al colaborador por olvido.
+- Las únicas rutas permitidas al colaborador son las de sus tareas asignadas y sus hilos (fase 4), su perfil, la sesión y el calendario de Google.
+- `GET /integraciones/google/permisos` devuelve al colaborador **solo** el alcance de calendario; pedir `gmail.send` con ese rol se rechaza.
+- **«Solo en la aplicación móvil»** lo aplica el cliente: si un colaborador entra en la web, esta le indica que su cuenta se usa desde el móvil (H-ACC-06). La API no puede saber con certeza desde qué plataforma llega una petición.
+
 ## 6. Seguridad
 
 | Aspecto | Tratamiento |
@@ -118,6 +125,8 @@ Es una **Operación** (AD-09):
 | ACC-10 | Operación `perfil.cambiar_zona_horaria` | `acceso.zona-horaria-modificable` | Integración |
 | ACC-11 | Previsualización de la operación | `acceso.cambio-zona-muestra-afectados-y-no-aplica-sin-confirmar` | Integración |
 | ACC-12 | Esquema estricto de `Perfil`; ausencia de rutas | `acceso.cuenta-no-autogestionable` | Integración |
+| ACC-13 | `RolGuard` con denegación por defecto | `acceso.colaborador-solo-ve-lo-suyo` | Integración |
+| ACC-14 | Permisos de Google por rol | `acceso.colaborador-solo-calendario` | Integración |
 
 Los nombres de prueba se copian a `specs/trazabilidad.md` cuando la tarea correspondiente las implemente.
 
@@ -132,3 +141,4 @@ Decisiones que este plan tuvo que tomar porque la especificación no las cubre. 
 | H-ACC-03 | No se especifica cuánto dura una sesión | 15 minutos de acceso y 30 días de renovación |
 | H-ACC-04 | ACC-11 no dice si cambiar de zona horaria mueve los compromisos o solo cambia cómo se muestran | Solo cambia cómo se muestran; los instantes se conservan |
 | H-ACC-05 | ACC-02 habla de «la vista que corresponde a su rol» sin nombrarla | La API devuelve rol y plan, y el cliente decide la vista según el diseño de Acceso |
+| H-ACC-06 | ACC-13 dice «solo en la aplicación móvil», pero el servidor no distingue plataformas de forma fiable | Lo aplica el cliente web, que redirige al colaborador al móvil. Añadido el 22 de octubre de 2026 por D-17 |

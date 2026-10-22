@@ -218,15 +218,20 @@ ENTONCES el sistema no muestra ningún compromiso de sus integrantes e indica qu
 
 ---
 
-## 3. Participantes que no son usuarios
+## 3. De dónde sale la disponibilidad de cada participante
 
-El Colaborador **no es usuario del aplicativo**: el producto se estructura alrededor de quien maneja personas, y dar un puesto de pago a cada empleado multiplicaría el precio de un contrato por el tamaño de la empresa. Ver `../../REPLANTEO.md` secciones 4.7 y 4.8.
+**Reescrita el 22 de octubre de 2026 (D-17).** Ahora hay dos clases de participante:
 
-Consecuencia directa para este caso de uso: **las agendas de los participantes no están dentro de NexoAI.** Hay que pedirlas.
+| Participante | Tiene cuenta | De dónde sale su disponibilidad |
+|---|---|---|
+| **Colaborador** del equipo | Sí, rol `colaborador` | De su propio calendario de Google conectado, si acepta compartirla con su equipo (REQ-CUN05-16) |
+| **Participante externo** | No | De una invitación por correo que acepta (REQ-CUN05-12) |
+
+En los dos casos rigen las mismas reglas: solo libre u ocupado (REQ-CUN05-13), el consentimiento es de la persona y revocable (REQ-CUN05-14), y quien no ha aceptado aparece sin datos (R-15).
 
 ### REQ-CUN05-12
 
-**Requisito:** CUANDO el gerente incorpore a un participante que no es usuario, EL SISTEMA le enviará una invitación por correo solicitando autorización para consultar su disponibilidad.
+**Requisito:** CUANDO el gerente incorpore a un participante externo, sin cuenta, EL SISTEMA le enviará una invitación por correo solicitando autorización para consultar su disponibilidad. *(Revisado el 22 de octubre de 2026, D-17: decía «que no es usuario»; desde D-17 los colaboradores sí lo son.)*
 
 **Origen:** decisión de alcance; RN-OP-02
 **Tipo:** dirigido por evento
@@ -241,7 +246,7 @@ Y hasta que responda, el participante figura **sin datos**
 
 ### REQ-CUN05-13
 
-**Requisito:** EL SISTEMA consultará únicamente los intervalos libres y ocupados de un participante externo, nunca el contenido de sus eventos.
+**Requisito:** EL SISTEMA consultará únicamente los intervalos libres y ocupados de otro participante, sea colaborador o externo, nunca el contenido de sus eventos. *(Revisado el 22 de octubre de 2026, D-17: decía «de un participante externo». Con cuenta propia, el colaborador mantiene la misma protección frente a su gerente, como pide R-22.)*
 
 **Origen:** regla de producto R-13; propuesta técnica §9, minimización
 **Tipo:** ubicuo
@@ -283,6 +288,22 @@ ENTONCES deja de consultarse su disponibilidad de inmediato, y pasa a figurar si
 DADO un equipo con participantes en estados distintos
 CUANDO el gerente consulte el equipo
 ENTONCES ve el estado de cada uno, y entiende por qué el resultado de una consulta es parcial
+
+---
+
+### REQ-CUN05-16
+
+**Requisito:** CUANDO un colaborador con cuenta acepte compartir su disponibilidad con su equipo, EL SISTEMA la obtendrá de su propio calendario conectado, sin invitación por correo.
+
+**Origen:** decisión D-17; RN-OP-02; R-14
+**Tipo:** dirigido por evento
+
+**Criterio de aceptación**
+DADO un colaborador que conectó su calendario de Google desde su aplicación (REQ-ACC-14)
+CUANDO acepte compartir su disponibilidad con su equipo
+ENTONCES el gerente ve sus intervalos libres y ocupados en la rejilla, sin títulos ni detalles
+Y DADO un colaborador que no lo aceptó, o que lo retiró (REQ-ENC-12)
+ENTONCES figura sin datos, igual que un externo pendiente
 
 ---
 

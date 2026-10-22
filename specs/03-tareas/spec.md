@@ -2,7 +2,7 @@
 
 **Origen:** Entregable 1. Caso de uso CUN-07, trabajador TN-02 Coordinador Empresarial Inteligente, entidades EN-01 Perfil de Usuario, EN-04 Tarea y EN-05 Equipo de Trabajo.
 **Notación:** EARS.
-**Plataforma:** web. Es el caso de uso del Gerente / Responsable de Equipo.
+**Plataforma:** web para el Gerente / Responsable de Equipo, que delega; móvil para el Colaborador, que responde (§7, D-17).
 
 ---
 
@@ -179,22 +179,32 @@ Por eso REQ-CUN07-10 no es una comodidad de interfaz: **es lo que hace aplicable
 
 ## 7. El ciclo de vuelta
 
-El Colaborador **no es usuario del aplicativo**: no tiene cuenta, no instala nada y no ocupa un puesto de pago. Participa por correo. Ver `../../REPLANTEO.md` sección 4.7.
+**Reescrita el 22 de octubre de 2026 por D-17** (`SPEC.md` §8). El Colaborador **tiene cuenta**, con un rol propio limitado a sus tareas asignadas, y trabaja desde la **aplicación móvil**. Con eso CUN-09, *Gestionar tarea asignada*, vuelve a tener soporte de software, como lo modela el Entregable 1.
 
-Eso deja CUN-09 y parte de CUN-08 sin soporte de software, y hay que taparlo aquí.
+El recorrido completo es:
+
+1. El gerente delega y confirma (REQ-CUN07-01 a 10).
+2. El colaborador recibe una notificación y ve la tarea en su aplicación (REQ-CUN07-16).
+3. El colaborador responde desde la aplicación (REQ-CUN07-11).
+4. La respuesta llega al líder como propuesta, nunca como cambio aplicado (REQ-CUN07-12, 13).
+5. El líder confirma, o modifica la tarea, y el resultado vuelve al colaborador (REQ-CUN07-17).
+
+La versión anterior, con el colaborador sin cuenta y respondiendo por correo, se conserva en `REPLANTEO.md` §4.7.
 
 ### REQ-CUN07-11
 
-**Requisito:** EL SISTEMA ofrecerá al colaborador tres formas de responder sobre una tarea delegada: acciones directas desde el correo, un formulario enlazado desde él, y la respuesta al propio correo.
+**Requisito:** EL SISTEMA permitirá al colaborador responder sobre una tarea que tiene asignada desde la aplicación, con una acción de estado, con las preguntas declaradas del encargo o con un comentario.
 
-**Origen:** decisión D-13
+**Origen:** CUN-09; RN-OP-04; decisión D-17
 **Tipo:** ubicuo
 
 **Criterio de aceptación**
-DADO un colaborador que recibe el correo de una tarea
-CUANDO quiera responder
-ENTONCES puede pulsar una acción, abrir el formulario, o simplemente responder el correo, y las tres llegan al mismo sitio
-Y ninguna de las tres le exige registrarse, instalar nada ni recordar una contraseña
+DADO un colaborador con una tarea asignada
+CUANDO la abra en la aplicación
+ENTONCES puede marcar un estado, contestar las preguntas declaradas del encargo (REQ-ENC-01) o escribir un comentario
+Y las tres formas llegan al mismo sitio: la propuesta de actualización de REQ-CUN07-12
+
+> **Reescrito el 22 de octubre de 2026 (D-17).** Antes decía: tres formas de responder sin cuenta, que eran botones en el correo, un formulario enlazado y la respuesta al propio correo.
 
 ---
 
@@ -206,12 +216,12 @@ Y ninguna de las tres le exige registrarse, instalar nada ni recordar una contra
 **Tipo:** ubicuo
 
 **Criterio de aceptación**
-DADO cualquier respuesta recibida por cualquiera de las tres vías
+DADO cualquier respuesta del colaborador desde la aplicación
 CUANDO llegue al sistema
 ENTONCES se presenta al gerente como propuesta de actualización, con lo que el colaborador dijo
 Y el estado de la Tarea no cambia hasta que el gerente lo confirme
 
-**Nota.** El responsable expresa, el usuario autorizado registra. Así se respeta RN-OP-04 sin convertir al colaborador en usuario.
+**Nota.** El responsable expresa, el usuario autorizado registra. Con D-17 el colaborador es usuario, pero la regla se mantiene: la confirmación sigue siendo del líder, que es quien pidió la tarea.
 
 ---
 
@@ -223,7 +233,7 @@ Y el estado de la Tarea no cambia hasta que el gerente lo confirme
 **Tipo:** ubicuo
 
 **Criterio de aceptación**
-DADO una actualización originada en un botón pulsado
+DADO una actualización originada en una acción de estado pulsada en la aplicación
 CUANDO se presente al gerente
 ENTONCES se lee como un hecho: «María Fernanda pulsó Hecho»
 Y DADO una originada en texto libre interpretado
@@ -234,17 +244,17 @@ Y los dos casos **no se ven iguales**
 
 ### REQ-CUN07-14
 
-**Requisito:** EL SISTEMA aplicará una sola vez cada acción recibida, aunque el enlace o el botón se activen varias veces.
+**Requisito:** EL SISTEMA propondrá una sola vez cada respuesta del colaborador, aunque la aplicación la envíe varias veces.
 
-**Origen:** propuesta técnica §7.2, idempotencia por clave de operación
+**Origen:** propuesta técnica §7.2, idempotencia por clave de operación; AD-09
 **Tipo:** ubicuo
 
 **Criterio de aceptación**
-DADO un filtro de seguridad corporativo que visita todos los enlaces del correo
-CUANDO abra el enlace de una acción
-ENTONCES no se registra ninguna actualización: la acción exige una confirmación explícita en la página
-Y DADO un colaborador que pulsa el mismo botón dos veces
-ENTONCES la actualización se propone una sola vez
+DADO un colaborador que pulsa la misma acción dos veces, o una respuesta que la aplicación reintenta tras perder la conexión
+CUANDO las peticiones lleguen al sistema
+ENTONCES la actualización se propone al gerente una sola vez
+
+> **Reescrito el 22 de octubre de 2026 (D-17).** Antes cubría también los enlaces del correo abiertos por escáneres corporativos. Ya no hay enlaces de acción en el correo.
 
 ---
 
@@ -257,24 +267,48 @@ ENTONCES la actualización se propone una sola vez
 
 **Criterio de aceptación**
 DADO una tarea delegada con comentarios del gerente
-CUANDO el colaborador abra el formulario enlazado
+CUANDO el colaborador la abra en la aplicación
 ENTONCES ve el hilo de esa tarea y puede añadir su respuesta
-Y no ve ninguna otra tarea, ni la lista del equipo, ni nada del resto del espacio de trabajo
+Y no ve las tareas de otros colaboradores, ni la lista del equipo (REQ-ACC-13)
 
-**Nota de ubicación.** En la plataforma grande, el hilo vive **en el lienzo, con la tarea abierta**, nunca en la columna de conversación. La conversación es donde se crea y se delega; el lienzo es donde se lee lo que ya existe.
+**Nota de ubicación.** En la web del gerente, el hilo vive **en el lienzo, con la tarea abierta**, nunca en la columna de conversación. En el móvil del colaborador vive dentro de la tarea (R-24).
+
+> **Reescrito el 22 de octubre de 2026 (D-17).** Antes el colaborador accedía al hilo con un formulario enlazado desde el correo.
 
 ---
 
-### Reglas del enlace del formulario
+### REQ-CUN07-16
 
-| Punto | Decisión |
-|---|---|
-| Testigo | Largo e impredecible, válido **solo para esa tarea** |
-| Alcance | Esa tarea y nada más |
-| Sesión | No inicia sesión ni deja nada abierto |
-| Caducidad | Deja de funcionar cuando la tarea se cierra |
-| Suplantación | Se comprueba que el remitente coincide con la dirección invitada |
-| Si lo reenvían | El enlace vale lo que vale el correo. Aceptable para una tarea de trabajo, pero se declara |
+**Requisito:** CUANDO una delegación quede registrada, EL SISTEMA notificará al colaborador en la aplicación y le enviará un correo que solo avisa de la tarea nueva.
+
+**Origen:** RN-ER-02; decisión D-17; DP-03
+**Tipo:** dirigido por evento
+
+**Criterio de aceptación**
+DADO una delegación confirmada por el gerente
+CUANDO quede registrada
+ENTONCES el colaborador recibe una notificación en el móvil, y al abrirla ve la tarea con su criterio de terminado
+Y recibe un correo que avisa de la tarea y remite a la aplicación, sin botones de acción ni posibilidad de responder por correo
+
+---
+
+### REQ-CUN07-17
+
+**Requisito:** CUANDO el gerente confirme o modifique una tarea a partir de una respuesta del colaborador, EL SISTEMA notificará al colaborador el resultado, indicando qué cambió.
+
+**Origen:** decisión D-17; RN-ER-02
+**Tipo:** dirigido por evento
+
+**Criterio de aceptación**
+DADO una respuesta del colaborador que proponía otra fecha
+CUANDO el gerente la acepte, la rechace o cambie la tarea, y confirme (RN-ER-03)
+ENTONCES el colaborador recibe una notificación con la decisión, y en la tarea ve qué campos cambiaron y quién los cambió
+
+---
+
+### ~~Reglas del enlace del formulario~~
+
+**Retiradas el 22 de octubre de 2026 (D-17):** ya no hay formulario enlazado desde el correo. La tabla anterior se conserva en `REPLANTEO.md` §4.7.
 
 ---
 

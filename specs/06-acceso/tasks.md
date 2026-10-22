@@ -1,10 +1,16 @@
 # Tareas — Acceso
 
 **Plan:** `specs/06-acceso/plan.md` (aprobado el 22 de octubre de 2026)
-**Numeración:** `T-nnn` es única en todo el proyecto. Las tareas de agenda siguen en `specs/02-agenda/tasks.md` desde T-012.
+**Numeración:** `T-nnn` es única en todo el proyecto. Las tareas de agenda siguen en `specs/02-agenda/tasks.md` desde T-012; T-022 se añadió aquí después.
 **Regla:** una tarea cabe en una sesión de trabajo. Termina cuando se cumple su «Hecho cuando», su prueba pasa y `python tools/trazabilidad.py --check` sigue limpio.
 
 Estados: `pendiente` · `en curso` · `hecha`.
+
+## Orden de ejecución
+
+Acordado el 22 de octubre de 2026 para tener pantallas antes. Las dependencias de cada tarea mandan sobre este orden.
+
+**T-004 → T-005 → T-010 → T-011** (primeras pantallas web) **→ T-020** (el móvil arranca) **→ T-006 → T-016 → T-012 →** el resto de agenda. La parte de Google (T-007, T-008, T-013, T-022) entra cuando estén las credenciales de Google Cloud.
 
 ---
 
@@ -63,11 +69,11 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 
 ### T-004 · Ingreso y sesión
 
-- **Satisface:** REQ-ACC-02, REQ-ACC-03 · H-ACC-03
+- **Satisface:** REQ-ACC-02, REQ-ACC-03, REQ-ACC-13 (núcleo) · H-ACC-03
 - **Depende de:** T-003
-- **Contenido:** `POST /auth/ingreso`, `/auth/renovar` y `/auth/salida`; argon2id; verificación contra un hash ficticio cuando el correo no existe; error único `CREDENCIALES_INVALIDAS`; JWT de 15 minutos y renovación rotativa de 30 días con detección de reutilización; límite de 5 intentos por minuto
-- **Hecho cuando:** un ingreso correcto devuelve rol y plan; un correo inexistente y una contraseña errónea dan la misma respuesta; reutilizar un token ya rotado revoca su familia
-- **Pruebas:** `acceso.ingreso-devuelve-rol`, `acceso.error-no-revela-correo`
+- **Contenido:** `POST /auth/ingreso`, `/auth/renovar` y `/auth/salida`; argon2id; verificación contra un hash ficticio cuando el correo no existe; error único `CREDENCIALES_INVALIDAS`; JWT de 15 minutos y renovación rotativa de 30 días con detección de reutilización; límite de 5 intentos por minuto. **Añadido por D-17:** el rol `colaborador` (migración nueva y contrato `Rol`), una cuenta de colaborador en la semilla, y `RolGuard`, que deniega por defecto al colaborador toda ruta no marcada con `@PermitidoPara('colaborador')`
+- **Hecho cuando:** un ingreso correcto devuelve rol y plan; un correo inexistente y una contraseña errónea dan la misma respuesta; reutilizar un token ya rotado revoca su familia; un colaborador recibe `ROL_NO_PERMITIDO` en cualquier ruta no marcada para su rol
+- **Pruebas:** `acceso.ingreso-devuelve-rol`, `acceso.error-no-revela-correo`, `acceso.colaborador-solo-ve-lo-suyo`
 - **Estado:** pendiente
 
 ### T-005 · Primer ingreso
@@ -94,8 +100,9 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 
 ### T-007 · Conexión con Google y consentimientos
 
-- **Satisface:** REQ-ACC-06, REQ-ACC-07
+- **Satisface:** REQ-ACC-06, REQ-ACC-07, REQ-ACC-14
 - **Depende de:** T-004
+- **Añadido por D-17:** al colaborador solo se le ofrece el alcance de calendario; pedir `gmail.send` con ese rol se rechaza. Prueba adicional: `acceso.colaborador-solo-calendario`
 - **Contenido:** `consentimiento_integracion` con una fila por alcance; constante de los dos alcances con su explicación en `packages/contratos`; OAuth incremental por alcance; tokens cifrados con AES-256-GCM; `GET /integraciones/google/permisos`
 - **Hecho cuando:** cada alcance se concede por separado; los tokens no se pueden leer en claro desde la base; `gmail.readonly` no aparece en el código
 - **Pruebas:** `acceso.permisos-google-explicados`, `acceso.solo-dos-alcances-sin-lectura-de-buzon`
@@ -134,11 +141,20 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 
 ### T-011 · Pantallas de acceso en la web
 
-- **Satisface:** REQ-ACC-02 a REQ-ACC-06 (interfaz) · H-ACC-05
-- **Depende de:** T-005, T-007, T-010
-- **Contenido:** `WEB-v2 / Acceso / 01 Entrada`, `02 Primer ingreso` y `03 Conectar Google`, según el diseño. La zona horaria puede venir preseleccionada, pero hay que elegirla
-- **Hecho cuando:** el recorrido completo funciona contra la API y no se puede enviar el primer ingreso sin elegir zona horaria
+- **Satisface:** REQ-ACC-02 a REQ-ACC-05 (interfaz) · H-ACC-05, H-ACC-06
+- **Depende de:** T-005, T-010
+- **Contenido:** `WEB-v2 / Acceso / 01 Entrada` y `02 Primer ingreso`, según el diseño. La zona horaria puede venir preseleccionada, pero hay que elegirla. Si entra un colaborador, la web le indica que su cuenta se usa desde el móvil. *(Revisado el 22 de octubre de 2026: «Conectar Google» pasó a T-022, para no esperar a las credenciales de Google y tener pantallas antes.)*
+- **Hecho cuando:** entrar y completar el primer ingreso funciona contra la API; no se puede enviar el primer ingreso sin elegir zona horaria; un colaborador ve el aviso del móvil
 - **Prueba:** `acceso.zona-horaria-requiere-eleccion`
+- **Estado:** pendiente
+
+### T-022 · Pantalla «Conectar Google» en la web
+
+- **Satisface:** REQ-ACC-06 (interfaz)
+- **Depende de:** T-007, T-011
+- **Contenido:** `WEB-v2 / Acceso / 03 Conectar Google`: cada permiso con su explicación, concedido por separado
+- **Hecho cuando:** desde la web se concede cada alcance por separado y su estado se refleja
+- **Prueba:** `acceso.conectar-google-por-permiso`
 - **Estado:** pendiente
 
 ---

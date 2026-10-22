@@ -13,7 +13,7 @@ EN-07 está descrita en el Entregable 1 como «las comunicaciones gestionadas co
 
 Y es, de todo el Plan Personal, el caso de uso con más peso y **cero diseño hecho**.
 
-Además sostiene el ciclo de delegación del Plan Empresarial: como el Colaborador no es usuario del aplicativo, el correo es el canal por el que recibe su tarea y por el que responde. La misma maquinaria sirve a los dos planes.
+~~Además sostiene el ciclo de delegación del Plan Empresarial: como el Colaborador no es usuario del aplicativo, el correo es el canal por el que recibe su tarea y por el que responde.~~ *Desde D-17 (22 de octubre de 2026) ya no: el colaborador tiene cuenta y responde desde la aplicación (§7).*
 
 ---
 
@@ -257,13 +257,14 @@ Los requisitos de esta especificación se escriben contra la interfaz, no contra
 
 ## 7. Relación con el Plan Empresarial
 
-El correo es también el canal del ciclo de delegación, porque el Colaborador no es usuario del aplicativo:
+**Reescrita el 22 de octubre de 2026 (D-17).** El correo **ya no es el canal del ciclo de delegación**: el colaborador tiene cuenta y responde desde la aplicación móvil (`specs/03-tareas` §7). Del correo solo queda un aviso de tarea nueva, que sale desde la dirección de la plataforma (DP-03) y no usa esta especificación.
 
-| Momento | Qué usa de aquí |
+| Momento | Por dónde va |
 |---|---|
-| El gerente delega | REQ-CUN04-03 y 04: el correo de asignación se presenta y confirma como cualquier otro |
-| El colaborador responde | Las tres puertas de `specs/03-tareas` sección 6 |
-| El gerente recibe la respuesta | Llega como propuesta de actualización, nunca como cambio aplicado |
+| El gerente delega | Confirmación en la web (`03-tareas`, REQ-CUN07-07) |
+| El colaborador se entera | Notificación en el móvil y correo de aviso (REQ-CUN07-16) |
+| El colaborador responde | Desde la aplicación (REQ-CUN07-11) |
+| El gerente recibe la respuesta | Como propuesta de actualización, nunca como cambio aplicado (REQ-CUN07-12) |
 
 ---
 
@@ -275,36 +276,40 @@ El correo es también el canal del ciclo de delegación, porque el Colaborador n
 
 ---
 
-## 7. El encargo con preguntas declaradas
+## 9. El encargo con preguntas declaradas
 
-Añadido tras la revisión de acceso y encargos. Numerado aparte porque cruza CUN-04 (el envío) y CUN-07 (la delegación).
+Añadido tras la revisión de acceso y encargos. Numerado aparte porque cruza CUN-04 (el envío) y CUN-07 (la delegación). Esta sección era una segunda «§7»; pasó a ser la §9 el 22 de octubre de 2026 (INC-06).
+
+**Revisada el 22 de octubre de 2026 (D-17).** Las preguntas declaradas siguen igual, pero ahora se contestan en la aplicación del colaborador, no en un formulario enlazado desde el correo. Los requisitos del canal de correo quedan retirados. Sus números no se reutilizan.
 
 **REQ-ENC-01** · Ubicuo — Todo encargo declara la lista de preguntas que se le harán al colaborador, y cada pregunta declara su tipo: opción, fecha, número o texto libre.
 
 **REQ-ENC-02** · Ubicuo — Una de las preguntas declaradas es el criterio de terminado. El sistema no marca un encargo como terminado si ese criterio no se cumple, aunque el colaborador afirme que lo está.
 
-**REQ-ENC-03** · Ubicuo — Toda pregunta de texto libre tiene un tope de caracteres, por defecto 400, y el formulario muestra el contador.
+**REQ-ENC-03** · Ubicuo — Toda pregunta de texto libre tiene un tope de caracteres, por defecto 400, y la aplicación del colaborador muestra el contador. *(Revisado el 22 de octubre de 2026, D-17: decía «el formulario».)*
 
-**REQ-ENC-04** · CUANDO el gerente envía un encargo, el sistema envía el correo desde la cuenta de Google del gerente usando únicamente el permiso de envío, y fija como dirección de respuesta una dirección irrepetible de esa tarea.
+**REQ-ENC-04** · RETIRADO el 22 de octubre de 2026 (D-17): el encargo ya no se envía por correo desde el Gmail del gerente. ~~CUANDO el gerente envía un encargo, el sistema envía el correo desde la cuenta de Google del gerente usando únicamente el permiso de envío, y fija como dirección de respuesta una dirección irrepetible de esa tarea.~~
 
 **REQ-ENC-05** · Ubicuo — El sistema no solicita en ningún momento permiso de lectura sobre el buzón del gerente.
 
-**REQ-ENC-06** · CUANDO el colaborador pulsa un botón de opción dentro del correo, el sistema abre una página de confirmación y no registra nada hasta que la persona confirma en ella.
+**REQ-ENC-06** · RETIRADO el 22 de octubre de 2026 (D-17): no hay botones de acción en el correo. ~~CUANDO el colaborador pulsa un botón de opción dentro del correo, el sistema abre una página de confirmación y no registra nada hasta que la persona confirma en ella.~~
 
-**REQ-ENC-07** · SI un enlace del correo se abre sin interacción humana —escáner de seguridad corporativo—, ENTONCES el sistema no registra ninguna respuesta.
+**REQ-ENC-07** · RETIRADO el 22 de octubre de 2026 (D-17): sin enlaces de acción en el correo, los escáneres corporativos no pueden disparar nada. ~~SI un enlace del correo se abre sin interacción humana —escáner de seguridad corporativo—, ENTONCES el sistema no registra ninguna respuesta.~~
 
-**REQ-ENC-08** · CUANDO llega una respuesta al correo de la tarea en lugar del formulario, el sistema descarta la cita del hilo y la firma, trunca el texto al tope declarado y marca la respuesta como recibida sin estructura.
+**REQ-ENC-08** · RETIRADO el 22 de octubre de 2026 (D-17): las respuestas por correo no se procesan. ~~CUANDO llega una respuesta al correo de la tarea en lugar del formulario, el sistema descarta la cita del hilo y la firma, trunca el texto al tope declarado y marca la respuesta como recibida sin estructura.~~
 
-**REQ-ENC-09** · Ubicuo — Ninguna respuesta, estructurada o no, cambia el estado del encargo por sí sola: llega al gerente como propuesta, con su procedencia y su hora (R-16, R-18).
+**REQ-ENC-09** · Ubicuo — Ninguna respuesta del colaborador cambia el estado del encargo por sí sola: llega al gerente como propuesta, con su procedencia y su hora (R-16, R-18).
 
 **REQ-ENC-10** · SI la fecha que propone el colaborador es distinta de la pedida, ENTONCES el sistema la señala como discrepancia y no modifica ni el encargo ni la agenda del gerente hasta que este decida.
 
-**REQ-ENC-11** · MIENTRAS un colaborador no haya aceptado la invitación, el sistema no le envía ningún correo de encargo, aunque el gerente lo pida.
+**REQ-ENC-11** · RETIRADO el 22 de octubre de 2026 (D-17): el colaborador ya no acepta una invitación por correo; su cuenta la crea la organización (REQ-ACC-01). ~~MIENTRAS un colaborador no haya aceptado la invitación, el sistema no le envía ningún correo de encargo, aunque el gerente lo pida.~~
 
-**REQ-ENC-12** · CUANDO un colaborador retira su permiso, el sistema deja de enviarle correos y borra los datos de disponibilidad que hubiera guardado de él.
+**REQ-ENC-12** · CUANDO un colaborador retira el permiso de compartir su disponibilidad, el sistema deja de consultarla y borra los datos de disponibilidad que hubiera guardado de él. *(Reescrito el 22 de octubre de 2026, D-17: decía además «deja de enviarle correos».)*
 
-**REQ-ENC-13** · DONDE el colaborador acepta solo la parte de correos, el sistema le envía encargos pero no consulta su disponibilidad.
+**REQ-ENC-13** · RETIRADO el 22 de octubre de 2026 (D-17): sin invitación por correo no hay aceptación parcial. ~~DONDE el colaborador acepta solo la parte de correos, el sistema le envía encargos pero no consulta su disponibilidad.~~
 
 ### Riesgo que esto no elimina
+
+*(Actualizado el 22 de octubre de 2026, D-17 y DP-03: la delegación ya no usa el Gmail del gerente, así que este riesgo solo afecta al correo asistido de CUN-04.)*
 
 El permiso de envío en nombre del usuario sigue siendo un ámbito restringido de Google y exige verificación con evaluación de seguridad. Lo que esta decisión consigue es **quedarse en uno solo** en vez de dos: sin lectura de buzón, la superficie de revisión y el coste bajan, pero no desaparecen. Si la verificación no se obtiene a tiempo, el repliegue es enviar desde el dominio propio, con peor tasa de respuesta, y eso hay que decidirlo antes de comprometer fechas.

@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 1.2.1 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
+**Versión:** 2.0.0 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -28,7 +28,7 @@ NexoAI es un asistente personal con IA para organizar el tiempo, gestionar tarea
 | Planes | Gratuito (responde) ⊂ Personal (propone) ⊂ Empresarial (coordina personas). Acumulativos — `REPLANTEO.md` §4 |
 | Clientes | **Móvil** — Usuario Personal, captura y día a día. **Web** — Gerente, coordinación y seguimiento |
 | Estructura de interfaz | Tres secciones en las dos plataformas: **Agenda · Tareas · Actividad**; la captura es una capa, Ajustes va al pie (R-32, R-36) |
-| Colaborador | **No es usuario** del aplicativo: participa por correo y enlace sin cuenta (`REPLANTEO.md` §4.7) |
+| Colaborador | **Tiene cuenta** con rol propio, limitado a sus tareas asignadas, y responde desde el móvil. Su respuesta vuelve al líder como propuesta (D-17) |
 | Agentes | Dos configuraciones sobre la misma plataforma: TN-01 Asistente Personal, TN-02 Coordinador Empresarial |
 
 ---
@@ -145,12 +145,12 @@ Estado por columna: **—** no existe · **borrador** · **vigente** · **parcia
 | Captura | `specs/01-captura/spec.md` | 01, 03 | Móvil | G / P | CAP-01…24 (24) | vigente | parcial | — | — | — | — |
 | Agenda | `specs/02-agenda/spec.md` | 01 | Móvil | G | CUN01-01…12 (12) | vigente | parcial (jerarquía anterior) | aprobado | T-012…T-021 | — | — |
 | Jornada | `specs/02-jornada/spec.md` | 02 | Móvil | P | CUN02-01…24 (24) | vigente | — | — | — | — | — |
-| Tareas / delegación | `specs/03-tareas/spec.md` | 07 | Web | E | CUN07-01…15 (15) | vigente | parcial (jerarquía anterior) | — | — | — | — |
+| Tareas / delegación | `specs/03-tareas/spec.md` | 07, 09 | Web (gerente) + móvil (colaborador) | E | CUN07-01…17 (17) | vigente | parcial (jerarquía anterior) | — | — | — | — |
 | Comunicaciones | `specs/04-comunicaciones/spec.md` | 04 | Móvil + web | P | CUN04-01…15 (15) | vigente | — | — | — | — | — |
-| Encargo | `specs/04-comunicaciones/spec.md` §7 | 04, 07, 09 | Web + correo | E | ENC-01…13 (13) | vigente | parcial (Encargos, Correo) | — | — | — | — |
-| Equipos | `specs/05-equipos/spec.md` | 05 | Web | E | CUN05-01…15 (15) | vigente | desfasado (INC-07) | — | — | — | — |
-| Acceso | `specs/06-acceso/spec.md` | — (sistema) | Web (móvil pendiente) | Todos | ACC-01…12 (12) | vigente | parcial | aprobado | T-001…T-011 (T-001 a T-003 hechas) | 1 de 12 REQ | 1 de 12 REQ |
-| **Total** | | | | | **130** | | | | | | |
+| Encargo | `specs/04-comunicaciones/spec.md` §9 | 07, 09 | Web + móvil | E | ENC-01…13 (7 vigentes, 6 retirados por D-17) | vigente | parcial (Encargos, Correo) | — | — | — | — |
+| Equipos | `specs/05-equipos/spec.md` | 05 | Web | E | CUN05-01…16 (16) | vigente | desfasado (INC-07) | — | — | — | — |
+| Acceso | `specs/06-acceso/spec.md` | — (sistema) | Web (móvil pendiente) | Todos | ACC-01…14 (14) | vigente | parcial | aprobado, revisado por D-17 | T-001…T-011, T-022 (T-001 a T-003 hechas) | 1 de 14 REQ | 1 de 14 REQ |
+| **Total** | | | | | **135 (129 vigentes)** | | | | | | |
 
 **Glosario:** `specs/glosario.md`. Una definición por término, y tres conflictos de vocabulario abiertos (INC-12).
 **Trazabilidad:** `specs/trazabilidad.md`, generada con `python tools/trazabilidad.py`. Con `--check` falla si un requisito falta de la tabla, aparece sin spec, no tiene origen o figura como implementado sin prueba. Es la semilla del smoke test.
@@ -169,7 +169,7 @@ Estado por columna: **—** no existe · **borrador** · **vigente** · **parcia
 | CUN-06 | Coordinar reunión | Gerente | — | **Sin especificar** (desbloqueado desde RN-CAL-01) |
 | CUN-07 | Delegar tarea | Gerente | 03-tareas | Especificado |
 | CUN-08 | Seguimiento de tareas delegadas | Gerente | — | **Sin especificar** |
-| CUN-09 | Gestionar tarea asignada | Colaborador | 03-tareas §7, ENC | **Parcial**: solo el ciclo de vuelta por correo |
+| CUN-09 | Gestionar tarea asignada | Colaborador (con cuenta, D-17) | 03-tareas §7, ENC, ACC-13 | **Especificado** en la aplicación móvil: recibir, responder y recibir la decisión del líder |
 | CUN-10 | Obtener resumen de reunión | ¿? (D-4) | — | **Bloqueado** por D-4 |
 | CUN-11 | Compromiso → tarea | Gerente | — | Candidato (D-1) |
 
@@ -204,6 +204,9 @@ Bloquean requisitos o tareas. Cuando una se resuelve: se tacha aquí, se anota e
 | D-12 | Supuestos S-3, S-4, S-5 | Reparto por plan |
 | D-16 | Categorías con ámbito | REQ-CUN02-19 |
 | — | Duración por defecto de un compromiso (1 h propuesta) · H-AG-01 | REQ-CUN01-01 |
+| ~~D-17~~ | **Resuelta el 2026-10-22 por el equipo: el colaborador tiene cuenta.** Reemplaza `REPLANTEO.md` §4.7 (el colaborador sin cuenta) y en parte §4.8. (a) **Rol propio, `colaborador`**, limitado a sus tareas asignadas, sus hilos y su perfil, sin las funciones del Plan Personal. (b) **Plataforma: móvil**, donde llegan las notificaciones; la web queda para más adelante. (c) **El correo solo avisa**: toda respuesta se da en la aplicación, y no hay botones, enlaces de formulario ni respuestas por correo. (d) Lo que el colaborador responde llega al líder como propuesta (R-16); el líder confirma o modifica la tarea, y el resultado vuelve al colaborador como notificación. Afecta a `03-tareas` §7, al encargo de `04-comunicaciones`, a `05-equipos` §3 y a `06-acceso` | Fase 4; rol en T-004 |
+| D-18 | **Precio del colaborador.** El argumento de costo de §4.7 vuelve: cada colaborador ocupa ahora una cuenta. ¿Asiento a precio completo, asiento reducido o incluido en el plan? No bloquea el desarrollo | Modelo comercial |
+| **DP-03** | **Provisional, revisable.** El correo de aviso al colaborador sale desde la dirección de la plataforma, no desde el Gmail del gerente. Así la delegación no necesita `gmail.send`, que solo queda para el correo asistido (CUN-04) | REQ-CUN07-16 |
 | **DP-02** | **Provisional, revisable.** Alternativas ante un conflicto: misma duración, dentro de la banda horaria, el mismo día primero y por cercanía a la hora pedida, sin sábado ni domingo, hasta tres y como mucho siete días adelante. Sale del cuadro `CUN-01 / Móvil / FA-01 / 01`. **Para cambiarla:** es una función pura; basta con su lista en `specs/02-agenda/plan.md` §9 y sus pruebas | REQ-CUN01-05 |
 | — | **Hallazgos de agenda** H-AG-03 a H-AG-08: eventos de todo el día, recurrentes, eventos donde se es invitado, calendario principal, comprobar de nuevo al confirmar, caducidad de las propuestas | `specs/02-agenda/plan.md` §9 |
 | — | **Hallazgos de acceso** H-ACC-01 a H-ACC-05: alta de cuentas, política de contraseña, duración de la sesión, efecto del cambio de zona horaria, vista por rol | `specs/06-acceso/plan.md` §8 |
@@ -225,13 +228,14 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 | ~~INC-03~~ | ~~REQ-ACC-05 todavía habla de «la zona horaria y la franja»~~ **Resuelta el 2026-10-22**: se quitó «y la franja» | — | — |
 | ~~INC-04~~ | ~~REQ-CUN01-11 cita como origen la «constitución del proyecto», que no existía~~ **Resuelta el 2026-10-22** con INC-01: ahora cita R-42 y P-11 | — | — |
 | INC-05 | Dos áreas con el mismo número: `02-agenda` y `02-jornada`; `03-tareas` cubre CUN-07, no CUN-03 | `specs/` | Renumerar al entrar en implementación, o declarar la numeración como no ordinal |
-| INC-06 | `04-comunicaciones` tiene dos secciones `## 7` y la `## 8` aparece antes de la segunda `## 7` | `specs/04-comunicaciones/spec.md` | Renumerar la sección del encargo como §9 |
+| ~~INC-06~~ | ~~`04-comunicaciones` tiene dos secciones `## 7`~~ **Resuelta el 2026-10-22**: la del encargo pasó a ser la §9 | — | — |
 | INC-07 | Los ocho cuadros de CUN-05 se generaron con la versión anterior de RN-CAL-01 | `specs/05-equipos/spec.md` §6 | Regenerar los cuadros |
 | ~~INC-08~~ | ~~`05-equipos` §6 numera dos puntos «2.»~~ **Resuelta el 2026-10-22**: se renumeró y se aclaró que la zona horaria ya la recoge ACC-04; solo falta declararla en EN-01 del Entregable 1 | — | — |
 | ~~INC-09~~ | ~~`02-jornada` §10 sigue citando D-10~~ **Resuelta el 2026-10-22**: ahora cita D-16 | — | — |
 | INC-10 | La segunda oración de RN-CAL-01 y el criterio de terminado de RN-INF-02 están aprobados pero no incorporados al Entregable 1 | `05-equipos` §1, `03-tareas` §6 | Actualizar el Entregable 1 |
 | INC-11 | **El diseño puede seguir mostrando el camino manual.** El script `14-cuadros-web-v2.js` todavía genera «Delegar a mano» en `Blancos / 03`, aunque el cuadro ya se rehízo en Figma; si se vuelve a ejecutar, se pierde la corrección. `17-cuadros-movil-v2.js` declara `Excepciones / 02 Asistente no disponible → banner y camino manual operativo` | `design/figma/14-…`, `17-…`; archivo de Figma | Revisar el cuadro móvil en Figma y alinear los dos scripts con P-11 |
 | ~~INC-13~~ | ~~`PROPUESTA-TECNICA.md` §4.1 proponía entrar con OAuth de Google y Microsoft; `06-acceso` fija credenciales propias y solo Google como integración~~ **Resuelta el 2026-10-22** a favor de la especificación, al aplicar PT-1. Microsoft queda fuera de esta versión | — | — |
+| INC-14 | **El diseño va por detrás de D-17.** Los cuadros `WEB-v2 / Correo / 01–02` y el recorrido del encargo dibujan el colaborador sin cuenta, con botones y formulario en el correo. No existe ningún cuadro móvil del colaborador | Archivo de Figma; `design/ARQUITECTURA-VISUAL-WEB.md`; `design/CONTEXTO.md` | Rehacer el correo como solo aviso y diseñar las pantallas del colaborador en el móvil antes de la fase 4 |
 | INC-12 | **Vocabulario con dos sentidos.** «Compromiso» (evento con hora en EN-02, y algo acordado en una reunión en CUN-10/11), «actividad» (tarea en el Entregable 1, y la sección de lo que pasó) y «jornada» frente a «período» | `specs/glosario.md` §6, C-1 a C-3 | C-1 antes de especificar CUN-10; C-2 ya tiene regla de redacción; C-3 depende de D-9 |
 
 ---
@@ -244,10 +248,12 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 | 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 21 tareas, T-001 a T-003 hechas. Siguiente: T-004 |
 | 2 | Capa de agente: intención, herramientas, confirmación | 01, 03 vía conversación + CAP | Especificado, sin plan |
 | 3 | Planificación de jornada | 02 | Especificado |
-| 4 | Equipos: disponibilidad, coordinación, delegación, seguimiento | 05 a 09 | Parcial (faltan 06 y 08) |
+| 4 | Equipos: disponibilidad, coordinación, delegación, seguimiento. Desde D-17, también la aplicación móvil del colaborador | 05 a 09 | Parcial (faltan 06 y 08); diseño desfasado (INC-14) |
 | 5 | Comunicaciones asistidas y resúmenes | 04, 10 | Parcial (10 bloqueado) |
 
-**Siguiente paso concreto:** T-004, ingreso y sesión; después T-005. Conviene preparar ya las credenciales de Google Cloud, porque T-007, T-008 y T-013 dependen de ellas. La duración por defecto (H-AG-01) tiene que estar decidida antes de T-017.
+**Orden acordado el 2026-10-22, para tener pantallas antes:** T-004 → T-005 → T-010 → T-011 (primeras pantallas web) → T-020 (el móvil arranca) → T-006 → T-016 → T-012 → resto de agenda. La parte de Google (T-007, T-008, T-013, T-022) entra cuando estén las credenciales de Google Cloud.
+
+**Siguiente paso concreto:** T-004, ingreso y sesión, que ahora incluye el rol `colaborador`. La duración por defecto (H-AG-01) tiene que estar decidida antes de T-017.
 
 ---
 
@@ -258,6 +264,7 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-22 | 2.0.0 | **D-17: el colaborador tiene cuenta.** Rol propio limitado a sus tareas, en el móvil; el correo solo avisa; la respuesta vuelve al líder como propuesta, y su decisión vuelve al colaborador. Reemplaza `REPLANTEO.md` §4.7, acota §4.8 y R-28. **Requisitos:** 5 nuevos (CUN07-16, 17; CUN05-16; ACC-13, 14), 6 retirados (ENC-04, 06, 07, 08, 11, 13) y 9 reescritos (CUN07-11 a 15, ENC-03, 09, 12; CUN05-12, 13). Abiertas D-18 (precio del colaborador) y DP-03 (el aviso sale desde la plataforma); INC-14 (el diseño va por detrás); INC-06 resuelta. **Nuevo orden de tareas** para tener pantallas antes: T-011 ya no incluye Google, que pasa a la nueva T-022 | `SPEC.md`, `REPLANTEO.md` (notas), `specs/03-tareas`, `04-comunicaciones`, `05-equipos`, `06-acceso` (spec, plan, tasks), `specs/glosario.md`, `specs/trazabilidad.md`, `tools/trazabilidad.py` | Equipo (D-17 y orden), redactado por Claude |
 | 2026-10-22 | 1.2.1 | **T-003 hecha** (habilita P-04). Separación entre organizaciones como extensión de Prisma, que cubre lecturas, escrituras, búsquedas por clave única y transacciones; `PrismaService` y `ContextoSolicitud`. La aplicación bajo prueba usa siempre la base de prueba. Tres reglas nuevas en `AGENTS.md`. 18 pruebas en la API | `apps/api/src/plataforma`, `apps/api/src/identidad/contexto.ts`, `apps/api/test/plataforma`, `apps/api/vitest.config.mts`, `AGENTS.md`, `specs/06-acceso/tasks.md` | Claude |
 | 2026-10-22 | 1.2.0 | **T-002 hecha. Primer requisito implementado: REQ-ACC-01.** Prisma 7 con la migración inicial (`organizacion`, `perfil_usuario`, `evento_auditoria`), alta de cuentas por script con argon2id y auditoría, semilla de desarrollo idempotente, y base `nexoai_prueba` que se vacía y se migra en cada ejecución de las pruebas. PostgreSQL de Docker pasa al puerto 5433 por un PostgreSQL local en el 5432. Integración continua con servicio de PostgreSQL. 10 pruebas | `apps/api` (prisma, src/identidad, src/plataforma, src/cli, test), `packages/contratos/src/acceso.ts`, `docker-compose.yml`, `infra/postgres`, `.env.example`, `.github/workflows/ci.yml`, `turbo.json`, `AGENTS.md`, `README.md`, `specs/06-acceso/tasks.md`, `specs/trazabilidad.md` | Claude |
 | 2026-10-22 | 1.1.0 | **Planes de acceso y agenda aprobados por el equipo**, con sus hallazgos tal como están. Primeros `tasks.md`: T-001 a T-011 (acceso y base técnica) y T-012 a T-021 (agenda), anotados en la trazabilidad. Las tareas de infraestructura citan su AD en lugar de un REQ (§2.2). **T-001 hecha**: monorepo con pnpm y Turborepo, `packages/contratos`, `apps/api` con `GET /salud`, Vitest con SWC, docker-compose, integración continua y `verificar`. `--check` ahora detecta también tareas citadas que no existen. Se desactiva el bloque que Turborepo escribía en `AGENTS.md` | `SPEC.md`, `AGENTS.md`, `README.md`, `specs/06-acceso/tasks.md`, `specs/02-agenda/tasks.md`, `specs/*/plan.md`, `specs/trazabilidad.md`, `tools/trazabilidad.py`, raíz del monorepo, `apps/api`, `packages/contratos` | Equipo (aprobación), redactado e implementado por Claude |

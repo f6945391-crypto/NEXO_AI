@@ -12,8 +12,8 @@
 |---|---|---|---|
 | **Usuario Personal** | Persona que usa NexoAI para organizar sus propias actividades. Los planes Gratuito y Personal son el mismo actor | E1 Act. 2 | — |
 | **Gerente** | Abreviatura de *Gerente / Responsable de Equipo*: persona de una organización cliente que coordina a un equipo. También es Usuario Personal de su propia agenda, porque los planes son acumulativos | E1 Act. 2; `REPLANTEO.md` §4.3 | — |
-| **Colaborador** | Persona de un equipo que recibe encargos. **No es usuario del aplicativo**: participa por correo y por enlace, sin cuenta | E1 Act. 2; `REPLANTEO.md` §4.7 | *Participante externo*: el colaborador puede serlo, pero no todo participante externo es colaborador |
-| **Participante externo** | Persona sin cuenta cuya disponibilidad o respuesta se necesita. Solo se lee de ella libre / ocupado, y solo con su consentimiento. Si es entidad o atributo está por decidir (D-8) | `REPLANTEO.md` §4.8; R-13, R-14 | *Colaborador* |
+| **Colaborador** | Persona de un equipo que recibe encargos. **Tiene cuenta**, con el rol `colaborador`: ve solo sus tareas asignadas y sus hilos, desde el móvil, y responde en la aplicación | E1 Act. 2; D-17; REQ-ACC-13 | *Participante externo*, que no tiene cuenta |
+| **Participante externo** | Persona **sin cuenta** cuya disponibilidad se necesita para coordinar. Solo se lee de ella libre u ocupado, y solo con su consentimiento por invitación. Si es entidad o atributo está por decidir (D-8) | `REPLANTEO.md` §4.8; R-13, R-14; D-17 | *Colaborador*, que sí tiene cuenta |
 | **Organización** | Cliente que crea las cuentas, asigna roles y decide el plan. No es actor del negocio | E1 Act. 2; R-45 | — |
 
 ## 2. Agentes
@@ -35,7 +35,8 @@
 | **Tarea** | Algo que hay que hacer y que tiene un responsable (EN-04). Puede ser personal o delegada | E1 EN-04; RN-EST-02 | *Apunte*, que no pide nada |
 | **Pendiente sin fecha** | Tarea sin fecha, ya sea porque no se le dio o porque no cabía en el día pedido (R-1) | REQ-CAP-02, REQ-CAP-07 | — |
 | **Esperando de alguien** | Tarea cuyo avance depende de un tercero. Solo se guarda qué se espera y de quién (R-12) | REQ-CAP-02; R-12 | — |
-| **Encargo** | Tarea delegada a un colaborador, vista desde quien la delegó. Declara sus preguntas, y una de ellas es el criterio de terminado | `REPLANTEO.md` §4.11; REQ-ENC-01, 02 | — |
+| **Encargo** | Tarea delegada a un colaborador, vista desde quien la delegó. Declara sus preguntas, y una de ellas es el criterio de terminado. El colaborador la ve en su aplicación como **tarea asignada** | `REPLANTEO.md` §4.11; REQ-ENC-01, 02; D-17 | — |
+| **Correo de aviso** | Correo que solo informa al colaborador de una tarea nueva y remite a la aplicación. No tiene botones y no se puede responder | REQ-CUN07-16; DP-03 | *Correo asistido* (CUN-04), que redacta el asistente y sale desde el Gmail del usuario |
 | **Apunte** | Algo que la persona pensó o que ocurrió y que no pide nada. Se ancla al día en que se capturó, no aparece en Tareas y no requiere confirmación | `design/ARQUITECTURA-VISUAL-MOVIL.md` «La regla que separa tarea de apunte» | *Tarea* |
 | **Memo por lugar** | Recordatorio que se dispara una sola vez al llegar a un lugar | R-7; REQ-CAP-17 | — |
 | **Planificación de Jornada** | Propuesta que distribuye compromisos y tareas en un período (EN-03). Si «período» puede ser más largo que un día está por decidir (D-9) | E1 EN-03 | — |

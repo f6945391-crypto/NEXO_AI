@@ -136,6 +136,8 @@ Reactivo contra proactivo. Con esa línea, CUN-01 tal como está diseñado es Gr
 
 ### 4.7 El Colaborador no es usuario del aplicativo — **acordado**
 
+> **Reemplazada el 22 de octubre de 2026 por D-17** (`SPEC.md` §8): el colaborador sí tiene cuenta, con un rol propio limitado a sus tareas, y responde desde la aplicación móvil. Esta sección se conserva como registro de la decisión anterior.
+
 **La decisión:** el aplicativo está enfocado en la gestión de actividades de quien **maneja personas**. El colaborador no tiene cuenta, no instala nada y no aparece como usuario.
 
 **El argumento es de costo, y es el que manda.** Dar la capa Personal a cada colaborador significa un puesto de pago por cada empleado de la empresa cliente. En una organización de cincuenta personas eso multiplica el precio del contrato por cincuenta para vender, en realidad, una herramienta de coordinación que usan cinco gerentes. El producto se vuelve imposible de colocar. Estructurarlo alrededor del gerente mantiene el precio en proporción a quién obtiene el valor. Y el colaborador, en la práctica, ya reporta a su gerente por los canales de la empresa.
@@ -188,6 +190,8 @@ Y es una **inversión del doble camino**: en el resto del producto el asistente 
 **Reutiliza CUN-04.** La misma maquinaria de comunicaciones asistidas sirve para el asistente personal y para el ciclo de delegación. No hay que construir un canal aparte.
 
 ### 4.8 Obtener la disponibilidad de gente que no es usuaria — **acordado**
+
+> **Acotada el 22 de octubre de 2026 por D-17:** desde entonces solo aplica a participantes externos, sin cuenta. Un colaborador con cuenta comparte su disponibilidad desde su propio calendario conectado (`specs/05-equipos/spec.md` §3).
 
 Si el colaborador no es usuario, su agenda no está en NexoAI. Y sin agendas no hay CUN-05 ni CUN-06. La solución acordada: **el gerente invita por correo, cada persona acepta, y a partir de ahí se lee su disponibilidad.**
 
@@ -529,7 +533,7 @@ R-2 merece una nota: es RN-ER-03 por otra razón. Allí se confirma porque la ac
 
 ---
 
-**R-28** · Aceptar no es tener cuenta. El colaborador autoriza por enlace, una vez, y puede retirarlo desde el pie de cualquier correo; al retirarlo se borra lo que se hubiera guardado de su disponibilidad.
+**R-28** · *(Acotada por D-17, el 22 de octubre de 2026: el colaborador ya tiene cuenta; vale solo para participantes externos.)* Aceptar no es tener cuenta. El colaborador autoriza por enlace, una vez, y puede retirarlo desde el pie de cualquier correo; al retirarlo se borra lo que se hubiera guardado de su disponibilidad.
 
 **R-29** · Todo encargo declara sus preguntas, y el criterio de terminado es una de ellas. Sin criterio declarado no se puede decir que algo está terminado (cierra D-15).
 
