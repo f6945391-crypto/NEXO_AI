@@ -7,6 +7,22 @@ on:
 jobs:
   verificar:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.0-pg17
+        env:
+          POSTGRES_USER: nexoai
+          POSTGRES_PASSWORD: nexoai
+          POSTGRES_DB: nexoai_prueba
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nexoai"
+          --health-interval 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://nexoai:nexoai@localhost:5432/nexoai_prueba
+      DATABASE_URL_PRUEBA: postgresql://nexoai:nexoai@localhost:5432/nexoai_prueba
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

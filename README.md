@@ -12,8 +12,18 @@ Requisitos: Node.js 22.12 o posterior, Python 3.12 y Docker.
 npx pnpm@12.10.1 install
 ```
 
+Copia `.env.example` a `.env`. PostgreSQL usa el puerto 5433, para no chocar con uno instalado en el equipo.
+
 ```bash
 docker compose up -d
+```
+
+```bash
+npx pnpm@12.10.1 --filter @nexoai/api migrar
+```
+
+```bash
+npx pnpm@12.10.1 --filter @nexoai/api semilla
 ```
 
 ```bash

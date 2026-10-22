@@ -1,0 +1,77 @@
+// Modelo de datos de NexoAI. Cada tabla cita su origen: entidad del Entregable 1 o tabla de sistema de un plan.
+// Las migraciones viven en prisma/migrations y nunca se modifican una vez aplicadas (AGENTS.md).
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generado/prisma"
+  moduleFormat        = "cjs"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// specs/06-acceso/plan.md §3
+enum Rol {
+  usuario_personal
+  gerente
+
+  @@map("rol")
+}
+
+enum Plan {
+  gratuito
+  personal
+  empresarial
+
+  @@map("plan")
+}
+
+// Cliente que crea las cuentas (R-45). Tabla de sistema.
+model Organizacion {
+  id       String   @id @default(uuid()) @db.Uuid
+  nombre   String
+  creadaEn DateTime @default(now()) @map("creada_en") @db.Timestamptz(3)
+
+  perfiles         PerfilUsuario[]
+  eventosAuditoria EventoAuditoria[]
+
+  @@map("organizacion")
+}
+
+// EN-01 Perfil de Usuario. Rol y plan los fija la organización (REQ-ACC-12).
+model PerfilUsuario {
+  id                    String   @id @default(uuid()) @db.Uuid
+  organizacionId        String   @map("organizacion_id") @db.Uuid
+  correo                String   @unique
+  hashContrasena        String   @map("hash_contrasena")
+  rol                   Rol
+  plan                  Plan
+  // IANA; nula hasta el primer ingreso (REQ-ACC-04)
+  zonaHoraria           String?  @map("zona_horaria")
+  debeCambiarContrasena Boolean  @default(true) @map("debe_cambiar_contrasena")
+  creadoEn              DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
+
+  organizacion     Organizacion      @relation(fields: [organizacionId], references: [id])
+  eventosAuditoria EventoAuditoria[]
+
+  @@index([organizacionId])
+  @@map("perfil_usuario")
+}
+
+// Registro de acciones (propuesta técnica §9). Tabla de sistema.
+model EventoAuditoria {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizacionId String   @map("organizacion_id") @db.Uuid
+  perfilId       String?  @map("perfil_id") @db.Uuid
+  accion         String
+  detalle        Json     @default("{}")
+  ocurridoEn     DateTime @default(now()) @map("ocurrido_en") @db.Timestamptz(3)
+
+  organizacion Organizacion   @relation(fields: [organizacionId], references: [id])
+  perfil       PerfilUsuario? @relation(fields: [perfilId], references: [id])
+
+  @@index([organizacionId, ocurridoEn])
+  @@map("evento_auditoria")
+}

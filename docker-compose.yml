@@ -7,9 +7,10 @@ services:
       POSTGRES_PASSWORD: nexoai
       POSTGRES_DB: nexoai
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres:/var/lib/postgresql/data
+      - ./infra/postgres:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U nexoai"]
       interval: 5s

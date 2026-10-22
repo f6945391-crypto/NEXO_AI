@@ -7,3 +7,5 @@ coverage/
 .env.*
 !.env.example
 __pycache__/
+# Cliente de Prisma: se regenera con `generar`
+apps/api/src/generado/

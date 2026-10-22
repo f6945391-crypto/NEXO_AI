@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 1.1.0 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
+**Versión:** 1.2.0 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -149,7 +149,7 @@ Estado por columna: **—** no existe · **borrador** · **vigente** · **parcia
 | Comunicaciones | `specs/04-comunicaciones/spec.md` | 04 | Móvil + web | P | CUN04-01…15 (15) | vigente | — | — | — | — | — |
 | Encargo | `specs/04-comunicaciones/spec.md` §7 | 04, 07, 09 | Web + correo | E | ENC-01…13 (13) | vigente | parcial (Encargos, Correo) | — | — | — | — |
 | Equipos | `specs/05-equipos/spec.md` | 05 | Web | E | CUN05-01…15 (15) | vigente | desfasado (INC-07) | — | — | — | — |
-| Acceso | `specs/06-acceso/spec.md` | — (sistema) | Web (móvil pendiente) | Todos | ACC-01…12 (12) | vigente | parcial | aprobado | T-001…T-011 (T-001 hecha) | andamiaje | — |
+| Acceso | `specs/06-acceso/spec.md` | — (sistema) | Web (móvil pendiente) | Todos | ACC-01…12 (12) | vigente | parcial | aprobado | T-001…T-011 (T-001 y T-002 hechas) | 1 de 12 REQ | 1 de 12 REQ |
 | **Total** | | | | | **130** | | | | | | |
 
 **Glosario:** `specs/glosario.md`. Una definición por término, y tres conflictos de vocabulario abiertos (INC-12).
@@ -241,13 +241,13 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 | Fase | Contenido | CUN | Estado |
 |---|---|---|---|
 | 0 | **Base SDD**: este archivo, `AGENTS.md`, glosario, trazabilidad, resolver PT-1 e INC-01 | — | **Cerrada el 2026-10-22** |
-| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 21 tareas, T-001 hecha. Siguiente: T-002 |
+| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 21 tareas, T-001 y T-002 hechas. Siguiente: T-003 |
 | 2 | Capa de agente: intención, herramientas, confirmación | 01, 03 vía conversación + CAP | Especificado, sin plan |
 | 3 | Planificación de jornada | 02 | Especificado |
 | 4 | Equipos: disponibilidad, coordinación, delegación, seguimiento | 05 a 09 | Parcial (faltan 06 y 08) |
 | 5 | Comunicaciones asistidas y resúmenes | 04, 10 | Parcial (10 bloqueado) |
 
-**Siguiente paso concreto:** T-002, la base de datos y el alta de cuentas (`specs/06-acceso/tasks.md`). La duración por defecto (H-AG-01) tiene que estar decidida antes de T-017.
+**Siguiente paso concreto:** T-003, el contexto de solicitud y la separación entre organizaciones; después T-004 y T-005. La duración por defecto (H-AG-01) tiene que estar decidida antes de T-017.
 
 ---
 
@@ -258,6 +258,7 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-22 | 1.2.0 | **T-002 hecha. Primer requisito implementado: REQ-ACC-01.** Prisma 7 con la migración inicial (`organizacion`, `perfil_usuario`, `evento_auditoria`), alta de cuentas por script con argon2id y auditoría, semilla de desarrollo idempotente, y base `nexoai_prueba` que se vacía y se migra en cada ejecución de las pruebas. PostgreSQL de Docker pasa al puerto 5433 por un PostgreSQL local en el 5432. Integración continua con servicio de PostgreSQL. 10 pruebas | `apps/api` (prisma, src/identidad, src/plataforma, src/cli, test), `packages/contratos/src/acceso.ts`, `docker-compose.yml`, `infra/postgres`, `.env.example`, `.github/workflows/ci.yml`, `turbo.json`, `AGENTS.md`, `README.md`, `specs/06-acceso/tasks.md`, `specs/trazabilidad.md` | Claude |
 | 2026-10-22 | 1.1.0 | **Planes de acceso y agenda aprobados por el equipo**, con sus hallazgos tal como están. Primeros `tasks.md`: T-001 a T-011 (acceso y base técnica) y T-012 a T-021 (agenda), anotados en la trazabilidad. Las tareas de infraestructura citan su AD en lugar de un REQ (§2.2). **T-001 hecha**: monorepo con pnpm y Turborepo, `packages/contratos`, `apps/api` con `GET /salud`, Vitest con SWC, docker-compose, integración continua y `verificar`. `--check` ahora detecta también tareas citadas que no existen. Se desactiva el bloque que Turborepo escribía en `AGENTS.md` | `SPEC.md`, `AGENTS.md`, `README.md`, `specs/06-acceso/tasks.md`, `specs/02-agenda/tasks.md`, `specs/*/plan.md`, `specs/trazabilidad.md`, `tools/trazabilidad.py`, raíz del monorepo, `apps/api`, `packages/contratos` | Equipo (aprobación), redactado e implementado por Claude |
 | 2026-10-22 | 1.0.0 | **Fase 0 cerrada; empieza la fase 1.** PT-1 se resuelve con TypeScript + NestJS: la propuesta técnica pasa a Prisma, BullMQ, LangGraph.js, zod y Vitest, y gana AD-08 (contratos zod), AD-09 (Operaciones) y AD-10 (Google como fuente de verdad). La autenticación se alinea con `06-acceso` (INC-13). Se redefine el alcance de la fase 1 para que sea compatible con R-42. Primeros `plan.md` de 06-acceso y 02-agenda, con DP-02 provisional y 13 hallazgos devueltos a sus especificaciones | `PROPUESTA-TECNICA.md`, `SPEC.md`, `AGENTS.md`, `specs/06-acceso/plan.md`, `specs/06-acceso/spec.md`, `specs/02-agenda/plan.md`, `specs/02-agenda/spec.md` | Equipo (PT-1), redactado por Claude |
 | 2026-10-22 | 0.3.0 | **Fase 0 casi cerrada.** Glosario con 44 términos y 3 conflictos (INC-12). Trazabilidad de 130 requisitos generada por `tools/trazabilidad.py`, con `--check` probado. **DP-01**: los botones directos sobre algo que ya existe se mantienen, de forma provisional y revisable, y se ajustan los criterios de CUN01-11 y CUN02-24. Se resuelven INC-03, 08 y 09 | `SPEC.md`, `AGENTS.md`, `specs/glosario.md`, `specs/trazabilidad.md`, `tools/trazabilidad.py`, `specs/02-agenda`, `02-jornada`, `05-equipos`, `06-acceso` | Equipo (DP-01), redactado por Claude |

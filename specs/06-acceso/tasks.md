@@ -33,8 +33,14 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 - **Depende de:** T-001
 - **Contenido:** Prisma con PostgreSQL; primera migración con `organizacion`, `perfil_usuario` y `evento_auditoria`; semilla de desarrollo con una organización, un usuario personal y un gerente; script `crear-cuenta` (correo, rol, plan, contraseña temporal)
 - **Hecho cuando:** la migración se aplica sobre una base vacía, la semilla deja tres filas consultables y no existe ninguna ruta pública que cree cuentas
-- **Prueba:** `acceso.sin-registro-abierto`
-- **Estado:** pendiente
+- **Prueba:** `acceso.sin-registro-abierto` · también `plataforma.migracion-y-semilla`
+- **Estado:** hecha · 22 de octubre de 2026. `verificar` pasa con 10 pruebas. La migración `20261022000000_inicial` se aplica desde cero en cada ejecución de las pruebas y también se aplicó a la base de desarrollo, con la semilla
+- **Notas de implementación:**
+  - Prisma 7: la conexión va en `prisma.config.ts` y el cliente se genera en `apps/api/src/generado`, que no se versiona. La tarea `generar` de Turborepo lo regenera antes de compilar y probar. **No ejecutar `prisma init`**: instala por su cuenta instrucciones para agentes de IA.
+  - Las pruebas usan la base `nexoai_prueba`, que se vacía y se migra en cada ejecución. El código se niega a vaciar cualquier base cuyo nombre no termine en `_prueba`.
+  - El PostgreSQL del contenedor va en el **puerto 5433**, porque en este equipo hay un PostgreSQL 18 instalado como servicio de Windows en el 5432.
+  - `crear-cuenta` valida todos los datos antes de escribir, para no dejar una organización creada a medias si la cuenta es inválida.
+  - Las cuentas de la semilla y sus contraseñas temporales de desarrollo están en `apps/api/src/plataforma/semilla.ts`.
 
 ### T-003 · Contexto de solicitud y aislamiento por organización
 

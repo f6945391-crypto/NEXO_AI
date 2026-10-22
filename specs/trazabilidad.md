@@ -15,7 +15,7 @@
 | 03-tareas | 15 | 15 | 0 | 0 | 0 | 0 |
 | 04-comunicaciones | 28 | 28 | 0 | 0 | 0 | 0 |
 | 05-equipos | 15 | 15 | 0 | 0 | 0 | 0 |
-| 06-acceso | 12 | 12 | 0 | 0 | 0 | 0 |
+| 06-acceso | 12 | 11 | 0 | 1 | 0 | 0 |
 
 ## Requisitos
 
@@ -139,7 +139,7 @@
 | REQ-CUN05-13 | 05-equipos | regla de producto R-13; propuesta técnica §9, minimización | 4 | — | — | pendiente |
 | REQ-CUN05-14 | 05-equipos | regla de producto R-14; RN-OP-01 | 4 | — | — | pendiente |
 | REQ-CUN05-15 | 05-equipos | REQ-CUN05-12 y 14 | 4 | — | — | pendiente |
-| REQ-ACC-01 | 06-acceso | Requisito del sistema | 1 | T-002 | — | pendiente |
+| REQ-ACC-01 | 06-acceso | Requisito del sistema | 1 | T-002 | acceso.sin-registro-abierto | implementado |
 | REQ-ACC-02 | 06-acceso | Requisito del sistema | 1 | T-004, T-011 | — | pendiente |
 | REQ-ACC-03 | 06-acceso | Requisito del sistema | 1 | T-004, T-011 | — | pendiente |
 | REQ-ACC-04 | 06-acceso | Requisito del sistema | 1 | T-005, T-011 | — | pendiente |

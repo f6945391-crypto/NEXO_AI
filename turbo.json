@@ -2,15 +2,20 @@
   "$schema": "https://turborepo.com/schema.json",
   "agentGuidance": false,
   "tasks": {
+    "generar": {
+      "inputs": ["prisma/schema.prisma"],
+      "outputs": ["src/generado/**"]
+    },
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "generar"],
       "outputs": ["dist/**"]
     },
     "typecheck": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build", "generar"]
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build", "generar"],
+      "env": ["DATABASE_URL_PRUEBA"]
     }
   }
 }

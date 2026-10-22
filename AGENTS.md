@@ -48,7 +48,11 @@ Requisitos: Node.js 22.12 o posterior (`.nvmrc`), Python 3.12 y Docker. pnpm no 
 | Comando | Para qué |
 |---|---|
 | `npx pnpm@12.10.1 install` | Instala todo el monorepo |
-| `docker compose up -d` | Levanta PostgreSQL (con pgvector) y Redis |
+| `copy .env.example .env` | Configuración local. PostgreSQL en el puerto **5433**, porque el 5432 lo ocupa un PostgreSQL instalado en el equipo |
+| `docker compose up -d` | Levanta PostgreSQL (con pgvector) y Redis, y crea `nexoai` y `nexoai_prueba` |
+| `npx pnpm@12.10.1 --filter @nexoai/api migrar` | Aplica las migraciones a la base de desarrollo |
+| `npx pnpm@12.10.1 --filter @nexoai/api semilla` | Organización y dos cuentas de desarrollo; es idempotente |
+| `npx pnpm@12.10.1 --filter @nexoai/api crear-cuenta -- --nueva-organizacion "<nombre>" --correo <correo> --rol <rol> --plan <plan>` | Alta de una cuenta (REQ-ACC-01). La contraseña temporal se muestra una sola vez |
 | `npx pnpm@12.10.1 verificar` | Comprobación de tipos, compilación, pruebas y trazabilidad. **Una tarea no está hecha si esto falla** |
 | `npx pnpm@12.10.1 test` | Solo las pruebas |
 | `node apps/api/dist/main.js` | Arranca la API compilada (`PUERTO`, 3000 por defecto) |
@@ -73,4 +77,6 @@ Requisitos: Node.js 22.12 o posterior (`.nvmrc`), Python 3.12 y Docker. pnpm no 
 - Ninguna escritura con efecto fuera de una Operación (AD-09). Un servicio de dominio no llama a Google directamente desde un controlador.
 - Ningún SDK de proveedor de modelo fuera del módulo del agente (P-06).
 - Nada de `$queryRaw` de Prisma fuera del repositorio de búsqueda semántica.
-- No modificar una migración ya aplicada; se crea una nueva.
+- No modificar una migración ya aplicada; se crea una nueva, con `prisma migrate diff`, o con `prisma migrate dev` contra la base de desarrollo.
+- No ejecutar `prisma init`: instala instrucciones para agentes de IA que no son de este proyecto.
+- Las pruebas con base de datos usan solo `DATABASE_URL_PRUEBA` y vacían sus tablas con `vaciarTablas()`. Nunca apuntan a la base de desarrollo.
