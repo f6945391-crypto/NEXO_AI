@@ -1,0 +1,308 @@
+# Arquitectura visual — plataforma web
+
+**Estado:** aprobada el 26 de septiembre de 2026. Sustituye la jerarquía con la que se generaron los 20 cuadros existentes de CUN-07 y CUN-05.
+**Lectura obligatoria** antes de generar cualquier cuadro web. `CONTEXTO.md` apunta aquí.
+
+---
+
+## 1. Por qué se cambia
+
+Los 20 cuadros web actuales están construidos con la jerarquía del móvil: la conversación manda y el trabajo aparece al costado, dentro de una sola columna de 1200 px junto a una navegación de 240 px con texto.
+
+En 1440x900 eso desperdicia la pantalla y, sobre todo, contradice el trabajo del actor. El Gerente no conversa: mira estado. Un chat no deja ver estado.
+
+---
+
+## 2. Las tres columnas
+
+```
+┌────────┬──────────────────────┬─────────────────────┐
+│  Nav   │   Conversación       │   Lienzo            │
+│ 72 px  │      528 px          │      840 px         │
+│        │                      │                     │
+│ Solo   │ Las tarjetas SON la  │ Contexto vivo: lo   │
+│ iconos │ interfaz: propuesta, │ que la conversación │
+│        │ confirmación,        │ manipula, y el      │
+│        │ resultado            │ registro de lo ya   │
+│        │                      │ cerrado             │
+│        │ DESECHABLE           │ MEMORIA             │
+└────────┴──────────────────────┴─────────────────────┘
+```
+
+| Columna | Ancho | Papel | Duración de su contenido |
+|---|---|---|---|
+| Navegación | 72 | Cambiar de sujeto — tres secciones y Ajustes al pie | Permanente |
+| Conversación | 528 | Área de trabajo | Efímera: se vacía al cerrar |
+| Lienzo | 840 | Contexto y memoria | Persistente |
+
+72 + 528 + 840 = 1440. El 528 mantiene la columna de tarjetas en ancho legible; el 840 es el mínimo donde la rejilla de disponibilidad sigue cabiendo.
+
+### La regla que lo sostiene todo
+
+**Un solo sujeto a la vez.** El lienzo muestra el sujeto de la operación en curso o, si no hay ninguna, el de la última cerrada. Nunca muestra algo que la conversación no esté tratando.
+
+Esto no es una recomendación de cuidado: es lo que hace **estructuralmente imposible** que las dos columnas se contradigan. No hay que evitar los casos contradictorios uno por uno; no existen.
+
+---
+
+## 3. Estados de disposición
+
+Dos, no tres.
+
+| Estado | Nav | Conversación | Lienzo |
+|---|---|---|---|
+| **Normal** | 72 | 528 | 840 |
+| **Lienzo expandido** | 72 | 0 | 1368 |
+
+El usuario expande y contrae el lienzo. **No existe el estado inverso** —conversación expandida, lienzo colapsado—, y es una decisión, no un olvido: si el lienzo es la memoria, esconderlo es esconder el resultado; y una conversación más ancha invita a acumular turnos, que es justo el problema que la sección 5 resuelve.
+
+Los anchos viven en la colección de variables `Disposición`, con un modo por estado. Cambiar de estado es cambiar de modo, no reescribir el cuadro.
+
+---
+
+## 4. El lienzo tiene dos modos
+
+| Modo | Muestra | Cuándo |
+|---|---|---|
+| **Objeto** | El día, la agenda, la rejilla de disponibilidad, la lista del equipo, la tarea abierta | Mientras hay una operación en curso |
+| **Registro** | Lo que el asistente hizo, con su resultado | Al cerrar una operación, y desde la navegación |
+
+El paso de uno a otro es automático: cuando la conversación se cierra, el lienzo conserva lo que acaba de pasar. **El lienzo es la memoria, la conversación es el área de trabajo.**
+
+### Estado inicial del lienzo
+
+Cuando no hay nada que mostrar, el lienzo no queda en blanco: presenta ejemplos de lo que se puede pedir. Y ese estado **no puede parecerse** al de «no hay datos» ni al de «sin resultados».
+
+---
+
+## 5. Ciclo de vida de la conversación
+
+El modelo de lenguaje no puede cargar contexto indefinido, así que la conversación es deliberadamente corta y desechable. Esto no es una limitación disimulada: es la separación que ya declara la propuesta técnica en §7.4, donde la conversación son «turnos recientes» y lo operativo vive en las tablas del dominio.
+
+**El vaciado lo decide el usuario, no el sistema**, y siempre con advertencia previa. La advertencia dice qué se pierde concretamente —«se descartará la delegación a María Fernanda Quispe, sin confirmar»—, nunca «¿estás seguro?». Eso lo exige RN-ER-03, que `CONTEXTO.md` ya recoge.
+
+Lo cerrado no se pierde al vaciar: queda en el registro.
+
+---
+
+## 6. El registro
+
+Es la interfaz de algo que la arquitectura ya declara: §9 de la propuesta técnica establece «registro de auditoría de toda acción ejecutada por el agente en nombre del usuario, consultable por el usuario», con la tabla `evento_auditoria` de §8. No es un elemento inventado para la interfaz.
+
+### Dos alcances
+
+| Plan | Alcance |
+|---|---|
+| Gratuito y Personal | Lo que el asistente hizo por mí. Un solo alcance, sin selector |
+| Empresarial | Se añade el alcance de equipo, con selector de persona, visible solo si RN-OP-02 lo permite |
+
+### Límite de privacidad — no negociable
+
+El alcance de equipo se restringe a **acciones sobre objetos del equipo**: tareas delegadas, reuniones del equipo, autorizaciones. **Nunca** la agenda personal ni las comunicaciones del colaborador.
+
+Que un gerente vea todo lo que el asistente hizo por un colaborador es vigilancia, no coordinación. El límite se apoya en RN-OP-02, que ya acota los datos al permiso, y en la minimización declarada en §9 de la propuesta técnica.
+
+---
+
+## 7. Navegación
+
+**Tres destinos, los mismos que el móvil**: Agenda · Tareas · Actividad. Y **Ajustes al pie de la columna**, separado, porque no es trabajo.
+
+### Por qué tres y no siete
+
+La web llegó a tener seis destinos y a punto estuvo de tener siete. Eran demasiados, y sobre todo eran **otra gramática**: en móvil habíamos fusionado a tres y aquí se iba en dirección contraria. Una sola aplicación no puede organizarse de dos maneras.
+
+El mapeo sale sin forzar nada:
+
+| Sección | Qué es | Absorbe | Por qué |
+|---|---|---|---|
+| **Agenda** | Lo que va a pasar | Reuniones, Equipo | Coordinar una reunión es crear un evento. La disponibilidad del equipo es el **dato que se lee** para colocarlo, no un destino |
+| **Tareas** | Lo que hay que hacer | Encargos | En móvil «esperando de alguien» ya era una franja dentro de Tareas; un encargo es su versión Empresarial |
+| **Actividad** | Lo que pasó | Resúmenes | Un resumen de reunión es lo que pasó en ella |
+
+**Equipo y permisos sale de la barra de trabajo.** Es configuración que se toca una vez y se revisa rara vez, no un sitio donde se trabaja a diario. Vive en **Ajustes**, al pie y separado por una línea.
+
+Eso no lo esconde: el estado del permiso **aparece donde estorba**, al intentar encargar algo a quien todavía no ha aceptado. Es R-20 — el agente pide solo lo que falta, cuando falta.
+
+**La sección activa tiene que ser la del sujeto en pantalla.** Si el lienzo muestra un encargo, la activa es Tareas. Se incumplía en cuatro de doce cuadros y está corregido; el validador web tiene que comprobarlo.
+
+**Iconografía:** en esta iteración son marcadores de posición geométricos, declarados como tales. Van montados como `INSTANCE_SWAP` dentro del componente de navegación, de modo que sustituir el juego real después no obligue a tocar ningún cuadro. Nunca una variante por icono.
+
+### Regla del clic a media conversación
+
+Pulsar un destino cambia el sujeto, y con él el lienzo.
+
+- Si **no hay propuesta sin confirmar**, se navega sin preguntar.
+- Si **hay una propuesta sin confirmar**, aparece la advertencia de descarte de la sección 5, con dos salidas: descartar y navegar, o quedarse.
+
+Se eligió esta opción entre cuatro (descartar con aviso, conservar un hilo por sujeto, bloquear la navegación, o mover la propuesta al lienzo como «en espera»). Conservar hilos multiplica los contextos vivos, que es lo que la sección 5 evita; bloquear la navegación atrapa al usuario. Mover la propuesta al lienzo es mejor producto y queda como versión posterior: no pierde nada y no pregunta, pero añade un estado que hoy no hace falta.
+
+**Un solo componente de advertencia sirve para los dos usos:** el vaciado manual y el clic en navegación.
+
+---
+
+## 8. Los cuatro blancos de la conversación
+
+La columna central puede estar en blanco por cuatro razones que dicen cosas opuestas. **Ninguna puede parecerse a otra.**
+
+| Estado | Significa | Debe sentirse como | Elementos obligatorios |
+|---|---|---|---|
+| Vacía tras cerrar | Terminó bien | Logro | Referencia a lo que quedó en el lienzo |
+| Inicial | No sabe qué pedir | Invitación | Tres ejemplos concretos, pulsables |
+| Asistente no disponible | El producto está caído | Disculpa | Banner de degradado, lo pedido en cola y lo que se puede seguir consultando. Sin formulario manual (§10 quater) |
+| Fuera del plan | No la tiene contratada | Oferta | Qué función es, qué plan la incluye |
+
+Es el mismo error que confundir «sin coincidencia» con «todavía no he calculado», pero en el estado más frecuente de la pantalla principal.
+
+---
+
+## 9. Componentes
+
+### Nuevos
+
+| Componente | Variantes | Propiedades |
+|---|---|---|
+| `Web / Icono` | Nombre = Agenda, Tareas, Equipo, Reuniones, Resúmenes, Actividad | — |
+| `Web / Ítem de navegación` | Estado = Reposo, Activo | Icono (`INSTANCE_SWAP`) |
+| `Web / Tarjeta` | Tipo = Propuesta, Confirmación, Resultado, Bloqueada, Error | Título, Cuerpo |
+| `Web / Burbuja` | Autor = Usuario, Asistente | Mensaje |
+| `Web / Barra de entrada` | Estado = Reposo, Activo, Deshabilitado | Texto |
+| `Web / Panel de lienzo` | Modo = Objeto, Registro | Título, Subtítulo |
+| `Web / Fila de registro` | Resultado = Hecho, Rechazado, Pendiente | Acción, Detalle, Momento |
+| `Web / Advertencia de descarte` | — | Qué se pierde |
+
+`Web / Tarjeta` es el componente que carga la propuesta entera. Si sale mal, la columna central es un chat con recuadros.
+
+### Modificados
+
+- `Web / Rejilla de disponibilidad` — de 1200 a 840 px, más el cuarto estado que exige RN-CAL-01 aprobada
+- `Web / Fila de colaborador` — variante compacta para 840 px
+
+### Sin cambios
+
+`Web / Botón` y `Web / Campo`. Son átomos; la jerarquía no les afecta.
+
+---
+
+## 10. Variables nuevas
+
+Los 39 tokens actuales son color, espaciado, radio y tipografía. No hay ninguno de dimensión, así que hoy los estados de disposición tendrían que cablearse a mano en cada cuadro.
+
+Colección nueva `Disposición`, con dos modos:
+
+| Variable | Modo Normal | Modo Lienzo expandido |
+|---|---|---|
+| `ancho/nav` | 72 | 72 |
+| `ancho/conversacion` | 528 | 0 |
+| `ancho/lienzo` | 840 | 1368 |
+
+---
+
+## 10 bis. Tres naturalezas, tres prefijos
+
+La página ya no contiene solo pantallas de la aplicación. Hay tres cosas distintas y el nombre lo dice, para que a un cuadro sin navegación no se le tome por defectuoso:
+
+| Prefijo | Qué es | Medida | Lleva navegación |
+|---|---|---|---|
+| `WEB-v2 /` | Pantalla de la aplicación | 1440x900 | Sí, salvo Acceso, que es anterior a ella |
+| `PÚBLICO /` | Página que abre alguien **sin cuenta** | 1440x900 | **No, y es correcto** |
+| `CORREO /` | Un correo, no una pantalla | 680 de ancho, alto al contenido | No |
+
+Esto sale de §4.7: el colaborador no es usuario. Sus dos pantallas —aceptar y responder— no pueden llevar la navegación de una aplicación en la que no ha entrado.
+
+---
+
+## 10 ter. La interfaz nunca se nombra a sí misma
+
+Regla que salió de una revisión de Franco y que atravesaba ocho cuadros sin que nadie la viera:
+
+> **El texto de la pantalla habla de lo que la aplicación hace, nunca de cómo está montada.**
+
+Tres cosas que no pueden aparecer nunca en la interfaz:
+
+| Lo que se coló | Por qué no vale | Cómo quedó |
+|---|---|---|
+| «el panel de la derecha», «el registro de la derecha», «el lienzo» | Son nombres nuestros de la disposición. El usuario no los conoce, y si cambia la disposición el texto miente | «puedes seguir delegando a mano», «aquí queda todo lo que ya se cerró» |
+| «Esto no es "no hay datos": es que aún no has pedido nada» | Cita el vocabulario de los estados del diseño | «Todavía no has pedido nada» |
+| «(RN-CAL-01)», «(RN-OP-02)» | Un código de especificación impreso en pantalla | Fuera. La frase se queda, el código no |
+
+El caso más claro era `Armazón / 02 Lienzo expandido`, que **llevaba un párrafo explicando el propio diseño como si fuera contenido de la pantalla**. Ese cuadro se eliminó: la disposición de lienzo expandido existe y está en §3, pero ese dibujo no cumplía.
+
+---
+
+## 10 quater. Una sección se ve igual en las dos plataformas
+
+El móvil llegó antes a la forma buena de Actividad —informes con niveles Día · Semana · Mes, y el registro del asistente como segundo nivel— y la web se quedó con un listado de acciones del asistente y nada más. Eran dos productos distintos con el mismo nombre.
+
+> **Lo que cambia entre plataformas es la disposición, nunca el contenido ni la jerarquía de la sección.**
+
+En web eso se traduce así:
+
+| Columna | Qué lleva en Actividad |
+|---|---|
+| Navegación | Actividad marcada |
+| Conversación | Vacía, centrada, con su barra de entrada: aquí no se conversa con un informe |
+| Lienzo | La cabecera con el selector de nivel, y debajo el informe con su misma gramática que en móvil |
+
+Los dos alcances —lo tuyo y el equipo— dejan de ser dos cuadros y pasan a ser **un filtro dentro del registro**, que es donde tiene sentido: el límite de privacidad se aplica a las acciones, no al informe de tu tiempo.
+
+### El modo degradado no ofrece un camino manual
+
+`Blancos / 03` enseñaba un formulario de «delegar a mano» con los campos sin rellenar. Dos errores en uno: el relleno del componente se había quedado a la vista, y sobre todo **el planteamiento estaba mal**. El asistente es quien hace el trabajo; si se cae, lo que se pidió **queda en cola** y se puede seguir consultando lo que ya existe. Ofrecer un formulario que hace lo mismo a mano contradice el producto y duplica la interfaz.
+
+---
+
+## 11. Convención de nombres de esta sección
+
+Los cuadros de arquitectura no pertenecen a un caso de uso, así que no siguen `CUN-XX / …`. Llevan su propia rama, declarada aquí para que la validación no los marque como fuera de convención:
+
+```
+WEB-v2 / <Grupo> / <NN Nombre>
+```
+
+Grupos: `Armazón`, `Blancos`, `Lienzo`, `Registro`, `Diálogos`.
+
+Ejemplo: `WEB-v2 / Blancos / 03 Asistente no disponible`.
+
+Cuando esta jerarquía se aplique a los casos de uso, esos cuadros vuelven a la convención `CUN-XX / …` de siempre.
+
+---
+
+## 12. Qué NO cambia
+
+- **Los 13 cuadros de móvil.** La jerarquía móvil no se toca.
+- **Los 20 cuadros web existentes.** Esta iteración añade una sección nueva; no los destruye. Se conservan para poder comparar y porque siguen siendo la única cobertura de CUN-07 y CUN-05 hasta que se rehagan.
+- **El documento base del Entregable 1.** Ahí se modela el negocio, no la interfaz. Lo único que le toca es la segunda oración de RN-CAL-01.
+
+De paso, la propuesta reduce divergencia entre plataformas: el móvil ya trabaja con tarjetas y burbujas, así que web y móvil pasan a compartir el **patrón**. Los componentes siguen sin compartirse, por el área táctil.
+
+---
+
+## 13. Trazabilidad
+
+| Elemento visual | De dónde viene |
+|---|---|
+| Confirmación previa como tarjeta | RN-ER-03 |
+| Estado «fuera del plan» | RN-OP-01, como caso de falta de permiso |
+| Registro y sus dos alcances | Propuesta técnica §9 y tabla `evento_auditoria` de §8 |
+| Límite del alcance de equipo | RN-OP-02 y minimización de §9 |
+| Conversación desechable | Propuesta técnica §7.4 |
+| Cola en modo degradado, sin camino manual | R-42 |
+| Rejilla a 840 | `specs/05-equipos/spec.md` §3 |
+
+---
+
+## 14. Pendiente
+
+Ordenado por lo que más pesa.
+
+1. **La disposición de lienzo expandido se quedó sin cuadro.** El que había explicaba el diseño dentro de la pantalla y se eliminó. Hay que volver a dibujarla cumpliendo R-40, y llenando el lienzo con lo que de verdad se vería.
+2. **Ninguna de las tres secciones tiene portada.** Agenda, Tareas y Actividad existen en la navegación y no hay un cuadro que enseñe cada una al entrar. En la página está declarado como la fila 3, vacía a propósito para que se vea. Dentro de Tareas falta además la franja de **encargadas**, que es la lista de lo que delegaste.
+2. **Los niveles de período no están dibujados en web.** En móvil Agenda y Actividad tienen selector Hoy · Semana · Mes; en web no hay ni un cuadro con él.
+3. **Rehacer los 20 cuadros de `05 Flujos · Web`**, que siguen en la jerarquía vieja —navegación de 240 con texto, una columna de 1200—. Mientras sigan ahí, el archivo cuenta dos productos web distintos, y eso pesa más que cualquier detalle visual.
+4. **Estados del bucle sin cuadro**: encargo vencido, recordatorio, enlace caducado a los 7 días, colaborador que revoca a mitad. Están en `specs/04-comunicaciones` §7 sin forma.
+5. **Caminos alternos del acceso sin cuadro**: credenciales incorrectas, permiso revocado, y cómo se ve la aplicación cuando alguien elige «ahora no». Están en `specs/06-acceso` sin forma.
+6. **CUN-06, CUN-08 y CUN-10** siguen sin especificación y sin diseño.
+7. **Juego de iconos real.** Lo de hoy son marcadores de posición, y el de Encargos además está prestado del de Tareas.
+8. **Cifras de los límites del Plan Gratuito**, sin las cuales el blanco «fuera del plan» no puede decir qué se agotó.
+9. **Extraer `Fundamentos` como biblioteca publicada.**

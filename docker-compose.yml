@@ -1,0 +1,24 @@
+# Servicios de desarrollo. La aplicación corre fuera de Docker.
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.0-pg17
+    environment:
+      POSTGRES_USER: nexoai
+      POSTGRES_PASSWORD: nexoai
+      POSTGRES_DB: nexoai
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexoai"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres:

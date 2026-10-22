@@ -1,0 +1,22 @@
+{
+  "name": "@nexoai/contratos",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Esquemas zod compartidos por la API, el agente, la web y el móvil (AD-08)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.1",
+    "typescript": "7.0.2",
+    "vitest": "5.0.3"
+  }
+}

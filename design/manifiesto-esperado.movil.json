@@ -1,0 +1,20 @@
+{
+  "casoDeUso": "CUN-01",
+  "plataforma": "Móvil",
+  "cuadros": [
+    { "nombre": "CUN-01 / Móvil / Principal / 01 Agenda vacía",                "requisitos": ["REQ-CUN01-12", "REQ-CUN01-09"] },
+    { "nombre": "CUN-01 / Móvil / Principal / 02 Agenda con compromisos",      "requisitos": ["REQ-CUN01-09", "REQ-CUN01-10"] },
+    { "nombre": "CUN-01 / Móvil / Principal / 03 Solicitud escrita",           "requisitos": ["REQ-CUN01-01"] },
+    { "nombre": "CUN-01 / Móvil / Principal / 04 Interpretando",               "requisitos": ["REQ-CUN01-01", "REQ-CUN01-02"] },
+    { "nombre": "CUN-01 / Móvil / Principal / 05 Confirmación pendiente",      "requisitos": ["REQ-CUN01-03", "REQ-CUN01-10"] },
+    { "nombre": "CUN-01 / Móvil / Principal / 06 Compromiso registrado",       "requisitos": ["REQ-CUN01-04"] },
+    { "nombre": "CUN-01 / Móvil / FA-01 / 01 Conflicto detectado",             "requisitos": ["REQ-CUN01-05"] },
+    { "nombre": "CUN-01 / Móvil / FA-02 / 01 Compromiso seleccionado",         "requisitos": ["REQ-CUN01-06"] },
+    { "nombre": "CUN-01 / Móvil / FA-02 / 02 Confirmación de cancelación",     "requisitos": ["REQ-CUN01-06", "REQ-CUN01-03"] },
+    { "nombre": "CUN-01 / Móvil / EX-01 / 01 Información insuficiente",        "requisitos": ["REQ-CUN01-07"] },
+    { "nombre": "CUN-01 / Móvil / EX-02 / 01 Sin autorización",                "requisitos": ["REQ-CUN01-08"] },
+    { "nombre": "CUN-01 / Móvil / Transversal / Cargando agenda",              "requisitos": [] },
+    { "nombre": "CUN-01 / Móvil / Transversal / Modo degradado",               "requisitos": ["REQ-CUN01-11"] }
+  ],
+  "requisitosSinRepresentacionVisual": []
+}
