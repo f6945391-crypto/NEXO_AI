@@ -1,7 +1,7 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { ConsultaAgenda, type EventoAgenda } from '@nexoai/contratos';
 import type { ContextoSolicitud } from '../identidad/contexto';
-import { Contexto } from '../identidad/decoradores';
+import { Contexto, SobreLoPropio } from '../identidad/decoradores';
 import { RequiereGoogle } from '../integraciones/requiere-google';
 import { errorApi, ValidarCon } from '../plataforma/errores';
 import { ConsultaAgendaService } from './consulta-agenda.service';
@@ -12,8 +12,9 @@ const idValido = new ParseUUIDPipe({
 });
 
 // specs/02-agenda/plan.md §5 · T-015. Sin el permiso de calendario, @RequiereGoogle responde
-// PERMISO_GOOGLE_FALTANTE antes de llegar aquí, sin llamar a Google (REQ-CUN01-08). El colaborador no
-// tiene agenda propia en NexoAI: su calendario solo sirve para compartir disponibilidad (REQ-ACC-13, 14).
+// PERMISO_GOOGLE_FALTANTE antes de llegar aquí, sin llamar a Google (REQ-CUN01-08). Es la agenda de quien
+// pregunta, también la del colaborador (REQ-ACC-13, T-026).
+@SobreLoPropio()
 @Controller('agenda')
 export class AgendaController {
   constructor(private readonly consulta: ConsultaAgendaService) {}

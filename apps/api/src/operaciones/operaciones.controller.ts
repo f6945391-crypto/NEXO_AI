@@ -5,7 +5,7 @@ import {
   type OperacionRespuesta,
 } from '@nexoai/contratos';
 import type { ContextoSolicitud } from '../identidad/contexto';
-import { Contexto } from '../identidad/decoradores';
+import { Contexto, SobreLoPropio } from '../identidad/decoradores';
 import { errorApi, ValidarCon } from '../plataforma/errores';
 import { OperacionesService } from './operaciones.service';
 
@@ -14,7 +14,9 @@ const idValido = new ParseUUIDPipe({
   exceptionFactory: () => errorApi(404, 'OPERACION_NO_ENCONTRADA', 'No existe esa operación.'),
 });
 
-// specs/02-agenda/plan.md §3.3 · T-012
+// specs/02-agenda/plan.md §3.3 · T-012. Cada uno propone y confirma lo suyo; lo que da autoridad sobre
+// otros lo limita el tipo de Operación (`soloResponsable`, T-026).
+@SobreLoPropio()
 @Controller('operaciones')
 export class OperacionesController {
   constructor(private readonly operaciones: OperacionesService) {}

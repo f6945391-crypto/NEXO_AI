@@ -8,7 +8,7 @@ export default async function PrimerIngreso() {
   const sesion = await obtenerSesion();
   if (sesion.estado === 'ninguna') redirect('/entrar');
   if (sesion.estado === 'caducada') redirect('/sesion/renovar?volver=/primer-ingreso');
-  if (sesion.estado === 'activa') redirect(sesion.sesion.rol === 'colaborador' ? '/solo-movil' : '/');
+  if (sesion.estado === 'activa') redirect('/');
 
   return (
     <TarjetaAcceso

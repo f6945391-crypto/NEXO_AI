@@ -6,7 +6,7 @@ import { FormularioEntrada } from './formulario-entrada';
 // WEB-v2 / Acceso / 01 Entrada · REQ-ACC-01, 02, 03. Sin registro: las cuentas las da la organización.
 export default async function Entrar() {
   const sesion = await obtenerSesion();
-  if (sesion.estado === 'activa') redirect(sesion.sesion.rol === 'colaborador' ? '/solo-movil' : '/');
+  if (sesion.estado === 'activa') redirect('/');
   if (sesion.estado === 'pendiente') redirect('/primer-ingreso');
 
   return (

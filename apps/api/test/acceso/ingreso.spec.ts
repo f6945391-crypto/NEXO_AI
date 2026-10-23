@@ -9,7 +9,8 @@ import { crearOrganizacion } from '../../src/identidad/alta-cuentas';
 import type { PrismaClient } from '../../src/plataforma/prisma';
 import { clientePrueba, crearCuentaLista, vaciarTablas } from '../utilidades/base-prueba';
 
-// Ruta sin @PermitidoPara: sirve para comprobar que el colaborador queda fuera por defecto (REQ-ACC-13).
+// Ruta sin alcance declarado: al colaborador se le cierra igual, para que un olvido no deje nada abierto
+// (REQ-ACC-13, T-026). La prueba acceso.toda-ruta-declara-su-alcance impide que exista en la aplicación.
 @Controller('ruta-de-prueba')
 class RutaDePruebaController {
   @Get()
@@ -191,7 +192,7 @@ describe('T-004 · ingreso y sesión', () => {
   });
 
   describe('acceso.colaborador-solo-ve-lo-suyo', () => {
-    it('al colaborador se le deniega toda ruta no marcada para su rol', async () => {
+    it('al colaborador se le cierra una ruta que no declara su alcance', async () => {
       await alta('c@nexoai.test', 'colaborador', 'empresarial');
       const { tokenAcceso } = IngresoRespuesta.parse((await ingresar('c@nexoai.test').expect(200)).body);
 

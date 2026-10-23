@@ -95,10 +95,11 @@ Es una **Operación** (AD-09):
 ### 5.5 El rol colaborador (ACC-13, ACC-14, ACC-15) · añadido por D-17
 
 > **Cambia el 23 de octubre de 2026 (D-17 a enmendada).** El colaborador usa el agente como el Plan Empresarial; lo único que no puede es asignar tareas a otros. Lo que sigue en esta sección describe la implementación de T-004 y T-007, que **T-026 sustituye** así:
-> - **Se deniega por defecto solo lo que da autoridad sobre otros.** Una ruta que asigna o delega trabajo, o que administra el equipo, se marca `@SoloResponsable()`, y `RolGuard` la rechaza al colaborador con `ROL_NO_PERMITIDO` (ACC-15). Todo lo demás, que siempre trabaja sobre lo de la propia persona, queda abierto.
+> - **Toda ruta declara su alcance**: `@SobreLoPropio()` (trabaja sobre lo de la propia persona) o `@SoloResponsable()` (asigna o delega trabajo, o administra el equipo). `RolGuard` rechaza al colaborador las segundas con `ROL_NO_PERMITIDO` (ACC-15), **y también una ruta sin declarar**, para que un olvido no la deje abierta. Una prueba recorre todas las rutas de la aplicación y falla si alguna no declara su alcance. Las rutas `@Publico()` no lo necesitan.
+> - **Las Operaciones también:** un tipo de Operación que asigna trabajo a otros declara `soloResponsable`, y `POST /operaciones` lo rechaza al colaborador antes de proponer nada. Hace falta porque la delegación llegará como Operación, por una ruta que el colaborador sí usa.
 > - `GET /integraciones/google/permisos` devuelve al colaborador los dos alcances (ACC-14).
-> - La web deja de enviar al colaborador a `/solo-movil` y le muestra la aplicación entera.
-> - Riesgo: con esta inversión, una ruta nueva de equipo **queda abierta si se olvida marcarla**. Para cubrirlo, T-026 añade una prueba que recorre las rutas de los módulos de equipo y exige la marca.
+> - La web deja de enviar al colaborador a `/solo-movil`, que se retira, y le muestra la aplicación entera.
+> - `@SoloResponsable()` solo excluye al rol colaborador. Que la delegación sea del Plan Empresarial es una restricción por plan, que todavía no existe (análisis por plan pendiente).
 
 
 - **Se deniega por defecto.** Una guarda global, `RolGuard`, rechaza con `ROL_NO_PERMITIDO` toda ruta que no declare `@PermitidoPara('colaborador')`. Así una ruta nueva nunca queda abierta al colaborador por olvido.

@@ -233,10 +233,17 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 
 - **Satisface:** REQ-ACC-13, REQ-ACC-14, REQ-ACC-15 · D-17 (a y b) enmendada
 - **Depende de:** T-004, T-007
-- **Contenido:** invertir la restricción del rol: `RolGuard` ya no deniega por defecto al colaborador, sino solo las rutas marcadas `@SoloResponsable()` (plan §5.5); los dos permisos de Google para el colaborador; quitar el envío a `/solo-movil` de la web; cambiar las pruebas que hoy comprueban la denegación por defecto, como la de T-015 sobre la agenda
-- **Hecho cuando:** un colaborador consulta su agenda y conecta el correo; una ruta marcada `@SoloResponsable()` le responde `ROL_NO_PERMITIDO` sin ejecutar nada; una prueba falla si una ruta de un módulo de equipo no lleva la marca; el colaborador entra en la web y ve la aplicación
-- **Pruebas:** `acceso.colaborador-solo-ve-lo-suyo` (se reescribe), `acceso.solo-el-responsable-asigna-tareas`
-- **Estado:** pendiente. Se puede hacer ya, aunque las rutas de delegación lleguen en la fase 4
+- **Contenido:** según el plan §5.5: toda ruta declara `@SobreLoPropio()` o `@SoloResponsable()`, y `RolGuard` rechaza al colaborador las segundas y las que no declaran nada; los tipos de Operación pueden ser `soloResponsable`; los dos permisos de Google para el colaborador; retirar `/solo-movil` de la web; cambiar las pruebas que hoy comprueban la denegación por defecto, como la de T-015 sobre la agenda
+- **Hecho cuando:** un colaborador consulta su agenda y conecta el correo; una ruta `@SoloResponsable()` y una Operación `soloResponsable` le responden `ROL_NO_PERMITIDO` sin ejecutar nada; una prueba falla si una ruta no declara su alcance; el colaborador entra en la web y ve la aplicación
+- **Pruebas:** `acceso.colaborador-solo-ve-lo-suyo` (se reescribe), `acceso.solo-el-responsable-asigna-tareas`, `acceso.toda-ruta-declara-su-alcance`, `acceso.colaborador-con-los-dos-permisos` (sustituye a `acceso.colaborador-solo-calendario`)
+- **Estado:** hecha · 23 de octubre de 2026. 4 pruebas nuevas y 4 reescritas
+- **Notas de implementación:**
+  - `@SobreLoPropio()` y `@SoloResponsable()` sustituyen a `@PermitidoPara('colaborador')`. Van en la clase del controlador: autenticación, perfil, Google, Operaciones y agenda son de lo propio.
+  - `RolGuard` cierra al colaborador las rutas del responsable **y las que no declaran alcance**. La prueba `acceso.toda-ruta-declara-su-alcance` recorre los controladores de la aplicación; quitar la marca de la agenda la hace fallar señalando sus dos rutas.
+  - `EjecutorOperacion.soloResponsable`: `POST /operaciones` lo rechaza al colaborador antes de proponer, y también al confirmar, por si su rol cambió entre medias.
+  - Google ofrece los dos permisos a toda cuenta. La web ya no envía al colaborador a `/solo-movil`, que se retiró; le muestra la aplicación entera, sin la franja «Encargadas».
+  - **Pendiente del análisis por plan:** los ejemplos de la conversación de Tareas sugieren delegar también al colaborador y a quien no tiene el Plan Empresarial.
+  - Al empezar, Docker Desktop no arrancaba: había quedado un archivo `dockerInference` de la sesión anterior; el equipo lo borró.
 
 ---
 

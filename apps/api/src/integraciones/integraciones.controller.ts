@@ -5,23 +5,20 @@ import {
   type PermisoGoogle,
 } from '@nexoai/contratos';
 import type { ContextoSolicitud } from '../identidad/contexto';
-import { Contexto, PermitidoPara, Publico } from '../identidad/decoradores';
+import { Contexto, Publico, SobreLoPropio } from '../identidad/decoradores';
 import { ValidarCon } from '../plataforma/errores';
 import { IntegracionesGoogleService } from './integraciones-google.service';
 
 // specs/06-acceso/plan.md §4 · T-007. Ajuste del plan: en lugar de GET /conectar, el cliente pide
 // con su sesión un enlace firmado (POST /enlace) y lo abre; un enlace normal no puede llevar el token.
+@SobreLoPropio()
 @Controller('integraciones/google')
 export class IntegracionesController {
   constructor(private readonly google: IntegracionesGoogleService) {}
-
-  @PermitidoPara('colaborador')
   @Get('permisos')
   permisos(@Contexto() contexto: ContextoSolicitud): Promise<PermisoGoogle[]> {
     return this.google.permisos(contexto);
   }
-
-  @PermitidoPara('colaborador')
   @Post('enlace')
   @HttpCode(200)
   async enlace(

@@ -154,6 +154,6 @@
 | REQ-ACC-10 | 06-acceso | Requisito del sistema | 1 | T-006, T-009 | acceso.cuenta-no-autogestionable | en curso |
 | REQ-ACC-11 | 06-acceso | Requisito del sistema | 1 | T-009 | — | pendiente |
 | REQ-ACC-12 | 06-acceso | Requisito del sistema; R-45 | 1 | T-006 | acceso.cuenta-no-autogestionable | implementado |
-| REQ-ACC-13 | 06-acceso | Requisito del sistema; D-17 | 1 | T-004, T-026 | acceso.colaborador-solo-ve-lo-suyo | en curso |
-| REQ-ACC-14 | 06-acceso | Requisito del sistema; D-17 | 1 | T-007, T-026 | — | en curso |
-| REQ-ACC-15 | 06-acceso | Requisito del sistema; D-17 | 1 | T-026 | — | pendiente |
+| REQ-ACC-13 | 06-acceso | Requisito del sistema; D-17 | 1 | T-004, T-026 | acceso.colaborador-solo-ve-lo-suyo | implementado |
+| REQ-ACC-14 | 06-acceso | Requisito del sistema; D-17 | 1 | T-007, T-026 | acceso.colaborador-con-los-dos-permisos | implementado |
+| REQ-ACC-15 | 06-acceso | Requisito del sistema; D-17 | 1 | T-026 | acceso.solo-el-responsable-asigna-tareas | implementado |

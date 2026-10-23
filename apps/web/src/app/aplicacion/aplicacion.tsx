@@ -50,6 +50,7 @@ const AVISO_GOOGLE: Record<string, { texto: string; tono: 'exito' | 'advertencia
 };
 
 export function Aplicacion({
+  rol,
   plan,
   perfil,
   permisosGoogle,
@@ -100,7 +101,9 @@ export function Aplicacion({
 
   const conLista = seccion === 'agenda' && corte === 0 && agenda.estado === 'lista' && agenda.compromisos.length > 0;
 
-  const cortes = seccion === 'tareas' && plan === 'empresarial' ? [...actual.cortes, 'Encargadas'] : actual.cortes;
+  // «Encargadas» es lo que encargaste a otros: el colaborador no asigna tareas (REQ-ACC-15)
+  const encarga = plan === 'empresarial' && rol !== 'colaborador';
+  const cortes = seccion === 'tareas' && encarga ? [...actual.cortes, 'Encargadas'] : actual.cortes;
 
   return (
     <div className={`aplicacion${expandido ? ' aplicacion--expandida' : ''}`}>

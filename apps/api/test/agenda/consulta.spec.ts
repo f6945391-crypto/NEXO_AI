@@ -134,10 +134,11 @@ describe('T-015 · consulta de la agenda', () => {
       expect(ErrorApi.parse(r.body).codigo).toBe('EVENTO_NO_ENCONTRADO');
     });
 
-    it('el colaborador no tiene agenda propia en NexoAI (REQ-ACC-13)', async () => {
-      const { autorizacion } = await persona({ rol: 'colaborador' });
-      const r = await consultar(autorizacion).expect(403);
-      expect(ErrorApi.parse(r.body).codigo).toBe('ROL_NO_PERMITIDO');
+    it('el colaborador consulta su agenda como cualquier cuenta (REQ-ACC-13, T-026)', async () => {
+      const { autorizacion, perfilId } = await persona({ rol: 'colaborador' });
+      const { inicio, fin } = enUnaHora();
+      calendario.sembrar(perfilId, { titulo: 'Del colaborador', inicio, fin, zonaHoraria: 'UTC' });
+      expect(Lista.parse((await consultar(autorizacion).expect(200)).body).map((e) => e.titulo)).toEqual(['Del colaborador']);
     });
   });
 

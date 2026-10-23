@@ -2,12 +2,13 @@ import { Injectable, type CanActivate, type ExecutionContext } from '@nestjs/com
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { SesionActual, type Rol } from '@nexoai/contratos';
+import { SesionActual } from '@nexoai/contratos';
 import { errorApi } from '../plataforma/errores';
 import {
+  CLAVE_ALCANCE,
   CLAVE_DURANTE_PRIMER_INGRESO,
-  CLAVE_PERMITIDO_PARA,
   CLAVE_PUBLICO,
+  type AlcanceRuta,
   type SolicitudConContexto,
 } from './decoradores';
 
@@ -63,19 +64,21 @@ export class PrimerIngresoGuard implements CanActivate {
   }
 }
 
-// Global, después de PrimerIngresoGuard. Deniega por defecto al colaborador (REQ-ACC-13).
+export const SOLO_EL_RESPONSABLE = 'Solo el responsable del equipo asigna tareas y administra el equipo.';
+
+// Global, después de PrimerIngresoGuard (T-026, REQ-ACC-13, REQ-ACC-15). El colaborador usa todo lo
+// suyo, como el Plan Empresarial, pero no lo que da autoridad sobre otros. Una ruta sin alcance
+// declarado se le cierra también: un olvido no deja nada abierto.
 @Injectable()
 export class RolGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(ctx: ExecutionContext): boolean {
     if (esPublica(this.reflector, ctx)) return true;
-    const rol = ctx.switchToHttp().getRequest<SolicitudConContexto>().contexto?.rol;
-    if (rol !== 'colaborador') return true;
-    const permitidos =
-      this.reflector.getAllAndOverride<Rol[]>(CLAVE_PERMITIDO_PARA, [ctx.getHandler(), ctx.getClass()]) ?? [];
-    if (permitidos.includes('colaborador')) return true;
-    throw errorApi(403, 'ROL_NO_PERMITIDO', 'Esta función no está disponible para tu cuenta.');
+    if (ctx.switchToHttp().getRequest<SolicitudConContexto>().contexto?.rol !== 'colaborador') return true;
+    const alcance = this.reflector.getAllAndOverride<AlcanceRuta | undefined>(CLAVE_ALCANCE, [ctx.getHandler(), ctx.getClass()]);
+    if (alcance === 'propio') return true;
+    throw errorApi(403, 'ROL_NO_PERMITIDO', alcance === 'responsable' ? SOLO_EL_RESPONSABLE : 'Esta función no está disponible para tu cuenta.');
   }
 }
 

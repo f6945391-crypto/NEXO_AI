@@ -93,9 +93,8 @@ export async function obtenerPermisosGoogle(): Promise<PermisoGoogle[]> {
   return respuesta.estado === 200 && permisos.success ? permisos.data : [];
 }
 
-// Destino tras entrar o completar el primer ingreso, según el rol (REQ-ACC-02, H-ACC-05, H-ACC-06).
-export function destinoTrasIngreso(sesion: Pick<IngresoRespuesta, 'rol' | 'primerIngresoPendiente'>): string {
-  if (sesion.primerIngresoPendiente) return '/primer-ingreso';
-  if (sesion.rol === 'colaborador') return '/solo-movil';
-  return '/';
+// Destino tras entrar o completar el primer ingreso (REQ-ACC-02, H-ACC-05). Desde T-026 el colaborador
+// también usa la web: todos van a la aplicación.
+export function destinoTrasIngreso(sesion: Pick<IngresoRespuesta, 'primerIngresoPendiente'>): string {
+  return sesion.primerIngresoPendiente ? '/primer-ingreso' : '/';
 }

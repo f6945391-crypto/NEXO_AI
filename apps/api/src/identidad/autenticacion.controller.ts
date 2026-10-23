@@ -9,10 +9,11 @@ import {
 import { ValidarCon } from '../plataforma/errores';
 import { AutenticacionService } from './autenticacion.service';
 import type { ContextoSolicitud } from './contexto';
-import { Contexto, PermitidoDurantePrimerIngreso, PermitidoPara, Publico } from './decoradores';
+import { Contexto, PermitidoDurantePrimerIngreso, Publico, SobreLoPropio } from './decoradores';
 import { LimiteIngresoGuard } from './guardas';
 
 // REQ-ACC-02, REQ-ACC-03, REQ-ACC-12 · T-004
+@SobreLoPropio()
 @Controller('auth')
 export class AutenticacionController {
   constructor(private readonly autenticacion: AutenticacionService) {}
@@ -42,7 +43,6 @@ export class AutenticacionController {
 
   // REQ-ACC-04, REQ-ACC-05 · T-005
   @PermitidoDurantePrimerIngreso()
-  @PermitidoPara('colaborador')
   @Post('primer-ingreso')
   @HttpCode(200)
   completarPrimerIngreso(
@@ -51,8 +51,6 @@ export class AutenticacionController {
   ): Promise<IngresoRespuesta> {
     return this.autenticacion.completarPrimerIngreso(contexto, cuerpo.contrasenaNueva, cuerpo.zonaHoraria);
   }
-
-  @PermitidoPara('colaborador')
   @Get('sesion')
   sesion(@Contexto() contexto: ContextoSolicitud): SesionActual {
     return contexto;

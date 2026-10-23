@@ -87,17 +87,15 @@ test.describe('acceso.recorrido-web', () => {
     await expect(page).toHaveURL(/\/entrar$/);
   });
 
-  test('el colaborador, tras su primer ingreso, ve que su cuenta se usa desde el móvil', async ({ page }) => {
+  test('el colaborador, tras su primer ingreso, usa la aplicación en la web, sin la franja de lo encargado (T-026)', async ({ page }) => {
     await entrar(page, cuentas.colaborador.correo);
     await page.getByLabel('Contraseña nueva').fill(cuentas.contrasenaNueva);
     await page.getByRole('button', { name: /Usar la de este equipo/ }).click();
     await page.getByRole('button', { name: 'Guardar y continuar' }).click();
 
-    await expect(page).toHaveURL(/\/solo-movil$/);
-    await expect(page.getByRole('heading', { name: 'Tu cuenta se usa desde el móvil' })).toBeVisible();
-
-    // Aunque escriba la dirección de inicio, vuelve al aviso.
-    await page.goto('/');
-    await expect(page).toHaveURL(/\/solo-movil$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Agenda' })).toBeVisible();
+    await page.getByRole('navigation', { name: 'Secciones' }).getByRole('button', { name: 'Tareas' }).click();
+    await expect(page.getByRole('tab', { name: 'Con fecha' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Encargadas' })).toHaveCount(0);
   });
 });

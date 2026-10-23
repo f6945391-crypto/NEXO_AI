@@ -18,9 +18,9 @@ const PROVEEDOR = 'google';
 const TIPO_ESTADO = 'oauth-google';
 const VIDA_ENLACE_S = 10 * 60;
 
-// REQ-ACC-14: al colaborador solo se le ofrece el calendario.
-const alcancesPara = (contexto: Pick<ContextoSolicitud, 'rol'>): ClaveAlcanceGoogle[] =>
-  contexto.rol === 'colaborador' ? ['calendario'] : ['calendario', 'correo'];
+// REQ-ACC-14 (reescrito el 23 de octubre de 2026, T-026): toda cuenta, también la del colaborador,
+// puede conectar los dos permisos.
+const ALCANCES_OFRECIDOS: ClaveAlcanceGoogle[] = ['calendario', 'correo'];
 
 export type ResultadoRetorno = 'conectado' | 'rechazado' | 'no-concedido' | 'error';
 
@@ -36,7 +36,7 @@ export class IntegracionesGoogleService {
     const filas = await this.prisma.deOrganizacion(contexto.organizacionId).consentimientoIntegracion.findMany({
       where: { perfilId: contexto.perfilId, proveedor: PROVEEDOR },
     });
-    return alcancesPara(contexto).map((clave) => ({
+    return ALCANCES_OFRECIDOS.map((clave) => ({
       clave,
       nombre: ALCANCES_GOOGLE[clave].nombre,
       paraQue: ALCANCES_GOOGLE[clave].paraQue,
@@ -47,9 +47,6 @@ export class IntegracionesGoogleService {
   // El estado de OAuth es un JWT firmado y de corta vida: quien vuelve de Google solo puede conectar
   // la cuenta que pidió el enlace, y solo el alcance que pidió.
   async crearEnlace(contexto: ContextoSolicitud, solicitud: EnlaceGoogleSolicitud): Promise<string> {
-    if (!alcancesPara(contexto).includes(solicitud.alcance)) {
-      throw errorApi(403, 'ROL_NO_PERMITIDO', 'Tu cuenta no usa este permiso.');
-    }
     const estado = await this.jwt.signAsync(
       { typ: TIPO_ESTADO, sub: contexto.perfilId, org: contexto.organizacionId, alcance: solicitud.alcance, cliente: solicitud.cliente },
       { expiresIn: VIDA_ENLACE_S },

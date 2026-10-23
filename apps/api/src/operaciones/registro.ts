@@ -20,6 +20,8 @@ export interface EjecutorOperacion<C = unknown> {
   readonly esquema: z.ZodType<C>;
   // Orígenes admitidos; sin declarar, todos. Crear algo nuevo solo lo hace el agente (R-42, DP-01).
   readonly origenes?: readonly OrigenOperacion[];
+  // Asigna trabajo a otros: el colaborador no puede proponerla ni confirmarla (REQ-ACC-15, T-026)
+  readonly soloResponsable?: boolean;
   // Cómo nombrar a la persona cada campo obligatorio cuando falta (REQ-CUN01-07)
   readonly nombresDeCampos?: Readonly<Record<string, string>>;
   proponer(contexto: ContextoSolicitud, carga: C): Promise<Propuesta<C>>;

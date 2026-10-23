@@ -140,12 +140,11 @@ describe('T-007 · conexión con Google', () => {
     });
   });
 
-  describe('acceso.colaborador-solo-calendario', () => {
-    it('al colaborador solo se le ofrece el calendario, y pedir el correo se rechaza (REQ-ACC-14)', async () => {
+  describe('acceso.colaborador-con-los-dos-permisos', () => {
+    it('al colaborador se le ofrecen el calendario y el correo, como a cualquier cuenta (REQ-ACC-14, T-026)', async () => {
       const { autorizacion } = await sesion('colaborador');
-      expect((await permisos(autorizacion)).map((p) => p.clave)).toEqual(['calendario']);
-      const r = await http().post('/integraciones/google/enlace').set('Authorization', autorizacion).send({ alcance: 'correo' }).expect(403);
-      expect(ErrorApi.parse(r.body).codigo).toBe('ROL_NO_PERMITIDO');
+      expect((await permisos(autorizacion)).map((p) => p.clave)).toEqual(['calendario', 'correo']);
+      expect((await enlace(autorizacion, 'correo')).searchParams.get('scope')).toBe('https://www.googleapis.com/auth/gmail.send');
       await enlace(autorizacion, 'calendario');
     });
   });

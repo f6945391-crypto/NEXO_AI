@@ -7,6 +7,7 @@ import {
 } from '@nexoai/contratos';
 import type { Operacion } from '../generado/prisma/client';
 import type { ContextoSolicitud } from '../identidad/contexto';
+import { SOLO_EL_RESPONSABLE } from '../identidad/guardas';
 import { errorApi } from '../plataforma/errores';
 import { PrismaService } from '../plataforma/prisma.service';
 import { RegistroOperaciones } from './registro';
@@ -55,6 +56,7 @@ export class OperacionesService {
   async proponer(contexto: ContextoSolicitud, solicitud: OperacionSolicitud): Promise<OperacionRespuesta> {
     const ejecutor = this.registro.obtener(solicitud.tipo);
     if (!ejecutor) throw errorApi(400, 'OPERACION_DESCONOCIDA', 'Esa acción no existe.');
+    this.comprobarAutoridad(contexto, ejecutor);
     if (ejecutor.origenes && !ejecutor.origenes.includes(solicitud.origen)) {
       throw errorApi(403, 'ORIGEN_NO_PERMITIDO', 'Esto se le pide al asistente: no hay un camino aparte para hacerlo.');
     }
@@ -94,6 +96,9 @@ export class OperacionesService {
     if (op.estado !== 'propuesta') {
       throw errorApi(409, 'OPERACION_NO_CONFIRMABLE', 'Esta acción ya no se puede confirmar.');
     }
+    // Por si el rol cambió desde que se propuso
+    const tipo = this.registro.obtener(op.tipo);
+    if (tipo) this.comprobarAutoridad(contexto, tipo);
     if (!VistaConfirmacion.parse(op.vistaConfirmacion).confirmable) {
       throw errorApi(409, 'OPERACION_NO_CONFIRMABLE', 'Hay que resolver lo que impide esta acción antes de confirmarla.');
     }
@@ -143,6 +148,11 @@ export class OperacionesService {
       take: 100,
     });
     return ops.map(aRespuesta);
+  }
+
+  // REQ-ACC-15: solo el responsable del equipo asigna trabajo a otros, aunque el colaborador tenga el plan.
+  private comprobarAutoridad(contexto: ContextoSolicitud, ejecutor: { soloResponsable?: boolean }): void {
+    if (ejecutor.soloResponsable && contexto.rol === 'colaborador') throw errorApi(403, 'ROL_NO_PERMITIDO', SOLO_EL_RESPONSABLE);
   }
 
   // Otra confirmación ganó la carrera: si ya terminó, mismo resultado; si sigue en curso, se dice.
