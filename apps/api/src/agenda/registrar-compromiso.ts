@@ -6,10 +6,9 @@ import { permisoFaltante } from '../integraciones/cliente-google';
 import { RegistroOperaciones, type EjecutorOperacion, type Propuesta, type ResultadoEjecucion } from '../operaciones/registro';
 import { PrismaService } from '../plataforma/prisma.service';
 import { aContrato } from './consulta-agenda.service';
-import { detectarConflictos, generarAlternativas } from './dominio/conflictos';
 import { isoConDesfase } from './dominio/tiempo';
 import { fechaLarga, horario, nombreDeZona } from './formato';
-import { ReplicaEventosRepositorio } from './replica-eventos.repositorio';
+import { RevisionHorario } from './revision-horario';
 import { SincronizadorCalendario } from './sincronizador-calendario';
 
 // REQ-CUN01-02, 03, 04, 05, 07 · T-017, T-018 · specs/02-agenda/plan.md §3 y §6. Operación
@@ -32,7 +31,7 @@ export class RegistrarCompromiso implements EjecutorOperacion<PropuestaEvento>, 
     private readonly registro: RegistroOperaciones,
     private readonly prisma: PrismaService,
     private readonly sincronizador: SincronizadorCalendario,
-    private readonly replica: ReplicaEventosRepositorio,
+    private readonly revisionHorario: RevisionHorario,
     @Inject(PROVEEDOR_CALENDARIO) private readonly proveedor: ProveedorCalendario,
   ) {}
 
@@ -83,14 +82,7 @@ export class RegistrarCompromiso implements EjecutorOperacion<PropuestaEvento>, 
     const zonaHoraria = carga.zonaHoraria ?? 'UTC';
     const inicio = new Date(carga.inicio);
     const fin = new Date(carga.fin ?? carga.inicio);
-    const DIA = 24 * 3600_000;
-    // Lo que hay alrededor: los solapes y, si los hay, los días donde buscar alternativas (DP-02)
-    const cercanos = await this.replica.enRango(contexto, new Date(inicio.getTime() - DIA), new Date(inicio.getTime() + 9 * DIA));
-    const choques = detectarConflictos(cercanos, { inicio, fin });
-    const alternativas = choques.length ? generarAlternativas(cercanos, { inicio, fin }, { zonaHoraria }) : [];
-    const causas = choques.map((c) => cercanos.find((e) => e.id === c.id)!);
-    const iso = (d: Date) => isoConDesfase(d, zonaHoraria);
-
+    const { datos: alternativas, ...revision } = await this.revisionHorario.revisar(contexto, { inicio, fin }, zonaHoraria);
     return {
       accion: 'Registrar este compromiso en tu calendario de Google',
       datos: [
@@ -99,25 +91,11 @@ export class RegistrarCompromiso implements EjecutorOperacion<PropuestaEvento>, 
         { etiqueta: 'Hora', valor: horario(inicio, fin, zonaHoraria) },
         { etiqueta: 'Zona horaria', valor: nombreDeZona(zonaHoraria, inicio) },
         ...(finPorDefecto ? [{ etiqueta: 'Duración', valor: '1 hora, porque no indicaste la hora de fin' }] : []),
-        ...(alternativas.length
-          ? [{ etiqueta: 'Alternativas', valor: alternativas.map((a) => `${fechaLarga(a.inicio, zonaHoraria)}, ${horario(a.inicio, a.fin, zonaHoraria)}`).join(' · ') }]
-          : []),
+        ...alternativas,
       ],
       // Se puede cancelar después y no se avisa a nadie: no hay nada irreversible
       irreversible: null,
-      // REQ-CUN01-05: un solape impide confirmar hasta que se elija otro horario
-      confirmable: causas.length === 0,
-      motivoNoConfirmable: causas.length
-        ? `Se superpone con ${causas.map((e) => `«${e.titulo}», de ${horario(e.inicio, e.fin, zonaHoraria)}`).join(' y con ')}. ${
-            alternativas.length ? 'Elige una de las alternativas u otro horario.' : 'Elige otro horario.'
-          }`
-        : null,
-      conflicto: causas.length
-        ? {
-            eventos: causas.map((e) => ({ id: e.id, titulo: e.titulo, inicio: iso(e.inicio), fin: iso(e.fin) })),
-            alternativas: alternativas.map((a) => ({ inicio: iso(a.inicio), fin: iso(a.fin) })),
-          }
-        : null,
+      ...revision,
     };
   }
 

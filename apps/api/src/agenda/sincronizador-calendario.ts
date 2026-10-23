@@ -101,11 +101,7 @@ export class SincronizadorCalendario {
   private async aplicar(quien: Quien, cambios: CambioCalendario[], ahora: Date): Promise<void> {
     for (const cambio of cambios) {
       if (cambio.tipo === 'cancelado') {
-        // Nunca se borra de la réplica: se marca (R-25)
-        await this.datos(quien).eventoAgenda.updateMany({
-          where: { perfilId: quien.perfilId, googleEventoId: cambio.id },
-          data: { estado: 'cancelado', sincronizadoEn: ahora },
-        });
+        await this.marcarCancelado(quien, cambio.id, ahora);
         continue;
       }
       await this.incorporar(quien, cambio.evento, ahora);
@@ -135,6 +131,14 @@ export class SincronizadorCalendario {
       });
     // El trabajador y una consulta pueden crear el mismo evento a la vez; el segundo intento lo actualiza.
     return guardar().catch((error: unknown) => (esClaveRepetida(error) ? guardar() : Promise.reject(error)));
+  }
+
+  // Nunca se borra de la réplica: se marca (R-25). Lo usan la sincronización y `agenda.cancelar`. Nulo si
+  // la réplica nunca tuvo ese evento.
+  async marcarCancelado(quien: Quien, googleEventoId: string, ahora = new Date()) {
+    const datos = this.datos(quien);
+    await datos.eventoAgenda.updateMany({ where: { perfilId: quien.perfilId, googleEventoId }, data: { estado: 'cancelado', sincronizadoEn: ahora } });
+    return datos.eventoAgenda.findFirst({ where: { perfilId: quien.perfilId, googleEventoId } });
   }
 
   private datos(quien: Quien) {

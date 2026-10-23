@@ -46,11 +46,11 @@
 | REQ-CAP-23 | 01-captura | regla de producto derivada de los cuatro blancos; RN-OP-01 | 2 | — | — | pendiente |
 | REQ-CAP-24 | 01-captura | regla de producto R-42; `SPEC.md` P-11 | 2 | — | — | pendiente |
 | REQ-CUN01-01 | 02-agenda | CUN-01 flujo principal, pasos 1 y 2 | 2 | — | — | pendiente |
-| REQ-CUN01-02 | 02-agenda | CUN-01 flujo principal, paso 3 | 1 | T-016, T-017, T-019 | agenda.consulta-solapes-antes-de-proponer | en curso |
+| REQ-CUN01-02 | 02-agenda | CUN-01 flujo principal, paso 3 | 1 | T-016, T-017, T-019 | agenda.consulta-solapes-antes-de-proponer | implementado |
 | REQ-CUN01-03 | 02-agenda | RN-ER-03 | 1 | T-012, T-017 | agenda.sin-confirmar-no-escribe-ni-notifica | implementado |
-| REQ-CUN01-04 | 02-agenda | CUN-01 flujo principal, pasos 5 y 6 | 1 | T-017, T-019 | agenda.confirmar-registra-lo-mostrado | en curso |
+| REQ-CUN01-04 | 02-agenda | CUN-01 flujo principal, pasos 5 y 6 | 1 | T-017, T-019 | agenda.confirmar-registra-lo-mostrado | implementado |
 | REQ-CUN01-05 | 02-agenda | CUN-01 FA-01 | 1 | T-016, T-018 | agenda.conflicto-identifica-causa-y-ofrece-alternativas | implementado |
-| REQ-CUN01-06 | 02-agenda | CUN-01 FA-02 | 1 | T-019, T-021 | — | pendiente |
+| REQ-CUN01-06 | 02-agenda | CUN-01 FA-02 | 1 | T-019, T-021 | agenda.cancelar-requiere-confirmacion | en curso |
 | REQ-CUN01-07 | 02-agenda | CUN-01 EX-01 | 1 | T-017 | agenda.datos-faltantes-no-crea-operacion | implementado |
 | REQ-CUN01-08 | 02-agenda | CUN-01 EX-02, RN-OP-01, REQ-ACC-08 | 1 | T-015, T-017 | agenda.sin-permiso-no-invoca-proveedor | implementado |
 | REQ-CUN01-09 | 02-agenda | RN-OP-01, RN-EST-01 | 1 | T-014, T-015 | agenda.solo-eventos-propios | implementado |

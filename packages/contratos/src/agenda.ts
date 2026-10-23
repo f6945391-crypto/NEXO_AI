@@ -50,3 +50,20 @@ export const PropuestaEvento = z
   })
   .refine(({ inicio, fin }) => !fin || Date.parse(inicio) < Date.parse(fin), { message: 'el fin tiene que ser posterior al inicio', path: ['fin'] });
 export type PropuestaEvento = z.infer<typeof PropuestaEvento>;
+
+// Carga de la Operación `agenda.modificar` (REQ-CUN01-06) · T-019. Solo lo que cambia; sin `fin`, un
+// inicio nuevo conserva la duración. La propuesta guarda la carga completada, con la zona del evento.
+export const ModificacionEvento = z
+  .strictObject({
+    eventoId: z.uuid(),
+    titulo: z.string().trim().min(1).max(200).optional(),
+    inicio: Instante.optional(),
+    fin: Instante.optional(),
+    zonaHoraria: ZonaHoraria.optional(),
+  })
+  .refine(({ titulo, inicio, fin }) => titulo !== undefined || inicio !== undefined || fin !== undefined, 'no dice qué cambiar');
+export type ModificacionEvento = z.infer<typeof ModificacionEvento>;
+
+// Carga de la Operación `agenda.cancelar` (REQ-CUN01-06, DP-01) · T-019. Es también un control directo.
+export const CancelacionEvento = z.strictObject({ eventoId: z.uuid() });
+export type CancelacionEvento = z.infer<typeof CancelacionEvento>;

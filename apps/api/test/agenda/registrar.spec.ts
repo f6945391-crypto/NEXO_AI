@@ -10,6 +10,7 @@ import { ProveedorCalendarioSimulado } from '../../src/integraciones/calendario/
 import { PROVEEDOR_CALENDARIO } from '../../src/integraciones/calendario/proveedor-calendario';
 import type { PrismaClient } from '../../src/plataforma/prisma';
 import { clientePrueba, crearCuentaLista, vaciarTablas } from '../utilidades/base-prueba';
+import { enLima, fechaEnLima, instante, VIERNES } from '../utilidades/fechas';
 
 // T-017 · REQ-CUN01-02, 03, 04, 07 · H-AG-01 · R-42
 // T-018 · REQ-CUN01-05 · DP-02 · H-AG-07
@@ -18,19 +19,6 @@ const CONTRASENA = 'una-contrasena-de-prueba';
 const calendario = new ProveedorCalendarioSimulado();
 const todo = { desde: new Date(0), hasta: new Date('2100-01-01') };
 const DIA = 24 * 3600_000;
-
-// Un viernes al menos diez días adelante: dentro de la ventana de la réplica y nunca en el pasado, sea
-// cual sea el día en que corran las pruebas. Las horas son de Lima, que no cambia de hora.
-function viernesProximo(): string {
-  const d = new Date(Date.now() + 10 * DIA);
-  while (d.getUTCDay() !== 5) d.setUTCDate(d.getUTCDate() + 1);
-  return d.toISOString().slice(0, 10);
-}
-const VIERNES = viernesProximo();
-const enLima = (hora: string, dia = VIERNES) => `${dia}T${hora}:00-05:00`;
-const instante = (hora: string, dia = VIERNES) => new Date(enLima(hora, dia));
-const fechaEnLima = (hora: string) =>
-  new Intl.DateTimeFormat('es', { timeZone: 'America/Lima', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(instante(hora));
 
 describe('T-017 y T-018 · registrar un compromiso', () => {
   let app: INestApplication;

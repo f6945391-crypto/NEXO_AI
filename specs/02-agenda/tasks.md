@@ -139,7 +139,16 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** tipos `agenda.modificar` y `agenda.cancelar`, con origen `agente` o `control_directo`; solo sobre la instancia elegida; se rechazan con explicación si el usuario no es el organizador
 - **Hecho cuando:** cancelar exige confirmación; modificar una instancia no toca la serie; un evento ajeno se rechaza sin llamar al proveedor
 - **Prueba:** `agenda.cancelar-requiere-confirmacion`
-- **Estado:** pendiente
+- **Estado:** hecha · 23 de octubre de 2026. 7 pruebas. Sin la comprobación del organizador, la de H-AG-05 falla
+- **Notas de implementación:**
+  - `agenda.modificar` (solo origen `agente`) y `agenda.cancelar` (`agente` y `control_directo`, DP-01). Ajustes del plan §6.
+  - Un compromiso ajeno, ya cancelado o desconocido se rechaza **al proponer**, con `EVENTO_NO_MODIFICABLE` o `EVENTO_NO_ENCONTRADO` y su explicación, sin crear la operación ni escribir en Google. Al invitado se le recuerda que puede rechazar la invitación en Google Calendar (H-AG-05).
+  - Modificar: lo que no se indica se toma del evento, y un inicio nuevo sin fin conserva la duración. La tarjeta muestra el antes y el ahora. Solo un horario nuevo se revisa (renombrar no tiene que resolver un solape que ya existía), y el propio evento no cuenta como solape.
+  - **Revisión de horario compartida** (`revision-horario.ts`): conflicto, alternativas y nueva comprobación al confirmar son los mismos para registrar y modificar.
+  - Un compromiso de todo el día no se cambia de hora desde aquí, aunque sí de título: H-AG-03 no dice cómo moverlo.
+  - Cancelar quita el evento de Google y lo deja `cancelado` en la réplica (R-25). Si ya estaba cancelado al confirmar, no se vuelve a llamar a Google. La tarjeta dice qué es irreversible.
+  - Todo, sobre la instancia elegida (H-AG-04). Las tarjetas dicen «No se avisa a nadie de este cambio»: hallazgo nuevo **H-AG-11**.
+  - Las pruebas de agenda comparten `test/utilidades/fechas.ts`, con fechas relativas al día en que corren.
 
 ---
 
