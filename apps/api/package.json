@@ -11,7 +11,8 @@
     "test": "vitest run",
     "migrar": "prisma migrate deploy",
     "semilla": "node dist/cli/semilla.js",
-    "crear-cuenta": "node dist/cli/crear-cuenta.js"
+    "crear-cuenta": "node dist/cli/crear-cuenta.js",
+    "probar-calendario": "node dist/cli/probar-calendario.js"
   },
   "dependencies": {
     "@nestjs/common": "12.1.2",

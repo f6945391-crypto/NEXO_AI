@@ -37,7 +37,14 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** interfaz `ProveedorCalendario` (listar con sincronización incremental, crear, actualizar, cancelar); implementación para Google Calendar sobre `ClienteGoogle`; implementación simulada en memoria que cuenta llamadas
 - **Hecho cuando:** la implementación simulada pasa las mismas pruebas de contrato que se usarán para la real; la real se probó a mano una vez con una cuenta de prueba
 - **Prueba:** `calendario.contrato-del-proveedor`
-- **Estado:** pendiente
+- **Estado:** hecha contra el simulado · 22 de octubre de 2026. 10 pruebas. **Falta la prueba real**: Google respondió `403 SERVICE_DISABLED`, porque la API de Google Calendar no está habilitada en el proyecto de Google Cloud. Lo tiene que habilitar el equipo
+- **Notas de implementación:**
+  - `src/integraciones/calendario/`: el puerto (`proveedor-calendario.ts`), la implementación sobre Google (`google-calendar.ts`, sin SDK, con `ClienteGoogle`) y la simulada (`calendario-simulado.ts`).
+  - **El contrato es código, no solo una prueba** (`contrato.ts`): la prueba lo ejecuta contra la simulada y `pnpm --filter @nexoai/api probar-calendario -- --correo <correo>` contra Google con la base de desarrollo. Crea un evento dentro de 30 días, lo cambia y lo cancela; con `--solo-lectura` solo lee.
+  - Lo borrado en Google llega como cambio `cancelado`, no desaparece (R-25). Cancelar dos veces no falla (P-07).
+  - Los eventos de todo el día empiezan y terminan a medianoche de su zona. Un evento sin zona propia toma la del calendario, que Google da en cada lectura.
+  - Ante un error, la persona solo ve `GOOGLE_NO_DISPONIBLE`; el motivo real de Google queda en el registro del servidor.
+  - La simulada cuenta lecturas y escrituras, y deja simular lo que se hace directamente en Google: crear, cambiar, borrar y que caduque el token (el `410`).
 
 ### T-014 · Réplica y sincronización
 

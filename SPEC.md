@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 2.8.0 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
+**Versión:** 2.8.1 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -143,7 +143,7 @@ Estado por columna: **—** no existe · **borrador** · **vigente** · **parcia
 | Área | Archivo | CUN | Plataforma | Plan | REQ | Spec | Diseño | Plan técnico | Tareas | Código | Pruebas |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | Captura | `specs/01-captura/spec.md` | 01, 03 | Móvil | G / P | CAP-01…24 (24) | vigente | parcial | — | — | — | — |
-| Agenda | `specs/02-agenda/spec.md` | 01 | Móvil | G | CUN01-01…12 (12) | vigente | parcial (jerarquía anterior) | aprobado | T-012…T-021 (T-012, T-016 y T-020 hechas) | 3 REQ en curso (Operaciones, conflictos y alternativas) | 3 de 12 REQ con prueba |
+| Agenda | `specs/02-agenda/spec.md` | 01 | Móvil | G | CUN01-01…12 (12) | vigente | parcial (jerarquía anterior) | aprobado | T-012…T-021 (T-012, T-016 y T-020 hechas; T-013 contra el simulado) | 3 REQ en curso (Operaciones, conflictos y alternativas) | 3 de 12 REQ con prueba |
 | Jornada | `specs/02-jornada/spec.md` | 02 | Móvil | P | CUN02-01…24 (24) | vigente | — | — | — | — | — |
 | Tareas / delegación | `specs/03-tareas/spec.md` | 07, 09 | Web (gerente) + móvil (colaborador) | E | CUN07-01…17 (17) | vigente | parcial (jerarquía anterior) | — | — | — | — |
 | Comunicaciones | `specs/04-comunicaciones/spec.md` | 04 | Móvil + web | P | CUN04-01…15 (15) | vigente | — | — | — | — | — |
@@ -247,7 +247,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 | Fase | Contenido | CUN | Estado |
 |---|---|---|---|
 | 0 | **Base SDD**: este archivo, `AGENTS.md`, glosario, trazabilidad, resolver PT-1 e INC-01 | — | **Cerrada el 2026-10-22** |
-| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023, T-006, T-016, T-012, T-007 y T-022 hechas. **Google conectado con una cuenta real.** T-008 y T-024 hechas. Siguiente: T-013 |
+| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023, T-006, T-016, T-012, T-007 y T-022 hechas. **Google conectado con una cuenta real.** T-008 y T-024 hechas. T-013 hecha contra el simulado: **falta habilitar la API de Google Calendar** en Google Cloud para probarla con la cuenta real. Siguiente: T-014 |
 | 2 | Capa de agente: intención, herramientas, confirmación | 01, 03 vía conversación + CAP | Especificado, sin plan |
 | 3 | Planificación de jornada | 02 | Especificado |
 | 4 | Equipos: disponibilidad, coordinación, delegación, seguimiento. Desde D-17, también la aplicación móvil del colaborador | 05 a 09 | Parcial (faltan 06 y 08); diseño desfasado (INC-14) |
@@ -266,6 +266,7 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-22 | 2.8.1 | **T-013 hecha contra el simulado.** Puerto `ProveedorCalendario` con implementación sobre Google Calendar (vía `ClienteGoogle`, sin SDK) y otra simulada que cuenta llamadas. El contrato es código compartido: lo ejecutan la prueba y el script `probar-calendario` contra Google. **La prueba real falló con `403 SERVICE_DISABLED`: la API de Google Calendar no está habilitada en el proyecto de Google Cloud.** 131 pruebas | `apps/api/src/integraciones/calendario`, `apps/api/src/cli/probar-calendario.ts`, `apps/api/test/calendario`, `apps/api/package.json`, `specs/02-agenda/tasks.md` | Claude |
 | 2026-10-22 | 2.8.0 | **T-008 hecha.** `ClienteGoogle`, el único punto que llama a Google: comprueba el permiso, renueva el acceso, y ante un permiso retirado lo marca, avisa una sola vez y no reintenta; `@RequiereGoogle` bloquea antes de ejecutar. ACC-08 y ACC-09 implementados. **T-024, nueva y hecha:** la auditoría mostró una sesión cerrada por dos renovaciones simultáneas (227 ms); margen de gracia de 30 s para duplicados (DP-04, provisional) y quinta migración. 121 pruebas | `apps/api/src/integraciones`, `apps/api/src/identidad/autenticacion.service.ts`, `apps/api/prisma`, `apps/api/test`, `packages/contratos`, `specs/06-acceso/plan.md`, `tasks.md`, `specs/trazabilidad.md` | Claude |
 | 2026-10-22 | 2.7.0 | **T-007 y T-022 hechas: conexión con Google, probada con una cuenta real.** Permisos por alcance con su explicación; enlace firmado de 10 minutos (ajuste del plan: `POST /integraciones/google/enlace`); tokens cifrados con AES-256-GCM; el colaborador solo ve el calendario; ninguna lectura de Gmail en el código. Pantalla en Ajustes y aviso al volver. **Defecto hallado en la prueba real y corregido:** las cookies `SameSite=Strict` perdían la sesión al volver de Google; ahora `Lax`. ACC-06, 07 y 14 implementados. 108 pruebas | `apps/api/src/integraciones`, `apps/api/prisma`, `apps/api/test`, `packages/contratos`, `apps/web`, `.env.example`, `.github/workflows/ci.yml`, `turbo.json`, `specs/06-acceso/plan.md`, `tasks.md`, `specs/trazabilidad.md` | Equipo (Google Cloud), implementado por Claude |
 | 2026-10-22 | 2.6.0 | **T-012 hecha: Operaciones (AD-09).** Tabla `operacion`; proponer, confirmar, descartar y listar; registro de ejecutores por tipo; confirmación idempotente con reclamación atómica (ajuste del plan §3.2, sin SQL escrito a mano); desenlaces ejecutada, no confirmable, vuelve a propuesta (H-AG-07) y fallida. `Operacion` entra en el filtro por organización. CUN01-03 en curso. **Lo que queda de la fase 1 depende de Google** (T-007 y siguientes). 97 pruebas | `apps/api/prisma`, `apps/api/src/operaciones`, `apps/api/test/operaciones`, `apps/api/test/plataforma`, `packages/contratos`, `specs/02-agenda/plan.md`, `tasks.md`, `specs/trazabilidad.md` | Claude |
