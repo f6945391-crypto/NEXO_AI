@@ -6,15 +6,16 @@ import { permisoFaltante } from '../integraciones/cliente-google';
 import { RegistroOperaciones, type EjecutorOperacion, type Propuesta, type ResultadoEjecucion } from '../operaciones/registro';
 import { PrismaService } from '../plataforma/prisma.service';
 import { aContrato } from './consulta-agenda.service';
-import { detectarConflictos } from './dominio/conflictos';
+import { detectarConflictos, generarAlternativas } from './dominio/conflictos';
 import { isoConDesfase } from './dominio/tiempo';
 import { fechaLarga, horario, nombreDeZona } from './formato';
 import { ReplicaEventosRepositorio } from './replica-eventos.repositorio';
 import { SincronizadorCalendario } from './sincronizador-calendario';
 
-// REQ-CUN01-02, 03, 04, 07 · T-017 · specs/02-agenda/plan.md §3 y §6. Operación `agenda.registrar`:
-// la propuesta consulta los solapes tras sincronizar y no escribe nada; solo `ejecutar`, al confirmar,
-// crea el evento en Google y guarda en la réplica lo que Google devolvió.
+// REQ-CUN01-02, 03, 04, 05, 07 · T-017, T-018 · specs/02-agenda/plan.md §3 y §6. Operación
+// `agenda.registrar`: la propuesta consulta los solapes tras sincronizar y no escribe nada; si choca,
+// dice con qué y ofrece alternativas (DP-02). Solo `ejecutar`, al confirmar, vuelve a comprobar
+// (H-AG-07), crea el evento en Google y guarda en la réplica lo que Google devolvió.
 
 // H-AG-01, decidido por el equipo el 22 de octubre de 2026: sin hora de fin, una hora.
 export const DURACION_POR_DEFECTO_MIN = 60;
@@ -57,31 +58,16 @@ export class RegistrarCompromiso implements EjecutorOperacion<PropuestaEvento>, 
       zonaHoraria,
     };
 
-    const existentes = await this.replica.enRango(contexto, inicio, fin);
-    const [primero] = detectarConflictos(existentes, { inicio, fin });
-    const causa = existentes.find((e) => e.id === primero?.id);
-
-    const vista: VistaConfirmacion = {
-      accion: 'Registrar este compromiso en tu calendario de Google',
-      datos: [
-        { etiqueta: 'Título', valor: completa.titulo },
-        { etiqueta: 'Fecha', valor: fechaLarga(inicio, zonaHoraria) },
-        { etiqueta: 'Hora', valor: horario(inicio, fin, zonaHoraria) },
-        { etiqueta: 'Zona horaria', valor: nombreDeZona(zonaHoraria, inicio) },
-        ...(finPorDefecto ? [{ etiqueta: 'Duración', valor: '1 hora, porque no indicaste la hora de fin' }] : []),
-      ],
-      // Se puede cancelar después y no se avisa a nadie: no hay nada irreversible
-      irreversible: null,
-      // Un solape impide confirmar. Las alternativas y la nueva comprobación al confirmar son T-018.
-      confirmable: !causa,
-      motivoNoConfirmable: causa
-        ? `Se superpone con «${causa.titulo}», de ${horario(causa.inicio, causa.fin, zonaHoraria)}. Elige otro horario.`
-        : null,
-    };
-    return { vista, carga: completa };
+    return { vista: await this.revisar(contexto, completa, finPorDefecto), carga: completa };
   }
 
   async ejecutar(contexto: ContextoSolicitud, carga: PropuestaEvento): Promise<ResultadoEjecucion> {
+    // H-AG-07: la agenda pudo cambiar desde que se propuso. Si ahora choca, no se escribe nada y se
+    // propone de nuevo, con el conflicto y alternativas nuevas.
+    await this.sincronizador.sincronizar(contexto);
+    const vista = await this.revisar(contexto, carga, false);
+    if (!vista.confirmable) return { tipo: 'reproponer', vistaConfirmacion: vista };
+
     const evento = await this.proveedor.crear(contexto, {
       titulo: carga.titulo,
       inicio: new Date(carga.inicio),
@@ -90,6 +76,49 @@ export class RegistrarCompromiso implements EjecutorOperacion<PropuestaEvento>, 
     });
     // La tarjeta de resultado se construye con lo que devolvió Google, no con lo propuesto
     return { tipo: 'ejecutada', resultado: aContrato(await this.sincronizador.incorporar(contexto, evento)) };
+  }
+
+  // La tarjeta de confirmación de una carga completa, con los solapes ya consultados en la réplica.
+  private async revisar(contexto: ContextoSolicitud, carga: PropuestaEvento, finPorDefecto: boolean): Promise<VistaConfirmacion> {
+    const zonaHoraria = carga.zonaHoraria ?? 'UTC';
+    const inicio = new Date(carga.inicio);
+    const fin = new Date(carga.fin ?? carga.inicio);
+    const DIA = 24 * 3600_000;
+    // Lo que hay alrededor: los solapes y, si los hay, los días donde buscar alternativas (DP-02)
+    const cercanos = await this.replica.enRango(contexto, new Date(inicio.getTime() - DIA), new Date(inicio.getTime() + 9 * DIA));
+    const choques = detectarConflictos(cercanos, { inicio, fin });
+    const alternativas = choques.length ? generarAlternativas(cercanos, { inicio, fin }, { zonaHoraria }) : [];
+    const causas = choques.map((c) => cercanos.find((e) => e.id === c.id)!);
+    const iso = (d: Date) => isoConDesfase(d, zonaHoraria);
+
+    return {
+      accion: 'Registrar este compromiso en tu calendario de Google',
+      datos: [
+        { etiqueta: 'Título', valor: carga.titulo },
+        { etiqueta: 'Fecha', valor: fechaLarga(inicio, zonaHoraria) },
+        { etiqueta: 'Hora', valor: horario(inicio, fin, zonaHoraria) },
+        { etiqueta: 'Zona horaria', valor: nombreDeZona(zonaHoraria, inicio) },
+        ...(finPorDefecto ? [{ etiqueta: 'Duración', valor: '1 hora, porque no indicaste la hora de fin' }] : []),
+        ...(alternativas.length
+          ? [{ etiqueta: 'Alternativas', valor: alternativas.map((a) => `${fechaLarga(a.inicio, zonaHoraria)}, ${horario(a.inicio, a.fin, zonaHoraria)}`).join(' · ') }]
+          : []),
+      ],
+      // Se puede cancelar después y no se avisa a nadie: no hay nada irreversible
+      irreversible: null,
+      // REQ-CUN01-05: un solape impide confirmar hasta que se elija otro horario
+      confirmable: causas.length === 0,
+      motivoNoConfirmable: causas.length
+        ? `Se superpone con ${causas.map((e) => `«${e.titulo}», de ${horario(e.inicio, e.fin, zonaHoraria)}`).join(' y con ')}. ${
+            alternativas.length ? 'Elige una de las alternativas u otro horario.' : 'Elige otro horario.'
+          }`
+        : null,
+      conflicto: causas.length
+        ? {
+            eventos: causas.map((e) => ({ id: e.id, titulo: e.titulo, inicio: iso(e.inicio), fin: iso(e.fin) })),
+            alternativas: alternativas.map((a) => ({ inicio: iso(a.inicio), fin: iso(a.fin) })),
+          }
+        : null,
+    };
   }
 
   private async zonaDelPerfil(contexto: ContextoSolicitud): Promise<string> {

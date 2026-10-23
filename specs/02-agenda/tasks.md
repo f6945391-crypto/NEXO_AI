@@ -124,7 +124,13 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** la propuesta incluye el evento que causa el conflicto y hasta tres alternativas, y no se puede confirmar. Al confirmar se vuelve a comprobar; si apareció un conflicto, la operación vuelve a `propuesta`
 - **Hecho cuando:** los dos casos del criterio de aceptación se cumplen contra el proveedor simulado
 - **Prueba:** `agenda.conflicto-identifica-causa-y-ofrece-alternativas`
-- **Estado:** pendiente
+- **Estado:** hecha · 23 de octubre de 2026. 3 pruebas nuevas. Sin la nueva comprobación al confirmar, la de H-AG-07 falla
+- **Notas de implementación:**
+  - La tarjeta de confirmación gana `conflicto`: los eventos que chocan (todos, no solo el primero) y hasta tres alternativas de `generarAlternativas()`, que también aparecen como texto en sus datos. Ajuste del plan §6.
+  - **Elegir una alternativa es proponer de nuevo** con ese horario y descartar la anterior; no hace falta una ruta propia.
+  - Al confirmar se vuelve a sincronizar y a revisar con la misma función que al proponer. Si ahora choca, no se escribe nada y la operación vuelve a `propuesta` con el conflicto y alternativas nuevas.
+  - En esa nueva propuesta ya no aparece la nota «1 hora, porque no indicaste la hora de fin»: la carga guardada no recuerda que el fin se calculó. La hora mostrada sigue siendo la exacta.
+  - **Defecto corregido de T-017:** sus pruebas usaban una fecha fija, el 6 de noviembre de 2026, y habrían fallado cuando esa fecha saliera de la ventana de la réplica. Ahora usan un viernes al menos diez días adelante, y el caso de otra zona usa Tokio, que no cambia de hora.
 
 ### T-019 · Modificar y cancelar
 

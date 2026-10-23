@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 2.16.1 · **Última actualización:** 23 de octubre de 2026 · Registro completo en §11
+**Versión:** 2.16.2 · **Última actualización:** 23 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -143,7 +143,7 @@ Estado por columna: **—** no existe · **borrador** · **vigente** · **parcia
 | Área | Archivo | CUN | Plataforma | Plan | REQ | Spec | Diseño | Plan técnico | Tareas | Código | Pruebas |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | Captura | `specs/01-captura/spec.md` | 01, 03 | Móvil | G / P | CAP-01…24 (24) | vigente | parcial | — | — | — | — |
-| Agenda | `specs/02-agenda/spec.md` | 01 | Móvil (y web: nivel Hoy, T-025) | G | CUN01-01…12 (12) | vigente | parcial (jerarquía anterior) | aprobado | T-012…T-021 y T-025 (T-012 a T-017, T-020 y T-025 hechas) | 4 REQ implementados (CUN01-03, 07, 08, 09) y 6 en curso | 10 de 12 REQ con prueba |
+| Agenda | `specs/02-agenda/spec.md` | 01 | Móvil (y web: nivel Hoy, T-025) | G | CUN01-01…12 (12) | vigente | parcial (jerarquía anterior) | aprobado | T-012…T-021 y T-025 (T-012 a T-018, T-020 y T-025 hechas) | 5 REQ implementados (CUN01-03, 05, 07, 08, 09) y 5 en curso | 10 de 12 REQ con prueba |
 | Jornada | `specs/02-jornada/spec.md` | 02 | Móvil | P | CUN02-01…24 (24) | vigente | — | — | — | — | — |
 | Tareas / delegación | `specs/03-tareas/spec.md` | 07, 08, 09 | Web y móvil, para el gerente y el colaborador | E | CUN07-01…19 y CUN08-01…07 (26) | vigente; §8 (CUN-08) en **borrador** | parcial (jerarquía anterior) | — | — | — | — |
 | Comunicaciones | `specs/04-comunicaciones/spec.md` | 04 | Móvil + web | P | CUN04-01…15 (15) | vigente | — | — | — | — | — |
@@ -252,7 +252,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 | Fase | Contenido | CUN | Estado |
 |---|---|---|---|
 | 0 | **Base SDD**: este archivo, `AGENTS.md`, glosario, trazabilidad, resolver PT-1 e INC-01 | — | **Cerrada el 2026-10-22** |
-| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023, T-006, T-016, T-012, T-007 y T-022 hechas. **Google conectado con una cuenta real.** T-008 y T-024 hechas. T-013 a T-015 hechas, **con la lectura real probada**: la API ya consulta la agenda. T-025 hecha: **la web muestra la agenda de hoy con los compromisos reales**. **T-017 hecha: registrar un compromiso** con la duración por defecto de una hora (H-AG-01). Siguiente: T-018 |
+| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023, T-006, T-016, T-012, T-007 y T-022 hechas. **Google conectado con una cuenta real.** T-008 y T-024 hechas. T-013 a T-015 hechas, **con la lectura real probada**: la API ya consulta la agenda. T-025 hecha: **la web muestra la agenda de hoy con los compromisos reales**. **T-017 hecha: registrar un compromiso** con la duración por defecto de una hora (H-AG-01). **T-018 hecha:** conflicto con su causa y alternativas, y nueva comprobación al confirmar. Siguiente: T-019 |
 | 2 | Capa de agente: intención, herramientas, confirmación | 01, 03 vía conversación + CAP | Especificado, sin plan |
 | 3 | Planificación de jornada | 02 | Especificado |
 | 4 | Equipos: disponibilidad, coordinación, delegación, seguimiento. Desde D-17, también la aplicación móvil del colaborador | 05 a 09 | Parcial (falta 06; 08 en borrador); diseño desfasado (INC-14) |
@@ -260,7 +260,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 
 **Orden acordado el 2026-10-22, para tener pantallas antes:** T-004 → T-005 → T-010 → T-011 (primeras pantallas web) → **T-023** (armazón web, añadida a pedido del equipo) → T-020 (el móvil arranca) → T-006 → T-016 → T-012 → resto de agenda. La parte de Google (T-007, T-008, T-013, T-022) entra cuando estén las credenciales de Google Cloud.
 
-**Siguiente paso concreto:** T-018, conflicto al proponer y al confirmar: alternativas de DP-02 y nueva comprobación (H-AG-07). Sigue pendiente que el equipo revise H-AG-09, H-AG-10 y H-WEB-01. Sigue pendiente contrastar las pantallas de acceso con Figma (INC-15).
+**Siguiente paso concreto:** T-019, modificar y cancelar compromisos, con cancelar como control directo (DP-01). Sigue pendiente que el equipo revise H-AG-09, H-AG-10 y H-WEB-01. Sigue pendiente contrastar las pantallas de acceso con Figma (INC-15).
 
 ---
 
@@ -271,6 +271,7 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-23 | 2.16.2 | **T-018 hecha: conflicto al proponer y al confirmar.** La tarjeta de confirmación lleva `conflicto` con los eventos que chocan y hasta tres alternativas de DP-02; elegir una es proponer de nuevo. Al confirmar se vuelve a sincronizar y comprobar, y si apareció un choque no se escribe nada y se propone de nuevo (H-AG-07). **CUN01-05 implementado.** Se corrige un defecto de las pruebas de T-017, que usaban una fecha fija. 171 pruebas, `verificar` completo en verde | `apps/api/src/agenda/registrar-compromiso.ts`, `apps/api/test/agenda/registrar.spec.ts`, `packages/contratos/src/operaciones.ts`, `specs/02-agenda/plan.md`, `tasks.md`, `specs/trazabilidad.md`, `SPEC.md` | Claude |
 | 2026-10-23 | 2.16.1 | **El equipo aprueba el formato del reporte del equipo** tal como está en la muestra: queda como referencia de REQ-CUN08-04 | `SPEC.md`, `specs/03-tareas/spec.md` | Equipo (aprobación), redactado por Claude |
 | 2026-10-23 | 2.16.0 | **Decididas H-SEG-01, 02 y 04, y H-SEG-03 en parte.** Solo existe «atrasada». El resumen en la conversación lleva como mucho cinco puntos clave; **el reporte es completo**, se ve en la web y se descarga en PDF, y se entiende solo (equipo, período, zona horaria y cómo se calcularon las cifras). Se reescriben REQ-CUN08-03 y 04, y se añade **REQ-CUN08-07**: al terminar un reporte, la conversación muestra solo su síntesis y el acceso al documento. Los reportes programados quedan como posibilidad, sin implementar. Muestra del formato con datos inventados | `SPEC.md`, `specs/03-tareas/spec.md`, `specs/trazabilidad.md`, `design/reporte-equipo-muestra.html` | Equipo (decisiones), redactado por Claude |
 | 2026-10-23 | 2.15.0 | **Resuelto el rango del colaborador** con las cinco respuestas del equipo, contrastadas con Jira, Trello y una empresa jerárquica: 6 requisitos nuevos (REQ-CUN05-17, REQ-CUN07-18 y 19, REQ-ACC-16 y 17). **CUN-08 en borrador** (`03-tareas` §8): solo el responsable ve el trabajo del equipo en conjunto, con un **resumen** breve en la conversación y un **reporte** con formato para compartir; los retrasos los calcula el código (P-02) y nada se envía sin pedirlo. 6 requisitos (REQ-CUN08-01 a 06) y cuatro decisiones abiertas (H-SEG-01 a 04). Glosario: **petición**, **resumen del equipo** y **reporte del equipo**; el gerente es responsable por equipo. 147 requisitos | `SPEC.md`, `specs/03-tareas/spec.md`, `specs/05-equipos/spec.md`, `specs/06-acceso/spec.md`, `plan.md`, `specs/glosario.md`, `specs/trazabilidad.md`, `tools/trazabilidad.py` | Equipo (decisiones), redactado por Claude |

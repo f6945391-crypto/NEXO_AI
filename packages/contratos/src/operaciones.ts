@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 // Operaciones (AD-09, specs/02-agenda/plan.md §3) · T-012.
 
+const Instante = z.iso.datetime({ offset: true });
+
 export const EstadoOperacion = z.enum(['en_espera', 'propuesta', 'ejecutada', 'descartada', 'fallida']);
 export type EstadoOperacion = z.infer<typeof EstadoOperacion>;
 
@@ -17,6 +19,15 @@ export const VistaConfirmacion = z.strictObject({
   // Falso cuando algo impide confirmar, como un conflicto de horario (REQ-CUN01-05).
   confirmable: z.boolean(),
   motivoNoConfirmable: z.string().nullable(),
+  // T-018 · REQ-CUN01-05: los eventos que causan el choque y hasta tres alternativas (DP-02). Elegir
+  // una es proponer de nuevo con ese horario.
+  conflicto: z
+    .strictObject({
+      eventos: z.array(z.strictObject({ id: z.uuid(), titulo: z.string(), inicio: Instante, fin: Instante })),
+      alternativas: z.array(z.strictObject({ inicio: Instante, fin: Instante })),
+    })
+    .nullable()
+    .optional(),
 });
 export type VistaConfirmacion = z.infer<typeof VistaConfirmacion>;
 
