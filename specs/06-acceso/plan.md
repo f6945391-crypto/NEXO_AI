@@ -92,7 +92,14 @@ Es una **Operación** (AD-09):
 - **ACC-08:** el decorador `@RequiereGoogle('calendar.events')` comprueba el consentimiento antes de que el servicio haga nada. Si falta, devuelve `PERMISO_GOOGLE_FALTANTE { alcance, paraQue, comoConceder }` sin llamar a Google.
 - **ACC-09:** el puerto `ClienteGoogle` es el único que llama a Google. Ante `invalid_grant` o un 401 que no se arregla renovando el token, marca el consentimiento como `revocado` o `caducado` y deja de intentar. Si `aviso_emitido_en` está vacío, emite el aviso y lo rellena; si ya estaba lleno, no avisa otra vez. Los trabajos en cola comprueban el estado antes de llamar.
 
-### 5.5 El rol colaborador (ACC-13, ACC-14) · añadido por D-17
+### 5.5 El rol colaborador (ACC-13, ACC-14, ACC-15) · añadido por D-17
+
+> **Cambia el 23 de octubre de 2026 (D-17 a enmendada).** El colaborador usa el agente como el Plan Empresarial; lo único que no puede es asignar tareas a otros. Lo que sigue en esta sección describe la implementación de T-004 y T-007, que **T-026 sustituye** así:
+> - **Se deniega por defecto solo lo que da autoridad sobre otros.** Una ruta que asigna o delega trabajo, o que administra el equipo, se marca `@SoloResponsable()`, y `RolGuard` la rechaza al colaborador con `ROL_NO_PERMITIDO` (ACC-15). Todo lo demás, que siempre trabaja sobre lo de la propia persona, queda abierto.
+> - `GET /integraciones/google/permisos` devuelve al colaborador los dos alcances (ACC-14).
+> - La web deja de enviar al colaborador a `/solo-movil` y le muestra la aplicación entera.
+> - Riesgo: con esta inversión, una ruta nueva de equipo **queda abierta si se olvida marcarla**. Para cubrirlo, T-026 añade una prueba que recorre las rutas de los módulos de equipo y exige la marca.
+
 
 - **Se deniega por defecto.** Una guarda global, `RolGuard`, rechaza con `ROL_NO_PERMITIDO` toda ruta que no declare `@PermitidoPara('colaborador')`. Así una ruta nueva nunca queda abierta al colaborador por olvido.
 - Las únicas rutas permitidas al colaborador son las de sus tareas asignadas y sus hilos (fase 4), su perfil, la sesión y el calendario de Google.

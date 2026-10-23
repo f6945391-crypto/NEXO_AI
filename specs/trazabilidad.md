@@ -10,12 +10,12 @@
 | Área | Requisitos | pendiente | en curso | implementado | verificado | retirado |
 |---|---|---|---|---|---|---|
 | 01-captura | 24 | 24 | 0 | 0 | 0 | 0 |
-| 02-agenda | 12 | 9 | 3 | 0 | 0 | 0 |
+| 02-agenda | 12 | 2 | 6 | 4 | 0 | 0 |
 | 02-jornada | 24 | 24 | 0 | 0 | 0 | 0 |
 | 03-tareas | 17 | 17 | 0 | 0 | 0 | 0 |
 | 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
 | 05-equipos | 16 | 16 | 0 | 0 | 0 | 0 |
-| 06-acceso | 14 | 1 | 2 | 11 | 0 | 0 |
+| 06-acceso | 15 | 2 | 2 | 11 | 0 | 0 |
 
 ## Requisitos
 
@@ -154,5 +154,6 @@
 | REQ-ACC-10 | 06-acceso | Requisito del sistema | 1 | T-006, T-009 | acceso.cuenta-no-autogestionable | en curso |
 | REQ-ACC-11 | 06-acceso | Requisito del sistema | 1 | T-009 | — | pendiente |
 | REQ-ACC-12 | 06-acceso | Requisito del sistema; R-45 | 1 | T-006 | acceso.cuenta-no-autogestionable | implementado |
-| REQ-ACC-13 | 06-acceso | Requisito del sistema; D-17 | 1 | T-004 | acceso.colaborador-solo-ve-lo-suyo | en curso |
-| REQ-ACC-14 | 06-acceso | Requisito del sistema; D-17 | 1 | T-007 | acceso.colaborador-solo-calendario | implementado |
+| REQ-ACC-13 | 06-acceso | Requisito del sistema; D-17 | 1 | T-004, T-026 | acceso.colaborador-solo-ve-lo-suyo | en curso |
+| REQ-ACC-14 | 06-acceso | Requisito del sistema; D-17 | 1 | T-007, T-026 | — | en curso |
+| REQ-ACC-15 | 06-acceso | Requisito del sistema; D-17 | 1 | T-026 | — | pendiente |

@@ -28,9 +28,11 @@
 
 **REQ-ACC-12** · Ubicuo — El usuario no administra su cuenta: no cambia su correo, no se da de baja y no cambia de plan. Esas tres cosas las decide la organización que creó la cuenta (R-45).
 
-**REQ-ACC-13** · MIENTRAS una cuenta tenga el rol colaborador, el sistema solo le muestra las tareas que tiene asignadas, sus hilos y su perfil, tanto en la web como en la aplicación móvil. *(D-17, 22 de octubre de 2026; reescrito el 23 de octubre de 2026: antes decía «y solo en la aplicación móvil»; el equipo decidió que los dos perfiles usan las dos plataformas)*
+**REQ-ACC-13** · MIENTRAS una cuenta tenga el rol colaborador, el sistema le ofrece sobre lo suyo lo mismo que a una cuenta del Plan Empresarial, en la web y en la aplicación móvil; de lo ajeno, solo le muestra las tareas que tiene asignadas y sus hilos. *(D-17, 22 de octubre de 2026. Reescrito dos veces el 23 de octubre de 2026: primero se quitó «y solo en la aplicación móvil»; después, «solo le muestra las tareas que tiene asignadas, sus hilos y su perfil», porque el equipo decidió que el colaborador usa el agente como el Plan Empresarial, D-17 a enmendada. Qué ve del equipo, como la disponibilidad, sigue abierto en `SPEC.md` §8)*
 
-**REQ-ACC-14** · DONDE la cuenta tiene el rol colaborador, el sistema solo le ofrece conectar el calendario de Google, para compartir su disponibilidad, y nunca el envío de correo. *(D-17, 22 de octubre de 2026)*
+**REQ-ACC-14** · DONDE la cuenta tiene el rol colaborador, el sistema le ofrece conectar los mismos dos permisos de Google que a cualquier otra cuenta: el calendario y el envío de correo (REQ-ACC-07). *(D-17, 22 de octubre de 2026. Reescrito el 23 de octubre de 2026: antes decía «solo el calendario, y nunca el envío de correo»; con el Plan Empresarial el colaborador tiene correo asistido)*
+
+**REQ-ACC-15** · SI una cuenta con el rol colaborador pide asignar o delegar una tarea a otra persona, ENTONCES el sistema la rechaza sin crear nada y explica que solo el responsable del equipo asigna tareas. *(D-17 a enmendada, 23 de octubre de 2026)*
 
 ---
 

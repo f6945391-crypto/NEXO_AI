@@ -70,6 +70,8 @@ DADO un gerente sin permiso de delegación sobre el equipo
 CUANDO intente delegar una tarea a un colaborador de ese equipo
 ENTONCES el sistema rechaza la operación, indica que falta autorización y no crea ningún registro de Tarea
 
+> **Precisado el 23 de octubre de 2026 (D-17 a enmendada).** Un colaborador nunca está autorizado para delegar, aunque tenga el Plan Empresarial: solo el responsable del equipo asigna tareas (REQ-ACC-15).
+
 ---
 
 ### REQ-CUN07-05

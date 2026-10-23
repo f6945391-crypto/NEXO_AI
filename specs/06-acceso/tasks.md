@@ -229,4 +229,15 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 
 ---
 
+### T-026 · El colaborador con el Plan Empresarial, sin autoridad para delegar
+
+- **Satisface:** REQ-ACC-13, REQ-ACC-14, REQ-ACC-15 · D-17 (a y b) enmendada
+- **Depende de:** T-004, T-007
+- **Contenido:** invertir la restricción del rol: `RolGuard` ya no deniega por defecto al colaborador, sino solo las rutas marcadas `@SoloResponsable()` (plan §5.5); los dos permisos de Google para el colaborador; quitar el envío a `/solo-movil` de la web; cambiar las pruebas que hoy comprueban la denegación por defecto, como la de T-015 sobre la agenda
+- **Hecho cuando:** un colaborador consulta su agenda y conecta el correo; una ruta marcada `@SoloResponsable()` le responde `ROL_NO_PERMITIDO` sin ejecutar nada; una prueba falla si una ruta de un módulo de equipo no lleva la marca; el colaborador entra en la web y ve la aplicación
+- **Pruebas:** `acceso.colaborador-solo-ve-lo-suyo` (se reescribe), `acceso.solo-el-responsable-asigna-tareas`
+- **Estado:** pendiente. Se puede hacer ya, aunque las rutas de delegación lleguen en la fase 4
+
+---
+
 **Fuera de este desglose:** la variante móvil de Acceso (falta su diseño, spec §4) y la contraseña olvidada (no tiene requisito).

@@ -12,7 +12,7 @@
 |---|---|---|---|
 | **Usuario Personal** | Persona que usa NexoAI para organizar sus propias actividades. Los planes Gratuito y Personal son el mismo actor | E1 Act. 2 | — |
 | **Gerente** | Abreviatura de *Gerente / Responsable de Equipo*: persona de una organización cliente que coordina a un equipo. También es Usuario Personal de su propia agenda, porque los planes son acumulativos | E1 Act. 2; `REPLANTEO.md` §4.3 | — |
-| **Colaborador** | Persona de un equipo que recibe encargos. **Tiene cuenta**, con el rol `colaborador`: ve solo sus tareas asignadas y sus hilos, desde la web o el móvil, y responde en la aplicación | E1 Act. 2; D-17; REQ-ACC-13 | *Participante externo*, que no tiene cuenta |
+| **Colaborador** | Persona de un equipo que recibe encargos. **Tiene cuenta**, con el rol `colaborador`: usa el agente como el Plan Empresarial sobre lo suyo, desde la web o el móvil, ve las tareas que tiene asignadas y responde en la aplicación. **No asigna tareas a otros**: eso solo lo hace el responsable del equipo | E1 Act. 2; D-17; REQ-ACC-13 | *Participante externo*, que no tiene cuenta |
 | **Participante externo** | Persona **sin cuenta** cuya disponibilidad se necesita para coordinar. Solo se lee de ella libre u ocupado, y solo con su consentimiento por invitación. Si es entidad o atributo está por decidir (D-8) | `REPLANTEO.md` §4.8; R-13, R-14; D-17 | *Colaborador*, que sí tiene cuenta |
 | **Organización** | Cliente que crea las cuentas, asigna roles y decide el plan. No es actor del negocio | E1 Act. 2; R-45 | — |
 
