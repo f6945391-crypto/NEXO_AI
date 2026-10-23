@@ -131,6 +131,8 @@ Reglas, cada una con su prueba:
 
 Las dos llevan `@RequiereGoogle('calendar.events')`. Sin ese permiso responden `PERMISO_GOOGLE_FALTANTE` (REQ-CUN01-08, REQ-ACC-08).
 
+*Ajustes de T-015:* la clave del permiso en el código es `calendario`, que apunta a `calendar.events`. El rango pedido lleva desfase y no pasa de 366 días. Si Google no responde y ya hay réplica, se devuelve la réplica; si nunca se sincronizó, `GOOGLE_NO_DISPONIBLE`. El colaborador no usa estas rutas (REQ-ACC-13).
+
 ## 6. Requisito por requisito
 
 | REQ | Dónde se cumple | Fase |

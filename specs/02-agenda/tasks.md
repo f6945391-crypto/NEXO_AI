@@ -70,7 +70,14 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** `GET /agenda/eventos?desde=&hasta=` y `GET /agenda/eventos/:id`, con `@RequiereGoogle('calendar.events')` y sincronización bajo demanda si han pasado más de 2 minutos
 - **Hecho cuando:** sin permiso no se llama al proveedor; con permiso se devuelven solo eventos propios, con su zona; la consulta funciona sin ningún proveedor de modelo configurado
 - **Pruebas:** `agenda.sin-permiso-no-invoca-proveedor`, `agenda.consulta-sin-proveedor-de-modelo`
-- **Estado:** pendiente
+- **Estado:** hecha · 22 de octubre de 2026. 10 pruebas
+- **Notas de implementación:**
+  - El alcance se llama `calendario` en el código (`ALCANCES_GOOGLE`), no `calendar.events`: es la clave de `packages/contratos`, que apunta a ese permiso de Google.
+  - Contrato `EventoAgenda` en `packages/contratos/src/agenda.ts`: horas en ISO 8601 con el desfase de la zona del evento («2026-10-26T10:00:00+01:00») y la zona IANA aparte. El rango pedido tiene que llevar desfase y no pasar de 366 días, lo que cubre la réplica.
+  - Se devuelven también los cancelados, marcados como tales (R-25); el cliente decide cómo mostrarlos.
+  - **Si Google no responde y ya hay réplica, se muestra la última copia** (lo existente sigue consultable, P-11). La primera vez no hay nada que mostrar y se responde `GOOGLE_NO_DISPONIBLE`. Un permiso retirado se avisa siempre.
+  - El colaborador no tiene agenda propia en NexoAI (REQ-ACC-13): su calendario solo sirve para compartir disponibilidad, y la ruta le responde `ROL_NO_PERMITIDO`.
+  - Código de error nuevo: `EVENTO_NO_ENCONTRADO`, también para un evento de otra persona.
 
 ---
 

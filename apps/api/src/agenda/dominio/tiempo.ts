@@ -45,6 +45,15 @@ function desfase(instante: Date, zona: string): number {
   return comoUtc - (instante.getTime() - instante.getUTCMilliseconds());
 }
 
+// ISO 8601 con el desfase que tiene la zona en ese instante: «2026-10-26T10:00:00+01:00» (REQ-CUN01-10).
+export function isoConDesfase(instante: Date, zona: string): string {
+  const d = desfase(instante, zona);
+  const minutos = Math.abs(d) / 60_000;
+  const hh = String(Math.floor(minutos / 60)).padStart(2, '0');
+  const mm = String(minutos % 60).padStart(2, '0');
+  return `${new Date(instante.getTime() + d).toISOString().slice(0, 19)}${d < 0 ? '-' : '+'}${hh}:${mm}`;
+}
+
 // Instante en que el reloj de la zona marca esa fecha y esos minutos. Ajusta dos veces por si el
 // cambio de hora cae entre la estimación y el resultado.
 export function instanteLocal(fecha: FechaLocal, minutos: number, zona: string): Date {
