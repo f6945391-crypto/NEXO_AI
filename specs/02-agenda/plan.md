@@ -131,6 +131,8 @@ Reglas, cada una con su prueba:
 
 Las dos llevan `@RequiereGoogle('calendar.events')`. Sin ese permiso responden `PERMISO_GOOGLE_FALTANTE` (REQ-CUN01-08, REQ-ACC-08).
 
+**Clientes:** la web la usa desde T-025 (nivel Hoy) y el móvil la usará en T-021. La web pide el día de medianoche a medianoche en la zona del perfil, con su desfase, y muestra las horas en esa zona aunque el navegador esté en otra.
+
 *Ajustes de T-015:* la clave del permiso en el código es `calendario`, que apunta a `calendar.events`. El rango pedido lleva desfase y no pasa de 366 días. Si Google no responde y ya hay réplica, se devuelve la réplica; si nunca se sincronizó, `GOOGLE_NO_DISPONIBLE`. El colaborador no usa estas rutas (REQ-ACC-13).
 
 ## 6. Requisito por requisito
@@ -196,6 +198,7 @@ Registrados en `SPEC.md` §8 y en la tabla de decisiones de `spec.md`. **No son 
 | H-AG-06 | Varios calendarios de Google | Solo el principal |
 | H-AG-07 | La agenda puede cambiar entre proponer y confirmar | Se vuelve a comprobar al confirmar; si hay conflicto, no se ejecuta y se propone de nuevo |
 | H-AG-08 | Una propuesta que nadie confirma ni descarta | Queda en `propuesta`, sin caducar. Falta decidir si caduca |
+| H-AG-10 | REQ-CUN01-12 dice que el estado vacío «abre la capa de captura» (R-36), pero la web no tiene capa de captura: se pide en la barra de entrada de la conversación (detectado en T-025) | En la web, la acción del estado vacío muestra la conversación si el lienzo está ampliado y pone el foco en su barra de entrada. En el móvil sigue siendo la capa (T-021) |
 | H-AG-09 | La lectura incremental solo trae lo que cambia: un evento que ya existía más allá de los 365 días no entra en la réplica aunque la ventana avance (detectado en T-014) | Se vuelve a leer completo cuando la ventana ha avanzado 30 días, así siempre cubre al menos 335 días por delante. Parámetro `RENOVAR_VENTANA_DIAS` |
 
 ### DP-02 — alternativas ante un conflicto (provisional)

@@ -163,13 +163,13 @@ Estados: `pendiente` · `en curso` · `hecha`.
 
 ### T-025 · Agenda en la web: Hoy
 
-- **Satisface:** REQ-CUN01-10 (interfaz), REQ-CUN01-12 (web) · R-42
+- **Satisface:** REQ-CUN01-10 (interfaz), REQ-CUN01-12 (web) · R-42 · H-AG-10
 - **Depende de:** T-015, T-023
 - **Origen:** pedido del equipo el 22 de octubre de 2026, para ver los compromisos reales antes de la fase 2. El móvil sigue en T-021
-- **Contenido:** el nivel Hoy de la sección Agenda de la web muestra los compromisos del día en la zona del perfil, con la zona visible; los de todo el día primero; los de otra zona dicen también su hora allí; cancelados e invitados marcados. Estado vacío cuya acción lleva a la conversación, sin formulario. Semana y Mes, de momento, lo dicen
+- **Contenido:** el nivel Hoy de la sección Agenda de la web muestra los compromisos del día en la zona del perfil, con la zona visible; los de todo el día primero; los de otra zona dicen también su hora allí; cancelados e invitados marcados. Estado vacío cuya acción lleva a la barra de entrada de la conversación (H-AG-10), sin formulario. Semana y Mes, de momento, dicen que llegan más adelante. Para probarlo sin Google, la API admite el calendario simulado fuera de producción
 - **Hecho cuando:** con el calendario simulado, Hoy muestra los compromisos del día con su horario y su zona aunque el navegador esté en otra; sin compromisos, la acción enfoca la conversación; sin calendario, se ofrece conectarlo
 - **Pruebas:** `agenda.horas-con-zona-horaria`, `agenda.estado-vacio-abre-captura` (extremo a extremo)
-- **Estado:** en curso
+- **Estado:** en curso. **Desvío del método:** el código se empezó antes de escribir esta tarea; la tarea, el plan y `SPEC.md` se completaron después, antes de probarlo y de hacer su commit
 - **Notas de implementación:**
   - La página lee la agenda en el servidor (`src/lib/agenda.ts`) y la formatea allí: el navegador recibe el texto hecho, sin diferencias de formato entre servidor y navegador.
   - El día se calcula en la zona del perfil, de medianoche a medianoche con su desfase, también si ese día cambia la hora.

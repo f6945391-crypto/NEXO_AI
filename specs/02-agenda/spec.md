@@ -216,5 +216,6 @@ Pendientes de revisión. Lo que asume el plan mientras tanto está en `plan.md` 
 | 9 | Un evento al que se fue invitado no se modifica ni se cancela desde NexoAI (H-AG-05) | REQ-CUN01-06 |
 | 10 | Solo se usa el calendario principal de Google (H-AG-06) | REQ-CUN01-02, 09 |
 | 11 | Los solapes se vuelven a comprobar al confirmar (H-AG-07) | REQ-CUN01-02, 04 |
+| 13 | En la web, el estado vacío lleva a la barra de entrada de la conversación, porque la web no tiene capa de captura (H-AG-10, detectada en T-025) | REQ-CUN01-12 |
 | 12 | La réplica cubre al menos 335 días por delante: se vuelve a leer completa cada 30 días (H-AG-09, detectada en T-014) | REQ-CUN01-09 |
 | 12 | Sin decidir si una propuesta sin respuesta caduca (H-AG-08) | REQ-CUN01-03 |
