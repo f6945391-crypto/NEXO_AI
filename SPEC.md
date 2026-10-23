@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 2.10.3 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
+**Versión:** 2.11.0 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -143,7 +143,7 @@ Estado por columna: **—** no existe · **borrador** · **vigente** · **parcia
 | Área | Archivo | CUN | Plataforma | Plan | REQ | Spec | Diseño | Plan técnico | Tareas | Código | Pruebas |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | Captura | `specs/01-captura/spec.md` | 01, 03 | Móvil | G / P | CAP-01…24 (24) | vigente | parcial | — | — | — | — |
-| Agenda | `specs/02-agenda/spec.md` | 01 | Móvil (y web: nivel Hoy, T-025) | G | CUN01-01…12 (12) | vigente | parcial (jerarquía anterior) | aprobado | T-012…T-021 y T-025 (T-012 a T-016 y T-020 hechas; T-025 en curso) | 1 REQ implementado (CUN01-09) y 7 en curso | 7 de 12 REQ con prueba |
+| Agenda | `specs/02-agenda/spec.md` | 01 | Móvil (y web: nivel Hoy, T-025) | G | CUN01-01…12 (12) | vigente | parcial (jerarquía anterior) | aprobado | T-012…T-021 y T-025 (T-012 a T-016, T-020 y T-025 hechas) | 1 REQ implementado (CUN01-09) y 7 en curso | 8 de 12 REQ con prueba |
 | Jornada | `specs/02-jornada/spec.md` | 02 | Móvil | P | CUN02-01…24 (24) | vigente | — | — | — | — | — |
 | Tareas / delegación | `specs/03-tareas/spec.md` | 07, 09 | Web (gerente) + móvil (colaborador) | E | CUN07-01…17 (17) | vigente | parcial (jerarquía anterior) | — | — | — | — |
 | Comunicaciones | `specs/04-comunicaciones/spec.md` | 04 | Móvil + web | P | CUN04-01…15 (15) | vigente | — | — | — | — | — |
@@ -248,7 +248,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 | Fase | Contenido | CUN | Estado |
 |---|---|---|---|
 | 0 | **Base SDD**: este archivo, `AGENTS.md`, glosario, trazabilidad, resolver PT-1 e INC-01 | — | **Cerrada el 2026-10-22** |
-| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023, T-006, T-016, T-012, T-007 y T-022 hechas. **Google conectado con una cuenta real.** T-008 y T-024 hechas. T-013 a T-015 hechas, **con la lectura real probada**: la API ya consulta la agenda. En curso: T-025 (la agenda de hoy en la web). Después, T-017 cuando se decida H-AG-01 |
+| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023, T-006, T-016, T-012, T-007 y T-022 hechas. **Google conectado con una cuenta real.** T-008 y T-024 hechas. T-013 a T-015 hechas, **con la lectura real probada**: la API ya consulta la agenda. T-025 hecha: **la web muestra la agenda de hoy con los compromisos reales**. Siguiente: T-017, cuando se decida H-AG-01 |
 | 2 | Capa de agente: intención, herramientas, confirmación | 01, 03 vía conversación + CAP | Especificado, sin plan |
 | 3 | Planificación de jornada | 02 | Especificado |
 | 4 | Equipos: disponibilidad, coordinación, delegación, seguimiento. Desde D-17, también la aplicación móvil del colaborador | 05 a 09 | Parcial (faltan 06 y 08); diseño desfasado (INC-14) |
@@ -256,7 +256,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 
 **Orden acordado el 2026-10-22, para tener pantallas antes:** T-004 → T-005 → T-010 → T-011 (primeras pantallas web) → **T-023** (armazón web, añadida a pedido del equipo) → T-020 (el móvil arranca) → T-006 → T-016 → T-012 → resto de agenda. La parte de Google (T-007, T-008, T-013, T-022) entra cuando estén las credenciales de Google Cloud.
 
-**Siguiente paso concreto:** terminar T-025 (la agenda de hoy en la web, añadida a pedido del equipo). Después, T-017, que necesita decidida la duración por defecto (H-AG-01). Sigue pendiente contrastar las pantallas de acceso con Figma (INC-15).
+**Siguiente paso concreto:** T-017, que necesita decidida la duración por defecto (H-AG-01; propuesta: 1 hora). Antes conviene que el equipo revise H-AG-09, H-AG-10 y H-WEB-01. Sigue pendiente contrastar las pantallas de acceso con Figma (INC-15).
 
 ---
 
@@ -267,6 +267,7 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-22 | 2.11.0 | **T-025 hecha: la agenda de hoy en la web.** El nivel Hoy muestra los compromisos del día en la zona del perfil, con la zona visible («Hora de Lima (GMT-5)»), los de todo el día primero, los de otra zona con su hora allí, y cancelados e invitados marcados. Estado vacío que lleva a la conversación (H-AG-10). Probada a mano con un evento real del calendario de `personal@nexoai.test`; esa prueba destapó que la lista salía centrada y encogida (Chrome aplica `place-items` a un bloque), ya corregido. La API admite `CALENDARIO_SIMULADO=1` fuera de producción para las pruebas de extremo a extremo. 155 pruebas, `verificar` completo en verde | `apps/web`, `apps/api/src/integraciones`, `specs/02-agenda/tasks.md`, `specs/trazabilidad.md`, `SPEC.md` | Equipo (pedido), implementado por Claude |
 | 2026-10-22 | 2.10.3 | **Hallazgo H-WEB-01, a pedido del equipo:** cómo se adapta la web a pantallas pequeñas. El diseño solo define 1440×900, y T-023 había asumido «solo escritorio» sin registrarlo como decisión. Queda abierto en §8 con lo que hace hoy el código y tres opciones | `SPEC.md`, `specs/06-acceso/tasks.md` | Equipo (pedido), redactado por Claude |
 | 2026-10-22 | 2.10.2 | **T-025, nueva, a pedido del equipo: la agenda de hoy en la web** (REQ-CUN01-10 y 12 en la web; el móvil sigue en T-021). Hallazgo nuevo **H-AG-10**: la web no tiene capa de captura, así que el estado vacío lleva a la barra de entrada de la conversación. CUN01-12 pasa a en curso. **Desvío del método, corregido aquí:** el código de T-025 se empezó antes que su tarea; esta entrada deja la especificación al día antes de probarlo y hacer su commit. Se actualiza el «siguiente paso» de §10, que seguía en T-020 | `SPEC.md`, `specs/02-agenda/spec.md`, `plan.md`, `tasks.md`, `specs/trazabilidad.md` | Equipo (pedido), redactado por Claude |
 | 2026-10-22 | 2.10.1 | **T-013: lectura real probada** con `personal@nexoai.test`, tras habilitar el equipo la API de Google Calendar en Google Cloud (el 403 `SERVICE_DISABLED` de 2.8.1). La sincronización completa guarda su token y `GET /agenda/eventos` responde de punta a punta | `specs/02-agenda/tasks.md`, `SPEC.md` | Equipo (Google Cloud), comprobado por Claude |

@@ -130,3 +130,7 @@ export class ProveedorCalendarioSimulado implements ProveedorCalendario {
     return cal;
   }
 }
+
+// La instancia que usa la API con CALENDARIO_SIMULADO=1 (T-025). Quien la arranca en el mismo proceso,
+// como las pruebas de extremo a extremo de la web, la siembra con `sembrar`.
+export const calendarioDeDemostracion = new ProveedorCalendarioSimulado();

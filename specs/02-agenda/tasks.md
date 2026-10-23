@@ -169,11 +169,12 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** el nivel Hoy de la sección Agenda de la web muestra los compromisos del día en la zona del perfil, con la zona visible; los de todo el día primero; los de otra zona dicen también su hora allí; cancelados e invitados marcados. Estado vacío cuya acción lleva a la barra de entrada de la conversación (H-AG-10), sin formulario. Semana y Mes, de momento, dicen que llegan más adelante. Para probarlo sin Google, la API admite el calendario simulado fuera de producción
 - **Hecho cuando:** con el calendario simulado, Hoy muestra los compromisos del día con su horario y su zona aunque el navegador esté en otra; sin compromisos, la acción enfoca la conversación; sin calendario, se ofrece conectarlo
 - **Pruebas:** `agenda.horas-con-zona-horaria`, `agenda.estado-vacio-abre-captura` (extremo a extremo)
-- **Estado:** en curso. **Desvío del método:** el código se empezó antes de escribir esta tarea; la tarea, el plan y `SPEC.md` se completaron después, antes de probarlo y de hacer su commit
+- **Estado:** hecha · 22 de octubre de 2026. 2 pruebas de extremo a extremo; `verificar` completo pasa con 155 pruebas. **Desvío del método:** el código se empezó antes de escribir esta tarea; la tarea, el plan y `SPEC.md` se completaron después, antes de probarlo y de hacer su commit
 - **Notas de implementación:**
   - La página lee la agenda en el servidor (`src/lib/agenda.ts`) y la formatea allí: el navegador recibe el texto hecho, sin diferencias de formato entre servidor y navegador.
   - El día se calcula en la zona del perfil, de medianoche a medianoche con su desfase, también si ese día cambia la hora.
   - La API acepta `CALENDARIO_SIMULADO=1` para las pruebas de extremo a extremo y las demostraciones; en producción se niega a arrancar con él.
+  - Probada a mano con `personal@nexoai.test` y un evento real de su calendario. Esa prueba mostró la lista centrada y encogida: Chrome aplica `place-items` también a un bloque normal, y el cuerpo del lienzo lo hereda del estado vacío. Se anula en la variante de lista.
 
 ---
 

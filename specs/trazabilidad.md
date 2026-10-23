@@ -56,7 +56,7 @@
 | REQ-CUN01-09 | 02-agenda | RN-OP-01, RN-EST-01 | 1 | T-014, T-015 | agenda.solo-eventos-propios | implementado |
 | REQ-CUN01-10 | 02-agenda | decisión de arquitectura AD-07; necesaria para CUN-05 y CUN-06 | 1 | T-014, T-015, T-021, T-025 | agenda.horas-con-zona-horaria | en curso |
 | REQ-CUN01-11 | 02-agenda | regla de producto R-42; `SPEC.md` P-11 | 1 | T-015, T-019, T-021 | agenda.consulta-sin-proveedor-de-modelo | en curso |
-| REQ-CUN01-12 | 02-agenda | derivado de la revisión de diseño de CUN-01 | 1 | T-021, T-025 | — | en curso |
+| REQ-CUN01-12 | 02-agenda | derivado de la revisión de diseño de CUN-01 | 1 | T-021, T-025 | agenda.estado-vacio-abre-captura | en curso |
 | REQ-CUN02-01 | 02-jornada | CUN-02 flujo principal, pasos 1 a 3 | 3 | — | — | pendiente |
 | REQ-CUN02-02 | 02-jornada | CUN-02 flujo principal, paso 4 | 3 | — | — | pendiente |
 | REQ-CUN02-03 | 02-jornada | CUN-02 pasos 6 y 7; RN-ER-03 | 3 | — | — | pendiente |

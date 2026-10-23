@@ -31,5 +31,15 @@
     "correo": "google-e2e@nexoai.test",
     "rol": "gerente",
     "plan": "empresarial"
+  },
+  "agenda": {
+    "correo": "agenda-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "agendaVacia": {
+    "correo": "agenda-vacia-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
   }
 }

@@ -40,10 +40,35 @@ const { crearClientePrisma } = desdeApi('./dist/plataforma/prisma.js');
 const { crearCuenta, crearOrganizacion } = desdeApi('./dist/identidad/alta-cuentas.js');
 const prisma = crearClientePrisma(urlE2e);
 const organizacionId = await crearOrganizacion(prisma, 'Organización de pruebas de extremo a extremo');
+const perfiles = {};
 for (const [clave, cuenta] of Object.entries(cuentas)) {
   if (typeof cuenta !== 'object') continue;
-  await crearCuenta(prisma, { organizacionId, ...cuenta }, cuentas.contrasenaTemporal);
+  perfiles[clave] = (await crearCuenta(prisma, { organizacionId, ...cuenta }, cuentas.contrasenaTemporal)).perfilId;
   console.log(`[e2e] cuenta ${clave}: ${cuenta.correo}`);
+}
+
+// T-025: dos cuentas con el primer ingreso hecho, en Lima, y el calendario conectado al calendario
+// simulado de la API. Una con compromisos hoy y otra sin ninguno.
+process.env.CALENDARIO_SIMULADO = '1';
+const { calendarioDeDemostracion: calendario } = desdeApi('./dist/integraciones/calendario/calendario-simulado.js');
+for (const clave of ['agenda', 'agendaVacia']) {
+  const perfilId = perfiles[clave];
+  await prisma.perfilUsuario.update({ where: { id: perfilId }, data: { debeCambiarContrasena: false, zonaHoraria: 'America/Lima' } });
+  await prisma.consentimientoIntegracion.create({
+    data: { organizacionId, perfilId, proveedor: 'google', alcance: 'calendario', estado: 'concedido' },
+  });
+}
+const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
+const manana = new Date(Date.parse(`${hoy}T12:00:00Z`) + 24 * 3600_000).toISOString().slice(0, 10);
+const aLas = (dia, hora) => new Date(`${dia}T${hora}:00-05:00`);
+for (const evento of [
+  { titulo: 'Revisión de sprint', inicio: aLas(hoy, '09:00'), fin: aLas(hoy, '10:00'), zonaHoraria: 'America/Lima' },
+  { titulo: 'Llamada con el equipo de Madrid', inicio: aLas(hoy, '11:00'), fin: aLas(hoy, '11:30'), zonaHoraria: 'Europe/Madrid' },
+  { titulo: 'Comité de arquitectura', inicio: aLas(hoy, '15:00'), fin: aLas(hoy, '16:00'), zonaHoraria: 'America/Lima', esOrganizador: false },
+  { titulo: 'Aniversario de la empresa', inicio: aLas(hoy, '00:00'), fin: aLas(manana, '00:00'), zonaHoraria: 'America/Lima', todoElDia: true },
+  { titulo: 'Esto es mañana', inicio: aLas(manana, '09:00'), fin: aLas(manana, '10:00'), zonaHoraria: 'America/Lima' },
+]) {
+  calendario.sembrar(perfiles.agenda, evento);
 }
 await prisma.$disconnect();
 

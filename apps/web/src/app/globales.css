@@ -451,6 +451,69 @@ body {
   background: var(--superficie-elevada);
 }
 
+/* Agenda del día (T-025): una lista que ocupa el lienzo */
+.lienzo__cuerpo--lista {
+  display: block;
+  /* Chrome también alinea los bloques con place-items: sin esto, la lista quedaría centrada y encogida */
+  place-items: normal;
+  border-style: solid;
+  background: var(--superficie-base);
+  padding: var(--espaciado-24);
+  overflow-y: auto;
+}
+
+.agenda-dia__cabecera {
+  margin-bottom: var(--espaciado-16);
+}
+
+.agenda-dia__cabecera h2 {
+  margin: 0;
+  font-size: var(--tam-cuerpo);
+}
+
+.agenda-dia__cabecera h2::first-letter {
+  text-transform: uppercase;
+}
+
+.agenda-dia__zona,
+.compromiso__zona {
+  margin: var(--espaciado-8) 0 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.agenda-dia__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.compromiso {
+  display: grid;
+  grid-template-columns: minmax(96px, 128px) 1fr;
+  gap: var(--espaciado-16);
+  padding: var(--espaciado-12) 0;
+  border-top: 1px solid var(--borde-base);
+}
+
+.compromiso p {
+  margin: 0;
+}
+
+.compromiso__horario {
+  font-variant-numeric: tabular-nums;
+  color: var(--texto-suave);
+}
+
+.compromiso__titulo {
+  font-weight: 600;
+}
+
+.compromiso--cancelado .compromiso__titulo {
+  text-decoration: line-through;
+  color: var(--texto-suave);
+}
+
 .vacio {
   max-width: 420px;
   text-align: center;

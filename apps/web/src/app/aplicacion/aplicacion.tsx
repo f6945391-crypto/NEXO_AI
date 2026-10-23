@@ -2,6 +2,7 @@
 
 import { useRef, useState, type FormEvent } from 'react';
 import type { Perfil, PermisoGoogle, Plan, Rol } from '@nexoai/contratos';
+import type { AgendaDelDia } from '../../lib/agenda';
 import { conectarGoogle, salir } from '../acciones';
 import {
   IconoActividad,
@@ -52,12 +53,14 @@ export function Aplicacion({
   plan,
   perfil,
   permisosGoogle,
+  agenda,
   resultadoGoogle,
 }: {
   rol: Rol;
   plan: Plan;
   perfil: Perfil | null;
   permisosGoogle: PermisoGoogle[];
+  agenda: AgendaDelDia;
   resultadoGoogle: string | null;
 }) {
   const [seccion, setSeccion] = useState<Seccion>('agenda');
@@ -65,7 +68,6 @@ export function Aplicacion({
   const [expandido, setExpandido] = useState(false);
   const [ajustes, setAjustes] = useState(false);
   const [aviso, setAviso] = useState(resultadoGoogle ? (AVISO_GOOGLE[resultadoGoogle] ?? null) : null);
-  const calendarioConectado = permisosGoogle.some((p) => p.clave === 'calendario' && p.estado === 'concedido');
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [borrador, setBorrador] = useState('');
   const entrada = useRef<HTMLTextAreaElement>(null);
@@ -88,6 +90,15 @@ export function Aplicacion({
     setBorrador(ejemplo);
     entrada.current?.focus();
   }
+
+  // REQ-CUN01-12: el estado vacío lleva a pedírselo al asistente, nunca a un formulario (R-42). Si el
+  // lienzo está ampliado, primero vuelve a mostrarse la conversación.
+  function abrirCaptura() {
+    setExpandido(false);
+    requestAnimationFrame(() => entrada.current?.focus());
+  }
+
+  const conLista = seccion === 'agenda' && corte === 0 && agenda.estado === 'lista' && agenda.compromisos.length > 0;
 
   const cortes = seccion === 'tareas' && plan === 'empresarial' ? [...actual.cortes, 'Encargadas'] : actual.cortes;
 
@@ -207,24 +218,60 @@ export function Aplicacion({
           ))}
         </div>
 
-        <div className="lienzo__cuerpo">
-          {seccion === 'agenda' && (
+        <div className={`lienzo__cuerpo${conLista ? ' lienzo__cuerpo--lista' : ''}`}>
+          {seccion === 'agenda' && agenda.estado === 'sin-calendario' && (
             <div className="vacio">
-              {calendarioConectado ? (
-                <>
-                  <h2>Tu calendario ya está conectado</h2>
-                  <p>Tus compromisos aparecerán aquí en cuanto NexoAI empiece a leer tu calendario.</p>
-                </>
-              ) : (
-                <>
-                  <h2>Tu agenda llega con tu calendario</h2>
-                  <p>Para mostrarte tus compromisos, NexoAI necesita permiso para ver y editar tu calendario de Google.</p>
-                  <button type="button" className="boton" onClick={() => setAjustes(true)}>
-                    Conectar mi calendario
-                  </button>
-                </>
-              )}
+              <h2>Tu agenda llega con tu calendario</h2>
+              <p>Para mostrarte tus compromisos, NexoAI necesita permiso para ver y editar tu calendario de Google.</p>
+              <button type="button" className="boton" onClick={() => setAjustes(true)}>
+                Conectar mi calendario
+              </button>
             </div>
+          )}
+          {seccion === 'agenda' && agenda.estado === 'error' && (
+            <div className="vacio" role="alert">
+              <h2>No pudimos leer tu agenda</h2>
+              <p>{agenda.mensaje}</p>
+            </div>
+          )}
+          {seccion === 'agenda' && agenda.estado === 'lista' && corte > 0 && (
+            <div className="vacio">
+              <h2>Por ahora, solo el día de hoy</h2>
+              <p>La vista de {cortes[corte]?.toLowerCase()} llega en una próxima versión.</p>
+            </div>
+          )}
+          {seccion === 'agenda' && agenda.estado === 'lista' && corte === 0 && agenda.compromisos.length === 0 && (
+            <div className="vacio">
+              <h2>Hoy no tienes compromisos</h2>
+              <p>Para crear el primero, pídeselo al asistente con tus palabras, por ejemplo «Agéndame una reunión mañana a las 10».</p>
+              <button type="button" className="boton" onClick={abrirCaptura}>
+                Pedírselo al asistente
+              </button>
+            </div>
+          )}
+          {conLista && agenda.estado === 'lista' && (
+            <section className="agenda-dia" aria-labelledby="titulo-dia">
+              <header className="agenda-dia__cabecera">
+                <h2 id="titulo-dia">{agenda.fecha}</h2>
+                {/* REQ-CUN01-10: en qué zona están las horas */}
+                <p className="agenda-dia__zona">{agenda.zona}</p>
+              </header>
+              <ol className="agenda-dia__lista" aria-label="Compromisos de hoy">
+                {agenda.compromisos.map((c) => (
+                  <li key={c.id} className={`compromiso${c.cancelado ? ' compromiso--cancelado' : ''}`}>
+                    <p className="compromiso__horario">{c.horario}</p>
+                    <div>
+                      <p className="compromiso__titulo">
+                        {c.titulo}
+                        {c.cancelado && <span className="etiqueta">Cancelado</span>}
+                        {c.invitado && <span className="etiqueta">Invitado</span>}
+                      </p>
+                      {c.enSuZona && <p className="compromiso__zona">{c.enSuZona}</p>}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </section>
           )}
           {seccion === 'tareas' && (
             <div className="vacio">
