@@ -709,3 +709,72 @@ body {
   color: inherit;
   cursor: pointer;
 }
+
+/* Cambio de zona horaria en Ajustes (T-027) */
+.cambio-zona {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaciado-8);
+}
+
+.cambio-zona p {
+  margin: 0;
+}
+
+.cambio-zona__eleccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaciado-8);
+}
+
+.cambio-zona__eleccion select {
+  font: inherit;
+  min-height: 44px;
+  padding: 0 var(--espaciado-8);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  color: var(--texto-fuerte);
+}
+
+.cambio-zona__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaciado-8);
+}
+
+.cambio-zona__aviso {
+  color: var(--estado-exito);
+  font-size: var(--tam-etiqueta);
+}
+
+.tarjeta-confirmacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaciado-12);
+  padding: var(--espaciado-16);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-md);
+  background: var(--superficie-elevada);
+}
+
+.tarjeta-confirmacion h4 {
+  margin: 0;
+  font-size: var(--tam-cuerpo);
+}
+
+.tarjeta-confirmacion dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaciado-8);
+}
+
+.tarjeta-confirmacion__dato dt {
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.tarjeta-confirmacion__dato dd {
+  margin: 0;
+}

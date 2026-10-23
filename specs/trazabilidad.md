@@ -161,8 +161,8 @@
 | REQ-ACC-07 | 06-acceso | Requisito del sistema | 1 | T-007 | acceso.solo-dos-alcances-sin-lectura-de-buzon | implementado |
 | REQ-ACC-08 | 06-acceso | Requisito del sistema | 1 | T-008 | acceso.sin-google-no-agenda-ni-envia | implementado |
 | REQ-ACC-09 | 06-acceso | Requisito del sistema | 1 | T-008 | acceso.revocacion-avisa-una-vez-y-no-reintenta | implementado |
-| REQ-ACC-10 | 06-acceso | Requisito del sistema | 1 | T-006, T-009 | acceso.zona-horaria-modificable | implementado |
-| REQ-ACC-11 | 06-acceso | Requisito del sistema | 1 | T-009 | acceso.cambio-zona-muestra-afectados-y-no-aplica-sin-confirmar | implementado |
+| REQ-ACC-10 | 06-acceso | Requisito del sistema | 1 | T-006, T-009, T-027 | acceso.zona-horaria-modificable | implementado |
+| REQ-ACC-11 | 06-acceso | Requisito del sistema | 1 | T-009, T-027 | acceso.cambio-zona-muestra-afectados-y-no-aplica-sin-confirmar | implementado |
 | REQ-ACC-12 | 06-acceso | Requisito del sistema; R-45 | 1 | T-006 | acceso.cuenta-no-autogestionable | implementado |
 | REQ-ACC-13 | 06-acceso | Requisito del sistema; D-17 | 1 | T-004, T-026 | acceso.colaborador-solo-ve-lo-suyo | implementado |
 | REQ-ACC-14 | 06-acceso | Requisito del sistema; D-17 | 1 | T-007, T-026 | acceso.colaborador-con-los-dos-permisos | implementado |

@@ -41,5 +41,10 @@
     "correo": "agenda-vacia-e2e@nexoai.test",
     "rol": "usuario_personal",
     "plan": "personal"
+  },
+  "zona": {
+    "correo": "zona-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
   }
 }

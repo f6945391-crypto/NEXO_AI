@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import type { Perfil, PermisoGoogle, Plan, Rol } from '@nexoai/contratos';
 import type { AgendaDelDia } from '../../lib/agenda';
 import { conectarGoogle, salir } from '../acciones';
+import { CambioZona } from './cambio-zona';
 import {
   IconoActividad,
   IconoAgenda,
@@ -309,7 +310,9 @@ export function Aplicacion({
                 <dt>Plan</dt>
                 <dd>{NOMBRE_PLAN[perfil.plan]}</dd>
                 <dt>Zona horaria</dt>
-                <dd>{perfil.zonaHoraria?.replaceAll('_', ' ') ?? '—'}</dd>
+                <dd>
+                  <CambioZona zonaActual={perfil.zonaHoraria} />
+                </dd>
               </dl>
             )}
             <p className="explicacion">Tu correo, tu plan y tu cuenta los gestiona tu organización.</p>

@@ -1,35 +1,13 @@
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useState } from 'react';
+import { useZonas } from '../../lib/zonas';
 import { completarPrimerIngreso, type EstadoFormulario } from '../acciones';
-
-type Zona = { valor: string; etiqueta: string };
-
-// «America/Lima · GMT-5»: toda hora debe dejar saber en qué huso está (design/CONTEXTO.md).
-function etiquetar(zona: string): string {
-  try {
-    const partes = new Intl.DateTimeFormat('es', { timeZone: zona, timeZoneName: 'shortOffset' }).formatToParts(new Date());
-    const desfase = partes.find((p) => p.type === 'timeZoneName')?.value ?? '';
-    return `${zona.replaceAll('_', ' ')} · ${desfase}`;
-  } catch {
-    return zona;
-  }
-}
 
 export function FormularioPrimerIngreso() {
   const [estado, accion, enviando] = useActionState<EstadoFormulario, FormData>(completarPrimerIngreso, {});
-  const [zonas, setZonas] = useState<Zona[]>([]);
-  const [deEsteEquipo, setDeEsteEquipo] = useState<Zona | null>(null);
+  const { zonas, deEsteEquipo } = useZonas();
   const [elegida, setElegida] = useState('');
-
-  // Solo en el navegador: la lista y la zona del equipo dependen de él, y así no difieren del servidor.
-  useEffect(() => {
-    const propia = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const nombres = new Set(Intl.supportedValuesOf('timeZone'));
-    if (propia) nombres.add(propia);
-    setZonas([...nombres].sort().map((valor) => ({ valor, etiqueta: etiquetar(valor) })));
-    if (propia) setDeEsteEquipo({ valor: propia, etiqueta: etiquetar(propia) });
-  }, []);
 
   return (
     <form action={accion} className="formulario" noValidate>

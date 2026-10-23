@@ -51,7 +51,7 @@ for (const [clave, cuenta] of Object.entries(cuentas)) {
 // simulado de la API. Una con compromisos hoy y otra sin ninguno.
 process.env.CALENDARIO_SIMULADO = '1';
 const { calendarioDeDemostracion: calendario } = desdeApi('./dist/integraciones/calendario/calendario-simulado.js');
-for (const clave of ['agenda', 'agendaVacia']) {
+for (const clave of ['agenda', 'agendaVacia', 'zona']) {
   const perfilId = perfiles[clave];
   await prisma.perfilUsuario.update({ where: { id: perfilId }, data: { debeCambiarContrasena: false, zonaHoraria: 'America/Lima' } });
   await prisma.consentimientoIntegracion.create({
@@ -70,6 +70,13 @@ for (const evento of [
 ]) {
   calendario.sembrar(perfiles.agenda, evento);
 }
+// T-027: un compromiso largo que cae «hoy» tanto en Lima como en Tokio, para ver la agenda en las dos zonas
+calendario.sembrar(perfiles.zona, {
+  titulo: 'Guardia de soporte',
+  inicio: new Date(Date.now() - 3600_000),
+  fin: new Date(Date.now() + 30 * 3600_000),
+  zonaHoraria: 'America/Lima',
+});
 await prisma.$disconnect();
 
 // La API corre en este mismo proceso, así Playwright la detiene al terminar.

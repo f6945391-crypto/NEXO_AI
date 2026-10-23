@@ -91,6 +91,8 @@ Es una **Operación** (AD-09):
 - Admite los orígenes `agente` y `control_directo`: es un ajuste sobre algo que ya existe, el perfil (DP-01).
 - El ejecutor vive en `IdentidadModule` y lee la réplica con el repositorio público de `AgendaModule`.
 
+*Interfaz web (T-027):* en Ajustes, dentro de «Perfil», la fila de la zona horaria lleva «Cambiar». La web propone la Operación con origen `control_directo` y pinta su tarjeta de confirmación con los datos que devuelve la API, sin calcular nada por su cuenta. Las acciones de servidor proponen, confirman y descartan; tras confirmar, la página se vuelve a pedir y la agenda se muestra en la zona nueva. No es un camino manual paralelo: es un ajuste sobre el perfil, que existe (DP-01), en el sitio que fijan REQ-ACC-10 y R-34.
+
 ### 5.4 Conexión con Google (ACC-06 a ACC-09)
 
 - Hay exactamente dos alcances: `https://www.googleapis.com/auth/calendar.events` (ver y editar eventos) y `https://www.googleapis.com/auth/gmail.send`. Están en una constante de `packages/contratos` junto con el texto de para qué sirve cada uno. **`gmail.readonly` no aparece en ningún sitio del código** (P-08), y lo comprueba una prueba.

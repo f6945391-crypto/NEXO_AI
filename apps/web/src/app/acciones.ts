@@ -1,5 +1,6 @@
 'use server';
 
+import { refresh } from 'next/cache';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
@@ -7,7 +8,9 @@ import {
   EnlaceGoogleRespuesta,
   IngresoRespuesta,
   IngresoSolicitud,
+  OperacionRespuesta,
   PrimerIngresoSolicitud,
+  ZonaHoraria,
 } from '@nexoai/contratos';
 import {
   borrarTokens,
@@ -86,6 +89,57 @@ export async function conectarGoogle(datos: FormData): Promise<void> {
     // Sin respuesta de la API: se vuelve con el aviso de error.
   }
   redirect(url);
+}
+
+// REQ-ACC-10, REQ-ACC-11 · T-027. El cambio de zona es la Operación de T-009, como control directo: la
+// web pide la propuesta, pinta su tarjeta tal como llega y la confirma o la descarta.
+export type ResultadoPropuesta = { propuesta?: OperacionRespuesta; error?: string };
+
+async function tokenDeAcceso(): Promise<string> {
+  const acceso = (await cookies()).get(COOKIE_ACCESO)?.value;
+  if (!acceso) redirect('/entrar');
+  return acceso;
+}
+
+export async function proponerCambioZona(zonaHoraria: string): Promise<ResultadoPropuesta> {
+  const zona = ZonaHoraria.safeParse(zonaHoraria);
+  if (!zona.success) return { error: 'Elige una zona horaria de la lista.' };
+  const token = await tokenDeAcceso();
+  try {
+    const respuesta = await llamarApi('/operaciones', {
+      metodo: 'POST',
+      cuerpo: { tipo: 'perfil.cambiar_zona_horaria', carga: { zonaHoraria: zona.data }, origen: 'control_directo' },
+      token,
+    });
+    if (respuesta.estado !== 201) return { error: mensajeDeError(respuesta.cuerpo) };
+    return { propuesta: OperacionRespuesta.parse(respuesta.cuerpo) };
+  } catch {
+    return { error: SIN_CONEXION };
+  }
+}
+
+export async function confirmarCambioZona(id: string): Promise<{ error?: string }> {
+  const token = await tokenDeAcceso();
+  try {
+    const respuesta = await llamarApi(`/operaciones/${encodeURIComponent(id)}/confirmar`, { metodo: 'POST', token });
+    if (respuesta.estado !== 200 || OperacionRespuesta.parse(respuesta.cuerpo).estado !== 'ejecutada') {
+      return { error: mensajeDeError(respuesta.cuerpo, 'No se pudo cambiar la zona horaria. Inténtalo de nuevo.') };
+    }
+  } catch {
+    return { error: SIN_CONEXION };
+  }
+  // La página se vuelve a pedir: el perfil y la agenda llegan ya en la zona nueva
+  refresh();
+  return {};
+}
+
+export async function descartarOperacion(id: string): Promise<void> {
+  const token = await tokenDeAcceso();
+  try {
+    await llamarApi(`/operaciones/${encodeURIComponent(id)}/descartar`, { metodo: 'POST', token });
+  } catch {
+    // Si la API no responde, la propuesta queda sin confirmar, que tampoco cambia nada
+  }
 }
 
 // REQ-ACC-12: lo único que el usuario hace con su cuenta.

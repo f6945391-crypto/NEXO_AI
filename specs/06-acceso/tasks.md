@@ -156,7 +156,7 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
   - La tarjeta dice la zona actual y la nueva, cuántos compromisos se verán a otra hora y, de como mucho diez, su hora antes y después. Cuentan los futuros, vigentes y con hora: los de todo el día, los cancelados y los pasados no.
   - Al confirmar cambia solo `perfil_usuario.zona_horaria` y se registra `perfil.zona-horaria-cambiada` con la zona anterior y la nueva. Los instantes de los compromisos no se tocan (H-ACC-04).
   - Pedir la zona que ya se tiene, o una sin nombre IANA, responde `SOLICITUD_INVALIDA` sin crear nada.
-  - **Sin pantalla todavía:** T-009 es la Operación. La web muestra la zona en Ajustes, pero no ofrece cambiarla; el agente lo hará en la fase 2.
+  - La pantalla para cambiarla desde Ajustes es T-027; el agente lo hará en la fase 2.
 
 ---
 
@@ -250,6 +250,22 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
   - Google ofrece los dos permisos a toda cuenta. La web ya no envía al colaborador a `/solo-movil`, que se retiró; le muestra la aplicación entera, sin la franja «Encargadas».
   - **Pendiente del análisis por plan:** los ejemplos de la conversación de Tareas sugieren delegar también al colaborador y a quien no tiene el Plan Empresarial.
   - Al empezar, Docker Desktop no arrancaba: había quedado un archivo `dockerInference` de la sesión anterior; el equipo lo borró.
+
+### T-027 · Cambiar la zona horaria desde Ajustes, en la web
+
+- **Satisface:** REQ-ACC-10, REQ-ACC-11 (interfaz) · R-34, DP-01
+- **Depende de:** T-009, T-023
+- **Origen:** pedido del equipo el 23 de octubre de 2026, tras T-009
+- **Contenido:** en Ajustes, junto a la zona horaria, «Cambiar»: un selector como el del primer ingreso, que propone `perfil.cambiar_zona_horaria` como control directo y muestra su tarjeta de confirmación con los compromisos que se verán a otra hora. «Confirmar el cambio» lo aplica; «Cancelar» descarta la propuesta. Al confirmar, la aplicación se vuelve a cargar con la zona nueva
+- **Hecho cuando:** la tarjeta se ve antes de cambiar nada; cancelar no cambia la zona; confirmar la cambia y la agenda pasa a mostrarse en la zona nueva
+- **Prueba:** `acceso.cambiar-zona-desde-ajustes` (extremo a extremo)
+- **Estado:** hecha · 23 de octubre de 2026. 1 prueba de extremo a extremo
+- **Notas de implementación:**
+  - `src/app/aplicacion/cambio-zona.tsx`, dentro de la fila «Zona horaria» de Ajustes: «Cambiar zona horaria» → selector → «Ver qué cambia» → tarjeta de confirmación → «Confirmar el cambio» o «Cancelar».
+  - La tarjeta se pinta tal como la devuelve la API; la web no calcula qué compromisos cambian. Cancelar descarta la Operación.
+  - Tras confirmar, la acción de servidor llama a `refresh()` (Next.js 16) y la página llega con el perfil y la agenda en la zona nueva, sin cerrar Ajustes.
+  - La lista de zonas, que ya usaba el primer ingreso, pasa a `src/lib/zonas.ts` y la comparten las dos pantallas.
+  - Para la prueba, una cuenta de extremo a extremo con un compromiso que cae «hoy» en Lima y en Tokio.
 
 ---
 
