@@ -28,6 +28,8 @@ DADO un usuario habilitado
 CUANDO solicite «Agéndame una reunión con Vasco el viernes a las 10»
 ENTONCES el sistema extrae fecha, hora de inicio, hora de fin estimada y título, y los presenta al usuario antes de registrar
 
+> **Precisado el 22 de octubre de 2026 (H-AG-01, decisión 1).** Si la solicitud no indica la hora de fin, la hora de fin estimada es una hora después del inicio. La calcula el código, no el modelo.
+
 ---
 
 ### REQ-CUN01-02
@@ -196,13 +198,13 @@ Estas se detectaron al construir la interfaz y deben revisarse con el equipo:
 
 | # | Decisión | Afecta |
 |---|---|---|
-| 1 | La duración por defecto de un compromiso propuesto cuando el usuario no la indica es de una hora | REQ-CUN01-01 |
+| 1 | La duración por defecto de un compromiso propuesto cuando el usuario no la indica es de una hora. **Decidida por el equipo el 22 de octubre de 2026** (H-AG-01) | REQ-CUN01-01 |
 | 2 | La confirmación previa aplica también a la cancelación, no solo al registro | REQ-CUN01-03, REQ-CUN01-06 |
 | 3 | El estado vacío es un requisito propio (REQ-CUN01-12), no un detalle visual | REQ-CUN01-12 |
 | 4 | El conflicto de horario ofrece alternativas concretas, no solo el aviso de conflicto | REQ-CUN01-05 |
 | ~~5~~ | ~~Ante falta de permiso, el sistema ofrece el camino manual en la misma pantalla~~ **Retirada el 22 de octubre de 2026** por R-42 y REQ-ACC-08 (INC-01) | REQ-CUN01-08 |
 
-El punto 1 es el más relevante: es una regla de negocio que no existe y que alguien tiene que decidir.
+El punto 1 era el más relevante, porque era una regla de negocio que no existía. El equipo la decidió el 22 de octubre de 2026: una hora.
 
 ### Detectadas al escribir `plan.md` · 22 de octubre de 2026
 

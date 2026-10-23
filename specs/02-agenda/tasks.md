@@ -105,10 +105,17 @@ Estados: `pendiente` · `en curso` · `hecha`.
 
 - **Satisface:** REQ-CUN01-02, REQ-CUN01-03, REQ-CUN01-04, REQ-CUN01-07 · H-AG-01
 - **Depende de:** T-012, T-015, T-016
-- **Contenido:** tipo `agenda.registrar`: esquema `PropuestaEvento`, `DATOS_FALTANTES`, consulta de solapes antes de proponer, ejecución en el proveedor y actualización de la réplica con la respuesta. `DURACION_POR_DEFECTO` queda como parámetro sin valor
+- **Contenido:** tipo `agenda.registrar`: esquema `PropuestaEvento`, `DATOS_FALTANTES`, consulta de solapes antes de proponer, ejecución en el proveedor y actualización de la réplica con la respuesta. `DURACION_POR_DEFECTO_MIN = 60` (H-AG-01, decidido por el equipo el 22 de octubre de 2026): si la carga no trae fin, el código lo calcula
 - **Hecho cuando:** sin confirmar no hay llamadas de escritura al proveedor; al confirmar, el evento queda con los datos mostrados; con datos incompletos no se crea la operación
 - **Pruebas:** `agenda.consulta-solapes-antes-de-proponer`, `agenda.sin-confirmar-no-escribe-ni-notifica`, `agenda.confirmar-registra-lo-mostrado`, `agenda.datos-faltantes-no-crea-operacion`
-- **Estado:** pendiente
+- **Estado:** hecha · 22 de octubre de 2026. 9 pruebas
+- **Notas de implementación:**
+  - `src/agenda/registrar-compromiso.ts`. La propuesta sincroniza antes de mirar los solapes, así ve también lo creado en Google hace un momento. Sin permiso de calendario no hay propuesta (REQ-CUN01-08).
+  - **La propuesta guarda la carga completada**: fin calculado con `DURACION_POR_DEFECTO_MIN = 60` y zona del perfil si no venía. Al confirmar se registra exactamente eso, y el resultado es el evento tal como lo devolvió Google (REQ-CUN01-04).
+  - La tarjeta muestra título, fecha, hora, zona («Hora de Lima (GMT-5)») y, si se usó la duración por defecto, que fue por no indicar el fin.
+  - Un solape deja la propuesta sin poder confirmarse, con el motivo y el evento que la causa. Las alternativas y la nueva comprobación al confirmar son T-018.
+  - Ajustes en Operaciones (T-012), anotados en el plan §3.3: `DATOS_FALTANTES` con la lista de campos, distinto de un dato inválido; los ejecutores pueden limitar su origen, y `agenda.registrar` solo admite `agente` (R-42, DP-01); `proponer` puede devolver la carga completada.
+  - `AgendaModule` importa `OperacionesModule` aunque sea global: sin eso, el proceso trabajador no arrancaba. Lo detectó la prueba del trabajador.
 
 ### T-018 · Conflicto al proponer y al confirmar
 

@@ -3,8 +3,8 @@ import type { CodigoError, ErrorApi } from '@nexoai/contratos';
 import type { z } from 'zod';
 
 // Todo error que sale de la API tiene la forma ErrorApi de packages/contratos.
-export function errorApi(estado: number, codigo: CodigoError, mensaje: string): HttpException {
-  const cuerpo: ErrorApi = { codigo, mensaje };
+export function errorApi(estado: number, codigo: CodigoError, mensaje: string, extra: Pick<ErrorApi, 'campos'> = {}): HttpException {
+  const cuerpo: ErrorApi = { codigo, mensaje, ...extra };
   return new HttpException(cuerpo, estado);
 }
 

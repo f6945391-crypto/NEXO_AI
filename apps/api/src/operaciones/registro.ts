@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { VistaConfirmacion } from '@nexoai/contratos';
+import type { OrigenOperacion, VistaConfirmacion } from '@nexoai/contratos';
 import type { z } from 'zod';
 import type { ContextoSolicitud } from '../identidad/contexto';
 
@@ -11,10 +11,18 @@ export type ResultadoEjecucion =
   // H-AG-07: algo cambió desde la propuesta (por ejemplo, un conflicto nuevo); no se ejecuta y se propone de nuevo.
   | { tipo: 'reproponer'; vistaConfirmacion: VistaConfirmacion };
 
+// T-017: la propuesta puede completar la carga (un valor por defecto, la zona del perfil). Se guarda la
+// carga completada, que es la que se ejecuta al confirmar: lo registrado es lo mostrado (REQ-CUN01-04).
+export type Propuesta<C> = VistaConfirmacion | { vista: VistaConfirmacion; carga: C };
+
 export interface EjecutorOperacion<C = unknown> {
   readonly tipo: string;
   readonly esquema: z.ZodType<C>;
-  proponer(contexto: ContextoSolicitud, carga: C): Promise<VistaConfirmacion>;
+  // Orígenes admitidos; sin declarar, todos. Crear algo nuevo solo lo hace el agente (R-42, DP-01).
+  readonly origenes?: readonly OrigenOperacion[];
+  // Cómo nombrar a la persona cada campo obligatorio cuando falta (REQ-CUN01-07)
+  readonly nombresDeCampos?: Readonly<Record<string, string>>;
+  proponer(contexto: ContextoSolicitud, carga: C): Promise<Propuesta<C>>;
   // Único lugar donde una operación produce su efecto (AD-09).
   ejecutar(contexto: ContextoSolicitud, carga: C): Promise<ResultadoEjecucion>;
 }

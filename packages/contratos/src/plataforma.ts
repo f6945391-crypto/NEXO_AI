@@ -26,11 +26,15 @@ export const CodigoError = z.enum([
   'PERMISO_GOOGLE_RETIRADO',
   'GOOGLE_NO_DISPONIBLE',
   'EVENTO_NO_ENCONTRADO',
+  'DATOS_FALTANTES',
+  'ORIGEN_NO_PERMITIDO',
 ]);
 export type CodigoError = z.infer<typeof CodigoError>;
 
 export const ErrorApi = z.strictObject({
   codigo: CodigoError,
   mensaje: z.string(),
+  // Solo con DATOS_FALTANTES: qué campos de la carga faltan (REQ-CUN01-07)
+  campos: z.array(z.string()).optional(),
 });
 export type ErrorApi = z.infer<typeof ErrorApi>;

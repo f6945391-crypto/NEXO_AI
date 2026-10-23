@@ -4,6 +4,7 @@ import {
   PROVEEDOR_CALENDARIO,
   SincronizacionCaducada,
   type CambioCalendario,
+  type EventoCalendario,
   type ProveedorCalendario,
   type Quien,
 } from '../integraciones/calendario/proveedor-calendario';
@@ -98,38 +99,42 @@ export class SincronizadorCalendario {
   }
 
   private async aplicar(quien: Quien, cambios: CambioCalendario[], ahora: Date): Promise<void> {
-    const datos = this.datos(quien);
     for (const cambio of cambios) {
       if (cambio.tipo === 'cancelado') {
         // Nunca se borra de la réplica: se marca (R-25)
-        await datos.eventoAgenda.updateMany({
+        await this.datos(quien).eventoAgenda.updateMany({
           where: { perfilId: quien.perfilId, googleEventoId: cambio.id },
           data: { estado: 'cancelado', sincronizadoEn: ahora },
         });
         continue;
       }
-      const e = cambio.evento;
-      const fila = {
-        etag: e.etag,
-        titulo: e.titulo,
-        inicio: e.inicio,
-        fin: e.fin,
-        zonaHoraria: e.zonaHoraria,
-        todoElDia: e.todoElDia,
-        esOrganizador: e.esOrganizador,
-        serieId: e.serieId,
-        estado: 'confirmado' as const,
-        sincronizadoEn: ahora,
-      };
-      const guardar = () =>
-        datos.eventoAgenda.upsert({
-          where: { perfilId_googleEventoId: { perfilId: quien.perfilId, googleEventoId: e.id } },
-          create: { perfilId: quien.perfilId, organizacionId: quien.organizacionId, googleCalendarioId: 'primary', googleEventoId: e.id, ...fila },
-          update: fila,
-        });
-      // El trabajador y una consulta pueden crear el mismo evento a la vez; el segundo intento lo actualiza.
-      await guardar().catch((error: unknown) => (esClaveRepetida(error) ? guardar() : Promise.reject(error)));
+      await this.incorporar(quien, cambio.evento, ahora);
     }
+  }
+
+  // Guarda en la réplica un evento tal como lo devolvió Google. Lo usan la sincronización y las
+  // Operaciones de agenda tras escribir (REQ-CUN01-04: la réplica queda con la respuesta, no con lo pedido).
+  async incorporar(quien: Quien, e: EventoCalendario, ahora = new Date()) {
+    const fila = {
+      etag: e.etag,
+      titulo: e.titulo,
+      inicio: e.inicio,
+      fin: e.fin,
+      zonaHoraria: e.zonaHoraria,
+      todoElDia: e.todoElDia,
+      esOrganizador: e.esOrganizador,
+      serieId: e.serieId,
+      estado: 'confirmado' as const,
+      sincronizadoEn: ahora,
+    };
+    const guardar = () =>
+      this.datos(quien).eventoAgenda.upsert({
+        where: { perfilId_googleEventoId: { perfilId: quien.perfilId, googleEventoId: e.id } },
+        create: { perfilId: quien.perfilId, organizacionId: quien.organizacionId, googleCalendarioId: 'primary', googleEventoId: e.id, ...fila },
+        update: fila,
+      });
+    // El trabajador y una consulta pueden crear el mismo evento a la vez; el segundo intento lo actualiza.
+    return guardar().catch((error: unknown) => (esClaveRepetida(error) ? guardar() : Promise.reject(error)));
   }
 
   private datos(quien: Quien) {

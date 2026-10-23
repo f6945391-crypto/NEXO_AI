@@ -4,7 +4,7 @@
 **Fase:** 1 para el dominio, la API y las Operaciones; 2 para las herramientas del agente
 **Decisiones que aplica:** AD-04, AD-05, AD-06, AD-08, AD-09, AD-10 · P-01, P-02, P-03, P-05, P-07, P-11 · DP-01, DP-02
 **Depende de:** `specs/06-acceso/plan.md`, por la sesión, el contexto de organización y `@RequiereGoogle`
-**Estado:** **aprobado** por el equipo el 22 de octubre de 2026, con sus hallazgos tal como están (DP-02 sigue siendo provisional; H-AG-01 y H-AG-08 siguen abiertos)
+**Estado:** **aprobado** por el equipo el 22 de octubre de 2026, con sus hallazgos tal como están (DP-02 sigue siendo provisional; H-AG-08 sigue abierto; H-AG-01 se decidió el 22 de octubre de 2026: una hora)
 
 Este plan dice **dónde y cómo** se cumple cada requisito. Lo que la especificación no decide está en §9 como hallazgo.
 
@@ -85,6 +85,8 @@ Reglas, cada una con su prueba:
 | `POST /operaciones/:id/descartar` | CUN01-03 |
 | `GET /operaciones?estado=en_espera,propuesta` | CUN01-11, REQ-CAP-23 |
 
+*Ajustes de T-017:* (1) si la carga no trae un campo obligatorio, la respuesta es `DATOS_FALTANTES` con `campos[]`, distinta de `SOLICITUD_INVALIDA` para un dato que está pero no vale; (2) cada tipo puede limitar su origen: `agenda.registrar` solo admite `agente`, porque crear algo nuevo no es un control directo (R-42, DP-01) y responde `ORIGEN_NO_PERMITIDO`; (3) la propuesta guarda la carga completada (fin por defecto, zona del perfil), que es la que se ejecuta al confirmar.
+
 ## 4. Modelo de datos de la agenda
 
 ### `evento_agenda` (EN-02) — réplica de Google (AD-10)
@@ -139,7 +141,7 @@ Las dos llevan `@RequiereGoogle('calendar.events')`. Sin ese permiso responden `
 
 | REQ | Dónde se cumple | Fase |
 |---|---|---|
-| CUN01-01 | Herramienta `agenda.registrar_evento`: el modelo extrae fecha, inicio, fin y título como argumentos del contrato `PropuestaEvento`. **Si falta el fin, no lo inventa el modelo**: lo calcula el código con la duración por defecto, que todavía está sin decidir (decisión 1 del spec) | 2 |
+| CUN01-01 | Herramienta `agenda.registrar_evento`: el modelo extrae fecha, inicio, fin y título como argumentos del contrato `PropuestaEvento`. **Si falta el fin, no lo inventa el modelo**: lo calcula el código con la duración por defecto de una hora (decisión 1 del spec, H-AG-01) | 2 |
 | CUN01-02 | `POST /operaciones` llama a `detectarConflictos()` sobre la réplica, tras sincronizar el rango, antes de devolver la propuesta. Se repite al confirmar | 1 |
 | CUN01-03 | Máquina de estados de §3.2; nada se escribe antes de `ejecutada` | 1 |
 | CUN01-04 | `confirmar` escribe en Google, actualiza la réplica con la respuesta y devuelve el evento tal como quedó. La tarjeta de resultado se construye con esos datos, no con los propuestos | 1 |
@@ -190,7 +192,7 @@ Registrados en `SPEC.md` §8 y en la tabla de decisiones de `spec.md`. **No son 
 
 | # | Hallazgo | Lo que asume este plan |
 |---|---|---|
-| H-AG-01 | Duración por defecto cuando no se indica fin (decisión 1 del spec, ya abierta) | Un parámetro `DURACION_POR_DEFECTO`, sin valor hasta que se decida. La propuesta de una hora sigue pendiente |
+| H-AG-01 | Duración por defecto cuando no se indica fin (decisión 1 del spec) | **Decidido por el equipo el 22 de octubre de 2026: una hora.** Constante `DURACION_POR_DEFECTO_MIN = 60`, aplicada por el código al preparar la propuesta |
 | H-AG-02 | REQ-CUN01-05 exige ofrecer alternativas, pero no dice cuáles | **DP-02**, provisional |
 | H-AG-03 | Los eventos de todo el día no se mencionan | Se muestran, pero **no cuentan como conflicto** |
 | H-AG-04 | Modificar o cancelar un evento que se repite: ¿una vez o toda la serie? | Solo la instancia elegida |

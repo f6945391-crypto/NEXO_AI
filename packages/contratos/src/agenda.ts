@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ZonaHoraria } from './acceso';
 
 // Agenda (specs/02-agenda/plan.md §5) · T-015. Toda hora va en ISO 8601 con el desfase de la zona del
 // evento, y la zona IANA aparte, para que el cliente pueda mostrar en qué zona está (P-05, REQ-CUN01-10).
@@ -35,3 +36,17 @@ export const EventoAgenda = z.strictObject({
   estado: EstadoEvento,
 });
 export type EventoAgenda = z.infer<typeof EventoAgenda>;
+
+// Carga de la Operación `agenda.registrar` (REQ-CUN01-01, 07) · T-017. En la fase 2 la rellena el agente
+// con lo que extrae de la solicitud. Sin `fin`, el código lo calcula con la duración por defecto
+// (H-AG-01); sin `zonaHoraria`, se usa la del perfil. La propuesta guarda la carga ya completada, que
+// es exactamente lo que se registra al confirmar (REQ-CUN01-04).
+export const PropuestaEvento = z
+  .strictObject({
+    titulo: z.string().trim().min(1).max(200),
+    inicio: Instante,
+    fin: Instante.optional(),
+    zonaHoraria: ZonaHoraria.optional(),
+  })
+  .refine(({ inicio, fin }) => !fin || Date.parse(inicio) < Date.parse(fin), { message: 'el fin tiene que ser posterior al inicio', path: ['fin'] });
+export type PropuestaEvento = z.infer<typeof PropuestaEvento>;

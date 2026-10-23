@@ -16,7 +16,8 @@ type Fila = Awaited<ReturnType<ReplicaEventosRepositorio['enRango']>>[number];
 const codigoDe = (error: unknown) =>
   error instanceof HttpException ? (error.getResponse() as Partial<ErrorApi>).codigo : undefined;
 
-function aContrato(fila: Fila): EventoAgenda {
+// Una fila de la réplica tal como sale de la API; también es el resultado de las Operaciones de agenda.
+export function aContrato(fila: Fila): EventoAgenda {
   return EventoAgenda.parse({
     id: fila.id,
     titulo: fila.titulo,

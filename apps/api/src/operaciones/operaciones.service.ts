@@ -32,6 +32,17 @@ const aRespuesta = (op: Operacion): OperacionRespuesta =>
     creadaEn: op.creadaEn.toISOString(),
   });
 
+// Campos de primer nivel que no vienen, o vienen vacíos, y que el esquema exige.
+function camposFaltantes(bruta: unknown, issues: readonly { path: readonly PropertyKey[] }[]): string[] {
+  const valores = bruta && typeof bruta === 'object' ? (bruta as Record<string, unknown>) : {};
+  const faltan = issues
+    .map((issue) => String(issue.path[0] ?? ''))
+    .filter((campo) => campo && (valores[campo] === undefined || valores[campo] === null || (typeof valores[campo] === 'string' && !String(valores[campo]).trim())));
+  return [...new Set(faltan)];
+}
+
+const unirConY = (partes: string[]) => (partes.length > 1 ? `${partes.slice(0, -1).join(', ')} y ${partes.at(-1)}` : (partes[0] ?? ''));
+
 const noEncontrada = () => errorApi(404, 'OPERACION_NO_ENCONTRADA', 'No existe esa operación.');
 
 @Injectable()
@@ -44,11 +55,24 @@ export class OperacionesService {
   async proponer(contexto: ContextoSolicitud, solicitud: OperacionSolicitud): Promise<OperacionRespuesta> {
     const ejecutor = this.registro.obtener(solicitud.tipo);
     if (!ejecutor) throw errorApi(400, 'OPERACION_DESCONOCIDA', 'Esa acción no existe.');
+    if (ejecutor.origenes && !ejecutor.origenes.includes(solicitud.origen)) {
+      throw errorApi(403, 'ORIGEN_NO_PERMITIDO', 'Esto se le pide al asistente: no hay un camino aparte para hacerlo.');
+    }
 
     const carga = ejecutor.esquema.safeParse(solicitud.carga);
-    if (!carga.success) throw errorApi(400, 'SOLICITUD_INVALIDA', 'Faltan datos o no tienen el formato esperado.');
+    if (!carga.success) {
+      // REQ-CUN01-07: si lo que falla es que falta algo, se dice qué, y no se crea la operación
+      const faltan = camposFaltantes(solicitud.carga, carga.error.issues);
+      if (faltan.length > 0) {
+        const nombres = faltan.map((campo) => ejecutor.nombresDeCampos?.[campo] ?? campo);
+        throw errorApi(400, 'DATOS_FALTANTES', `Falta ${unirConY(nombres)}.`, { campos: faltan });
+      }
+      throw errorApi(400, 'SOLICITUD_INVALIDA', 'Faltan datos o no tienen el formato esperado.');
+    }
 
-    const vista = VistaConfirmacion.parse(await ejecutor.proponer(contexto, carga.data));
+    const propuesta = await ejecutor.proponer(contexto, carga.data);
+    const [vistaPropuesta, cargaFinal] = 'vista' in propuesta ? [propuesta.vista, propuesta.carga] : [propuesta, carga.data];
+    const vista = VistaConfirmacion.parse(vistaPropuesta);
     const op = await this.datos(contexto).operacion.create({
       data: {
         organizacionId: contexto.organizacionId,
@@ -56,7 +80,7 @@ export class OperacionesService {
         tipo: solicitud.tipo,
         origen: solicitud.origen,
         solicitudOriginal: solicitud.solicitudOriginal ?? null,
-        carga: carga.data as object,
+        carga: cargaFinal as object,
         vistaConfirmacion: vista,
         estado: 'propuesta',
       },
