@@ -37,7 +37,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** interfaz `ProveedorCalendario` (listar con sincronización incremental, crear, actualizar, cancelar); implementación para Google Calendar sobre `ClienteGoogle`; implementación simulada en memoria que cuenta llamadas
 - **Hecho cuando:** la implementación simulada pasa las mismas pruebas de contrato que se usarán para la real; la real se probó a mano una vez con una cuenta de prueba
 - **Prueba:** `calendario.contrato-del-proveedor`
-- **Estado:** hecha contra el simulado · 22 de octubre de 2026. 10 pruebas. **Falta la prueba real**: Google respondió `403 SERVICE_DISABLED`, porque la API de Google Calendar no está habilitada en el proyecto de Google Cloud. Lo tiene que habilitar el equipo
+- **Estado:** hecha · 22 de octubre de 2026. 10 pruebas contra el simulado. **Lectura real probada** con `personal@nexoai.test` (`probar-calendario --solo-lectura`, y `GET /agenda/eventos` de punta a punta): Google entrega el token de sincronización también con la lectura acotada por fechas. La primera vez respondió `403 SERVICE_DISABLED`, porque la API de Google Calendar no estaba habilitada en el proyecto de Google Cloud; el equipo la habilitó. Los pasos de escritura del contrato todavía no se ejecutaron contra Google
 - **Notas de implementación:**
   - `src/integraciones/calendario/`: el puerto (`proveedor-calendario.ts`), la implementación sobre Google (`google-calendar.ts`, sin SDK, con `ClienteGoogle`) y la simulada (`calendario-simulado.ts`).
   - **El contrato es código, no solo una prueba** (`contrato.ts`): la prueba lo ejecuta contra la simulada y `pnpm --filter @nexoai/api probar-calendario -- --correo <correo>` contra Google con la base de desarrollo. Crea un evento dentro de 30 días, lo cambia y lo cancela; con `--solo-lectura` solo lee.
@@ -156,6 +156,24 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Hecho cuando:** el recorrido coincide con los cuadros vigentes de `07 Móvil v2` y no existe ningún formulario de creación
 - **Prueba:** `agenda.estado-vacio-abre-captura`
 - **Estado:** pendiente
+
+---
+
+## 6. Interfaz web
+
+### T-025 · Agenda en la web: Hoy
+
+- **Satisface:** REQ-CUN01-10 (interfaz), REQ-CUN01-12 (web) · R-42
+- **Depende de:** T-015, T-023
+- **Origen:** pedido del equipo el 22 de octubre de 2026, para ver los compromisos reales antes de la fase 2. El móvil sigue en T-021
+- **Contenido:** el nivel Hoy de la sección Agenda de la web muestra los compromisos del día en la zona del perfil, con la zona visible; los de todo el día primero; los de otra zona dicen también su hora allí; cancelados e invitados marcados. Estado vacío cuya acción lleva a la conversación, sin formulario. Semana y Mes, de momento, lo dicen
+- **Hecho cuando:** con el calendario simulado, Hoy muestra los compromisos del día con su horario y su zona aunque el navegador esté en otra; sin compromisos, la acción enfoca la conversación; sin calendario, se ofrece conectarlo
+- **Pruebas:** `agenda.horas-con-zona-horaria`, `agenda.estado-vacio-abre-captura` (extremo a extremo)
+- **Estado:** en curso
+- **Notas de implementación:**
+  - La página lee la agenda en el servidor (`src/lib/agenda.ts`) y la formatea allí: el navegador recibe el texto hecho, sin diferencias de formato entre servidor y navegador.
+  - El día se calcula en la zona del perfil, de medianoche a medianoche con su desfase, también si ese día cambia la hora.
+  - La API acepta `CALENDARIO_SIMULADO=1` para las pruebas de extremo a extremo y las demostraciones; en producción se niega a arrancar con él.
 
 ---
 

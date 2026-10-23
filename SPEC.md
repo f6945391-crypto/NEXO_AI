@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 2.10.0 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
+**Versión:** 2.10.1 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -143,7 +143,7 @@ Estado por columna: **—** no existe · **borrador** · **vigente** · **parcia
 | Área | Archivo | CUN | Plataforma | Plan | REQ | Spec | Diseño | Plan técnico | Tareas | Código | Pruebas |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | Captura | `specs/01-captura/spec.md` | 01, 03 | Móvil | G / P | CAP-01…24 (24) | vigente | parcial | — | — | — | — |
-| Agenda | `specs/02-agenda/spec.md` | 01 | Móvil | G | CUN01-01…12 (12) | vigente | parcial (jerarquía anterior) | aprobado | T-012…T-021 (T-012, T-014 a T-016 y T-020 hechas; T-013 contra el simulado) | 1 REQ implementado (CUN01-09) y 6 en curso | 7 de 12 REQ con prueba |
+| Agenda | `specs/02-agenda/spec.md` | 01 | Móvil | G | CUN01-01…12 (12) | vigente | parcial (jerarquía anterior) | aprobado | T-012…T-021 (T-012 a T-016 y T-020 hechas) | 1 REQ implementado (CUN01-09) y 6 en curso | 7 de 12 REQ con prueba |
 | Jornada | `specs/02-jornada/spec.md` | 02 | Móvil | P | CUN02-01…24 (24) | vigente | — | — | — | — | — |
 | Tareas / delegación | `specs/03-tareas/spec.md` | 07, 09 | Web (gerente) + móvil (colaborador) | E | CUN07-01…17 (17) | vigente | parcial (jerarquía anterior) | — | — | — | — |
 | Comunicaciones | `specs/04-comunicaciones/spec.md` | 04 | Móvil + web | P | CUN04-01…15 (15) | vigente | — | — | — | — | — |
@@ -247,7 +247,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 | Fase | Contenido | CUN | Estado |
 |---|---|---|---|
 | 0 | **Base SDD**: este archivo, `AGENTS.md`, glosario, trazabilidad, resolver PT-1 e INC-01 | — | **Cerrada el 2026-10-22** |
-| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023, T-006, T-016, T-012, T-007 y T-022 hechas. **Google conectado con una cuenta real.** T-008 y T-024 hechas. T-013 hecha contra el simulado: **falta habilitar la API de Google Calendar** en Google Cloud para probarla con la cuenta real. T-014 y T-015 hechas: la API ya consulta la agenda. Siguiente: la agenda en la web, y T-017 cuando se decida H-AG-01 |
+| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023, T-006, T-016, T-012, T-007 y T-022 hechas. **Google conectado con una cuenta real.** T-008 y T-024 hechas. T-013 a T-015 hechas, **con la lectura real probada**: la API ya consulta la agenda. Siguiente: la agenda en la web, y T-017 cuando se decida H-AG-01 |
 | 2 | Capa de agente: intención, herramientas, confirmación | 01, 03 vía conversación + CAP | Especificado, sin plan |
 | 3 | Planificación de jornada | 02 | Especificado |
 | 4 | Equipos: disponibilidad, coordinación, delegación, seguimiento. Desde D-17, también la aplicación móvil del colaborador | 05 a 09 | Parcial (faltan 06 y 08); diseño desfasado (INC-14) |
@@ -266,6 +266,7 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-22 | 2.10.1 | **T-013: lectura real probada** con `personal@nexoai.test`, tras habilitar el equipo la API de Google Calendar en Google Cloud (el 403 `SERVICE_DISABLED` de 2.8.1). La sincronización completa guarda su token y `GET /agenda/eventos` responde de punta a punta | `specs/02-agenda/tasks.md`, `SPEC.md` | Equipo (Google Cloud), comprobado por Claude |
 | 2026-10-22 | 2.10.0 | **T-015 hecha: consulta de la agenda.** `GET /agenda/eventos?desde=&hasta=` y `GET /agenda/eventos/:id`, con `@RequiereGoogle('calendario')` y sincronización bajo demanda pasados 2 minutos. Contrato `EventoAgenda` con horas en ISO 8601 con desfase y zona IANA aparte. Si Google no responde, se muestra la última copia. **CUN01-09 implementado**; CUN01-08 y CUN01-11 en curso. 153 pruebas | `apps/api/src/agenda`, `apps/api/src/app.module.ts`, `apps/api/test/agenda`, `packages/contratos`, `specs/02-agenda/plan.md`, `tasks.md`, `specs/trazabilidad.md` | Claude |
 | 2026-10-22 | 2.9.0 | **T-014 hecha: réplica de la agenda.** Tablas `evento_agenda` y `sincronizacion_calendario` (sexta migración), en el filtro por organización. Sincronización completa (−30 a +365 días) e incremental con `syncToken`, vuelta a empezar ante el `410`, y lo borrado en Google queda `cancelado` (R-25). **Proceso trabajador** con BullMQ 6.3.11 sobre Redis: cada 5 minutos, un trabajo por perfil conectado. Hallazgo nuevo **H-AG-09** (renovar la ventana cada 30 días) y cuatro ajustes al plan §4. Redis entra en la integración continua. CUN01-09 y CUN01-10 en curso. 143 pruebas | `apps/api/prisma`, `apps/api/src/agenda`, `apps/api/src/trabajador*.ts`, `apps/api/src/plataforma/aislamiento.ts`, `apps/api/test`, `apps/api/vitest.config.mts`, `apps/api/package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `turbo.json`, `.github/workflows/ci.yml`, `AGENTS.md`, `specs/02-agenda`, `specs/trazabilidad.md` | Claude |
 | 2026-10-22 | 2.8.1 | **T-013 hecha contra el simulado.** Puerto `ProveedorCalendario` con implementación sobre Google Calendar (vía `ClienteGoogle`, sin SDK) y otra simulada que cuenta llamadas. El contrato es código compartido: lo ejecutan la prueba y el script `probar-calendario` contra Google. **La prueba real falló con `403 SERVICE_DISABLED`: la API de Google Calendar no está habilitada en el proyecto de Google Cloud.** 131 pruebas | `apps/api/src/integraciones/calendario`, `apps/api/src/cli/probar-calendario.ts`, `apps/api/test/calendario`, `apps/api/package.json`, `specs/02-agenda/tasks.md` | Claude |
