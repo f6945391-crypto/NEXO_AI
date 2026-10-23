@@ -41,7 +41,7 @@ export class TrabajadorCalendario implements OnModuleInit, OnModuleDestroy {
       { connection, prefix: prefijo() },
     );
     this.trabajador.on('failed', (job, error) => this.registro.warn(`Falló ${job?.name ?? 'un trabajo'}: ${error.message}`));
-    await this.cola.upsertJobScheduler('repasar', { every: CADA_MS, immediately: true }, { name: 'repasar' });
+    await this.cola.upsertJobScheduler('repasar', { every: CADA_MS }, { name: 'repasar' });
   }
 
   async onModuleDestroy(): Promise<void> {
