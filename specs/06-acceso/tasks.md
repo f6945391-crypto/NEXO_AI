@@ -213,7 +213,7 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
   - Componente cliente `src/app/aplicacion/aplicacion.tsx`; secciones, cortes y ejemplos en `secciones.ts`; iconos geométricos provisionales en `iconos.tsx`, declarados como tales (diseño §7).
   - **La conversación no persiste.** Un mensaje enviado vive solo en la pantalla, porque el asistente y la cola de Operaciones (T-012) todavía no existen. El aviso lo dice: «No se ha enviado a nadie ni se ha creado nada».
   - El lienzo de Agenda dice que hace falta el permiso de calendario (REQ-ACC-08), porque la agenda se muestra a partir de Google (AD-10).
-  - En pantallas de menos de 1440 px se estrechan la conversación y el lienzo; por debajo de unos 710 px aparece desplazamiento horizontal. La web es para escritorio.
+  - En pantallas de menos de 1440 px se estrechan la conversación y el lienzo; por debajo de unos 710 px aparece desplazamiento horizontal. Que la web sea solo para escritorio se asumió aquí sin decidirlo: queda abierto como **H-WEB-01** en `SPEC.md` §8 (registrado el 22 de octubre de 2026).
   - Pendiente del diseño: el vaciado de la conversación con su advertencia (§5), el blanco «fuera del plan» y la regla del clic a media conversación (§7). No hacen falta mientras no haya propuestas que confirmar.
   - **Las pruebas de la web no corren si hay un `next dev` abierto en `apps/web`**: Next.js 16 no admite dos a la vez sobre el mismo proyecto.
 
