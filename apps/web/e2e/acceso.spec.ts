@@ -64,6 +64,21 @@ test.describe('acceso.recorrido-web', () => {
     expect(await page.evaluate(() => document.cookie)).not.toContain('nexoai_renovacion');
   });
 
+  test('volver desde otro sitio, como Google tras conceder un permiso, conserva la sesión', async ({ page }) => {
+    await entrar(page, cuentas.recorridoCompleto.correo, cuentas.contrasenaNueva);
+    await expect(page.getByRole('navigation', { name: 'Secciones' })).toBeVisible();
+
+    // Una página de otro sitio con un enlace de vuelta: la navegación es entre sitios, como la de Google.
+    await page.route('https://otro-sitio.prueba/', (ruta) =>
+      ruta.fulfill({ contentType: 'text/html', body: '<a href="http://localhost:3101/?google=conectado">Volver</a>' }),
+    );
+    await page.goto('https://otro-sitio.prueba/');
+    await page.getByRole('link', { name: 'Volver' }).click();
+
+    await expect(page).toHaveURL(/\/\?google=conectado$/);
+    await expect(page.getByRole('navigation', { name: 'Secciones' })).toBeVisible();
+  });
+
   test('credenciales erróneas muestran un mensaje que no revela si el correo existe', async ({ page }) => {
     await entrar(page, cuentas.credencialesErroneas.correo, 'no-es-la-contrasena');
     const conCorreoExistente = await aviso(page).textContent();

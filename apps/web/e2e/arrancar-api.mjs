@@ -51,4 +51,9 @@ await prisma.$disconnect();
 process.env.DATABASE_URL = urlE2e;
 process.env.PUERTO = process.env.PUERTO_API_E2E ?? '3102';
 process.env.JWT_SECRETO ??= 'solo-para-pruebas-e2e';
+// Google: si no hay credenciales (integración continua), unas ficticias. Las pruebas interceptan a Google.
+process.env.GOOGLE_CLIENT_ID ||= 'prueba-e2e.apps.googleusercontent.com';
+process.env.GOOGLE_CLIENT_SECRET ||= 'prueba-e2e';
+process.env.GOOGLE_REDIRECT_URI ||= `http://localhost:${process.env.PUERTO}/integraciones/google/retorno`;
+process.env.TOKENS_CLAVE_CIFRADO ||= Buffer.alloc(32, 7).toString('base64');
 desdeApi('./dist/main.js');

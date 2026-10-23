@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { ErrorApi, Perfil, SesionActual, type IngresoRespuesta } from '@nexoai/contratos';
+import { ErrorApi, Perfil, PermisoGoogle, SesionActual, type IngresoRespuesta } from '@nexoai/contratos';
 
 // Intermediario de sesión (specs/06-acceso/plan.md §5.1, ajuste de T-004). Next.js guarda los dos tokens
 // en cookies httpOnly y es el único que habla con la API: el navegador nunca ve el token de renovación.
@@ -43,7 +43,9 @@ export function codigoDeError(cuerpo: unknown): string | null {
 // Solo desde acciones de servidor o route handlers: Next.js no permite escribir cookies al renderizar.
 export async function guardarTokens(sesion: IngresoRespuesta): Promise<void> {
   const almacen = await cookies();
-  const comunes = { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production', path: '/' } as const;
+  // Lax y no Strict: al volver de Google (otro sitio) el navegador tiene que enviar la sesión. Lax sigue sin
+  // enviarla en formularios que llegan desde otros sitios.
+  const comunes = { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/' } as const;
   almacen.set(COOKIE_ACCESO, sesion.tokenAcceso, { ...comunes, expires: new Date(sesion.accesoExpiraEn) });
   almacen.set(COOKIE_RENOVACION, sesion.tokenRenovacion, { ...comunes, maxAge: DURACION_RENOVACION_S });
 }
@@ -80,6 +82,15 @@ export async function obtenerPerfil(): Promise<Perfil | null> {
   const respuesta = await llamarApi('/perfil', { token: acceso });
   const perfil = Perfil.safeParse(respuesta.cuerpo);
   return respuesta.estado === 200 && perfil.success ? perfil.data : null;
+}
+
+// GET /integraciones/google/permisos (T-022). Lista vacía si no se pudo leer.
+export async function obtenerPermisosGoogle(): Promise<PermisoGoogle[]> {
+  const acceso = (await cookies()).get(COOKIE_ACCESO)?.value;
+  if (!acceso) return [];
+  const respuesta = await llamarApi('/integraciones/google/permisos', { token: acceso });
+  const permisos = PermisoGoogle.array().safeParse(respuesta.cuerpo);
+  return respuesta.estado === 200 && permisos.success ? permisos.data : [];
 }
 
 // Destino tras entrar o completar el primer ingreso, según el rol (REQ-ACC-02, H-ACC-05, H-ACC-06).

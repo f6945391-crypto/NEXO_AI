@@ -39,6 +39,7 @@ model Organizacion {
   perfiles         PerfilUsuario[]
   eventosAuditoria EventoAuditoria[]
   operaciones      Operacion[]
+  consentimientos  ConsentimientoIntegracion[]
 
   @@map("organizacion")
 }
@@ -56,10 +57,11 @@ model PerfilUsuario {
   debeCambiarContrasena Boolean  @default(true) @map("debe_cambiar_contrasena")
   creadoEn              DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
 
-  organizacion       Organizacion       @relation(fields: [organizacionId], references: [id])
+  organizacion       Organizacion                @relation(fields: [organizacionId], references: [id])
   eventosAuditoria   EventoAuditoria[]
   sesionesRenovacion SesionRenovacion[]
   operaciones        Operacion[]
+  consentimientos    ConsentimientoIntegracion[]
 
   @@index([organizacionId])
   @@map("perfil_usuario")
@@ -126,6 +128,38 @@ model Operacion {
 
   @@index([organizacionId, perfilId, estado])
   @@map("operacion")
+}
+
+// Permiso concedido a una integración externa (specs/06-acceso/plan.md §3) · T-007. Una fila por alcance:
+// calendario y correo se conceden y se revocan por separado. El token se guarda cifrado (AES-256-GCM).
+enum EstadoConsentimiento {
+  concedido
+  revocado
+  caducado
+
+  @@map("estado_consentimiento")
+}
+
+model ConsentimientoIntegracion {
+  id             String               @id @default(uuid()) @db.Uuid
+  organizacionId String               @map("organizacion_id") @db.Uuid
+  perfilId       String               @map("perfil_id") @db.Uuid
+  proveedor      String
+  // Clave del alcance en packages/contratos: calendario · correo
+  alcance        String
+  estado         EstadoConsentimiento
+  tokenCifrado   String?              @map("token_cifrado")
+  concedidoEn    DateTime?            @map("concedido_en") @db.Timestamptz(3)
+  cambiadoEn     DateTime             @default(now()) @updatedAt @map("cambiado_en") @db.Timestamptz(3)
+  // REQ-ACC-09: el aviso de revocación se da una sola vez
+  avisoEmitidoEn DateTime?            @map("aviso_emitido_en") @db.Timestamptz(3)
+
+  organizacion Organizacion  @relation(fields: [organizacionId], references: [id])
+  perfil       PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+
+  @@unique([perfilId, proveedor, alcance])
+  @@index([organizacionId])
+  @@map("consentimiento_integracion")
 }
 
 // Registro de acciones (propuesta técnica §9). Tabla de sistema.

@@ -15,7 +15,7 @@
 | 03-tareas | 17 | 17 | 0 | 0 | 0 | 0 |
 | 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
 | 05-equipos | 16 | 16 | 0 | 0 | 0 | 0 |
-| 06-acceso | 14 | 6 | 2 | 6 | 0 | 0 |
+| 06-acceso | 14 | 3 | 2 | 9 | 0 | 0 |
 
 ## Requisitos
 
@@ -147,12 +147,12 @@
 | REQ-ACC-03 | 06-acceso | Requisito del sistema | 1 | T-004, T-011 | acceso.error-no-revela-correo | implementado |
 | REQ-ACC-04 | 06-acceso | Requisito del sistema | 1 | T-005, T-011 | acceso.primer-ingreso-bloquea-hasta-completar | implementado |
 | REQ-ACC-05 | 06-acceso | Requisito del sistema; RN-CAL-01 | 1 | T-005, T-011 | acceso.zona-horaria-requiere-eleccion | implementado |
-| REQ-ACC-06 | 06-acceso | Requisito del sistema | 1 | T-007, T-022 | — | pendiente |
-| REQ-ACC-07 | 06-acceso | Requisito del sistema | 1 | T-007 | — | pendiente |
+| REQ-ACC-06 | 06-acceso | Requisito del sistema | 1 | T-007, T-022 | acceso.conectar-google-por-permiso | implementado |
+| REQ-ACC-07 | 06-acceso | Requisito del sistema | 1 | T-007 | acceso.solo-dos-alcances-sin-lectura-de-buzon | implementado |
 | REQ-ACC-08 | 06-acceso | Requisito del sistema | 1 | T-008 | — | pendiente |
 | REQ-ACC-09 | 06-acceso | Requisito del sistema | 1 | T-008 | — | pendiente |
 | REQ-ACC-10 | 06-acceso | Requisito del sistema | 1 | T-006, T-009 | acceso.cuenta-no-autogestionable | en curso |
 | REQ-ACC-11 | 06-acceso | Requisito del sistema | 1 | T-009 | — | pendiente |
 | REQ-ACC-12 | 06-acceso | Requisito del sistema; R-45 | 1 | T-006 | acceso.cuenta-no-autogestionable | implementado |
 | REQ-ACC-13 | 06-acceso | Requisito del sistema; D-17 | 1 | T-004 | acceso.colaborador-solo-ve-lo-suyo | en curso |
-| REQ-ACC-14 | 06-acceso | Requisito del sistema; D-17 | 1 | T-007 | — | pendiente |
+| REQ-ACC-14 | 06-acceso | Requisito del sistema; D-17 | 1 | T-007 | acceso.colaborador-solo-calendario | implementado |

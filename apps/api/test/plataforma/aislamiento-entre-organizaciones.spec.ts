@@ -63,6 +63,10 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
           estado: 'propuesta',
         },
       });
+      // Y un permiso de Google por organización (T-007).
+      await base.consentimientoIntegracion.create({
+        data: { organizacionId, perfilId, proveedor: 'google', alcance: 'calendario', estado: 'concedido' },
+      });
     }
     deA = aislarPorOrganizacion(base, orgA);
   });

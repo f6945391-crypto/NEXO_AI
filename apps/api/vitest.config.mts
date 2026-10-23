@@ -9,6 +9,8 @@ if (existsSync(entorno)) process.loadEnvFile(entorno);
 // La aplicación bajo prueba usa la base de prueba, nunca la de desarrollo.
 if (process.env.DATABASE_URL_PRUEBA) process.env.DATABASE_URL = process.env.DATABASE_URL_PRUEBA;
 process.env.JWT_SECRETO ??= 'solo-para-pruebas';
+// Clave de prueba de 32 bytes para cifrar tokens de Google (T-007). La real vive en .env.
+process.env.TOKENS_CLAVE_CIFRADO ??= Buffer.alloc(32, 7).toString('base64');
 
 // SWC compila los decoradores con sus metadatos, que NestJS necesita para inyectar dependencias.
 export default defineConfig({

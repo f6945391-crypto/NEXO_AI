@@ -2,7 +2,13 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { IngresoRespuesta, IngresoSolicitud, PrimerIngresoSolicitud } from '@nexoai/contratos';
+import {
+  ClaveAlcanceGoogle,
+  EnlaceGoogleRespuesta,
+  IngresoRespuesta,
+  IngresoSolicitud,
+  PrimerIngresoSolicitud,
+} from '@nexoai/contratos';
 import {
   borrarTokens,
   COOKIE_ACCESO,
@@ -60,6 +66,26 @@ export async function completarPrimerIngreso(_: EstadoFormulario, datos: FormDat
     return { error: SIN_CONEXION };
   }
   redirect(destino);
+}
+
+// REQ-ACC-06 · T-022. Pide a la API un enlace firmado para ese permiso y lleva el navegador a Google.
+export async function conectarGoogle(datos: FormData): Promise<void> {
+  const alcance = ClaveAlcanceGoogle.safeParse(datos.get('alcance'));
+  const acceso = (await cookies()).get(COOKIE_ACCESO)?.value;
+  if (!alcance.success || !acceso) redirect('/');
+
+  let url = '/?google=error';
+  try {
+    const respuesta = await llamarApi('/integraciones/google/enlace', {
+      metodo: 'POST',
+      cuerpo: { alcance: alcance.data, cliente: 'web' },
+      token: acceso,
+    });
+    if (respuesta.estado === 200) url = EnlaceGoogleRespuesta.parse(respuesta.cuerpo).url;
+  } catch {
+    // Sin respuesta de la API: se vuelve con el aviso de error.
+  }
+  redirect(url);
 }
 
 // REQ-ACC-12: lo único que el usuario hace con su cuenta.

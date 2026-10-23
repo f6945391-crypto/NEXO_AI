@@ -120,7 +120,13 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 - **Contenido:** `consentimiento_integracion` con una fila por alcance; constante de los dos alcances con su explicación en `packages/contratos`; OAuth incremental por alcance; tokens cifrados con AES-256-GCM; `GET /integraciones/google/permisos`
 - **Hecho cuando:** cada alcance se concede por separado; los tokens no se pueden leer en claro desde la base; `gmail.readonly` no aparece en el código
 - **Pruebas:** `acceso.permisos-google-explicados`, `acceso.solo-dos-alcances-sin-lectura-de-buzon`
-- **Estado:** pendiente
+- **Estado:** hecha · 22 de octubre de 2026. 9 pruebas con Google simulado. **Probada con una cuenta real de Google**: el calendario de `personal@nexoai.test` quedó conectado, con el token cifrado
+- **Notas de implementación:**
+  - Tabla `consentimiento_integracion` (cuarta migración), una fila por alcance. Lleva `organizacionId`, que el plan no tenía, para quedar dentro del filtro por organización.
+  - **Sin SDK de Google**: el puerto `ProveedorOAuthGoogle` hace las dos llamadas HTTP de OAuth, y las pruebas lo sustituyen por uno simulado.
+  - **Ajuste del plan:** en vez de `GET /conectar`, `POST /integraciones/google/enlace` devuelve un enlace con estado firmado (JWT, 10 minutos) que ata la conexión a quien la pidió. Un estado falsificado, un rechazo en Google o un permiso desmarcado no guardan nada.
+  - Tokens cifrados con AES-256-GCM con `TOKENS_CLAVE_CIFRADO`, generada en el `.env` local. `.env.example` documenta todas las variables de Google.
+  - Una prueba recorre el código de la API, la web, el móvil y los contratos buscando alcances de lectura o gestión de Gmail.
 
 ### T-008 · Permiso faltante y revocación
 
@@ -202,7 +208,8 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 - **Contenido:** `WEB-v2 / Acceso / 03 Conectar Google`: cada permiso con su explicación, concedido por separado
 - **Hecho cuando:** desde la web se concede cada alcance por separado y su estado se refleja
 - **Prueba:** `acceso.conectar-google-por-permiso`
-- **Estado:** pendiente
+- **Estado:** hecha · 22 de octubre de 2026. Probada con una cuenta real de Google
+- **Notas de implementación:** Los permisos viven en **Ajustes**, cada uno con su explicación, su estado y su botón «Conectar»; Agenda ofrece «Conectar mi calendario» mientras falte. Al volver de Google aparece un aviso según el resultado. **Defecto encontrado en la prueba real:** con cookies `SameSite=Strict`, la vuelta desde Google perdía la sesión; se pasó a `Lax` y una prueba simula volver desde otro sitio.
 
 ---
 

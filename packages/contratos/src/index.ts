@@ -2,5 +2,6 @@
 // Un esquema nuevo se añade aquí antes de usarse en la API o en un cliente.
 
 export * from './acceso';
+export * from './integraciones';
 export * from './operaciones';
 export * from './plataforma';

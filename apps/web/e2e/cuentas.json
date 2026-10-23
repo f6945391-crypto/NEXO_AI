@@ -26,5 +26,10 @@
     "correo": "armazon@nexoai.test",
     "rol": "gerente",
     "plan": "empresarial"
+  },
+  "google": {
+    "correo": "google-e2e@nexoai.test",
+    "rol": "gerente",
+    "plan": "empresarial"
   }
 }
