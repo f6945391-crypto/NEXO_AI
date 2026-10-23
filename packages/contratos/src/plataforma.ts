@@ -18,6 +18,10 @@ export const CodigoError = z.enum([
   'PRIMER_INGRESO_PENDIENTE',
   'PRIMER_INGRESO_YA_COMPLETADO',
   'CONTRASENA_NO_VALIDA',
+  'OPERACION_DESCONOCIDA',
+  'OPERACION_NO_ENCONTRADA',
+  'OPERACION_NO_CONFIRMABLE',
+  'OPERACION_EN_CURSO',
 ]);
 export type CodigoError = z.infer<typeof CodigoError>;
 

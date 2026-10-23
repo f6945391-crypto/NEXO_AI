@@ -17,7 +17,14 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** tabla `operacion`; máquina de estados del plan §3.2; `POST /operaciones`, `/:id/confirmar`, `/:id/descartar` y `GET /operaciones`; registro de ejecutores por `tipo`; transición a `ejecutada` con bloqueo de fila
 - **Hecho cuando:** una operación de un tipo de prueba solo ejecuta su efecto al confirmarse; confirmar dos veces ejecuta una vez y devuelve el mismo resultado; descartar no ejecuta nada
 - **Prueba:** `operaciones.confirmar-dos-veces-ejecuta-una`
-- **Estado:** pendiente
+- **Estado:** hecha · 22 de octubre de 2026. 10 pruebas; 97 en el monorepo. Sin la condición que reclama la operación, la prueba de confirmaciones simultáneas falla
+- **Notas de implementación:**
+  - Tabla `operacion` (tercera migración) y módulo `OperacionesModule`, global, con `RegistroOperaciones`: cada módulo de dominio registra los ejecutores de sus tipos al iniciarse.
+  - Un ejecutor declara su esquema de carga, cómo se propone (la `VistaConfirmacion`: acción, datos, qué es irreversible y si se puede confirmar) y cómo se ejecuta. `ejecutar` es el único sitio donde una operación produce efecto.
+  - Desenlaces probados: ejecutada (idempotente), no confirmable, vuelve a propuesta si algo cambió (H-AG-07), fallida con su motivo, descartada.
+  - Idempotencia con una actualización condicional atómica en lugar de `SELECT … FOR UPDATE` (ajuste anotado en el plan §3.2).
+  - `Operacion` entra en el filtro por organización, y la prueba de aislamiento cubre ya cuatro tablas.
+  - Todavía no hay tipos reales: los primeros llegan con T-017 (`agenda.registrar`) y T-009 (`perfil.cambiar_zona_horaria`).
 
 ---
 

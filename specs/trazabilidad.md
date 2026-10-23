@@ -10,7 +10,7 @@
 | Área | Requisitos | pendiente | en curso | implementado | verificado | retirado |
 |---|---|---|---|---|---|---|
 | 01-captura | 24 | 24 | 0 | 0 | 0 | 0 |
-| 02-agenda | 12 | 10 | 2 | 0 | 0 | 0 |
+| 02-agenda | 12 | 9 | 3 | 0 | 0 | 0 |
 | 02-jornada | 24 | 24 | 0 | 0 | 0 | 0 |
 | 03-tareas | 17 | 17 | 0 | 0 | 0 | 0 |
 | 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
@@ -47,7 +47,7 @@
 | REQ-CAP-24 | 01-captura | regla de producto R-42; `SPEC.md` P-11 | 2 | — | — | pendiente |
 | REQ-CUN01-01 | 02-agenda | CUN-01 flujo principal, pasos 1 y 2 | 2 | — | — | pendiente |
 | REQ-CUN01-02 | 02-agenda | CUN-01 flujo principal, paso 3 | 1 | T-016, T-017 | alternativas.dp02 | en curso |
-| REQ-CUN01-03 | 02-agenda | RN-ER-03 | 1 | T-012, T-017 | — | pendiente |
+| REQ-CUN01-03 | 02-agenda | RN-ER-03 | 1 | T-012, T-017 | operaciones.confirmar-dos-veces-ejecuta-una | en curso |
 | REQ-CUN01-04 | 02-agenda | CUN-01 flujo principal, pasos 5 y 6 | 1 | T-017 | — | pendiente |
 | REQ-CUN01-05 | 02-agenda | CUN-01 FA-01 | 1 | T-016, T-018 | alternativas.dp02 | en curso |
 | REQ-CUN01-06 | 02-agenda | CUN-01 FA-02 | 1 | T-019, T-021 | — | pendiente |

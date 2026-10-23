@@ -72,7 +72,7 @@ stateDiagram-v2
 Reglas, cada una con su prueba:
 
 - **Ninguna escritura sobre `evento_agenda` ni sobre Google ocurre fuera de la transición `propuesta → ejecutada`** (REQ-CUN01-03). Ningún otro servicio llama a `ProveedorCalendario` para escribir.
-- La transición se hace con un bloqueo de fila (`SELECT … FOR UPDATE`). Una segunda confirmación de una operación ya `ejecutada` devuelve el mismo resultado sin volver a ejecutar.
+- La transición se hace con un bloqueo de fila (`SELECT … FOR UPDATE`). Una segunda confirmación de una operación ya `ejecutada` devuelve el mismo resultado sin volver a ejecutar. *Ajuste de T-012: en lugar de `SELECT … FOR UPDATE`, que exigiría SQL escrito a mano (prohibido en `AGENTS.md`), la primera confirmación «reclama» la operación con una actualización condicional atómica de `confirmada_en`, de nulo a ahora. Solo una la consigue; las demás reciben el resultado si ya terminó, o `OPERACION_EN_CURSO`.*
 - **Al confirmar se vuelven a consultar los solapes** (REQ-CUN01-02). Si apareció un conflicto desde que se propuso, la operación no se ejecuta: vuelve a `propuesta` con el conflicto y las alternativas nuevas (hallazgo H-AG-07).
 - Cuánto tiempo puede estar una propuesta sin respuesta queda sin resolver (hallazgo H-AG-08).
 

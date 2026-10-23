@@ -50,6 +50,20 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
     orgB = await crearOrganizacion(base, 'Organización B');
     perfilA = (await crearCuenta(base, { organizacionId: orgA, correo: 'a@nexoai.test', rol: 'gerente', plan: 'empresarial' })).perfilId;
     perfilB = (await crearCuenta(base, { organizacionId: orgB, correo: 'b@nexoai.test', rol: 'gerente', plan: 'empresarial' })).perfilId;
+    // Una operación por organización, para cubrir también esa tabla (T-012).
+    for (const [organizacionId, perfilId] of [[orgA, perfilA], [orgB, perfilB]] as const) {
+      await base.operacion.create({
+        data: {
+          organizacionId,
+          perfilId,
+          tipo: 'prueba',
+          origen: 'agente',
+          carga: {},
+          vistaConfirmacion: {},
+          estado: 'propuesta',
+        },
+      });
+    }
     deA = aislarPorOrganizacion(base, orgA);
   });
 

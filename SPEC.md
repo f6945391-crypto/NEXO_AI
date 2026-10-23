@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 2.5.1 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
+**Versión:** 2.6.0 · **Última actualización:** 22 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -143,7 +143,7 @@ Estado por columna: **—** no existe · **borrador** · **vigente** · **parcia
 | Área | Archivo | CUN | Plataforma | Plan | REQ | Spec | Diseño | Plan técnico | Tareas | Código | Pruebas |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | Captura | `specs/01-captura/spec.md` | 01, 03 | Móvil | G / P | CAP-01…24 (24) | vigente | parcial | — | — | — | — |
-| Agenda | `specs/02-agenda/spec.md` | 01 | Móvil | G | CUN01-01…12 (12) | vigente | parcial (jerarquía anterior) | aprobado | T-012…T-021 (T-016 y T-020 hechas) | 2 REQ en curso (cálculo de conflictos y alternativas) | 2 de 12 REQ con prueba |
+| Agenda | `specs/02-agenda/spec.md` | 01 | Móvil | G | CUN01-01…12 (12) | vigente | parcial (jerarquía anterior) | aprobado | T-012…T-021 (T-012, T-016 y T-020 hechas) | 3 REQ en curso (Operaciones, conflictos y alternativas) | 3 de 12 REQ con prueba |
 | Jornada | `specs/02-jornada/spec.md` | 02 | Móvil | P | CUN02-01…24 (24) | vigente | — | — | — | — | — |
 | Tareas / delegación | `specs/03-tareas/spec.md` | 07, 09 | Web (gerente) + móvil (colaborador) | E | CUN07-01…17 (17) | vigente | parcial (jerarquía anterior) | — | — | — | — |
 | Comunicaciones | `specs/04-comunicaciones/spec.md` | 04 | Móvil + web | P | CUN04-01…15 (15) | vigente | — | — | — | — | — |
@@ -246,7 +246,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 | Fase | Contenido | CUN | Estado |
 |---|---|---|---|
 | 0 | **Base SDD**: este archivo, `AGENTS.md`, glosario, trazabilidad, resolver PT-1 e INC-01 | — | **Cerrada el 2026-10-22** |
-| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023, T-006 y T-016 hechas: acceso y armazón web visibles, y el móvil arranca. Siguiente: T-012 |
+| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023, T-006, T-016 y T-012 hechas. **Detenida en T-007: necesita las credenciales de Google Cloud** |
 | 2 | Capa de agente: intención, herramientas, confirmación | 01, 03 vía conversación + CAP | Especificado, sin plan |
 | 3 | Planificación de jornada | 02 | Especificado |
 | 4 | Equipos: disponibilidad, coordinación, delegación, seguimiento. Desde D-17, también la aplicación móvil del colaborador | 05 a 09 | Parcial (faltan 06 y 08); diseño desfasado (INC-14) |
@@ -265,6 +265,7 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-22 | 2.6.0 | **T-012 hecha: Operaciones (AD-09).** Tabla `operacion`; proponer, confirmar, descartar y listar; registro de ejecutores por tipo; confirmación idempotente con reclamación atómica (ajuste del plan §3.2, sin SQL escrito a mano); desenlaces ejecutada, no confirmable, vuelve a propuesta (H-AG-07) y fallida. `Operacion` entra en el filtro por organización. CUN01-03 en curso. **Lo que queda de la fase 1 depende de Google** (T-007 y siguientes). 97 pruebas | `apps/api/prisma`, `apps/api/src/operaciones`, `apps/api/test/operaciones`, `apps/api/test/plataforma`, `packages/contratos`, `specs/02-agenda/plan.md`, `tasks.md`, `specs/trazabilidad.md` | Claude |
 | 2026-10-22 | 2.5.1 | **T-016 hecha.** Funciones puras `detectarConflictos()` y `generarAlternativas()` según DP-02, con manejo propio de la hora local por zona IANA. Se precisa DP-02: horarios cada 15 minutos, alternativas sin solaparse entre sí y nunca en el pasado. CUN01-02 y CUN01-05 en curso (falta la Operación, T-017 y T-018). 11 pruebas unitarias; 86 en total | `apps/api/src/agenda/dominio`, `specs/02-agenda/plan.md`, `tasks.md`, `specs/trazabilidad.md` | Claude |
 | 2026-10-22 | 2.5.0 | **T-006 hecha.** `GET /perfil`, solo lectura y también para el colaborador; ninguna ruta para cambiar correo, plan, rol o dar de baja. ACC-12 implementado, ACC-10 en curso (falta cambiar la zona, T-009). La web muestra el perfil en Ajustes. 75 pruebas | `apps/api/src/identidad/perfil.controller.ts`, `apps/api/test/acceso/perfil.spec.ts`, `packages/contratos`, `apps/web`, `specs/06-acceso/tasks.md`, `specs/trazabilidad.md` | Claude |
 | 2026-10-22 | 2.4.1 | **T-020 hecha en web.** `apps/movil` con Expo SDK 57 (React Native 0.86.3); la app consulta la API y valida con `contratos`. Pruebas de extremo a extremo del móvil con Playwright sobre Expo web (propuesta técnica §4.1). Falta probarla en un teléfono. Dos excepciones de auditoría documentadas, sin versión corregida publicada (`node-forge` y `braces`, herramientas de desarrollo). 71 pruebas | `apps/movil`, `pnpm-workspace.yaml`, `.gitignore`, `apps/web/playwright.config.ts`, `PROPUESTA-TECNICA.md`, `AGENTS.md`, `specs/02-agenda/tasks.md` | Claude |

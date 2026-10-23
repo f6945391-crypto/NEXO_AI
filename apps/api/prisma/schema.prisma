@@ -38,6 +38,7 @@ model Organizacion {
 
   perfiles         PerfilUsuario[]
   eventosAuditoria EventoAuditoria[]
+  operaciones      Operacion[]
 
   @@map("organizacion")
 }
@@ -58,6 +59,7 @@ model PerfilUsuario {
   organizacion       Organizacion       @relation(fields: [organizacionId], references: [id])
   eventosAuditoria   EventoAuditoria[]
   sesionesRenovacion SesionRenovacion[]
+  operaciones        Operacion[]
 
   @@index([organizacionId])
   @@map("perfil_usuario")
@@ -79,6 +81,51 @@ model SesionRenovacion {
 
   @@index([familia])
   @@map("sesion_renovacion")
+}
+
+// Operación (AD-09, specs/02-agenda/plan.md §3) · T-012. Toda escritura con efecto se propone, se
+// confirma y se ejecuta una sola vez. Su id es la clave de idempotencia; en_espera es la cola de P-11.
+enum EstadoOperacion {
+  en_espera
+  propuesta
+  ejecutada
+  descartada
+  fallida
+
+  @@map("estado_operacion")
+}
+
+enum OrigenOperacion {
+  agente
+  control_directo
+
+  @@map("origen_operacion")
+}
+
+model Operacion {
+  id                String          @id @default(uuid()) @db.Uuid
+  organizacionId    String          @map("organizacion_id") @db.Uuid
+  perfilId          String          @map("perfil_id") @db.Uuid
+  tipo              String
+  origen            OrigenOperacion
+  solicitudOriginal String?         @map("solicitud_original")
+  carga             Json
+  vistaConfirmacion Json            @map("vista_confirmacion")
+  estado            EstadoOperacion
+  resultado         Json?
+  error             String?
+  // Momento de la captura: referencia para resolver «mañana» en lo encolado (REQ-CAP-24)
+  capturadaEn       DateTime        @default(now()) @map("capturada_en") @db.Timestamptz(3)
+  creadaEn          DateTime        @default(now()) @map("creada_en") @db.Timestamptz(3)
+  // Se rellena al reclamar la confirmación: solo una confirmación lo consigue
+  confirmadaEn      DateTime?       @map("confirmada_en") @db.Timestamptz(3)
+  ejecutadaEn       DateTime?       @map("ejecutada_en") @db.Timestamptz(3)
+
+  organizacion Organizacion  @relation(fields: [organizacionId], references: [id])
+  perfil       PerfilUsuario @relation(fields: [perfilId], references: [id])
+
+  @@index([organizacionId, perfilId, estado])
+  @@map("operacion")
 }
 
 // Registro de acciones (propuesta técnica §9). Tabla de sistema.
