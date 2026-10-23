@@ -12,10 +12,10 @@
 | 01-captura | 24 | 24 | 0 | 0 | 0 | 0 |
 | 02-agenda | 12 | 2 | 6 | 4 | 0 | 0 |
 | 02-jornada | 24 | 24 | 0 | 0 | 0 | 0 |
-| 03-tareas | 17 | 17 | 0 | 0 | 0 | 0 |
+| 03-tareas | 25 | 25 | 0 | 0 | 0 | 0 |
 | 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
-| 05-equipos | 16 | 16 | 0 | 0 | 0 | 0 |
-| 06-acceso | 15 | 2 | 2 | 11 | 0 | 0 |
+| 05-equipos | 17 | 17 | 0 | 0 | 0 | 0 |
+| 06-acceso | 17 | 3 | 1 | 13 | 0 | 0 |
 
 ## Requisitos
 
@@ -98,6 +98,14 @@
 | REQ-CUN07-15 | 03-tareas | decisión D-14; regla de producto R-17 | 4 | — | — | pendiente |
 | REQ-CUN07-16 | 03-tareas | RN-ER-02; decisión D-17; DP-03 | 4 | — | — | pendiente |
 | REQ-CUN07-17 | 03-tareas | decisión D-17; RN-ER-02 | 4 | — | — | pendiente |
+| REQ-CUN07-18 | 03-tareas | decisión del equipo del 23 de octubre de 2026 (rango del colaborador, pregunta 2); REQ-ACC-15 | 4 | — | — | pendiente |
+| REQ-CUN07-19 | 03-tareas | decisión del equipo del 23 de octubre de 2026 (rango del colaborador, pregunta 3); R-16 | 4 | — | — | pendiente |
+| REQ-CUN08-01 | 03-tareas | CUN-08; decisión del equipo del 23 de octubre de 2026 | 4 | — | — | pendiente |
+| REQ-CUN08-02 | 03-tareas | decisión del equipo del 23 de octubre de 2026; REQ-ACC-15, REQ-ACC-16 | 4 | — | — | pendiente |
+| REQ-CUN08-03 | 03-tareas | decisión del equipo del 23 de octubre de 2026 («reportar lo clave, sin bombardear») | 4 | — | — | pendiente |
+| REQ-CUN08-04 | 03-tareas | decisión del equipo del 23 de octubre de 2026 («tiene que tener un formato, no solo una tabla») | 4 | — | — | pendiente |
+| REQ-CUN08-05 | 03-tareas | P-02, AD-05 | 4 | — | — | pendiente |
+| REQ-CUN08-06 | 03-tareas | decisión del equipo del 23 de octubre de 2026 («no hay que bombardear de información») | 4 | — | — | pendiente |
 | REQ-CUN04-01 | 04-comunicaciones | CUN-04 flujo principal | 5 | — | — | pendiente |
 | REQ-CUN04-02 | 04-comunicaciones | CUN-04 excepciones; RN-ER-03 | 5 | — | — | pendiente |
 | REQ-CUN04-03 | 04-comunicaciones | RN-ER-03; propuesta técnica §7.2, herramienta `comunicaciones.preparar` | 5 | — | — | pendiente |
@@ -142,6 +150,7 @@
 | REQ-CUN05-14 | 05-equipos | regla de producto R-14; RN-OP-01 | 4 | — | — | pendiente |
 | REQ-CUN05-15 | 05-equipos | REQ-CUN05-12 y 14 | 4 | — | — | pendiente |
 | REQ-CUN05-16 | 05-equipos | decisión D-17; RN-OP-02; R-14 | 4 | — | — | pendiente |
+| REQ-CUN05-17 | 05-equipos | decisión del equipo del 23 de octubre de 2026 (rango del colaborador, pregunta 1) | 4 | — | — | pendiente |
 | REQ-ACC-01 | 06-acceso | Requisito del sistema | 1 | T-002 | acceso.sin-registro-abierto | implementado |
 | REQ-ACC-02 | 06-acceso | Requisito del sistema | 1 | T-004, T-011, T-024 | acceso.recorrido-web | implementado |
 | REQ-ACC-03 | 06-acceso | Requisito del sistema | 1 | T-004, T-011 | acceso.error-no-revela-correo | implementado |
@@ -157,3 +166,5 @@
 | REQ-ACC-13 | 06-acceso | Requisito del sistema; D-17 | 1 | T-004, T-026 | acceso.colaborador-solo-ve-lo-suyo | implementado |
 | REQ-ACC-14 | 06-acceso | Requisito del sistema; D-17 | 1 | T-007, T-026 | acceso.colaborador-con-los-dos-permisos | implementado |
 | REQ-ACC-15 | 06-acceso | Requisito del sistema; D-17 | 1 | T-026 | acceso.solo-el-responsable-asigna-tareas | implementado |
+| REQ-ACC-16 | 06-acceso | Requisito del sistema | 4 | — | — | pendiente |
+| REQ-ACC-17 | 06-acceso | Requisito del sistema | 4 | — | — | pendiente |

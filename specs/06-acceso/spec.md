@@ -34,6 +34,10 @@
 
 **REQ-ACC-15** · SI una cuenta con el rol colaborador pide asignar o delegar una tarea a otra persona, ENTONCES el sistema la rechaza sin crear nada y explica que solo el responsable del equipo asigna tareas. *(D-17 a enmendada, 23 de octubre de 2026)*
 
+**REQ-ACC-16** · Ubicuo — La autoridad para asignar tareas y ver el trabajo del equipo se tiene **por equipo**: una misma cuenta puede ser responsable de un equipo y miembro de otro, y en cada equipo tiene solo la autoridad que le corresponde allí. *(Decisión del equipo, 23 de octubre de 2026)*
+
+**REQ-ACC-17** · Ubicuo — De cada miembro de su equipo, el responsable solo ve su disponibilidad como libre u ocupado y las tareas del equipo. Nunca ve el contenido de su agenda, ni las tareas que el miembro se creó para sí, ni nada marcado como personal (P-10). *(Decisión del equipo, 23 de octubre de 2026)*
+
 ---
 
 ## 2. Permisos de Google

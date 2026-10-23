@@ -99,6 +99,7 @@ Es una **Operación** (AD-09):
 > - **Las Operaciones también:** un tipo de Operación que asigna trabajo a otros declara `soloResponsable`, y `POST /operaciones` lo rechaza al colaborador antes de proponer nada. Hace falta porque la delegación llegará como Operación, por una ruta que el colaborador sí usa.
 > - `GET /integraciones/google/permisos` devuelve al colaborador los dos alcances (ACC-14).
 > - La web deja de enviar al colaborador a `/solo-movil`, que se retira, y le muestra la aplicación entera.
+> - **Pendiente para la fase 4 (REQ-ACC-16, 23 de octubre de 2026):** la autoridad pasa a tenerse **por equipo**. Hoy el rol está en la cuenta; con el modelo de equipos, `@SoloResponsable()` tendrá que comprobar que quien pide es responsable **del equipo afectado**, y el rol de la cuenta dejará de bastar.
 > - `@SoloResponsable()` solo excluye al rol colaborador. Que la delegación sea del Plan Empresarial es una restricción por plan, que todavía no existe (análisis por plan pendiente).
 
 

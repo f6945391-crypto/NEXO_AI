@@ -11,7 +11,7 @@
 | Término | Definición | Origen | No confundir con |
 |---|---|---|---|
 | **Usuario Personal** | Persona que usa NexoAI para organizar sus propias actividades. Los planes Gratuito y Personal son el mismo actor | E1 Act. 2 | — |
-| **Gerente** | Abreviatura de *Gerente / Responsable de Equipo*: persona de una organización cliente que coordina a un equipo. También es Usuario Personal de su propia agenda, porque los planes son acumulativos | E1 Act. 2; `REPLANTEO.md` §4.3 | — |
+| **Gerente** | Abreviatura de *Gerente / Responsable de Equipo*: persona de una organización cliente que coordina a un equipo. También es Usuario Personal de su propia agenda, porque los planes son acumulativos. **Se es responsable de un equipo, no de la organización entera**: una misma persona puede ser responsable de un equipo y colaboradora en otro (REQ-ACC-16) | E1 Act. 2; `REPLANTEO.md` §4.3 | — |
 | **Colaborador** | Persona de un equipo que recibe encargos. **Tiene cuenta**, con el rol `colaborador`: usa el agente como el Plan Empresarial sobre lo suyo, desde la web o el móvil, ve las tareas que tiene asignadas y responde en la aplicación. **No asigna tareas a otros**: eso solo lo hace el responsable del equipo | E1 Act. 2; D-17; REQ-ACC-13 | *Participante externo*, que no tiene cuenta |
 | **Participante externo** | Persona **sin cuenta** cuya disponibilidad se necesita para coordinar. Solo se lee de ella libre u ocupado, y solo con su consentimiento por invitación. Si es entidad o atributo está por decidir (D-8) | `REPLANTEO.md` §4.8; R-13, R-14; D-17 | *Colaborador*, que sí tiene cuenta |
 | **Organización** | Cliente que crea las cuentas, asigna roles y decide el plan. No es actor del negocio | E1 Act. 2; R-45 | — |
@@ -34,6 +34,7 @@
 | **Compromiso** | Algo con fecha y hora en la agenda del usuario. Es un **Evento de Agenda** (EN-02) | E1 EN-02 | *Compromiso de reunión*: ver §6, conflicto C-1 |
 | **Tarea** | Algo que hay que hacer y que tiene un responsable (EN-04). Puede ser personal o delegada | E1 EN-04; RN-EST-02 | *Apunte*, que no pide nada |
 | **Pendiente sin fecha** | Tarea sin fecha, ya sea porque no se le dio o porque no cabía en el día pedido (R-1) | REQ-CAP-02, REQ-CAP-07 | — |
+| **Petición** | Algo que un miembro le pide a un compañero de su equipo sin ser su responsable. El compañero la acepta o la rechaza; mientras no la acepta, no es una tarea suya (REQ-CUN07-18) | Decisión del equipo, 23 de octubre de 2026 | *Encargo*, que solo hace el responsable |
 | **Esperando de alguien** | Tarea cuyo avance depende de un tercero. Solo se guarda qué se espera y de quién (R-12) | REQ-CAP-02; R-12 | — |
 | **Encargo** | Tarea delegada a un colaborador, vista desde quien la delegó. Declara sus preguntas, y una de ellas es el criterio de terminado. El colaborador la ve en su aplicación como **tarea asignada** | `REPLANTEO.md` §4.11; REQ-ENC-01, 02; D-17 | — |
 | **Correo de aviso** | Correo que solo informa al colaborador de una tarea nueva y remite a la aplicación. No tiene botones y no se puede responder | REQ-CUN07-16; DP-03 | *Correo asistido* (CUN-04), que redacta el asistente y sale desde el Gmail del usuario |
@@ -46,6 +47,8 @@
 | **Reunión** | Encuentro coordinado entre participantes (EN-06) | E1 EN-06 | — |
 | **Comunicación** | Correo o llamada gestionados con ayuda del asistente (EN-07). Una llamada consiste en **marcar**: el asistente no habla por el usuario | E1 EN-07; `REPLANTEO.md` §10 | — |
 | **Resumen de Reunión** | Síntesis de temas, decisiones y compromisos de una reunión (EN-08). Se borra con su reunión | E1 EN-08; RN-EST-04 | — |
+| **Resumen del equipo** | Respuesta breve, en la conversación, con los puntos clave del trabajo del equipo: lo terminado, lo atrasado y lo bloqueado. El detalle solo se da si se pide. Solo para el responsable (REQ-CUN08-03) | CUN-08 | *Reporte del equipo* |
+| **Reporte del equipo** | Documento con formato, sobre un período, pensado para compartirlo o archivarlo: resumen ejecutivo, indicadores, retrasos con su causa y el detalle. Solo para el responsable (REQ-CUN08-04) | CUN-08 | *Resumen del equipo* |
 | **Hilo** | Conversación ligada a una tarea. Vive dentro de la tarea, nunca como sección propia, y el asistente solo lo lee si se le pide | R-17, R-24, R-37 | *Conversación* (web), que es desechable |
 | **Categoría** | Agrupación de compromisos que el agente deriva de títulos repetidos y que el usuario confirma. Su **ámbito** (laboral o personal) lo heredan los bloques. Está en propuesta (D-16) | `REPLANTEO.md` §4.9 | — |
 | **Ámbito** | Propiedad de una categoría: laboral o personal. Lo personal no es visible para la empresa (R-22) | `REPLANTEO.md` §4.9; R-22 | — |

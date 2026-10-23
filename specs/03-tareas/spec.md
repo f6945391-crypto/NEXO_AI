@@ -314,6 +314,140 @@ ENTONCES el colaborador recibe una notificación con la decisión, y en la tarea
 
 ---
 
+### REQ-CUN07-18
+
+**Requisito:** CUANDO un miembro de un equipo le pida algo a un compañero sin ser su responsable, EL SISTEMA se lo hará llegar como una petición que el compañero puede aceptar o rechazar, y no la convertirá en una tarea suya mientras no la acepte.
+
+**Origen:** decisión del equipo del 23 de octubre de 2026 (rango del colaborador, pregunta 2); REQ-ACC-15
+**Tipo:** dirigido por evento
+
+**Criterio de aceptación**
+DADO dos miembros del mismo equipo, ninguno responsable del otro
+CUANDO uno le pida al otro «revisa el informe antes del jueves»
+ENTONCES el compañero recibe una petición que puede aceptar o rechazar, y a quien pidió le queda como «esperando de alguien»
+Y si el compañero la rechaza, a quien pidió se le avisa y no queda ninguna tarea creada
+
+---
+
+### REQ-CUN07-19
+
+**Requisito:** CUANDO un miembro de un equipo le proponga una tarea a su responsable, EL SISTEMA se la presentará al responsable como propuesta, y solo el responsable decidirá si la crea y a quién la asigna.
+
+**Origen:** decisión del equipo del 23 de octubre de 2026 (rango del colaborador, pregunta 3); R-16
+**Tipo:** dirigido por evento
+
+**Criterio de aceptación**
+DADO un colaborador de un equipo
+CUANDO le proponga a su responsable «que alguien revise el contrato de Acme»
+ENTONCES el responsable recibe la propuesta con quién la hizo, y no se crea ni se asigna ninguna tarea hasta que él lo confirme
+
+---
+
+## 8. Seguimiento del equipo (CUN-08) · borrador
+
+**Estado:** borrador del 23 de octubre de 2026, a partir de lo que pidió el equipo. Lo diferencial del responsable es **ver el trabajo del equipo en conjunto**, cosa que un miembro no puede. Hay que revisarlo en sesión antes de planificarlo.
+
+**Qué cuenta como trabajo del equipo:** las tareas que asignó el responsable, con su estado, sus fechas, sus retrasos y el tiempo registrado en ellas. Del hilo, solo lo destacable. Lo que cada miembro hace para sí no entra (REQ-ACC-17).
+
+**Dos piezas con destino distinto.** El **resumen** es para consultar rápido en la conversación; el **reporte** es un documento para compartir o archivar. Ninguno de los dos vuelca todo: dicen lo clave primero.
+
+### REQ-CUN08-01
+
+**Requisito:** MIENTRAS una cuenta sea responsable de un equipo, EL SISTEMA le permitirá consultar el estado del trabajo de ese equipo: qué tareas tiene cada miembro, en qué estado, con qué fecha, cuáles van atrasadas y cuánto tiempo se registró en ellas.
+
+**Origen:** CUN-08; decisión del equipo del 23 de octubre de 2026
+**Tipo:** dirigido por estado
+
+**Criterio de aceptación**
+DADO un responsable con cinco tareas asignadas en su equipo
+CUANDO pregunte «¿cómo va el equipo?»
+ENTONCES ve las tareas de su equipo con su estado, su fecha y su tiempo registrado, y ninguna tarea que un miembro se haya creado para sí
+
+---
+
+### REQ-CUN08-02
+
+**Requisito:** SI una cuenta que no es responsable de un equipo pide su resumen, su reporte o el estado de sus tareas, ENTONCES EL SISTEMA lo rechazará y le mostrará solo lo suyo.
+
+**Origen:** decisión del equipo del 23 de octubre de 2026; REQ-ACC-15, REQ-ACC-16
+**Tipo:** comportamiento no deseado
+
+**Criterio de aceptación**
+DADO un colaborador de un equipo
+CUANDO pregunte «¿quién va atrasado en el equipo?»
+ENTONCES el sistema le explica que eso lo consulta el responsable, y le ofrece el estado de sus propias tareas
+
+---
+
+### REQ-CUN08-03
+
+**Requisito:** CUANDO el responsable pida un resumen del equipo, EL SISTEMA responderá primero con un número acotado de puntos clave (lo terminado, lo atrasado y lo bloqueado), y dará el detalle solo si se lo pide.
+
+**Origen:** decisión del equipo del 23 de octubre de 2026 («reportar lo clave, sin bombardear»)
+**Tipo:** dirigido por evento
+
+**Criterio de aceptación**
+DADO un equipo con veinte tareas en la semana
+CUANDO el responsable pregunte «resúmeme la semana del equipo»
+ENTONCES recibe pocos puntos clave, cada uno con a quién afecta, y no una lista de las veinte tareas
+Y lo destacable de un hilo aparece resumido, con su procedencia (REQ-CUN07-13), nunca el hilo entero
+
+---
+
+### REQ-CUN08-04
+
+**Requisito:** CUANDO el responsable pida un reporte de un período, EL SISTEMA generará un documento con formato que empiece por un resumen ejecutivo y siga con los indicadores, los retrasos con su causa y, al final, el detalle.
+
+**Origen:** decisión del equipo del 23 de octubre de 2026 («tiene que tener un formato, no solo una tabla»)
+**Tipo:** dirigido por evento
+
+**Criterio de aceptación**
+DADO un responsable
+CUANDO pida «el reporte de octubre de mi equipo»
+ENTONCES recibe un documento que se lee de arriba abajo: primero qué pasó en dos o tres frases, después las cifras clave, después lo atrasado con su causa, y por último la tabla de detalle
+Y puede compartirlo o descargarlo, sin que el sistema lo envíe a nadie por su cuenta
+
+---
+
+### REQ-CUN08-05
+
+**Requisito:** EL SISTEMA calculará de forma determinista qué tareas están atrasadas y cuánto, y el asistente solo redactará el resumen o el reporte a partir de esos datos.
+
+**Origen:** P-02, AD-05
+**Tipo:** ubicuo
+
+**Criterio de aceptación**
+DADO una tarea cuya fecha ya pasó y que no cumple su criterio de terminado
+CUANDO el responsable pregunte quién va atrasado
+ENTONCES la tarea aparece como atrasada, con los días de retraso calculados por el sistema, aunque el asistente no esté disponible
+
+---
+
+### REQ-CUN08-06
+
+**Requisito:** EL SISTEMA no enviará resúmenes ni reportes que el responsable no haya pedido.
+
+**Origen:** decisión del equipo del 23 de octubre de 2026 («no hay que bombardear de información»)
+**Tipo:** ubicuo
+
+**Criterio de aceptación**
+DADO un responsable que no ha pedido ningún reporte
+CUANDO pase la semana
+ENTONCES no recibe ningún resumen ni reporte por iniciativa del sistema
+
+---
+
+### Decisiones abiertas del seguimiento
+
+| # | Pregunta | Propuesta mientras tanto |
+|---|---|---|
+| H-SEG-01 | Además de «atrasada», ¿existe «en riesgo»? ¿Con qué criterio? | Solo «atrasada» (fecha vencida sin cumplir el criterio de terminado) hasta que se decida |
+| H-SEG-02 | ¿Cuántos puntos clave lleva un resumen? | Hasta cinco |
+| H-SEG-03 | ¿En qué formato se descarga el reporte y quién más puede leerlo? | Se ve en la web y se descarga en PDF; solo lo lee quien lo genera |
+| H-SEG-04 | ¿Se pueden programar reportes, por ejemplo cada lunes? REQ-CUN08-06 solo prohíbe los no pedidos | No, hasta que se decida |
+
+---
+
 ## Diferencias con la plataforma móvil
 
 CUN-07 se diseña en web porque su actor es el Gerente y el trabajo de coordinación se hace en escritorio. Consecuencias de diseño:

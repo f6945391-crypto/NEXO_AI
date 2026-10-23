@@ -307,6 +307,21 @@ ENTONCES figura sin datos, igual que un externo pendiente
 
 ---
 
+### REQ-CUN05-17
+
+**Requisito:** CUANDO un miembro del equipo que no es su responsable consulte la disponibilidad de su equipo, EL SISTEMA le mostrará los intervalos libres y ocupados de cada integrante, igual que al responsable.
+
+**Origen:** decisión del equipo del 23 de octubre de 2026 (rango del colaborador, pregunta 1)
+**Tipo:** dirigido por evento
+
+**Criterio de aceptación**
+DADO un colaborador de un equipo cuyos integrantes comparten su disponibilidad
+CUANDO consulte la disponibilidad del equipo
+ENTONCES ve los intervalos libres y ocupados de cada uno, sin títulos ni detalles
+Y puede convocar una reunión con ellos, porque convocar no es asignar trabajo (CUN-06)
+
+---
+
 **Lo que ya estaba previsto sin saberlo.** La excepción EX-01 de CUN-05 —«algún participante no tiene información de disponibilidad»— describe exactamente el estado de quien aún no ha aceptado. `REQ-CUN05-08` ya lo exige y el cuadro `EX-01 Disponibilidad parcial` ya está diseñado. Lo único nuevo es el flujo de invitación que lleva hasta ahí.
 
 ---
@@ -335,7 +350,7 @@ Es el componente visual más difícil del producto y el que da identidad a la pl
 
 ## 5. Relación con CUN-06
 
-CUN-06 Coordinar reunión **incluye** a CUN-05: la consulta de disponibilidad no se reimplementa, se invoca. En la interfaz eso significa que la rejilla es el mismo componente en ambos casos de uso; lo que cambia es lo que viene después: en CUN-05 el gerente solo consulta, en CUN-06 selecciona una alternativa y se registra una Reunión.
+CUN-06 Coordinar reunión **incluye** a CUN-05: la consulta de disponibilidad no se reimplementa, se invoca. **Desde el 23 de octubre de 2026, cualquier miembro del equipo puede consultarla y convocar una reunión** (REQ-CUN05-17): convocar no es asignar trabajo. En la interfaz eso significa que la rejilla es el mismo componente en ambos casos de uso; lo que cambia es lo que viene después: en CUN-05 el gerente solo consulta, en CUN-06 selecciona una alternativa y se registra una Reunión.
 
 ---
 
