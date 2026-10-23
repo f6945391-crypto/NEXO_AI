@@ -2,7 +2,7 @@
 
 **Origen:** Entregable 1. Caso de uso CUN-07, trabajador TN-02 Coordinador Empresarial Inteligente, entidades EN-01 Perfil de Usuario, EN-04 Tarea y EN-05 Equipo de Trabajo.
 **Notación:** EARS.
-**Plataforma:** web para el Gerente / Responsable de Equipo, que delega; móvil para el Colaborador, que responde (§7, D-17).
+**Plataforma:** web y móvil para los dos perfiles: el Gerente / Responsable de Equipo, que delega, y el Colaborador, que responde (§7, D-17; ampliado el 23 de octubre de 2026). Qué parte de la coordinación tiene el gerente en el móvil está por decidir (`SPEC.md` §8).
 
 ---
 
@@ -179,7 +179,7 @@ Por eso REQ-CUN07-10 no es una comodidad de interfaz: **es lo que hace aplicable
 
 ## 7. El ciclo de vuelta
 
-**Reescrita el 22 de octubre de 2026 por D-17** (`SPEC.md` §8). El Colaborador **tiene cuenta**, con un rol propio limitado a sus tareas asignadas, y trabaja desde la **aplicación móvil**. Con eso CUN-09, *Gestionar tarea asignada*, vuelve a tener soporte de software, como lo modela el Entregable 1.
+**Reescrita el 22 de octubre de 2026 por D-17** (`SPEC.md` §8). El Colaborador **tiene cuenta**, con un rol propio limitado a sus tareas asignadas, y trabaja desde la **web o la aplicación móvil** (ampliado el 23 de octubre de 2026). Con eso CUN-09, *Gestionar tarea asignada*, vuelve a tener soporte de software, como lo modela el Entregable 1.
 
 El recorrido completo es:
 
@@ -271,7 +271,7 @@ CUANDO el colaborador la abra en la aplicación
 ENTONCES ve el hilo de esa tarea y puede añadir su respuesta
 Y no ve las tareas de otros colaboradores, ni la lista del equipo (REQ-ACC-13)
 
-**Nota de ubicación.** En la web del gerente, el hilo vive **en el lienzo, con la tarea abierta**, nunca en la columna de conversación. En el móvil del colaborador vive dentro de la tarea (R-24).
+**Nota de ubicación.** En la web del gerente, el hilo vive **en el lienzo, con la tarea abierta**, nunca en la columna de conversación. En el móvil del colaborador vive dentro de la tarea (R-24). En la web del colaborador, falta diseñarlo (INC-14).
 
 > **Reescrito el 22 de octubre de 2026 (D-17).** Antes el colaborador accedía al hilo con un formulario enlazado desde el correo.
 
@@ -287,7 +287,7 @@ Y no ve las tareas de otros colaboradores, ni la lista del equipo (REQ-ACC-13)
 **Criterio de aceptación**
 DADO una delegación confirmada por el gerente
 CUANDO quede registrada
-ENTONCES el colaborador recibe una notificación en el móvil, y al abrirla ve la tarea con su criterio de terminado
+ENTONCES el colaborador recibe una notificación en la aplicación, en la web o en el móvil, y al abrirla ve la tarea con su criterio de terminado
 Y recibe un correo que avisa de la tarea y remite a la aplicación, sin botones de acción ni posibilidad de responder por correo
 
 ---

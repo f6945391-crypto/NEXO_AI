@@ -257,12 +257,12 @@ Los requisitos de esta especificación se escriben contra la interfaz, no contra
 
 ## 7. Relación con el Plan Empresarial
 
-**Reescrita el 22 de octubre de 2026 (D-17).** El correo **ya no es el canal del ciclo de delegación**: el colaborador tiene cuenta y responde desde la aplicación móvil (`specs/03-tareas` §7). Del correo solo queda un aviso de tarea nueva, que sale desde la dirección de la plataforma (DP-03) y no usa esta especificación.
+**Reescrita el 22 de octubre de 2026 (D-17).** El correo **ya no es el canal del ciclo de delegación**: el colaborador tiene cuenta y responde desde la aplicación, en la web o en el móvil (`specs/03-tareas` §7; ampliado el 23 de octubre de 2026). Del correo solo queda un aviso de tarea nueva, que sale desde la dirección de la plataforma (DP-03) y no usa esta especificación.
 
 | Momento | Por dónde va |
 |---|---|
 | El gerente delega | Confirmación en la web (`03-tareas`, REQ-CUN07-07) |
-| El colaborador se entera | Notificación en el móvil y correo de aviso (REQ-CUN07-16) |
+| El colaborador se entera | Notificación en la aplicación (web o móvil) y correo de aviso (REQ-CUN07-16) |
 | El colaborador responde | Desde la aplicación (REQ-CUN07-11) |
 | El gerente recibe la respuesta | Como propuesta de actualización, nunca como cambio aplicado (REQ-CUN07-12) |
 

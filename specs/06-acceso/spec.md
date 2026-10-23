@@ -28,7 +28,7 @@
 
 **REQ-ACC-12** · Ubicuo — El usuario no administra su cuenta: no cambia su correo, no se da de baja y no cambia de plan. Esas tres cosas las decide la organización que creó la cuenta (R-45).
 
-**REQ-ACC-13** · MIENTRAS una cuenta tenga el rol colaborador, el sistema solo le muestra las tareas que tiene asignadas, sus hilos y su perfil, y solo en la aplicación móvil. *(D-17, 22 de octubre de 2026)*
+**REQ-ACC-13** · MIENTRAS una cuenta tenga el rol colaborador, el sistema solo le muestra las tareas que tiene asignadas, sus hilos y su perfil, tanto en la web como en la aplicación móvil. *(D-17, 22 de octubre de 2026; reescrito el 23 de octubre de 2026: antes decía «y solo en la aplicación móvil»; el equipo decidió que los dos perfiles usan las dos plataformas)*
 
 **REQ-ACC-14** · DONDE la cuenta tiene el rol colaborador, el sistema solo le ofrece conectar el calendario de Google, para compartir su disponibilidad, y nunca el envío de correo. *(D-17, 22 de octubre de 2026)*
 
@@ -73,4 +73,4 @@ Pendientes de revisión. Lo que asume el plan mientras tanto está en `plan.md` 
 | H-ACC-03 | Sesión: 15 minutos de acceso y 30 días de renovación | REQ-ACC-02 |
 | H-ACC-04 | Cambiar de zona horaria no mueve los compromisos: solo cambia la hora con que se muestran | REQ-ACC-11 |
 | H-ACC-05 | La vista de cada rol la decide el cliente según el diseño de Acceso | REQ-ACC-02 |
-| H-ACC-06 | «Solo en la aplicación móvil» lo aplica el cliente: la web redirige al colaborador al móvil | REQ-ACC-13 |
+| ~~H-ACC-06~~ | ~~«Solo en la aplicación móvil» lo aplica el cliente: la web redirige al colaborador al móvil~~ **Retirado el 23 de octubre de 2026**: el colaborador también usa la web (REQ-ACC-13 reescrito) | REQ-ACC-13 |

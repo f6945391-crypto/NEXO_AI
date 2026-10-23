@@ -97,7 +97,7 @@ Es una **Operación** (AD-09):
 - **Se deniega por defecto.** Una guarda global, `RolGuard`, rechaza con `ROL_NO_PERMITIDO` toda ruta que no declare `@PermitidoPara('colaborador')`. Así una ruta nueva nunca queda abierta al colaborador por olvido.
 - Las únicas rutas permitidas al colaborador son las de sus tareas asignadas y sus hilos (fase 4), su perfil, la sesión y el calendario de Google.
 - `GET /integraciones/google/permisos` devuelve al colaborador **solo** el alcance de calendario; pedir `gmail.send` con ese rol se rechaza.
-- **«Solo en la aplicación móvil»** lo aplica el cliente: si un colaborador entra en la web, esta le indica que su cuenta se usa desde el móvil (H-ACC-06). La API no puede saber con certeza desde qué plataforma llega una petición.
+- ~~**«Solo en la aplicación móvil»** lo aplica el cliente: si un colaborador entra en la web, esta le indica que su cuenta se usa desde el móvil (H-ACC-06).~~ **Cambiado el 23 de octubre de 2026:** el colaborador usa la web y el móvil (REQ-ACC-13 reescrito). Lo que lo limita es el servidor, que ya deniega por defecto; el cliente no tiene que distinguir plataformas. **Mientras no exista su vista de tareas (fase 4)**, la web le sigue mostrando el aviso de `/solo-movil`, que se retira en cuanto llegue esa vista.
 
 ## 6. Seguridad
 
@@ -141,4 +141,4 @@ Decisiones que este plan tuvo que tomar porque la especificación no las cubre. 
 | H-ACC-03 | No se especifica cuánto dura una sesión | 15 minutos de acceso y 30 días de renovación |
 | H-ACC-04 | ACC-11 no dice si cambiar de zona horaria mueve los compromisos o solo cambia cómo se muestran | Solo cambia cómo se muestran; los instantes se conservan |
 | H-ACC-05 | ACC-02 habla de «la vista que corresponde a su rol» sin nombrarla | La API devuelve rol y plan, y el cliente decide la vista según el diseño de Acceso |
-| H-ACC-06 | ACC-13 dice «solo en la aplicación móvil», pero el servidor no distingue plataformas de forma fiable | Lo aplica el cliente web, que redirige al colaborador al móvil. Añadido el 22 de octubre de 2026 por D-17 |
+| ~~H-ACC-06~~ | ~~ACC-13 dice «solo en la aplicación móvil», pero el servidor no distingue plataformas de forma fiable~~ | **Retirado el 23 de octubre de 2026**: ACC-13 ya no restringe la plataforma. El aviso `/solo-movil` queda como provisional hasta la vista web del colaborador (fase 4) |
