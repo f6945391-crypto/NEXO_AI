@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 2.16.3 · **Última actualización:** 23 de octubre de 2026 · Registro completo en §11
+**Versión:** 2.16.4 · **Última actualización:** 23 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -149,7 +149,7 @@ Estado por columna: **—** no existe · **borrador** · **vigente** · **parcia
 | Comunicaciones | `specs/04-comunicaciones/spec.md` | 04 | Móvil + web | P | CUN04-01…15 (15) | vigente | — | — | — | — | — |
 | Encargo | `specs/04-comunicaciones/spec.md` §9 | 07, 09 | Web + móvil | E | ENC-01…13 (7 vigentes, 6 retirados por D-17) | vigente | parcial (Encargos, Correo) | — | — | — | — |
 | Equipos | `specs/05-equipos/spec.md` | 05 | Web | E | CUN05-01…17 (17) | vigente | desfasado (INC-07) | — | — | — | — |
-| Acceso | `specs/06-acceso/spec.md` | — (sistema) | Web (móvil pendiente) | Todos | ACC-01…17 (17) | vigente | parcial | aprobado, revisado por D-17 | T-001…T-011, T-022 a T-026 (T-001 a T-008, T-010, T-011 y T-022 a T-026 hechas) | 13 de 17 REQ implementados, 1 en curso | 14 de 17 REQ con prueba |
+| Acceso | `specs/06-acceso/spec.md` | — (sistema) | Web (móvil pendiente) | Todos | ACC-01…17 (17) | vigente | parcial | aprobado, revisado por D-17 | T-001…T-011, T-022 a T-026 (todas hechas) | 15 de 17 REQ implementados; ACC-16 y 17 son de la fase 4 | 15 de 17 REQ con prueba |
 | **Total** | | | | | **148 (142 vigentes)** | | | | | | |
 
 **Glosario:** `specs/glosario.md`. Una definición por término, y tres conflictos de vocabulario abiertos (INC-12).
@@ -252,7 +252,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 | Fase | Contenido | CUN | Estado |
 |---|---|---|---|
 | 0 | **Base SDD**: este archivo, `AGENTS.md`, glosario, trazabilidad, resolver PT-1 e INC-01 | — | **Cerrada el 2026-10-22** |
-| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023, T-006, T-016, T-012, T-007 y T-022 hechas. **Google conectado con una cuenta real.** T-008 y T-024 hechas. T-013 a T-015 hechas, **con la lectura real probada**: la API ya consulta la agenda. T-025 hecha: **la web muestra la agenda de hoy con los compromisos reales**. **T-017 hecha: registrar un compromiso** con la duración por defecto de una hora (H-AG-01). **T-018 hecha:** conflicto con su causa y alternativas, y nueva comprobación al confirmar. **T-019 hecha:** modificar y cancelar compromisos; cancelar también como control directo. De la fase 1 quedan T-009 (cambio de zona horaria), T-021 (agenda en el móvil) y las tareas personales (CUN-03, sin especificar entero) |
+| 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023, T-006, T-016, T-012, T-007 y T-022 hechas. **Google conectado con una cuenta real.** T-008 y T-024 hechas. T-013 a T-015 hechas, **con la lectura real probada**: la API ya consulta la agenda. T-025 hecha: **la web muestra la agenda de hoy con los compromisos reales**. **T-017 hecha: registrar un compromiso** con la duración por defecto de una hora (H-AG-01). **T-018 hecha:** conflicto con su causa y alternativas, y nueva comprobación al confirmar. **T-019 hecha:** modificar y cancelar compromisos; cancelar también como control directo. **T-009 hecha:** cambio de zona horaria con los compromisos que se verán a otra hora. De la fase 1 quedan T-021 (agenda en el móvil) y las tareas personales (CUN-03, sin especificar entero) |
 | 2 | Capa de agente: intención, herramientas, confirmación | 01, 03 vía conversación + CAP | Especificado, sin plan |
 | 3 | Planificación de jornada | 02 | Especificado |
 | 4 | Equipos: disponibilidad, coordinación, delegación, seguimiento. Desde D-17, también la aplicación móvil del colaborador | 05 a 09 | Parcial (falta 06; 08 en borrador); diseño desfasado (INC-14) |
@@ -260,7 +260,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 
 **Orden acordado el 2026-10-22, para tener pantallas antes:** T-004 → T-005 → T-010 → T-011 (primeras pantallas web) → **T-023** (armazón web, añadida a pedido del equipo) → T-020 (el móvil arranca) → T-006 → T-016 → T-012 → resto de agenda. La parte de Google (T-007, T-008, T-013, T-022) entra cuando estén las credenciales de Google Cloud.
 
-**Siguiente paso concreto:** T-009, cambio de zona horaria, o T-021, la agenda en el móvil, que conviene probar en un teléfono real. Sigue pendiente que el equipo revise H-AG-09, H-AG-10 y H-WEB-01. Sigue pendiente contrastar las pantallas de acceso con Figma (INC-15).
+**Siguiente paso concreto:** T-021, la agenda en el móvil, que conviene probar en un teléfono real; o especificar las tareas personales (CUN-03). Sigue pendiente que el equipo revise H-AG-09, H-AG-10 y H-WEB-01. Sigue pendiente contrastar las pantallas de acceso con Figma (INC-15).
 
 ---
 
@@ -271,6 +271,7 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-23 | 2.16.4 | **T-009 hecha: cambio de zona horaria.** Operación `perfil.cambiar_zona_horaria` (agente y control directo): la tarjeta dice la zona actual y la nueva y qué compromisos futuros se verán a otra hora, con su hora antes y después (como mucho diez, y cuántos más). Al confirmar cambia solo la zona del perfil y queda en la auditoría; los compromisos no se mueven (H-ACC-04). Cinco ajustes al plan §5.3. **ACC-10 y ACC-11 implementados**: Acceso completo para la fase 1. Sin pantalla todavía. 183 pruebas, `verificar` completo en verde | `apps/api/src/identidad`, `apps/api/test/acceso/zona-horaria.spec.ts`, `packages/contratos/src/acceso.ts`, `specs/06-acceso/plan.md`, `tasks.md`, `specs/trazabilidad.md`, `SPEC.md` | Claude |
 | 2026-10-23 | 2.16.3 | **T-019 hecha: modificar y cancelar compromisos.** `agenda.modificar` (solo el agente) y `agenda.cancelar` (también control directo, DP-01), sobre la instancia elegida (H-AG-04). Un compromiso ajeno o ya cancelado se rechaza al proponer, con su explicación y sin llamar a Google (H-AG-05). Modificar conserva la duración, muestra el antes y el ahora, y comparte con registrar la revisión de horario: conflicto, alternativas y nueva comprobación al confirmar. Cancelar deja el compromiso `cancelado` en la réplica (R-25). Hallazgo nuevo **H-AG-11**: no se avisa a los invitados al mover o cancelar. **CUN01-02 y CUN01-04 implementados**; CUN01-06 en curso (falta la pantalla, T-021). 178 pruebas, `verificar` completo en verde | `apps/api/src/agenda`, `apps/api/test/agenda`, `apps/api/test/utilidades/fechas.ts`, `packages/contratos`, `specs/02-agenda/spec.md`, `plan.md`, `tasks.md`, `specs/trazabilidad.md`, `SPEC.md` | Claude |
 | 2026-10-23 | 2.16.2 | **T-018 hecha: conflicto al proponer y al confirmar.** La tarjeta de confirmación lleva `conflicto` con los eventos que chocan y hasta tres alternativas de DP-02; elegir una es proponer de nuevo. Al confirmar se vuelve a sincronizar y comprobar, y si apareció un choque no se escribe nada y se propone de nuevo (H-AG-07). **CUN01-05 implementado.** Se corrige un defecto de las pruebas de T-017, que usaban una fecha fija. 171 pruebas, `verificar` completo en verde | `apps/api/src/agenda/registrar-compromiso.ts`, `apps/api/test/agenda/registrar.spec.ts`, `packages/contratos/src/operaciones.ts`, `specs/02-agenda/plan.md`, `tasks.md`, `specs/trazabilidad.md`, `SPEC.md` | Claude |
 | 2026-10-23 | 2.16.1 | **El equipo aprueba el formato del reporte del equipo** tal como está en la muestra: queda como referencia de REQ-CUN08-04 | `SPEC.md`, `specs/03-tareas/spec.md` | Equipo (aprobación), redactado por Claude |

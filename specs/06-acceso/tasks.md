@@ -150,7 +150,13 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 - **Contenido:** Operación `perfil.cambiar_zona_horaria`. La propuesta lista los compromisos futuros que cambian de hora local; los instantes no se tocan
 - **Hecho cuando:** sin confirmar no cambia nada; al confirmar cambia solo `perfil_usuario.zona_horaria` y queda en auditoría
 - **Pruebas:** `acceso.zona-horaria-modificable`, `acceso.cambio-zona-muestra-afectados-y-no-aplica-sin-confirmar`
-- **Estado:** pendiente
+- **Estado:** hecha · 23 de octubre de 2026. 5 pruebas
+- **Notas de implementación:**
+  - `src/identidad/cambiar-zona-horaria.ts`, registrada en `IdentidadModule`, que importa `AgendaModule` para leer la réplica. Admite `agente` y `control_directo` (DP-01).
+  - La tarjeta dice la zona actual y la nueva, cuántos compromisos se verán a otra hora y, de como mucho diez, su hora antes y después. Cuentan los futuros, vigentes y con hora: los de todo el día, los cancelados y los pasados no.
+  - Al confirmar cambia solo `perfil_usuario.zona_horaria` y se registra `perfil.zona-horaria-cambiada` con la zona anterior y la nueva. Los instantes de los compromisos no se tocan (H-ACC-04).
+  - Pedir la zona que ya se tiene, o una sin nombre IANA, responde `SOLICITUD_INVALIDA` sin crear nada.
+  - **Sin pantalla todavía:** T-009 es la Operación. La web muestra la zona en Ajustes, pero no ofrece cambiarla; el agente lo hará en la fase 2.
 
 ---
 

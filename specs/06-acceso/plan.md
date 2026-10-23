@@ -84,6 +84,13 @@ Es una **Operación** (AD-09):
 2. **Los compromisos no se modifican**: se guardan como instantes absolutos, y lo único que cambia es cómo se muestran. Esta es la lectura de «qué compromisos quedan a otra hora» (hallazgo H-ACC-04).
 3. Solo al confirmar se actualiza `perfil_usuario.zona_horaria` y se registra en auditoría.
 
+*Ajustes de T-009:*
+- Los compromisos afectados van **en los datos de la tarjeta de confirmación**, uno por línea, con su hora en la zona actual y en la nueva; no hace falta un campo propio. Como mucho diez, y después «y N más».
+- Cuentan los compromisos **futuros, vigentes y con hora**. Los de todo el día no tienen hora que cambie.
+- Pedir la zona que ya se tiene responde `SOLICITUD_INVALIDA`, sin crear la operación.
+- Admite los orígenes `agente` y `control_directo`: es un ajuste sobre algo que ya existe, el perfil (DP-01).
+- El ejecutor vive en `IdentidadModule` y lee la réplica con el repositorio público de `AgendaModule`.
+
 ### 5.4 Conexión con Google (ACC-06 a ACC-09)
 
 - Hay exactamente dos alcances: `https://www.googleapis.com/auth/calendar.events` (ver y editar eventos) y `https://www.googleapis.com/auth/gmail.send`. Están en una constante de `packages/contratos` junto con el texto de para qué sirve cada uno. **`gmail.readonly` no aparece en ningún sitio del código** (P-08), y lo comprueba una prueba.

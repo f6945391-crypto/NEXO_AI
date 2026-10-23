@@ -83,6 +83,10 @@ export const ZonaHoraria = z
   .refine(zonaReconocida, 'Zona horaria desconocida');
 export type ZonaHoraria = z.infer<typeof ZonaHoraria>;
 
+// Carga de la Operación `perfil.cambiar_zona_horaria` — REQ-ACC-10, REQ-ACC-11 · T-009
+export const CambioZonaHorariaCarga = z.strictObject({ zonaHoraria: ZonaHoraria });
+export type CambioZonaHorariaCarga = z.infer<typeof CambioZonaHorariaCarga>;
+
 // POST /auth/primer-ingreso — REQ-ACC-04, REQ-ACC-05 · H-ACC-02 · T-005
 export const PrimerIngresoSolicitud = z.strictObject({
   contrasenaNueva: z.string().min(12, 'Al menos 12 caracteres').max(200),
