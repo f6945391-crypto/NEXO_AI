@@ -349,7 +349,9 @@ ENTONCES el responsable recibe la propuesta con quién la hizo, y no se crea ni 
 
 **Qué cuenta como trabajo del equipo:** las tareas que asignó el responsable, con su estado, sus fechas, sus retrasos y el tiempo registrado en ellas. Del hilo, solo lo destacable. Lo que cada miembro hace para sí no entra (REQ-ACC-17).
 
-**Dos piezas con destino distinto.** El **resumen** es para consultar rápido en la conversación; el **reporte** es un documento para compartir o archivar. Ninguno de los dos vuelca todo: dicen lo clave primero.
+**Dos piezas con destino distinto.** El **resumen** es para consultar rápido en la conversación: corto, con lo clave. El **reporte** es un documento **completo**, que puede ser largo, para compartir o archivar; en la conversación solo se ve su síntesis, y el documento entero se abre aparte. Los dos dicen lo clave primero.
+
+**Muestra del formato:** `design/reporte-equipo-muestra.html` (23 de octubre de 2026), con datos inventados.
 
 ### REQ-CUN08-01
 
@@ -381,7 +383,7 @@ ENTONCES el sistema le explica que eso lo consulta el responsable, y le ofrece e
 
 ### REQ-CUN08-03
 
-**Requisito:** CUANDO el responsable pida un resumen del equipo, EL SISTEMA responderá primero con un número acotado de puntos clave (lo terminado, lo atrasado y lo bloqueado), y dará el detalle solo si se lo pide.
+**Requisito:** CUANDO el responsable pida un resumen del equipo, EL SISTEMA responderá en la conversación con como mucho cinco puntos clave (lo terminado, lo atrasado y lo bloqueado), y dará el detalle solo si se lo pide.
 
 **Origen:** decisión del equipo del 23 de octubre de 2026 («reportar lo clave, sin bombardear»)
 **Tipo:** dirigido por evento
@@ -389,23 +391,25 @@ ENTONCES el sistema le explica que eso lo consulta el responsable, y le ofrece e
 **Criterio de aceptación**
 DADO un equipo con veinte tareas en la semana
 CUANDO el responsable pregunte «resúmeme la semana del equipo»
-ENTONCES recibe pocos puntos clave, cada uno con a quién afecta, y no una lista de las veinte tareas
+ENTONCES recibe como mucho cinco puntos clave, cada uno con a quién afecta, y no una lista de las veinte tareas
 Y lo destacable de un hilo aparece resumido, con su procedencia (REQ-CUN07-13), nunca el hilo entero
 
 ---
 
 ### REQ-CUN08-04
 
-**Requisito:** CUANDO el responsable pida un reporte de un período, EL SISTEMA generará un documento con formato que empiece por un resumen ejecutivo y siga con los indicadores, los retrasos con su causa y, al final, el detalle.
+**Requisito:** CUANDO el responsable pida un reporte de un período, EL SISTEMA generará un documento completo, que se ve en la web y se descarga en PDF, y que se entiende sin más contexto: dice de qué equipo y período es, en qué zona horaria están las fechas y cómo se calcularon las cifras, y sigue con el resumen ejecutivo, los indicadores, lo destacado, los retrasos con su causa, el avance por persona y el detalle de todas las tareas.
 
-**Origen:** decisión del equipo del 23 de octubre de 2026 («tiene que tener un formato, no solo una tabla»)
+**Origen:** decisión del equipo del 23 de octubre de 2026 («tiene que tener un formato, no solo una tabla»; «el PDF debe ser completo»); H-SEG-02, H-SEG-03
 **Tipo:** dirigido por evento
 
 **Criterio de aceptación**
-DADO un responsable
+DADO un responsable con un mes de trabajo de su equipo
 CUANDO pida «el reporte de octubre de mi equipo»
-ENTONCES recibe un documento que se lee de arriba abajo: primero qué pasó en dos o tres frases, después las cifras clave, después lo atrasado con su causa, y por último la tabla de detalle
-Y puede compartirlo o descargarlo, sin que el sistema lo envíe a nadie por su cuenta
+ENTONCES recibe un documento que se lee de arriba abajo: primero el contexto y qué pasó en dos o tres frases, después las cifras clave y lo destacado, después lo atrasado con su causa y el avance de cada persona, y al final el detalle de todas las tareas del período, sin recortar
+Y lo puede ver en la web y descargar en PDF, sin que el sistema lo envíe a nadie por su cuenta
+
+> **Reescrito el 23 de octubre de 2026 (H-SEG-02 y 03).** Antes no decía que el reporte fuera completo ni en qué formato salía.
 
 ---
 
@@ -437,14 +441,28 @@ ENTONCES no recibe ningún resumen ni reporte por iniciativa del sistema
 
 ---
 
+### REQ-CUN08-07
+
+**Requisito:** CUANDO el sistema termine un reporte, EL SISTEMA mostrará en la conversación solo una síntesis del documento, con como mucho cinco puntos clave, y el acceso al reporte completo.
+
+**Origen:** decisión del equipo del 23 de octubre de 2026 («en el chat solo una síntesis del archivo que se generó»); H-SEG-02
+**Tipo:** dirigido por evento
+
+**Criterio de aceptación**
+DADO un responsable que pidió el reporte de octubre
+CUANDO el reporte esté listo
+ENTONCES la conversación muestra una síntesis breve y un acceso para abrir o descargar el documento, y no el reporte entero
+
+---
+
 ### Decisiones abiertas del seguimiento
 
 | # | Pregunta | Propuesta mientras tanto |
 |---|---|---|
-| H-SEG-01 | Además de «atrasada», ¿existe «en riesgo»? ¿Con qué criterio? | Solo «atrasada» (fecha vencida sin cumplir el criterio de terminado) hasta que se decida |
-| H-SEG-02 | ¿Cuántos puntos clave lleva un resumen? | Hasta cinco |
-| H-SEG-03 | ¿En qué formato se descarga el reporte y quién más puede leerlo? | Se ve en la web y se descarga en PDF; solo lo lee quien lo genera |
-| H-SEG-04 | ¿Se pueden programar reportes, por ejemplo cada lunes? REQ-CUN08-06 solo prohíbe los no pedidos | No, hasta que se decida |
+| ~~H-SEG-01~~ | ~~Además de «atrasada», ¿existe «en riesgo»?~~ **Decidido el 23 de octubre de 2026: solo «atrasada»**, es decir, fecha vencida sin cumplir el criterio de terminado. El reporte da el contexto de cada retraso | REQ-CUN08-04, 05 |
+| ~~H-SEG-02~~ | ~~¿Cuántos puntos clave lleva un resumen?~~ **Decidido: como mucho cinco en la conversación**, tanto en el resumen como en la síntesis de un reporte. **El reporte no se recorta**: es completo y puede ser largo | REQ-CUN08-03, 04, 07 |
+| H-SEG-03 | ¿En qué formato sale el reporte y quién más puede leerlo? | **Formato decidido: se ve en la web y se descarga en PDF.** Sigue abierto quién más puede leerlo; mientras tanto, solo quien lo genera, que puede descargarlo y compartirlo por su cuenta |
+| ~~H-SEG-04~~ | ~~¿Se pueden programar reportes?~~ **Decidido: queda como posibilidad futura y no se implementa.** REQ-CUN08-06 sigue vigente | REQ-CUN08-06 |
 
 ---
 

@@ -12,7 +12,7 @@
 | 01-captura | 24 | 24 | 0 | 0 | 0 | 0 |
 | 02-agenda | 12 | 2 | 6 | 4 | 0 | 0 |
 | 02-jornada | 24 | 24 | 0 | 0 | 0 | 0 |
-| 03-tareas | 25 | 25 | 0 | 0 | 0 | 0 |
+| 03-tareas | 26 | 26 | 0 | 0 | 0 | 0 |
 | 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
 | 05-equipos | 17 | 17 | 0 | 0 | 0 | 0 |
 | 06-acceso | 17 | 3 | 1 | 13 | 0 | 0 |
@@ -103,9 +103,10 @@
 | REQ-CUN08-01 | 03-tareas | CUN-08; decisión del equipo del 23 de octubre de 2026 | 4 | — | — | pendiente |
 | REQ-CUN08-02 | 03-tareas | decisión del equipo del 23 de octubre de 2026; REQ-ACC-15, REQ-ACC-16 | 4 | — | — | pendiente |
 | REQ-CUN08-03 | 03-tareas | decisión del equipo del 23 de octubre de 2026 («reportar lo clave, sin bombardear») | 4 | — | — | pendiente |
-| REQ-CUN08-04 | 03-tareas | decisión del equipo del 23 de octubre de 2026 («tiene que tener un formato, no solo una tabla») | 4 | — | — | pendiente |
+| REQ-CUN08-04 | 03-tareas | decisión del equipo del 23 de octubre de 2026 («tiene que tener un formato, no solo una tabla»; «el PDF debe ser completo»); H-SEG-02, H-SEG-03 | 4 | — | — | pendiente |
 | REQ-CUN08-05 | 03-tareas | P-02, AD-05 | 4 | — | — | pendiente |
 | REQ-CUN08-06 | 03-tareas | decisión del equipo del 23 de octubre de 2026 («no hay que bombardear de información») | 4 | — | — | pendiente |
+| REQ-CUN08-07 | 03-tareas | decisión del equipo del 23 de octubre de 2026 («en el chat solo una síntesis del archivo que se generó»); H-SEG-02 | 4 | — | — | pendiente |
 | REQ-CUN04-01 | 04-comunicaciones | CUN-04 flujo principal | 5 | — | — | pendiente |
 | REQ-CUN04-02 | 04-comunicaciones | CUN-04 excepciones; RN-ER-03 | 5 | — | — | pendiente |
 | REQ-CUN04-03 | 04-comunicaciones | RN-ER-03; propuesta técnica §7.2, herramienta `comunicaciones.preparar` | 5 | — | — | pendiente |
