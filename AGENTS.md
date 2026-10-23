@@ -56,6 +56,8 @@ Requisitos: Node.js 22.12 o posterior (`.nvmrc`), Python 3.12 y Docker. pnpm no 
 | `npx pnpm@12.10.1 verificar` | Comprobación de tipos, compilación, pruebas y trazabilidad. **Una tarea no está hecha si esto falla** |
 | `npx pnpm@12.10.1 test` | Solo las pruebas |
 | `node apps/api/dist/main.js` | Arranca la API compilada (`PUERTO`, 3000 por defecto) |
+| `node apps/api/dist/trabajador.js` | Arranca el proceso trabajador: sincroniza el calendario de cada perfil conectado cada 5 minutos, con BullMQ sobre el Redis de Docker |
+| `npx pnpm@12.10.1 --filter @nexoai/api probar-calendario -- --correo <correo> [--solo-lectura]` | Prueba el proveedor real de Google Calendar con el contrato de T-013, sobre la base de desarrollo |
 | `npx pnpm@12.10.1 --filter @nexoai/web dev` | Arranca la web en http://localhost:3001 (`API_URL` apunta a la API) |
 | `npx pnpm@12.10.1 --filter @nexoai/web test` | Pruebas de extremo a extremo: arrancan la API real sobre `nexoai_e2e_prueba` (puerto 3102) y la web (puerto 3101). **Antes, cierra cualquier `next dev` de `apps/web`**: Next.js no admite dos a la vez |
 | `npx pnpm@12.10.1 --filter @nexoai/movil web` | Arranca el móvil en el navegador, en http://localhost:3201 |

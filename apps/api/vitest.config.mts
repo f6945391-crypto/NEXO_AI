@@ -12,6 +12,10 @@ process.env.JWT_SECRETO ??= 'solo-para-pruebas';
 // Clave de prueba de 32 bytes para cifrar tokens de Google (T-007). La real vive en .env.
 process.env.TOKENS_CLAVE_CIFRADO ??= Buffer.alloc(32, 7).toString('base64');
 
+// Las colas de BullMQ de las pruebas no se mezclan con las de un trabajador de desarrollo (T-014).
+process.env.COLA_PREFIJO ??= 'nexoai-prueba';
+process.env.REDIS_URL ??= 'redis://localhost:6379';
+
 // SWC compila los decoradores con sus metadatos, que NestJS necesita para inyectar dependencias.
 export default defineConfig({
   plugins: [swc.vite({ module: { type: 'es6' } })],

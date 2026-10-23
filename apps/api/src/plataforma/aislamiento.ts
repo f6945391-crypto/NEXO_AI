@@ -9,7 +9,14 @@ import type { PrismaClient } from '../generado/prisma/client';
 
 // Modelos con columna organizacion_id. La prueba plataforma.aislamiento-entre-organizaciones
 // falla si el esquema tiene alguno que no esté en esta lista.
-export const MODELOS_CON_ORGANIZACION: ReadonlySet<string> = new Set(['PerfilUsuario', 'EventoAuditoria', 'Operacion', 'ConsentimientoIntegracion']);
+export const MODELOS_CON_ORGANIZACION: ReadonlySet<string> = new Set([
+  'PerfilUsuario',
+  'EventoAuditoria',
+  'Operacion',
+  'ConsentimientoIntegracion',
+  'EventoAgenda',
+  'SincronizacionCalendario',
+]);
 
 export class ErrorDeAislamiento extends Error {
   constructor(mensaje: string) {

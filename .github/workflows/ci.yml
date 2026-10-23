@@ -20,11 +20,17 @@ jobs:
           --health-cmd "pg_isready -U nexoai"
           --health-interval 5s
           --health-retries 10
+      # Cola de BullMQ (T-014)
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
     env:
       DATABASE_URL: postgresql://nexoai:nexoai@localhost:5432/nexoai_prueba
       DATABASE_URL_PRUEBA: postgresql://nexoai:nexoai@localhost:5432/nexoai_prueba
       JWT_SECRETO: solo-para-la-integracion-continua
       TOKENS_CLAVE_CIFRADO: BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=
+      REDIS_URL: redis://localhost:6379
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

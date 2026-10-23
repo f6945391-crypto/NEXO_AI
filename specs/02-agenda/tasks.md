@@ -53,7 +53,15 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** `evento_agenda` y `sincronizacion_calendario`; sincronización inicial (−30 días a +365 días, `singleEvents=true`), incremental con `syncToken` en un trabajo de BullMQ y repetición completa ante `410`; un borrado en Google se marca `cancelado` (R-25)
 - **Hecho cuando:** tras sincronizar contra el proveedor simulado, la réplica refleja altas, cambios y borrados; cada evento conserva su zona horaria; solo se lee el calendario principal
 - **Pruebas:** `agenda.solo-eventos-propios`, `agenda.horas-con-zona-horaria`
-- **Estado:** pendiente
+- **Estado:** hecha · 22 de octubre de 2026. 10 pruebas, también `agenda.sincronizacion-periodica`, que pasa por BullMQ sobre un Redis real
+- **Notas de implementación:**
+  - Tablas `evento_agenda` y `sincronizacion_calendario` (sexta migración); las dos entran en el filtro por organización y la prueba de aislamiento cubre ya seis tablas.
+  - `SincronizadorCalendario`: incremental si hay token y la ventana está vigente; completa si no, o ante el `410`. Una sola sincronización a la vez por perfil dentro de un proceso.
+  - `ReplicaEventosRepositorio` filtra siempre por el perfil, además de la organización (REQ-CUN01-09).
+  - Proceso trabajador nuevo, `dist/trabajador.js`: cada 5 minutos un trabajo `repasar` encola un `sincronizar` por perfil conectado, sin duplicados y con un solo intento.
+  - **BullMQ 6.3.11** e **ioredis 6.0.0**, las últimas con dos semanas. `msgpackr-extract`, una aceleración nativa opcional, queda sin permiso para ejecutar scripts.
+  - Las pruebas usan el prefijo de cola `nexoai-prueba`, y la integración continua tiene ahora un servicio de Redis.
+  - Ajustes del plan (§4) y hallazgo nuevo **H-AG-09**: la ventana se renueva leyendo completo cada 30 días.
 
 ### T-015 · Consulta de la agenda
 

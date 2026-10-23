@@ -115,6 +115,12 @@ Reglas, cada una con su prueba:
 - Si Google responde `410 Gone`, se repite la sincronización inicial.
 - Si el consentimiento está revocado, no se sincroniza y se aplica REQ-ACC-09.
 - **El asistente nunca borra de la réplica por su cuenta.** Lo que se borra en Google se marca `cancelado` y queda a la vista como tal (R-25).
+- *Ajustes de T-014:*
+  - *La sincronización inicial no se dispara al conectar Google, sino en la primera consulta de la agenda o en la siguiente pasada del trabajador, lo que ocurra antes. Así la API no necesita la cola ni Redis, y el módulo de integraciones no depende del de agenda.*
+  - *Tras una lectura completa, lo que la réplica tenía en la ventana y Google ya no devuelve se marca `cancelado`. Cubre lo borrado mientras el token estaba caducado.*
+  - *El trabajador lista los perfiles con el calendario conectado de todas las organizaciones con `sinAislar`: no atiende a nadie en concreto. Solo lee perfil y organización; cada sincronización se hace después con `deOrganizacion`.*
+  - *Un solo intento por trabajo: si Google falla, lo vuelve a intentar la siguiente pasada, sin bucles (REQ-ACC-09).*
+  - *La ventana se renueva con una lectura completa cada 30 días (H-AG-09).*
 
 ## 5. Rutas de consulta
 
@@ -188,6 +194,7 @@ Registrados en `SPEC.md` §8 y en la tabla de decisiones de `spec.md`. **No son 
 | H-AG-06 | Varios calendarios de Google | Solo el principal |
 | H-AG-07 | La agenda puede cambiar entre proponer y confirmar | Se vuelve a comprobar al confirmar; si hay conflicto, no se ejecuta y se propone de nuevo |
 | H-AG-08 | Una propuesta que nadie confirma ni descarta | Queda en `propuesta`, sin caducar. Falta decidir si caduca |
+| H-AG-09 | La lectura incremental solo trae lo que cambia: un evento que ya existía más allá de los 365 días no entra en la réplica aunque la ventana avance (detectado en T-014) | Se vuelve a leer completo cuando la ventana ha avanzado 30 días, así siempre cubre al menos 335 días por delante. Parámetro `RENOVAR_VENTANA_DIAS` |
 
 ### DP-02 — alternativas ante un conflicto (provisional)
 

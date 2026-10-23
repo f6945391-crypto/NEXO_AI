@@ -40,6 +40,8 @@ model Organizacion {
   eventosAuditoria EventoAuditoria[]
   operaciones      Operacion[]
   consentimientos  ConsentimientoIntegracion[]
+  eventosAgenda    EventoAgenda[]
+  sincronizaciones SincronizacionCalendario[]
 
   @@map("organizacion")
 }
@@ -62,6 +64,8 @@ model PerfilUsuario {
   sesionesRenovacion SesionRenovacion[]
   operaciones        Operacion[]
   consentimientos    ConsentimientoIntegracion[]
+  eventosAgenda      EventoAgenda[]
+  sincronizacion     SincronizacionCalendario?
 
   @@index([organizacionId])
   @@map("perfil_usuario")
@@ -162,6 +166,64 @@ model ConsentimientoIntegracion {
   @@unique([perfilId, proveedor, alcance])
   @@index([organizacionId])
   @@map("consentimiento_integracion")
+}
+
+// EN-02 Evento de Agenda, réplica del calendario de Google (AD-10, specs/02-agenda/plan.md §4) · T-014.
+// Google es la fuente de verdad. Lo borrado allí se marca cancelado y no se borra de aquí (R-25).
+enum EstadoEvento {
+  confirmado
+  cancelado
+
+  @@map("estado_evento")
+}
+
+model EventoAgenda {
+  id                 String       @id @default(uuid()) @db.Uuid
+  organizacionId     String       @map("organizacion_id") @db.Uuid
+  // RN-EST-01: cada evento corresponde a un perfil (REQ-CUN01-09)
+  perfilId           String       @map("perfil_id") @db.Uuid
+  // Solo el calendario principal (H-AG-06)
+  googleCalendarioId String       @map("google_calendario_id")
+  googleEventoId     String       @map("google_evento_id")
+  etag               String
+  titulo             String
+  inicio             DateTime     @db.Timestamptz(3)
+  fin                DateTime     @db.Timestamptz(3)
+  // IANA del evento, tal como viene de Google (P-05, REQ-CUN01-10)
+  zonaHoraria        String       @map("zona_horaria")
+  // H-AG-03: se muestran, pero no cuentan como conflicto
+  todoElDia          Boolean      @map("todo_el_dia")
+  // H-AG-05
+  esOrganizador      Boolean      @map("es_organizador")
+  // Instancia de un evento recurrente (H-AG-04)
+  serieId            String?      @map("serie_id")
+  estado             EstadoEvento
+  sincronizadoEn     DateTime     @map("sincronizado_en") @db.Timestamptz(3)
+
+  organizacion Organizacion  @relation(fields: [organizacionId], references: [id])
+  perfil       PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+
+  @@unique([perfilId, googleEventoId])
+  @@index([perfilId, inicio, fin])
+  @@index([organizacionId])
+  @@map("evento_agenda")
+}
+
+// Estado de la sincronización con Google de cada perfil (specs/02-agenda/plan.md §4) · T-014.
+model SincronizacionCalendario {
+  perfilId             String   @id @map("perfil_id") @db.Uuid
+  organizacionId       String   @map("organizacion_id") @db.Uuid
+  // Para la lectura incremental; nulo obliga a leer desde cero
+  syncToken            String?  @map("sync_token")
+  ventanaDesde         DateTime @map("ventana_desde") @db.Timestamptz(3)
+  ventanaHasta         DateTime @map("ventana_hasta") @db.Timestamptz(3)
+  ultimaSincronizacion DateTime @map("ultima_sincronizacion") @db.Timestamptz(3)
+
+  organizacion Organizacion  @relation(fields: [organizacionId], references: [id])
+  perfil       PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+
+  @@index([organizacionId])
+  @@map("sincronizacion_calendario")
 }
 
 // Registro de acciones (propuesta técnica §9). Tabla de sistema.

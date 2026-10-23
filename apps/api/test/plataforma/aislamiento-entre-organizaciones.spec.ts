@@ -13,7 +13,7 @@ import { clientePrueba, vaciarTablas } from '../utilidades/base-prueba';
 
 // P-04 · T-003: con el contexto de la organización A no se lee ni se escribe nada de la B, en ninguna tabla.
 
-type Fila = { id: string; organizacionId?: string };
+type Fila = { id: string; organizacionId?: string; [campo: string]: unknown };
 type Delegado = {
   findMany(args?: object): Promise<Fila[]>;
   findFirst(args?: object): Promise<Fila | null>;
@@ -25,6 +25,8 @@ const delegadoDe = (cliente: object, modelo: string): Delegado =>
   (cliente as Record<string, Delegado>)[modelo[0]!.toLowerCase() + modelo.slice(1)]!;
 
 const campoDe = (modelo: string) => (modelo === 'Organizacion' ? 'id' : 'organizacionId');
+// Clave primaria: `id` en todas salvo la sincronización del calendario, que tiene una fila por perfil (T-014).
+const claveDe = (modelo: string) => (modelo === 'SincronizacionCalendario' ? 'perfilId' : 'id');
 
 const TODOS = ['Organizacion', ...MODELOS_CON_ORGANIZACION];
 
@@ -67,6 +69,28 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
       await base.consentimientoIntegracion.create({
         data: { organizacionId, perfilId, proveedor: 'google', alcance: 'calendario', estado: 'concedido' },
       });
+      // Y un evento de la réplica de la agenda con su sincronización (T-014).
+      const ahora = new Date();
+      await base.eventoAgenda.create({
+        data: {
+          organizacionId,
+          perfilId,
+          googleCalendarioId: 'primary',
+          googleEventoId: `evento-${perfilId}`,
+          etag: '"1"',
+          titulo: 'Reunión',
+          inicio: ahora,
+          fin: ahora,
+          zonaHoraria: 'America/Lima',
+          todoElDia: false,
+          esOrganizador: true,
+          estado: 'confirmado',
+          sincronizadoEn: ahora,
+        },
+      });
+      await base.sincronizacionCalendario.create({
+        data: { organizacionId, perfilId, ventanaDesde: ahora, ventanaHasta: ahora, ultimaSincronizacion: ahora },
+      });
     }
     deA = aislarPorOrganizacion(base, orgA);
   });
@@ -91,8 +115,9 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
     expect(filas).toHaveLength(propias);
     expect(filas.every((f) => (campo === 'id' ? f.id : f.organizacionId) === orgA)).toBe(true);
     expect(await delegado.count()).toBe(propias);
-    expect(await delegado.findUnique({ where: { id: ajena!.id } })).toBeNull();
-    expect(await delegado.findFirst({ where: { id: ajena!.id } })).toBeNull();
+    const clave = claveDe(modelo);
+    expect(await delegado.findUnique({ where: { [clave]: ajena![clave] } })).toBeNull();
+    expect(await delegado.findFirst({ where: { [clave]: ajena![clave] } })).toBeNull();
   });
 
   it('una condición explícita sobre otra organización no se salta el filtro', async () => {
