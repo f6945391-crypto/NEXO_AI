@@ -135,7 +135,13 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 - **Contenido:** decorador `@RequiereGoogle(alcance)`; puerto `ClienteGoogle`, que es el único que llama a Google; ante `invalid_grant`, el consentimiento pasa a revocado o caducado, se avisa una sola vez (`aviso_emitido_en`) y no se reintenta
 - **Hecho cuando:** sin consentimiento no se hace ninguna llamada a Google; tras una revocación hay exactamente un aviso y cero reintentos
 - **Pruebas:** `acceso.sin-google-no-agenda-ni-envia`, `acceso.revocacion-avisa-una-vez-y-no-reintenta`
-- **Estado:** pendiente
+- **Estado:** hecha · 22 de octubre de 2026. 10 pruebas con Google simulado; 121 en el monorepo. Sin la comprobación del permiso retirado, la prueba de «no reintentar» falla
+- **Notas de implementación:**
+  - `ClienteGoogle` es el único punto que llama a Google en nombre de una persona. Comprueba el permiso, renueva el acceso cuando caduca (y una vez más si Google responde 401) y guarda el token nuevo cifrado.
+  - `@RequiereGoogle(alcance)` y su guarda global responden `PERMISO_GOOGLE_FALTANTE` antes de ejecutar la ruta.
+  - Si la renovación responde `invalid_grant`, o el acceso sigue rechazado tras renovar, el permiso pasa a `revocado` o `caducado`, se borra el token y se avisa **una sola vez**. El aviso es un evento `google.permiso-perdido` en la auditoría, y Ajustes muestra el permiso como retirado. Las llamadas siguientes no llegan a Google.
+  - Un fallo pasajero de Google (`GOOGLE_NO_DISPONIBLE`, 502) no toca el permiso.
+  - El aviso todavía no es una notificación: llegará cuando exista el sistema de notificaciones (fase 4).
 
 ### T-009 · Cambio de zona horaria
 
@@ -179,6 +185,16 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
   - **Base propia para estas pruebas:** `nexoai_e2e_prueba`. `e2e/arrancar-api.mjs` la vacía, la migra, crea las cuentas de `e2e/cuentas.json` y arranca la API en el puerto 3102. Así no se pisa con las pruebas de la API, que Turborepo ejecuta a la vez.
   - **Diseño:** los cuadros `WEB-v2 / Acceso / 01–02` solo existen en Figma, y Figma no estaba disponible (el conector necesita autorización). Las pantallas se construyeron con la especificación, `design/tokens.json` y las reglas de `design/CONTEXTO.md`. **Falta contrastarlas con los cuadros** (INC-15).
   - Se desactivó el `AGENTS.md` que Next.js escribía en `apps/web` (`agentRules: false`), y la API arrancada a mano ahora carga el `.env`.
+
+### T-024 · Renovación concurrente sin cerrar la sesión
+
+- **Satisface:** REQ-ACC-02 (que la sesión no se pierda sin motivo) · DP-04. Añadida el 22 de octubre de 2026 por un defecto visto en la auditoría
+- **Depende de:** T-004
+- **Contenido:** columna `rotada_en` en `sesion_renovacion` (quinta migración). Si el mismo token recién rotado vuelve dentro de un margen, se trata como petición duplicada y se emiten tokens nuevos de la misma sesión. Fuera del margen, o si la sesión ya se cerró, se sigue revocando toda la familia
+- **Hecho cuando:** dos renovaciones simultáneas con el mismo token dan 200 sin registrar `sesion.reutilizada`; la reutilización pasado el margen sigue cerrando la sesión; tras cerrar sesión, el margen no reabre nada
+- **Prueba:** `acceso.renovacion-concurrente` · y `acceso.sesion-rotativa` ajustada
+- **Estado:** hecha · 22 de octubre de 2026. Sin el margen, las pruebas de concurrencia fallan
+- **Por qué:** la auditoría de `personal@nexoai.test` registró a las 19:56:45 dos renovaciones con el mismo token separadas por 227 ms. La API lo tomó como un robo y cerró la sesión. Era la web renovando dos veces a la vez, y habría pasado cada vez que caducara el acceso (15 minutos) con dos pestañas o dos cargas seguidas.
 
 ### T-023 · Armazón web de tres columnas
 

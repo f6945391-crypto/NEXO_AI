@@ -11,6 +11,8 @@ import type { ContextoSolicitud } from './contexto';
 // specs/06-acceso/plan.md §5.1 y §6 · T-004
 export const DURACION_ACCESO_SEGUNDOS = 15 * 60;
 export const DURACION_RENOVACION_MS = 30 * 24 * 60 * 60 * 1000;
+// DP-04, provisional · T-024: margen en que reutilizar un token recién rotado no cierra la sesión.
+export const MARGEN_REUTILIZACION_MS = 30 * 1000;
 
 const hashDeToken = (token: string) => createHash('sha256').update(token).digest('hex');
 
@@ -46,25 +48,36 @@ export class AutenticacionService {
   }
 
   async renovar(tokenRenovacion: string): Promise<IngresoRespuesta> {
-    const sesion = await this.prisma.sinAislar.sesionRenovacion.findUnique({
-      where: { hashToken: hashDeToken(tokenRenovacion) },
-      include: { perfil: true },
-    });
+    const hashToken = hashDeToken(tokenRenovacion);
+    const sesion = await this.prisma.sinAislar.sesionRenovacion.findUnique({ where: { hashToken }, include: { perfil: true } });
     if (!sesion || sesion.expiraEn <= new Date()) throw sesionInvalida();
 
-    if (sesion.revocadaEn) {
-      // Un token ya rotado vuelve a usarse: alguien más lo tiene. Se cierra todo ese ingreso.
-      await this.revocarFamilia(sesion.familia);
-      await this.auditar(sesion.perfil, 'sesion.reutilizada');
-      throw sesionInvalida();
+    if (!sesion.revocadaEn) {
+      const ahora = new Date();
+      const rotada = await this.prisma.sinAislar.sesionRenovacion.updateMany({
+        where: { id: sesion.id, revocadaEn: null },
+        data: { revocadaEn: ahora, rotadaEn: ahora },
+      });
+      if (rotada.count === 1) return this.emitir(sesion.perfil, sesion.familia);
+      // Otra petición la rotó en este mismo instante: se resuelve como un duplicado, abajo.
     }
 
-    const rotada = await this.prisma.sinAislar.sesionRenovacion.updateMany({
-      where: { id: sesion.id, revocadaEn: null },
-      data: { revocadaEn: new Date() },
+    const actual = await this.prisma.sinAislar.sesionRenovacion.findUniqueOrThrow({ where: { hashToken } });
+    // Revocada sin rotar: cierre de sesión o cambio de contraseña. No es una alarma, simplemente terminó.
+    if (!actual.rotadaEn) throw sesionInvalida();
+
+    // T-024 · DP-04: el mismo token rotado vuelve en los segundos siguientes. Es la web pidiendo renovar
+    // dos veces a la vez (dos pestañas, dos cargas), no un robo: tokens nuevos de la misma familia.
+    const dentroDelMargen = Date.now() - actual.rotadaEn.getTime() <= MARGEN_REUTILIZACION_MS;
+    const familiaActiva = await this.prisma.sinAislar.sesionRenovacion.count({
+      where: { familia: actual.familia, revocadaEn: null },
     });
-    if (rotada.count !== 1) throw sesionInvalida();
-    return this.emitir(sesion.perfil, sesion.familia);
+    if (dentroDelMargen && familiaActiva > 0) return this.emitir(sesion.perfil, actual.familia);
+
+    // Fuera del margen: alguien más tiene el token. Se cierra todo ese ingreso.
+    await this.revocarFamilia(actual.familia);
+    await this.auditar(sesion.perfil, 'sesion.reutilizada');
+    throw sesionInvalida();
   }
 
   // REQ-ACC-04, REQ-ACC-05 · H-ACC-02 · T-005. Cambiar la contraseña cierra todas las sesiones abiertas

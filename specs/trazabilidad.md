@@ -15,7 +15,7 @@
 | 03-tareas | 17 | 17 | 0 | 0 | 0 | 0 |
 | 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
 | 05-equipos | 16 | 16 | 0 | 0 | 0 | 0 |
-| 06-acceso | 14 | 3 | 2 | 9 | 0 | 0 |
+| 06-acceso | 14 | 1 | 2 | 11 | 0 | 0 |
 
 ## Requisitos
 
@@ -143,14 +143,14 @@
 | REQ-CUN05-15 | 05-equipos | REQ-CUN05-12 y 14 | 4 | — | — | pendiente |
 | REQ-CUN05-16 | 05-equipos | decisión D-17; RN-OP-02; R-14 | 4 | — | — | pendiente |
 | REQ-ACC-01 | 06-acceso | Requisito del sistema | 1 | T-002 | acceso.sin-registro-abierto | implementado |
-| REQ-ACC-02 | 06-acceso | Requisito del sistema | 1 | T-004, T-011 | acceso.recorrido-web | implementado |
+| REQ-ACC-02 | 06-acceso | Requisito del sistema | 1 | T-004, T-011, T-024 | acceso.recorrido-web | implementado |
 | REQ-ACC-03 | 06-acceso | Requisito del sistema | 1 | T-004, T-011 | acceso.error-no-revela-correo | implementado |
 | REQ-ACC-04 | 06-acceso | Requisito del sistema | 1 | T-005, T-011 | acceso.primer-ingreso-bloquea-hasta-completar | implementado |
 | REQ-ACC-05 | 06-acceso | Requisito del sistema; RN-CAL-01 | 1 | T-005, T-011 | acceso.zona-horaria-requiere-eleccion | implementado |
 | REQ-ACC-06 | 06-acceso | Requisito del sistema | 1 | T-007, T-022 | acceso.conectar-google-por-permiso | implementado |
 | REQ-ACC-07 | 06-acceso | Requisito del sistema | 1 | T-007 | acceso.solo-dos-alcances-sin-lectura-de-buzon | implementado |
-| REQ-ACC-08 | 06-acceso | Requisito del sistema | 1 | T-008 | — | pendiente |
-| REQ-ACC-09 | 06-acceso | Requisito del sistema | 1 | T-008 | — | pendiente |
+| REQ-ACC-08 | 06-acceso | Requisito del sistema | 1 | T-008 | acceso.sin-google-no-agenda-ni-envia | implementado |
+| REQ-ACC-09 | 06-acceso | Requisito del sistema | 1 | T-008 | acceso.revocacion-avisa-una-vez-y-no-reintenta | implementado |
 | REQ-ACC-10 | 06-acceso | Requisito del sistema | 1 | T-006, T-009 | acceso.cuenta-no-autogestionable | en curso |
 | REQ-ACC-11 | 06-acceso | Requisito del sistema | 1 | T-009 | — | pendiente |
 | REQ-ACC-12 | 06-acceso | Requisito del sistema; R-45 | 1 | T-006 | acceso.cuenta-no-autogestionable | implementado |

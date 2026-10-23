@@ -16,6 +16,15 @@ export interface TokensGoogle {
 export interface ProveedorOAuthGoogle {
   urlDeAutorizacion(alcance: string, estado: string): string;
   canjearCodigo(codigo: string): Promise<TokensGoogle>;
+  // T-008. Lanza ErrorOAuthGoogle; `codigo === 'invalid_grant'` significa permiso retirado o caducado.
+  renovarAcceso(refreshToken: string): Promise<TokensGoogle>;
+}
+
+export class ErrorOAuthGoogle extends Error {
+  constructor(readonly codigo: string) {
+    super(`Google respondió ${codigo}`);
+    this.name = 'ErrorOAuthGoogle';
+  }
 }
 
 @Injectable()
@@ -48,8 +57,26 @@ export class OAuthGoogleReal implements ProveedorOAuthGoogle {
         grant_type: 'authorization_code',
       }),
     });
+    return this.leerTokens(respuesta);
+  }
+
+  async renovarAcceso(refreshToken: string): Promise<TokensGoogle> {
+    const respuesta = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        refresh_token: refreshToken,
+        client_id: requerirVariable('GOOGLE_CLIENT_ID'),
+        client_secret: requerirVariable('GOOGLE_CLIENT_SECRET'),
+        grant_type: 'refresh_token',
+      }),
+    });
+    return this.leerTokens(respuesta);
+  }
+
+  private async leerTokens(respuesta: Response): Promise<TokensGoogle> {
     const cuerpo = (await respuesta.json()) as Record<string, unknown>;
-    if (!respuesta.ok) throw new Error(`Google rechazó el código: ${String(cuerpo.error ?? respuesta.status)}`);
+    if (!respuesta.ok) throw new ErrorOAuthGoogle(String(cuerpo.error ?? respuesta.status));
     return {
       accessToken: String(cuerpo.access_token),
       refreshToken: typeof cuerpo.refresh_token === 'string' ? cuerpo.refresh_token : null,

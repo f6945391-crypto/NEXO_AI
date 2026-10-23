@@ -31,6 +31,9 @@ const googleSimulado: ProveedorOAuthGoogle = {
       alcancesConcedidos: codigo === 'sin-permiso' ? [] : [CALENDARIO],
     };
   },
+  async renovarAcceso() {
+    throw new Error('No se usa en estas pruebas');
+  },
 };
 
 const CONTRASENA = 'una-contrasena-de-prueba';

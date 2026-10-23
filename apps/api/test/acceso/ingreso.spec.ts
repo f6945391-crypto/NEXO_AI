@@ -115,16 +115,63 @@ describe('T-004 · ingreso y sesión', () => {
       await http().get('/auth/sesion').set('Authorization', `Bearer ${segundo.tokenAcceso}`).expect(200);
     });
 
-    it('reutilizar un token ya rotado revoca toda la familia', async () => {
+    it('reutilizar un token rotado fuera del margen de gracia revoca toda la familia', async () => {
       await alta('g7@nexoai.test', 'gerente', 'empresarial');
       const primero = IngresoRespuesta.parse((await ingresar('g7@nexoai.test').expect(200)).body);
       const segundo = IngresoRespuesta.parse(
         (await http().post('/auth/renovar').send({ tokenRenovacion: primero.tokenRenovacion }).expect(200)).body,
       );
+      // Pasó un minuto desde la rotación: ya no puede ser un duplicado (DP-04).
+      await prisma.sesionRenovacion.updateMany({
+        where: { rotadaEn: { not: null } },
+        data: { rotadaEn: new Date(Date.now() - 60_000) },
+      });
 
       const reutilizado = await http().post('/auth/renovar').send({ tokenRenovacion: primero.tokenRenovacion }).expect(401);
       expect(ErrorApi.parse(reutilizado.body).codigo).toBe('SESION_INVALIDA');
       await http().post('/auth/renovar').send({ tokenRenovacion: segundo.tokenRenovacion }).expect(401);
+    });
+
+    // T-024 · DP-04
+    it('acceso.renovacion-concurrente · dos renovaciones a la vez con el mismo token no cierran la sesión', async () => {
+      const { perfilId } = await alta('g12@nexoai.test', 'gerente', 'empresarial');
+      const sesion = IngresoRespuesta.parse((await ingresar('g12@nexoai.test').expect(200)).body);
+
+      const [a, b] = await Promise.all([
+        http().post('/auth/renovar').send({ tokenRenovacion: sesion.tokenRenovacion }),
+        http().post('/auth/renovar').send({ tokenRenovacion: sesion.tokenRenovacion }),
+      ]);
+      expect([a.status, b.status]).toEqual([200, 200]);
+      for (const r of [a, b]) {
+        const nuevo = IngresoRespuesta.parse(r.body);
+        await http().post('/auth/renovar').send({ tokenRenovacion: nuevo.tokenRenovacion }).expect(200);
+      }
+      expect(await prisma.eventoAuditoria.count({ where: { perfilId, accion: 'sesion.reutilizada' } })).toBe(0);
+    });
+
+    it('acceso.renovacion-concurrente · repetir un token recién rotado devuelve tokens válidos de la misma sesión', async () => {
+      await alta('g13@nexoai.test', 'gerente', 'empresarial');
+      const primero = IngresoRespuesta.parse((await ingresar('g13@nexoai.test').expect(200)).body);
+      const segundo = IngresoRespuesta.parse(
+        (await http().post('/auth/renovar').send({ tokenRenovacion: primero.tokenRenovacion }).expect(200)).body,
+      );
+      const duplicado = IngresoRespuesta.parse(
+        (await http().post('/auth/renovar').send({ tokenRenovacion: primero.tokenRenovacion }).expect(200)).body,
+      );
+      await http().get('/auth/sesion').set('Authorization', `Bearer ${duplicado.tokenAcceso}`).expect(200);
+      await http().post('/auth/renovar').send({ tokenRenovacion: segundo.tokenRenovacion }).expect(200);
+    });
+
+    it('acceso.renovacion-concurrente · tras cerrar sesión, el margen no reabre nada', async () => {
+      const { perfilId } = await alta('g14@nexoai.test', 'gerente', 'empresarial');
+      const primero = IngresoRespuesta.parse((await ingresar('g14@nexoai.test').expect(200)).body);
+      const segundo = IngresoRespuesta.parse(
+        (await http().post('/auth/renovar').send({ tokenRenovacion: primero.tokenRenovacion }).expect(200)).body,
+      );
+      await http().post('/auth/salida').send({ tokenRenovacion: segundo.tokenRenovacion }).expect(204);
+      await http().post('/auth/renovar').send({ tokenRenovacion: primero.tokenRenovacion }).expect(401);
+      await http().post('/auth/renovar').send({ tokenRenovacion: segundo.tokenRenovacion }).expect(401);
+      expect(await prisma.eventoAuditoria.count({ where: { perfilId, accion: 'sesion.reutilizada' } })).toBe(1);
     });
 
     it('cerrar sesión invalida el token de renovación', async () => {

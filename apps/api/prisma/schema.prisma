@@ -77,6 +77,8 @@ model SesionRenovacion {
   familia    String    @db.Uuid
   expiraEn   DateTime  @map("expira_en") @db.Timestamptz(3)
   revocadaEn DateTime? @map("revocada_en") @db.Timestamptz(3)
+  // T-024: solo se rellena cuando se revoca por rotación; habilita el margen de gracia (DP-04)
+  rotadaEn   DateTime? @map("rotada_en") @db.Timestamptz(3)
   creadaEn   DateTime  @default(now()) @map("creada_en") @db.Timestamptz(3)
 
   perfil PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)

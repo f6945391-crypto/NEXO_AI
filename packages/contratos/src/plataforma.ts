@@ -22,6 +22,9 @@ export const CodigoError = z.enum([
   'OPERACION_NO_ENCONTRADA',
   'OPERACION_NO_CONFIRMABLE',
   'OPERACION_EN_CURSO',
+  'PERMISO_GOOGLE_FALTANTE',
+  'PERMISO_GOOGLE_RETIRADO',
+  'GOOGLE_NO_DISPONIBLE',
 ]);
 export type CodigoError = z.infer<typeof CodigoError>;
 
