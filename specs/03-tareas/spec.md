@@ -351,7 +351,7 @@ ENTONCES el responsable recibe la propuesta con quién la hizo, y no se crea ni 
 
 **Dos piezas con destino distinto.** El **resumen** es para consultar rápido en la conversación: corto, con lo clave. El **reporte** es un documento **completo**, que puede ser largo, para compartir o archivar; en la conversación solo se ve su síntesis, y el documento entero se abre aparte. Los dos dicen lo clave primero.
 
-**Muestra del formato:** `design/reporte-equipo-muestra.html` (23 de octubre de 2026), con datos inventados.
+**Formato del reporte: aprobado por el equipo el 23 de octubre de 2026.** La referencia es `design/reporte-equipo-muestra.html`, con datos inventados: contexto, resumen ejecutivo, indicadores clave, lo destacado con su procedencia, retrasos y su causa, avance por persona, detalle de todas las tareas y cómo se calcularon las cifras. La síntesis que se ve en la conversación está en el mismo lienzo de diseño.
 
 ### REQ-CUN08-01
 
