@@ -173,7 +173,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 ### T-021 · Agenda en el móvil: Hoy y cancelar
 
 - **Satisface:** REQ-CUN01-06 (interfaz), REQ-CUN01-10, REQ-CUN01-11, REQ-CUN01-12
-- **Depende de:** T-015, T-019, T-020
+- **Depende de:** T-015, T-019, T-020, **T-028** (sin acceso en el móvil no hay agenda que mostrar; añadido el 24 de octubre de 2026)
 - **Contenido:** nivel Hoy de la sección Agenda, con el huso visible; estado vacío cuya acción abre la capa de captura (de momento sin interpretación); detalle de un compromiso con «Cancelar compromiso» y su tarjeta de confirmación; aviso de asistente no disponible
 - **Hecho cuando:** el recorrido coincide con los cuadros vigentes de `07 Móvil v2` y no existe ningún formulario de creación
 - **Prueba:** `agenda.estado-vacio-abre-captura`

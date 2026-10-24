@@ -117,6 +117,15 @@ Es una **Operación** (AD-09):
 - `GET /integraciones/google/permisos` devuelve al colaborador **solo** el alcance de calendario; pedir `gmail.send` con ese rol se rechaza.
 - ~~**«Solo en la aplicación móvil»** lo aplica el cliente: si un colaborador entra en la web, esta le indica que su cuenta se usa desde el móvil (H-ACC-06).~~ **Cambiado el 23 de octubre de 2026:** el colaborador usa la web y el móvil (REQ-ACC-13 reescrito). Lo que lo limita es el servidor, que ya deniega por defecto; el cliente no tiene que distinguir plataformas. **Mientras no exista su vista de tareas (fase 4)**, la web le sigue mostrando el aviso de `/solo-movil`, que se retira en cuanto llegue esa vista.
 
+### 5.6 Acceso en el móvil (T-028) · añadido el 24 de octubre de 2026
+
+- **El mismo flujo que la web**: Entrar → Primer ingreso (contraseña nueva y zona elegida) → la aplicación. La especificación lo describe como «igual y más estrecho» (spec §4). No hay cuadros de Figma a mano para compararlo (INC-15).
+- **Sesión.** La API ya devuelve los dos tokens en el cuerpo (ajuste de T-004), justamente para que el móvil los guarde él mismo. Se guardan en el almacenamiento seguro del teléfono (Keychain en iOS, Keystore en Android, con `expo-secure-store`). En Expo web, que solo usan las pruebas, viven en la memoria de la página. La renovación es la misma que la de la web (`POST /auth/renovacion`), con el margen de DP-04.
+- **CORS.** Una app nativa no lo usa, pero Expo web sí, porque corre en un navegador. La API admite como origen de navegador solo los de la variable `CORS_ORIGENES`, vacía por defecto; en desarrollo y en las pruebas, `http://localhost:3201`. Nunca `*`.
+- **Conectar Google desde el teléfono.** La variante `cliente: 'movil'` ya vuelve a la app con `nexoai://google` (T-007). En desarrollo, Google vuelve a `localhost:3000`, que en el teléfono no existe: el permiso se conecta desde la web. Queda guardado en el servidor, por cuenta, y el móvil lo usa igual. En producción hará falta una dirección pública con HTTPS.
+- **Red del teléfono.** `EXPO_PUBLIC_API_URL` apunta a la IP del equipo en la red local, por ejemplo `http://192.168.1.20:3000`. El firewall de Windows puede pedir permitir el puerto 3000.
+- **Para el hito**, el móvil es de los usuarios personales y de los colaboradores; el gerente usa la web (`SPEC.md` §10).
+
 ## 6. Seguridad
 
 | Aspecto | Tratamiento |

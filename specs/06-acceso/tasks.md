@@ -267,6 +267,16 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
   - La lista de zonas, que ya usaba el primer ingreso, pasa a `src/lib/zonas.ts` y la comparten las dos pantallas.
   - Para la prueba, una cuenta de extremo a extremo con un compromiso que cae «hoy» en Lima y en Tokio.
 
+### T-028 · Acceso en el móvil
+
+- **Satisface:** REQ-ACC-02, REQ-ACC-03, REQ-ACC-04, REQ-ACC-05 (interfaz móvil) · plan §5.6
+- **Depende de:** T-004, T-005, T-020
+- **Origen:** detectada el 24 de octubre de 2026 al empezar T-021: el móvil no tenía cómo entrar. Es parte del hito del presentable (`SPEC.md` §10)
+- **Contenido:** pantallas Entrar y Primer ingreso en el móvil, con los mismos mensajes que la web; sesión en el almacenamiento seguro y renovación; salir; orígenes de navegador permitidos en la API (`CORS_ORIGENES`); cómo probarlo en un teléfono con Expo Go
+- **Hecho cuando:** en Expo web, una cuenta entra, completa el primer ingreso eligiendo su zona, llega a la aplicación y sale; unas credenciales erróneas dan el mismo mensaje que en la web; la API rechaza un origen de navegador que no está en la lista
+- **Pruebas:** `movil.acceso-recorrido` (extremo a extremo), `plataforma.cors-solo-origenes-listados`
+- **Estado:** pendiente
+
 ---
 
-**Fuera de este desglose:** la variante móvil de Acceso (falta su diseño, spec §4) y la contraseña olvidada (no tiene requisito).
+**Fuera de este desglose:** la contraseña olvidada (no tiene requisito). La variante móvil de Acceso pasó a T-028.

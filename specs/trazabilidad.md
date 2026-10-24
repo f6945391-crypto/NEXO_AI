@@ -153,10 +153,10 @@
 | REQ-CUN05-16 | 05-equipos | decisión D-17; RN-OP-02; R-14 | 4 | — | — | pendiente |
 | REQ-CUN05-17 | 05-equipos | decisión del equipo del 23 de octubre de 2026 (rango del colaborador, pregunta 1) | 4 | — | — | pendiente |
 | REQ-ACC-01 | 06-acceso | Requisito del sistema | 1 | T-002 | acceso.sin-registro-abierto | implementado |
-| REQ-ACC-02 | 06-acceso | Requisito del sistema | 1 | T-004, T-011, T-024 | acceso.recorrido-web | implementado |
-| REQ-ACC-03 | 06-acceso | Requisito del sistema | 1 | T-004, T-011 | acceso.error-no-revela-correo | implementado |
-| REQ-ACC-04 | 06-acceso | Requisito del sistema | 1 | T-005, T-011 | acceso.primer-ingreso-bloquea-hasta-completar | implementado |
-| REQ-ACC-05 | 06-acceso | Requisito del sistema; RN-CAL-01 | 1 | T-005, T-011 | acceso.zona-horaria-requiere-eleccion | implementado |
+| REQ-ACC-02 | 06-acceso | Requisito del sistema | 1 | T-004, T-011, T-024, T-028 | acceso.recorrido-web | implementado |
+| REQ-ACC-03 | 06-acceso | Requisito del sistema | 1 | T-004, T-011, T-028 | acceso.error-no-revela-correo | implementado |
+| REQ-ACC-04 | 06-acceso | Requisito del sistema | 1 | T-005, T-011, T-028 | acceso.primer-ingreso-bloquea-hasta-completar | implementado |
+| REQ-ACC-05 | 06-acceso | Requisito del sistema; RN-CAL-01 | 1 | T-005, T-011, T-028 | acceso.zona-horaria-requiere-eleccion | implementado |
 | REQ-ACC-06 | 06-acceso | Requisito del sistema | 1 | T-007, T-022 | acceso.conectar-google-por-permiso | implementado |
 | REQ-ACC-07 | 06-acceso | Requisito del sistema | 1 | T-007 | acceso.solo-dos-alcances-sin-lectura-de-buzon | implementado |
 | REQ-ACC-08 | 06-acceso | Requisito del sistema | 1 | T-008 | acceso.sin-google-no-agenda-ni-envia | implementado |
