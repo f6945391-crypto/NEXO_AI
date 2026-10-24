@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 2.17.3 · **Última actualización:** 24 de octubre de 2026 · Registro completo en §11
+**Versión:** 2.17.4 · **Última actualización:** 24 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -149,7 +149,7 @@ Estado por columna: **—** no existe · **borrador** · **vigente** · **parcia
 | Comunicaciones | `specs/04-comunicaciones/spec.md` | 04 | Móvil + web | P | CUN04-01…15 (15) | vigente | — | — | — | — | — |
 | Encargo | `specs/04-comunicaciones/spec.md` §9 | 07, 09 | Web + móvil | E | ENC-01…13 (7 vigentes, 6 retirados por D-17) | vigente | parcial (Encargos, Correo) | — | — | — | — |
 | Equipos | `specs/05-equipos/spec.md` | 05 | Web | E | CUN05-01…17 (17) | vigente | desfasado (INC-07) | — | — | — | — |
-| Acceso | `specs/06-acceso/spec.md` | — (sistema) | Web (móvil pendiente) | Todos | ACC-01…17 (17) | vigente | parcial | aprobado, revisado por D-17 | T-001…T-011, T-022 a T-028 (todas hechas; T-028 falta probarla en un teléfono) | 15 de 17 REQ implementados; ACC-16 y 17 son de la fase 4 | 15 de 17 REQ con prueba |
+| Acceso | `specs/06-acceso/spec.md` | — (sistema) | Web (móvil pendiente) | Todos | ACC-01…17 (17) | vigente | parcial | aprobado, revisado por D-17 | T-001…T-011, T-022 a T-028 (todas hechas) | 15 de 17 REQ implementados; ACC-16 y 17 son de la fase 4 | 15 de 17 REQ con prueba |
 | **Total** | | | | | **148 (142 vigentes)** | | | | | | |
 
 **Glosario:** `specs/glosario.md`. Una definición por término, y tres conflictos de vocabulario abiertos (INC-12).
@@ -267,12 +267,12 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 | Perfil | Plataforma | Qué se muestra | Tareas | Estado |
 |---|---|---|---|---|
 | Gerente / responsable del equipo | **Web** | Entrar y primer ingreso; agenda de hoy con los compromisos reales de Google; Ajustes con los permisos de Google y el cambio de zona horaria; la conversación en espera (R-42) | T-011, T-022, T-023, T-025, T-027 | **Hecho** |
-| Usuario personal y colaborador | **Móvil** | Entrar y primer ingreso; agenda de hoy con su zona; cancelar un compromiso con su confirmación; la capa de captura en espera | T-028 → T-021 | **Hecho en Expo web**; falta probarlo en un teléfono |
+| Usuario personal y colaborador | **Móvil** | Entrar y primer ingreso; agenda de hoy con su zona; cancelar un compromiso con su confirmación; la capa de captura en espera | T-028 → T-021 | **Hecho y probado en un teléfono Android** |
 | Los dos | API | Registrar, modificar y cancelar compromisos como Operaciones, aunque sin agente no hay pantalla que los cree (R-42) | T-012 a T-019 | Hecho |
 
 **Fuera del hito:** el agente (fase 2), la delegación y el seguimiento del equipo (fase 4, CUN-08 en borrador), y la vista móvil del gerente. La API ya deja al colaborador usar la web (T-026), pero el hito no lo muestra.
 
-**Siguiente paso concreto:** probar el móvil en un teléfono real con Expo Go, y contrastar web y móvil con Figma (INC-15). Después, planificar la fase 2, el agente, o especificar las tareas personales (CUN-03). Sigue pendiente que el equipo revise H-AG-09, H-AG-10 y H-WEB-01. Sigue pendiente contrastar las pantallas de acceso con Figma (INC-15).
+**Siguiente paso concreto:** planificar la fase 2, el agente. Sigue pendiente contrastar web y móvil con Figma (INC-15) y especificar las tareas personales (CUN-03). Sigue pendiente que el equipo revise H-AG-09, H-AG-10 y H-WEB-01. Sigue pendiente contrastar las pantallas de acceso con Figma (INC-15).
 
 ---
 
@@ -283,6 +283,7 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-24 | 2.17.4 | **El equipo prueba el móvil en un teléfono Android** con Expo Go, contra la API de desarrollo por la IP del equipo: T-028 y T-021 quedan probadas. El hito del presentable queda completo también en el teléfono. Expo Go para el SDK 57 se instala desde expo.dev/go, porque la tienda ya trae el 58 | `SPEC.md`, `specs/06-acceso/tasks.md`, `specs/02-agenda/tasks.md` | Equipo (prueba), registrado por Claude |
 | 2026-10-24 | 2.17.3 | **T-021 hecha en Expo web: la agenda en el móvil.** Hoy con el huso, los compromisos en la zona del perfil y su marca de cancelado o invitado; el detalle de cada uno, con «Cancelar compromiso» y su tarjeta de confirmación en los propios y vigentes; la capa de captura, desde el estado vacío y desde el asa, que deja lo pedido en espera. **CUN01-06, 10 y 12 implementados**: con T-028, **el hito del presentable queda completo** en el navegador. No se pudo contrastar con Figma (INC-15) y falta probarlo en un teléfono. 191 pruebas, `verificar` completo en verde | `apps/movil`, `specs/02-agenda/plan.md`, `tasks.md`, `specs/trazabilidad.md`, `SPEC.md` | Claude |
 | 2026-10-24 | 2.17.2 | **T-028 hecha en Expo web: acceso en el móvil.** Entrar y Primer ingreso con los textos de la web, la zona buscada en una lista o la del teléfono; la sesión en el almacenamiento seguro y su renovación; las tres secciones con Ajustes y «Cerrar sesión». La API admite solo los orígenes de `CORS_ORIGENES`. Las pruebas del móvil tienen su propia API y su base (`nexoai_e2e_movil_prueba`). Falta probarlo en un teléfono. 188 pruebas, `verificar` completo en verde | `apps/movil`, `apps/api/src/main.ts`, `apps/api/src/plataforma/cors.ts`, `apps/api/test/plataforma/cors.spec.ts`, `apps/web/e2e/arrancar-api.mjs`, `turbo.json`, `.env.example`, `AGENTS.md`, `specs/06-acceso/plan.md`, `tasks.md`, `SPEC.md` | Claude |
 | 2026-10-24 | 2.17.1 | **Corrección de seguridad, a mitad de T-028.** Tres vulnerabilidades altas publicadas el 11 y el 22 de octubre: `zod` 4.6.5 → 4.6.6 en contratos y API; `body-parser` 2.4.0 y `multer` 2.5.0 forzadas en `pnpm-workspace.yaml`, porque llegan dentro de NestJS. La `zod` 3 de la CLI de Expo queda como excepción documentada: no hay corrección en esa línea y es una herramienta de desarrollo. Auditoría limpia y 157 pruebas de la API en verde. El mismo commit lleva `expo-secure-store` 57.0.4, que T-028 instaló justo antes | `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `apps/api/package.json`, `packages/contratos/package.json`, `apps/movil/package.json`, `SPEC.md` | Claude |

@@ -275,7 +275,7 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 - **Contenido:** pantallas Entrar y Primer ingreso en el móvil, con los mismos mensajes que la web; sesión en el almacenamiento seguro y renovación; salir; orígenes de navegador permitidos en la API (`CORS_ORIGENES`); cómo probarlo en un teléfono con Expo Go
 - **Hecho cuando:** en Expo web, una cuenta entra, completa el primer ingreso eligiendo su zona, llega a la aplicación y sale; unas credenciales erróneas dan el mismo mensaje que en la web; la API rechaza un origen de navegador que no está en la lista
 - **Pruebas:** `movil.acceso-recorrido` (extremo a extremo), `plataforma.cors-solo-origenes-listados`
-- **Estado:** hecha en Expo web · 24 de octubre de 2026. 4 pruebas nuevas. **Falta probarla en un teléfono** con Expo Go
+- **Estado:** hecha · 24 de octubre de 2026. 4 pruebas nuevas. **Probada por el equipo en un teléfono Android** con Expo Go, contra la API de desarrollo por la IP del equipo
 - **Notas de implementación:**
   - `apps/movil/src/sesion.ts`: los dos tokens en `expo-secure-store` en el teléfono y en memoria en Expo web; si el acceso caducó, se renueva una vez y se repite la petición; si tampoco vale, se borra la sesión y se vuelve a Entrar.
   - Pantallas `entrar.tsx` y `primer-ingreso.tsx`, con los mismos textos y mensajes que la web. La zona se busca escribiendo y se toca en la lista, o se usa la del teléfono; empieza sin elegir.
