@@ -2,12 +2,13 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Perfil } from '@nexoai/contratos';
 import { Boton } from '../componentes';
+import { CapaCaptura } from './captura';
 import { conSesion } from '../sesion';
 import { color, espaciado, tipografia } from '../tokens';
 import { etiquetarZona } from '../zonas';
 
 // T-028 · design/ARQUITECTURA-VISUAL-MOVIL.md §2. Tres secciones con pestañas abajo (R-32) y Ajustes en la
-// cabecera, encima y con una equis (R-34, R-43). Cada sección pone su contenido; Agenda llega en T-021.
+// cabecera, encima y con «Cerrar» (R-34, R-43). El asa abre la capa de captura sobre la sección (R-36, T-021).
 
 export type Seccion = 'agenda' | 'tareas' | 'actividad';
 
@@ -19,9 +20,10 @@ const SECCIONES: Record<Seccion, { nombre: string; pregunta: string }> = {
 
 const NOMBRE_PLAN = { gratuito: 'Gratuito', personal: 'Personal', empresarial: 'Empresarial' } as const;
 
-export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido: (seccion: Seccion) => ReactNode }) {
+export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido: (seccion: Seccion, abrirCaptura: () => void) => ReactNode }) {
   const [seccion, setSeccion] = useState<Seccion>('agenda');
   const [ajustes, setAjustes] = useState(false);
+  const [captura, setCaptura] = useState(false);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
 
   useEffect(() => {
@@ -48,7 +50,13 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={estilos.cuerpo}>{contenido(seccion)}</ScrollView>
+      <ScrollView contentContainerStyle={estilos.cuerpo}>{contenido(seccion, () => setCaptura(true))}</ScrollView>
+
+      {/* El asa: abre la capa de captura sin salir de la sección (glosario, «Asa») */}
+      <Pressable accessibilityRole="button" accessibilityLabel="Pedir algo al asistente" onPress={() => setCaptura(true)} style={estilos.asa}>
+        <Text style={estilos.asaTexto}>Pedir algo</Text>
+      </Pressable>
+      <CapaCaptura visible={captura} alCerrar={() => setCaptura(false)} />
 
       <View accessibilityRole="tablist" style={estilos.pestanas}>
         {(Object.keys(SECCIONES) as Seccion[]).map((clave) => (
@@ -109,6 +117,8 @@ const estilos = StyleSheet.create({
   textoBoton: { minHeight: 44, minWidth: 44, paddingHorizontal: espaciado[8], alignItems: 'center', justifyContent: 'center' },
   textoBotonTexto: { fontSize: tipografia.etiqueta, fontWeight: '600', color: color.marca.base },
   cuerpo: { flexGrow: 1, paddingHorizontal: espaciado[16], paddingBottom: espaciado[24], gap: espaciado[16] },
+  asa: { position: 'absolute', right: espaciado[16], bottom: 72, minHeight: 48, paddingHorizontal: espaciado[20], justifyContent: 'center', borderRadius: 24, backgroundColor: color.agente.base },
+  asaTexto: { fontSize: tipografia.etiqueta, fontWeight: '700', color: color.texto.inverso },
   pestanas: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: color.borde.base, backgroundColor: color.superficie.base },
   pestana: { flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center' },
   pestanaTexto: { fontSize: tipografia.etiqueta, color: color.texto.suave },

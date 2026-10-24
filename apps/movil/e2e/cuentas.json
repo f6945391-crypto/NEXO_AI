@@ -11,5 +11,15 @@
     "correo": "errores-movil@nexoai.test",
     "rol": "colaborador",
     "plan": "empresarial"
+  },
+  "agenda": {
+    "correo": "agenda-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "agendaVacia": {
+    "correo": "agenda-vacia-movil@nexoai.test",
+    "rol": "colaborador",
+    "plan": "empresarial"
   }
 }

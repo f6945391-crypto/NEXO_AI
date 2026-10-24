@@ -135,6 +135,13 @@ Las dos llevan `@RequiereGoogle('calendar.events')`. Sin ese permiso responden `
 
 **Clientes:** la web la usa desde T-025 (nivel Hoy) y el móvil la usará en T-021. La web pide el día de medianoche a medianoche en la zona del perfil, con su desfase, y muestra las horas en esa zona aunque el navegador esté en otra.
 
+**Interfaz móvil (T-021), decidido al empezarla el 24 de octubre de 2026:**
+- Hoy pide el día en la zona del perfil, igual que la web, y muestra el huso. Semana y Mes, de momento, dicen que llegan más adelante.
+- Sin el calendario conectado, el móvil lo explica y remite a la web, donde se conecta en desarrollo (plan de acceso §5.6).
+- El estado vacío y el asa abren la **capa de captura** (R-36). Lo que se pide allí queda «en espera», sin crear ni enviar nada (P-11), y la capa lo dice: el asistente todavía no está activo. No hay camino manual: el cuadro móvil que lo ofrece es INC-11.
+- Tocar un compromiso abre su detalle. «Cancelar compromiso» solo aparece si es propio y vigente (H-AG-05); propone `agenda.cancelar` como control directo (DP-01), muestra su tarjeta de confirmación y lo confirma o lo descarta.
+- No se pudo contrastar con los cuadros de `07 Móvil v2`, porque el conector de Figma no está autorizado (INC-15).
+
 *Ajustes de T-015:* la clave del permiso en el código es `calendario`, que apunta a `calendar.events`. El rango pedido lleva desfase y no pasa de 366 días. Si Google no responde y ya hay réplica, se devuelve la réplica; si nunca se sincronizó, `GOOGLE_NO_DISPONIBLE`. El colaborador no usa estas rutas (REQ-ACC-13).
 
 ## 6. Requisito por requisito

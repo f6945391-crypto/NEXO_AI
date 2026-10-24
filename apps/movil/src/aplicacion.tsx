@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SesionActual } from '@nexoai/contratos';
 import { Entrar } from './pantallas/entrar';
+import { AgendaHoy } from './pantallas/agenda';
 import { Inicio, type Seccion } from './pantallas/inicio';
 import { PrimerIngreso } from './pantallas/primer-ingreso';
 import { conSesion, salir } from './sesion';
@@ -13,8 +14,7 @@ import { color, espaciado, tipografia } from './tokens';
 
 type Estado = 'cargando' | 'entrar' | 'primer-ingreso' | 'aplicacion';
 
-const VACIOS: Record<Seccion, { titulo: string; texto: string }> = {
-  agenda: { titulo: 'Tu agenda de hoy', texto: 'Aquí verás tus compromisos de hoy, cada uno a su hora.' },
+const VACIOS: Record<Exclude<Seccion, 'agenda'>, { titulo: string; texto: string }> = {
   tareas: { titulo: 'Nada en tus tareas', texto: 'Cuando le pidas algo al asistente, tus tareas aparecerán aquí, ordenadas por franja.' },
   actividad: { titulo: 'Todavía no hay actividad', texto: 'Aquí verás cuánto tiempo dedicaste a cada cosa y todo lo que el asistente hizo por ti.' },
 };
@@ -49,12 +49,16 @@ export function Aplicacion() {
       {estado === 'aplicacion' && (
         <Inicio
           alSalir={cerrarSesion}
-          contenido={(seccion) => (
-            <View style={estilos.vacio}>
-              <Text style={estilos.vacioTitulo}>{VACIOS[seccion].titulo}</Text>
-              <Text style={estilos.vacioTexto}>{VACIOS[seccion].texto}</Text>
-            </View>
-          )}
+          contenido={(seccion, abrirCaptura) =>
+            seccion === 'agenda' ? (
+              <AgendaHoy alSalir={cerrarSesion} alAbrirCaptura={abrirCaptura} />
+            ) : (
+              <View style={estilos.vacio}>
+                <Text style={estilos.vacioTitulo}>{VACIOS[seccion].titulo}</Text>
+                <Text style={estilos.vacioTexto}>{VACIOS[seccion].texto}</Text>
+              </View>
+            )
+          }
         />
       )}
       <StatusBar style="dark" />
