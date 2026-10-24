@@ -1,0 +1,15 @@
+{
+  "_nota": "Cuentas de prueba de extremo a extremo del móvil. Las crea apps/web/e2e/arrancar-api.mjs en nexoai_e2e_movil_prueba, que se vacía en cada ejecución.",
+  "contrasenaTemporal": "temporal-de-prueba-movil",
+  "contrasenaNueva": "contrasena-nueva-movil",
+  "recorrido": {
+    "correo": "recorrido-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "credencialesErroneas": {
+    "correo": "errores-movil@nexoai.test",
+    "rol": "colaborador",
+    "plan": "empresarial"
+  }
+}

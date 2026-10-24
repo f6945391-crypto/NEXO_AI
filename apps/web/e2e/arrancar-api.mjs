@@ -1,5 +1,7 @@
 // Arranca la API real para las pruebas de extremo a extremo (T-011), sobre una base propia que se
 // vacía, se migra y se siembra en cada ejecución. Lo lanza playwright.config.ts como servidor web.
+// T-028: el móvil lo usa también, con otra base, otro puerto y otras cuentas (BASE_E2E, PUERTO_API_E2E,
+// CUENTAS_E2E), para que las pruebas de la web y del móvil no se pisen.
 import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -15,16 +17,18 @@ if (existsSync(resolve(raiz, '.env'))) process.loadEnvFile(resolve(raiz, '.env')
 const base = process.env.DATABASE_URL_PRUEBA;
 if (!base) throw new Error('Falta DATABASE_URL_PRUEBA (ver .env.example)');
 
+const nombreBase = process.env.BASE_E2E ?? 'nexoai_e2e_prueba';
+if (!/^[a-z0-9_]+_prueba$/.test(nombreBase)) throw new Error(`BASE_E2E tiene que terminar en _prueba: ${nombreBase}`);
 const url = new URL(base);
-url.pathname = '/nexoai_e2e_prueba';
+url.pathname = `/${nombreBase}`;
 const urlE2e = url.toString();
 
 // Crear la base si no existe y dejarla vacía. Solo bases *_prueba.
 const { Client } = desdeApi('pg');
 const admin = new Client({ connectionString: base });
 await admin.connect();
-const existe = await admin.query("SELECT 1 FROM pg_database WHERE datname = 'nexoai_e2e_prueba'");
-if (existe.rowCount === 0) await admin.query('CREATE DATABASE nexoai_e2e_prueba');
+const existe = await admin.query('SELECT 1 FROM pg_database WHERE datname = $1', [nombreBase]);
+if (existe.rowCount === 0) await admin.query(`CREATE DATABASE ${nombreBase}`);
 await admin.end();
 
 const e2e = new Client({ connectionString: urlE2e });
@@ -35,7 +39,7 @@ await e2e.end();
 execSync('npx prisma migrate deploy', { cwd: api, env: { ...process.env, DATABASE_URL: urlE2e }, stdio: 'pipe' });
 
 // Cuentas de e2e/cuentas.json, con el código de alta de la propia API.
-const cuentas = JSON.parse(readFileSync(resolve(aqui, 'cuentas.json'), 'utf8'));
+const cuentas = JSON.parse(readFileSync(process.env.CUENTAS_E2E ?? resolve(aqui, 'cuentas.json'), 'utf8'));
 const { crearClientePrisma } = desdeApi('./dist/plataforma/prisma.js');
 const { crearCuenta, crearOrganizacion } = desdeApi('./dist/identidad/alta-cuentas.js');
 const prisma = crearClientePrisma(urlE2e);
@@ -51,7 +55,7 @@ for (const [clave, cuenta] of Object.entries(cuentas)) {
 // simulado de la API. Una con compromisos hoy y otra sin ninguno.
 process.env.CALENDARIO_SIMULADO = '1';
 const { calendarioDeDemostracion: calendario } = desdeApi('./dist/integraciones/calendario/calendario-simulado.js');
-for (const clave of ['agenda', 'agendaVacia', 'zona']) {
+for (const clave of ['agenda', 'agendaVacia', 'zona'].filter((c) => perfiles[c])) {
   const perfilId = perfiles[clave];
   await prisma.perfilUsuario.update({ where: { id: perfilId }, data: { debeCambiarContrasena: false, zonaHoraria: 'America/Lima' } });
   await prisma.consentimientoIntegracion.create({
@@ -68,10 +72,10 @@ for (const evento of [
   { titulo: 'Aniversario de la empresa', inicio: aLas(hoy, '00:00'), fin: aLas(manana, '00:00'), zonaHoraria: 'America/Lima', todoElDia: true },
   { titulo: 'Esto es mañana', inicio: aLas(manana, '09:00'), fin: aLas(manana, '10:00'), zonaHoraria: 'America/Lima' },
 ]) {
-  calendario.sembrar(perfiles.agenda, evento);
+  if (perfiles.agenda) calendario.sembrar(perfiles.agenda, evento);
 }
 // T-027: un compromiso largo que cae «hoy» tanto en Lima como en Tokio, para ver la agenda en las dos zonas
-calendario.sembrar(perfiles.zona, {
+if (perfiles.zona) calendario.sembrar(perfiles.zona, {
   titulo: 'Guardia de soporte',
   inicio: new Date(Date.now() - 3600_000),
   fin: new Date(Date.now() + 30 * 3600_000),

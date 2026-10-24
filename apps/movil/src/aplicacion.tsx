@@ -1,50 +1,71 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
-import { SaludRespuesta } from '@nexoai/contratos';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { SesionActual } from '@nexoai/contratos';
+import { Entrar } from './pantallas/entrar';
+import { Inicio, type Seccion } from './pantallas/inicio';
+import { PrimerIngreso } from './pantallas/primer-ingreso';
+import { conSesion, salir } from './sesion';
 import { color, espaciado, tipografia } from './tokens';
 
-// T-020: la app arranca y consume packages/contratos (AD-08). Las pantallas llegan en T-021 y siguientes.
-// En un teléfono, «localhost» es el propio teléfono: EXPO_PUBLIC_API_URL apunta a la API en tu red.
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+// T-028 · specs/06-acceso/plan.md §5.6. Sin librería de navegación: entrar, primer ingreso y la aplicación
+// son estados de una sola pantalla. Al abrir se mira si hay una sesión guardada en el teléfono.
 
-type EstadoApi = 'consultando' | 'disponible' | 'no disponible';
+type Estado = 'cargando' | 'entrar' | 'primer-ingreso' | 'aplicacion';
+
+const VACIOS: Record<Seccion, { titulo: string; texto: string }> = {
+  agenda: { titulo: 'Tu agenda de hoy', texto: 'Aquí verás tus compromisos de hoy, cada uno a su hora.' },
+  tareas: { titulo: 'Nada en tus tareas', texto: 'Cuando le pidas algo al asistente, tus tareas aparecerán aquí, ordenadas por franja.' },
+  actividad: { titulo: 'Todavía no hay actividad', texto: 'Aquí verás cuánto tiempo dedicaste a cada cosa y todo lo que el asistente hizo por ti.' },
+};
 
 export function Aplicacion() {
-  const [api, setApi] = useState<EstadoApi>('consultando');
+  const [estado, setEstado] = useState<Estado>('cargando');
 
   useEffect(() => {
-    const controlador = new AbortController();
-    const espera = setTimeout(() => controlador.abort(), 3000);
-    fetch(`${API_URL}/salud`, { signal: controlador.signal })
-      .then((respuesta) => respuesta.json())
-      .then((cuerpo: unknown) => setApi(SaludRespuesta.safeParse(cuerpo).success ? 'disponible' : 'no disponible'))
-      .catch(() => setApi('no disponible'))
-      .finally(() => clearTimeout(espera));
-    return () => controlador.abort();
+    void conSesion('/auth/sesion')
+      .then((r) => {
+        const sesion = SesionActual.safeParse(r?.cuerpo);
+        if (r?.estado === 200 && sesion.success) setEstado('aplicacion');
+        else if (r && (r.cuerpo as { codigo?: string } | null)?.codigo === 'PRIMER_INGRESO_PENDIENTE') setEstado('primer-ingreso');
+        else setEstado('entrar');
+      })
+      .catch(() => setEstado('entrar'));
+  }, []);
+
+  const cerrarSesion = useCallback(() => {
+    void salir().then(() => setEstado('entrar'));
   }, []);
 
   return (
-    <View style={estilos.pantalla}>
-      <Text style={estilos.marca} accessibilityRole="header">
-        NexoAI
-      </Text>
-      <Text style={estilos.estado} testID="estado-api">
-        API: {api}
-      </Text>
+    <View style={estilos.raiz}>
+      {estado === 'cargando' && (
+        <View style={estilos.centro}>
+          <ActivityIndicator color={color.marca.base} accessibilityLabel="Cargando" />
+        </View>
+      )}
+      {estado === 'entrar' && <Entrar alEntrar={(s) => setEstado(s.primerIngresoPendiente ? 'primer-ingreso' : 'aplicacion')} />}
+      {estado === 'primer-ingreso' && <PrimerIngreso alCompletar={() => setEstado('aplicacion')} alSalir={cerrarSesion} />}
+      {estado === 'aplicacion' && (
+        <Inicio
+          alSalir={cerrarSesion}
+          contenido={(seccion) => (
+            <View style={estilos.vacio}>
+              <Text style={estilos.vacioTitulo}>{VACIOS[seccion].titulo}</Text>
+              <Text style={estilos.vacioTexto}>{VACIOS[seccion].texto}</Text>
+            </View>
+          )}
+        />
+      )}
       <StatusBar style="dark" />
     </View>
   );
 }
 
 const estilos = StyleSheet.create({
-  pantalla: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: espaciado[12],
-    backgroundColor: color.superficie.base,
-  },
-  marca: { fontSize: tipografia.titulo, fontWeight: '700', color: color.texto.fuerte },
-  estado: { fontSize: tipografia.cuerpo, color: color.texto.suave },
+  raiz: { flex: 1, backgroundColor: color.superficie.base },
+  centro: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  vacio: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: espaciado[8], padding: espaciado[24], borderRadius: 16, backgroundColor: color.superficie.elevada },
+  vacioTitulo: { fontSize: tipografia.cuerpo, fontWeight: '700', color: color.texto.fuerte, textAlign: 'center' },
+  vacioTexto: { fontSize: tipografia.etiqueta, lineHeight: 20, color: color.texto.suave, textAlign: 'center' },
 });

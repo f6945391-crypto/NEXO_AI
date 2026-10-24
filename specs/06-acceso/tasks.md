@@ -275,7 +275,14 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 - **Contenido:** pantallas Entrar y Primer ingreso en el móvil, con los mismos mensajes que la web; sesión en el almacenamiento seguro y renovación; salir; orígenes de navegador permitidos en la API (`CORS_ORIGENES`); cómo probarlo en un teléfono con Expo Go
 - **Hecho cuando:** en Expo web, una cuenta entra, completa el primer ingreso eligiendo su zona, llega a la aplicación y sale; unas credenciales erróneas dan el mismo mensaje que en la web; la API rechaza un origen de navegador que no está en la lista
 - **Pruebas:** `movil.acceso-recorrido` (extremo a extremo), `plataforma.cors-solo-origenes-listados`
-- **Estado:** pendiente
+- **Estado:** hecha en Expo web · 24 de octubre de 2026. 4 pruebas nuevas. **Falta probarla en un teléfono** con Expo Go
+- **Notas de implementación:**
+  - `apps/movil/src/sesion.ts`: los dos tokens en `expo-secure-store` en el teléfono y en memoria en Expo web; si el acceso caducó, se renueva una vez y se repite la petición; si tampoco vale, se borra la sesión y se vuelve a Entrar.
+  - Pantallas `entrar.tsx` y `primer-ingreso.tsx`, con los mismos textos y mensajes que la web. La zona se busca escribiendo y se toca en la lista, o se usa la del teléfono; empieza sin elegir.
+  - `inicio.tsx`: las tres secciones con pestañas abajo y Ajustes en la cabecera, encima y con «Cerrar», con el perfil y «Cerrar sesión». Agenda la rellena T-021. Botones con palabras y no iconos de texto, que algunos teléfonos pintan como emoji.
+  - La API admite solo los orígenes de `CORS_ORIGENES` (`src/plataforma/cors.ts`).
+  - Las pruebas del móvil arrancan su propia API sobre `nexoai_e2e_movil_prueba`, en el puerto 3103, con `apps/movil/e2e/cuentas.json`. El script de la web acepta ahora esas tres variables.
+  - **Cómo probarlo en el teléfono:** `EXPO_PUBLIC_API_URL=http://<IP del equipo>:3000`, `npx pnpm@12.10.1 --filter @nexoai/movil start` y abrir el código QR con Expo Go. El firewall de Windows puede pedir permitir el puerto 3000.
 
 ---
 

@@ -5,6 +5,7 @@ export const color = {
   texto: { fuerte: '#14212E', suave: '#5A6E7A', inverso: '#FFFFFF' },
   borde: { base: '#DCE6EC', fuerte: '#B8C9D4' },
   agente: { base: '#6B4FD8', suave: '#F0ECFD' },
+  estado: { error: '#B3261E', exito: '#1B7F4B', advertencia: '#9A6400' },
 } as const;
 
 export const espaciado = { 4: 4, 8: 8, 12: 12, 16: 16, 20: 20, 24: 24, 32: 32 } as const;

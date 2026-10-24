@@ -60,7 +60,7 @@ Requisitos: Node.js 22.12 o posterior (`.nvmrc`), Python 3.12 y Docker. pnpm no 
 | `npx pnpm@12.10.1 --filter @nexoai/api probar-calendario -- --correo <correo> [--solo-lectura]` | Prueba el proveedor real de Google Calendar con el contrato de T-013, sobre la base de desarrollo |
 | `npx pnpm@12.10.1 --filter @nexoai/web dev` | Arranca la web en http://localhost:3001 (`API_URL` apunta a la API) |
 | `npx pnpm@12.10.1 --filter @nexoai/web test` | Pruebas de extremo a extremo: arrancan la API real sobre `nexoai_e2e_prueba` (puerto 3102) y la web (puerto 3101). **Antes, cierra cualquier `next dev` de `apps/web`**: Next.js no admite dos a la vez |
-| `npx pnpm@12.10.1 --filter @nexoai/movil web` | Arranca el móvil en el navegador, en http://localhost:3201 |
+| `npx pnpm@12.10.1 --filter @nexoai/movil web` | Arranca el móvil en el navegador, en http://localhost:3201. La API tiene que admitir ese origen: `CORS_ORIGENES=http://localhost:3201` en `.env` (T-028) |
 | `npx pnpm@12.10.1 --filter @nexoai/movil start` | Arranca el móvil para abrirlo con Expo Go en un teléfono (`EXPO_PUBLIC_API_URL` con la IP del equipo) |
 | `npx pnpm@12.10.1 audit --audit-level high` | Auditoría de dependencias. También corre en la integración continua. Las excepciones, solo para vulnerabilidades **sin versión corregida** y con motivo escrito, van en `pnpm-workspace.yaml` (`auditConfig`) |
 | `python tools/trazabilidad.py` | Regenera `specs/trazabilidad.md` desde los `spec.md` |

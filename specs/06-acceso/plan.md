@@ -126,6 +126,12 @@ Es una **Operación** (AD-09):
 - **Red del teléfono.** `EXPO_PUBLIC_API_URL` apunta a la IP del equipo en la red local, por ejemplo `http://192.168.1.20:3000`. El firewall de Windows puede pedir permitir el puerto 3000.
 - **Para el hito**, el móvil es de los usuarios personales y de los colaboradores; el gerente usa la web (`SPEC.md` §10).
 
+*Decidido al empezar T-028 (24 de octubre de 2026):*
+- **`expo-secure-store` 57.0.4**, la versión que fija el SDK 57. En web no existe; por eso, en Expo web la sesión vive en memoria.
+- **Sin librería de navegación**: Entrar, Primer ingreso y la aplicación son estados de una sola pantalla. Si más adelante hacen falta rutas, se decide entonces.
+- **Pruebas del móvil con su propia API**: el mismo script que usa la web (`apps/web/e2e/arrancar-api.mjs`) lee de variables de entorno la base, el puerto y el archivo de cuentas. El móvil usa `nexoai_e2e_movil_prueba`, el puerto 3103 y `apps/movil/e2e/cuentas.json`, para que en `verificar` las dos no se pisen.
+- **Zona horaria en el primer ingreso**: un buscador sobre las zonas que conoce el dispositivo, con una lista corta de respaldo si el motor de JavaScript del teléfono no las da, y un botón para usar la del teléfono. Empieza sin elegir (REQ-ACC-05).
+
 ## 6. Seguridad
 
 | Aspecto | Tratamiento |

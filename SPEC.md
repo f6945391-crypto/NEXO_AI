@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 2.17.1 · **Última actualización:** 24 de octubre de 2026 · Registro completo en §11
+**Versión:** 2.17.2 · **Última actualización:** 24 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -149,7 +149,7 @@ Estado por columna: **—** no existe · **borrador** · **vigente** · **parcia
 | Comunicaciones | `specs/04-comunicaciones/spec.md` | 04 | Móvil + web | P | CUN04-01…15 (15) | vigente | — | — | — | — | — |
 | Encargo | `specs/04-comunicaciones/spec.md` §9 | 07, 09 | Web + móvil | E | ENC-01…13 (7 vigentes, 6 retirados por D-17) | vigente | parcial (Encargos, Correo) | — | — | — | — |
 | Equipos | `specs/05-equipos/spec.md` | 05 | Web | E | CUN05-01…17 (17) | vigente | desfasado (INC-07) | — | — | — | — |
-| Acceso | `specs/06-acceso/spec.md` | — (sistema) | Web (móvil pendiente) | Todos | ACC-01…17 (17) | vigente | parcial | aprobado, revisado por D-17 | T-001…T-011, T-022 a T-027 (todas hechas) | 15 de 17 REQ implementados; ACC-16 y 17 son de la fase 4 | 15 de 17 REQ con prueba |
+| Acceso | `specs/06-acceso/spec.md` | — (sistema) | Web (móvil pendiente) | Todos | ACC-01…17 (17) | vigente | parcial | aprobado, revisado por D-17 | T-001…T-011, T-022 a T-028 (todas hechas; T-028 falta probarla en un teléfono) | 15 de 17 REQ implementados; ACC-16 y 17 son de la fase 4 | 15 de 17 REQ con prueba |
 | **Total** | | | | | **148 (142 vigentes)** | | | | | | |
 
 **Glosario:** `specs/glosario.md`. Una definición por término, y tres conflictos de vocabulario abiertos (INC-12).
@@ -267,7 +267,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 | Perfil | Plataforma | Qué se muestra | Tareas | Estado |
 |---|---|---|---|---|
 | Gerente / responsable del equipo | **Web** | Entrar y primer ingreso; agenda de hoy con los compromisos reales de Google; Ajustes con los permisos de Google y el cambio de zona horaria; la conversación en espera (R-42) | T-011, T-022, T-023, T-025, T-027 | **Hecho** |
-| Usuario personal y colaborador | **Móvil** | Entrar y primer ingreso; agenda de hoy con su zona; cancelar un compromiso con su confirmación | T-028 → T-021 | **Pendiente** |
+| Usuario personal y colaborador | **Móvil** | Entrar y primer ingreso; agenda de hoy con su zona; cancelar un compromiso con su confirmación | T-028 → T-021 | **T-028 hecha** en Expo web; T-021 pendiente |
 | Los dos | API | Registrar, modificar y cancelar compromisos como Operaciones, aunque sin agente no hay pantalla que los cree (R-42) | T-012 a T-019 | Hecho |
 
 **Fuera del hito:** el agente (fase 2), la delegación y el seguimiento del equipo (fase 4, CUN-08 en borrador), y la vista móvil del gerente. La API ya deja al colaborador usar la web (T-026), pero el hito no lo muestra.
@@ -283,6 +283,7 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-24 | 2.17.2 | **T-028 hecha en Expo web: acceso en el móvil.** Entrar y Primer ingreso con los textos de la web, la zona buscada en una lista o la del teléfono; la sesión en el almacenamiento seguro y su renovación; las tres secciones con Ajustes y «Cerrar sesión». La API admite solo los orígenes de `CORS_ORIGENES`. Las pruebas del móvil tienen su propia API y su base (`nexoai_e2e_movil_prueba`). Falta probarlo en un teléfono. 188 pruebas, `verificar` completo en verde | `apps/movil`, `apps/api/src/main.ts`, `apps/api/src/plataforma/cors.ts`, `apps/api/test/plataforma/cors.spec.ts`, `apps/web/e2e/arrancar-api.mjs`, `turbo.json`, `.env.example`, `AGENTS.md`, `specs/06-acceso/plan.md`, `tasks.md`, `SPEC.md` | Claude |
 | 2026-10-24 | 2.17.1 | **Corrección de seguridad, a mitad de T-028.** Tres vulnerabilidades altas publicadas el 11 y el 22 de octubre: `zod` 4.6.5 → 4.6.6 en contratos y API; `body-parser` 2.4.0 y `multer` 2.5.0 forzadas en `pnpm-workspace.yaml`, porque llegan dentro de NestJS. La `zod` 3 de la CLI de Expo queda como excepción documentada: no hay corrección en esa línea y es una herramienta de desarrollo. Auditoría limpia y 157 pruebas de la API en verde. El mismo commit lleva `expo-secure-store` 57.0.4, que T-028 instaló justo antes | `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `apps/api/package.json`, `packages/contratos/package.json`, `apps/movil/package.json`, `SPEC.md` | Claude |
 | 2026-10-24 | 2.17.0 | **Hito del presentable acordado por el equipo:** el gerente en la web y los usuarios personales y colaboradores en el móvil, como en el reparto original; la extensión a las dos plataformas (D-17 b) queda para después. Nueva §10 «Hito del presentable». **T-028, nueva: acceso en el móvil**, detectada al empezar T-021, que ahora depende de ella. Plan de acceso §5.6 con lo que cambia en Android: sesión en el almacenamiento seguro del teléfono, CORS solo para orígenes listados (Expo web en desarrollo), Google conectado desde la web en desarrollo e IP del equipo en `EXPO_PUBLIC_API_URL`. INC-15 se amplía al acceso móvil. Sin cambios de código | `SPEC.md`, `specs/06-acceso/plan.md`, `tasks.md`, `specs/02-agenda/tasks.md`, `specs/trazabilidad.md` | Equipo (hito), redactado por Claude |
 | 2026-10-23 | 2.16.6 | **T-027 hecha: cambiar la zona horaria desde Ajustes, en la web.** «Cambiar zona horaria» → selector → tarjeta de confirmación con los compromisos que se verán a otra hora → confirmar o cancelar. La tarjeta es la de la API; tras confirmar, la página se vuelve a pedir con `refresh()` y la agenda llega en la zona nueva. La lista de zonas se comparte con el primer ingreso. 184 pruebas, `verificar` completo en verde | `apps/web`, `specs/06-acceso/tasks.md`, `SPEC.md` | Equipo (pedido), implementado por Claude |
