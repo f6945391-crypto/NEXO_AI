@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 2.17.0 · **Última actualización:** 24 de octubre de 2026 · Registro completo en §11
+**Versión:** 2.17.1 · **Última actualización:** 24 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -283,6 +283,7 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-24 | 2.17.1 | **Corrección de seguridad, a mitad de T-028.** Tres vulnerabilidades altas publicadas el 11 y el 22 de octubre: `zod` 4.6.5 → 4.6.6 en contratos y API; `body-parser` 2.4.0 y `multer` 2.5.0 forzadas en `pnpm-workspace.yaml`, porque llegan dentro de NestJS. La `zod` 3 de la CLI de Expo queda como excepción documentada: no hay corrección en esa línea y es una herramienta de desarrollo. Auditoría limpia y 157 pruebas de la API en verde. El mismo commit lleva `expo-secure-store` 57.0.4, que T-028 instaló justo antes | `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `apps/api/package.json`, `packages/contratos/package.json`, `apps/movil/package.json`, `SPEC.md` | Claude |
 | 2026-10-24 | 2.17.0 | **Hito del presentable acordado por el equipo:** el gerente en la web y los usuarios personales y colaboradores en el móvil, como en el reparto original; la extensión a las dos plataformas (D-17 b) queda para después. Nueva §10 «Hito del presentable». **T-028, nueva: acceso en el móvil**, detectada al empezar T-021, que ahora depende de ella. Plan de acceso §5.6 con lo que cambia en Android: sesión en el almacenamiento seguro del teléfono, CORS solo para orígenes listados (Expo web en desarrollo), Google conectado desde la web en desarrollo e IP del equipo en `EXPO_PUBLIC_API_URL`. INC-15 se amplía al acceso móvil. Sin cambios de código | `SPEC.md`, `specs/06-acceso/plan.md`, `tasks.md`, `specs/02-agenda/tasks.md`, `specs/trazabilidad.md` | Equipo (hito), redactado por Claude |
 | 2026-10-23 | 2.16.6 | **T-027 hecha: cambiar la zona horaria desde Ajustes, en la web.** «Cambiar zona horaria» → selector → tarjeta de confirmación con los compromisos que se verán a otra hora → confirmar o cancelar. La tarjeta es la de la API; tras confirmar, la página se vuelve a pedir con `refresh()` y la agenda llega en la zona nueva. La lista de zonas se comparte con el primer ingreso. 184 pruebas, `verificar` completo en verde | `apps/web`, `specs/06-acceso/tasks.md`, `SPEC.md` | Equipo (pedido), implementado por Claude |
 | 2026-10-23 | 2.16.5 | **T-027, nueva, a pedido del equipo: cambiar la zona horaria desde Ajustes, en la web.** Usa la Operación de T-009 como control directo y muestra su tarjeta de confirmación; plan de acceso §5.3 ampliado. Especificación antes del código | `SPEC.md`, `specs/06-acceso/plan.md`, `tasks.md`, `specs/trazabilidad.md` | Equipo (pedido), redactado por Claude |
