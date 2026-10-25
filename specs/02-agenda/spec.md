@@ -192,6 +192,21 @@ ENTONCES ve un estado vacío con una acción explícita para crear un compromiso
 
 ---
 
+### REQ-CUN01-13
+
+**Requisito:** CUANDO el usuario pregunte al asistente por su agenda, EL SISTEMA responderá con los compromisos del rango preguntado tal como están registrados, con su hora en la zona del usuario, sin añadir ni omitir ninguno.
+
+**Origen:** CUN-01, alcance «consultar»; `PROPUESTA-TECNICA.md` §7.3; añadido el 24 de octubre de 2026 al planificar el agente
+**Tipo:** dirigido por evento
+
+**Criterio de aceptación**
+DADO un usuario con tres compromisos mañana por la tarde, uno de ellos cancelado
+CUANDO pregunte «¿Qué tengo mañana por la tarde?»
+ENTONCES la respuesta lista los tres, con su hora y su zona, y marca el cancelado como tal
+Y no aparece ningún compromiso que no esté en su agenda
+
+---
+
 ## Decisiones tomadas durante el diseño que no estaban en el Entregable 1
 
 Estas se detectaron al construir la interfaz y deben revisarse con el equipo:
@@ -222,3 +237,13 @@ Pendientes de revisión. Lo que asume el plan mientras tanto está en `plan.md` 
 | 13 | En la web, el estado vacío lleva a la barra de entrada de la conversación, porque la web no tiene capa de captura (H-AG-10, detectada en T-025) | REQ-CUN01-12 |
 | 12 | La réplica cubre al menos 335 días por delante: se vuelve a leer completa cada 30 días (H-AG-09, detectada en T-014) | REQ-CUN01-09 |
 | 12 | Sin decidir si una propuesta sin respuesta caduca (H-AG-08) | REQ-CUN01-03 |
+
+### Detectadas al planificar el agente · 24 de octubre de 2026
+
+Las del agente en sí están en `../07-agente/spec.md` §5. Estas son las que tocan la agenda.
+
+| # | Decisión | Afecta |
+|---|---|---|
+| 15 | La consulta por conversación necesita su propio requisito: se añade REQ-CUN01-13. La lista de compromisos la arma el código con los datos de la réplica; el modelo solo la introduce | REQ-CUN01-13 |
+| 16 | El modelo da la fecha y la hora en la zona del perfil, sin desfase; el código las convierte (P-05). Así nunca escribe un desfase equivocado | REQ-CUN01-01, 10 |
+| 17 | Elegir una alternativa en la tarjeta no pasa por el modelo: el código descarta la propuesta y propone otra con ese horario | REQ-CUN01-05 |

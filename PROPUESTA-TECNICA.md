@@ -376,7 +376,7 @@ Las fases 1 y 2 son el núcleo demostrable. Las fases 4 y 5 son las que dependen
 ## 12. Decisiones que el grupo debe tomar
 
 1. ~~**Lenguaje del backend**~~ — **RESUELTO el 22 de octubre de 2026: TypeScript con NestJS.** Ver AD-02 y §4.1.
-2. **Alcance de la voz:** si entra en la primera versión o se deja declarada para una posterior.
+2. ~~**Alcance de la voz**~~ — **RESUELTO el 24 de octubre de 2026: no entra en la primera versión.** Solo texto (`specs/01-captura/spec.md` §11).
 3. **Integración de correo:** real con usuarios de prueba, o simulada tras la misma interfaz.
 4. ~~**Criterio de "mejor horario" (RN-CAL-01)**~~ — **RESUELTO el 26 de septiembre de 2026.** El criterio aprobado está en `specs/05-equipos/spec.md` sección 1: filtro por duración solicitada, banda horaria admisible de 08:00 a 20:00 con techo duro a las 22:00, la más temprana primero, desempate por mayor duración, y a partir del día siguiente salvo petición expresa. Queda incorporar la segunda oración al texto de la regla en el Entregable 1.
 5. **Alcance del Plan Personal.** Rutina, bienestar, nutrición, agendas médicas, automatización de pedidos y gestión de gastos exceden los diez casos de uso modelados. Hay que decidir si se revisa el Entregable 1 o si se declara como visión de producto fuera del alcance modelado. Los pedidos automatizados son el punto delicado: es la única función donde el asistente gasta dinero del usuario, y choca de frente con RN-ER-03.

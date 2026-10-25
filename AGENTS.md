@@ -2,7 +2,7 @@
 
 Este proyecto se desarrolla con **Spec-Driven Development, modo spec-anchored**. La fuente de verdad es `SPEC.md`. Léelo antes de cualquier tarea.
 
-> No confundir con `specs/agentes/*.md` (cuando exista): eso especifica el comportamiento del asistente NexoAI. Este archivo dice cómo trabajar en el repositorio.
+> No confundir con `specs/07-agente/`: eso especifica el comportamiento del asistente NexoAI. Este archivo dice cómo trabajar en el repositorio.
 
 ## Orden obligatorio ante cualquier cambio
 

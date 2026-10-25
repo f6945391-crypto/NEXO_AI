@@ -411,3 +411,16 @@ Y «mañana» se resuelve respecto del momento en que se capturó, no del moment
 2. **Recurrencia y vigencia** en Evento de Agenda: lo necesita REQ-CAP-15.
 3. **Forma del Participante externo** (D-8): lo necesita REQ-CAP-08.
 4. **Cifras del Plan Gratuito** (D-7): sin ellas no se puede decir qué parte de esta captura queda limitada en el nivel gratuito.
+
+---
+
+## 11. Decisiones del 24 de octubre de 2026, al planificar el agente
+
+Decididas por el equipo antes de escribir `../07-agente/plan.md`.
+
+| # | Decisión | Afecta |
+|---|---|---|
+| 1 | **Sin voz en la primera versión (PT-2 resuelta).** Solo la puerta de texto; la de voz y la de cámara quedan para después | REQ-CAP-01, REQ-CAP-09 a 13, REQ-CAP-22 (la parte de voz) |
+| 2 | **Solo agenda.** Una captura que es tarea, pendiente sin fecha o algo que se espera de alguien se reconoce y se dice, pero queda **en espera** sin registrarse, hasta que existan las tareas personales (CUN-03). Es REQ-AGT-02 | REQ-CAP-02, REQ-CAP-07, REQ-CAP-08 |
+| 3 | REQ-CAP-23 suma un caso: lo que espera a una función que llega en una próxima versión. Se ve como en espera, con su motivo, y no como un error ni como algo fuera del plan (H-AGT-09) | REQ-CAP-23 |
+| 4 | La paleta de comandos (REQ-CAP-05) y la captura sin conexión del móvil (REQ-CAP-22) no entran en la primera versión del agente | REQ-CAP-05, REQ-CAP-22 |

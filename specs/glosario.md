@@ -25,7 +25,7 @@
 | **TN-02 Coordinador Empresarial Inteligente** | Configuración del agente para coordinar personas: CUN-05 a 09 | E1 Act. 5 | — |
 | **Herramienta** | Operación tipada con la que el agente actúa sobre los datos. Es la única forma que tiene de hacerlo | AD-04; `PROPUESTA-TECNICA.md` §7.2 | — |
 | **Modo degradado** | Estado en el que el asistente no está disponible. Lo pedido queda **en espera** y lo existente se sigue consultando | R-42; P-11 | *Sin permiso*: falta una autorización y el asistente funciona |
-| **En espera** | Estado de una solicitud encolada mientras el asistente no responde. No ha creado ni enviado nada | REQ-CAP-23, REQ-CAP-24 | *Error*; *fuera del plan*. Los tres no pueden verse igual |
+| **En espera** | Estado de una solicitud guardada que todavía no se puede atender. No ha creado ni enviado nada. Tiene un motivo: el asistente no responde, falta un permiso o es algo que el asistente hará en una próxima versión, como una tarea (REQ-AGT-02) | REQ-CAP-23, REQ-CAP-24; REQ-AGT-02 | *Error*; *fuera del plan*. Los tres no pueden verse igual |
 
 ## 3. Objetos del dominio
 

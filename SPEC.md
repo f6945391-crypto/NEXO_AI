@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 2.17.4 · **Última actualización:** 24 de octubre de 2026 · Registro completo en §11
+**Versión:** 2.18.1 · **Última actualización:** 25 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -123,6 +123,7 @@ Detalle y justificación en `PROPUESTA-TECNICA.md`. Resumen de lo que condiciona
 | Datos | PostgreSQL + pgvector · Redis · S3 compatible (MinIO en desarrollo) | Decidido |
 | Cola | BullMQ sobre Redis | Decidido |
 | Agentes | LangGraph.js, con interrupción para confirmación (P-03) | Decidido |
+| Proveedor del modelo | **Simulado por ahora**, detrás de la interfaz propia (P-06). Sin proveedor configurado, el asistente cuenta como no disponible (P-11) | Decidido el 2026-10-24; el real, pendiente |
 | Escrituras | Toda escritura con efecto pasa por una **Operación** que se propone, se confirma y se ejecuta una vez | AD-09, decidido |
 | Agenda | Google Calendar como fuente de verdad, con `evento_agenda` como réplica | AD-10, decidido |
 | Autenticación | Credenciales propias + JWT; Google solo como integración | Alineado con `06-acceso` |
@@ -142,15 +143,16 @@ Estado por columna: **—** no existe · **borrador** · **vigente** · **parcia
 
 | Área | Archivo | CUN | Plataforma | Plan | REQ | Spec | Diseño | Plan técnico | Tareas | Código | Pruebas |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| Captura | `specs/01-captura/spec.md` | 01, 03 | Móvil | G / P | CAP-01…24 (24) | vigente | parcial | — | — | — | — |
-| Agenda | `specs/02-agenda/spec.md` | 01 | Móvil (y web: nivel Hoy, T-025) | G | CUN01-01…12 (12) | vigente | parcial (jerarquía anterior) | aprobado | T-012…T-021 y T-025 (todas hechas) | 10 REQ implementados (CUN01-02 a 10 y 12) y 1 en curso (CUN01-11, falta el agente) | 11 de 12 REQ con prueba; CUN01-01 es de la fase 2 |
+| Captura | `specs/01-captura/spec.md` | 01, 03 | Móvil | G / P | CAP-01…24 (24) | vigente; sin voz en la primera versión (PT-2) | parcial | en `07-agente` (aprobado) | T-031 a T-035 | — | — |
+| Agenda | `specs/02-agenda/spec.md` | 01 | Móvil (y web: nivel Hoy, T-025) | G | CUN01-01…13 (13) | vigente | parcial (jerarquía anterior) | aprobado | T-012…T-021 y T-025 (todas hechas) | 10 REQ implementados (CUN01-02 a 10 y 12) y 1 en curso (CUN01-11, falta el agente); CUN01-01 y 13 son de la fase 2 | 11 de 13 REQ con prueba |
 | Jornada | `specs/02-jornada/spec.md` | 02 | Móvil | P | CUN02-01…24 (24) | vigente | — | — | — | — | — |
 | Tareas / delegación | `specs/03-tareas/spec.md` | 07, 08, 09 | Web y móvil, para el gerente y el colaborador | E | CUN07-01…19 y CUN08-01…07 (26) | vigente; §8 (CUN-08) en **borrador** | parcial (jerarquía anterior) | — | — | — | — |
 | Comunicaciones | `specs/04-comunicaciones/spec.md` | 04 | Móvil + web | P | CUN04-01…15 (15) | vigente | — | — | — | — | — |
 | Encargo | `specs/04-comunicaciones/spec.md` §9 | 07, 09 | Web + móvil | E | ENC-01…13 (7 vigentes, 6 retirados por D-17) | vigente | parcial (Encargos, Correo) | — | — | — | — |
 | Equipos | `specs/05-equipos/spec.md` | 05 | Web | E | CUN05-01…17 (17) | vigente | desfasado (INC-07) | — | — | — | — |
 | Acceso | `specs/06-acceso/spec.md` | — (sistema) | Web (móvil pendiente) | Todos | ACC-01…17 (17) | vigente | parcial | aprobado, revisado por D-17 | T-001…T-011, T-022 a T-028 (todas hechas) | 15 de 17 REQ implementados; ACC-16 y 17 son de la fase 4 | 15 de 17 REQ con prueba |
-| **Total** | | | | | **148 (142 vigentes)** | | | | | | |
+| Agente | `specs/07-agente/spec.md` | 01, 03 (transversal) | Web y móvil | Todos | AGT-01…02 (2) | vigente | — | aprobado | T-029 a T-036 (pendientes) | — | — |
+| **Total** | | | | | **151 (145 vigentes)** | | | | | | |
 
 **Glosario:** `specs/glosario.md`. Una definición por término, y tres conflictos de vocabulario abiertos (INC-12).
 **Trazabilidad:** `specs/trazabilidad.md`, generada con `python tools/trazabilidad.py`. Con `--check` falla si un requisito falta de la tabla, aparece sin spec, no tiene origen o figura como implementado sin prueba. Es la semilla del smoke test.
@@ -190,7 +192,9 @@ Bloquean requisitos o tareas. Cuando una se resuelve: se tacha aquí, se anota e
 | # | Decisión | Bloquea |
 |---|---|---|
 | ~~PT-1~~ | ~~Backend en Python/FastAPI o TypeScript/NestJS~~ **Resuelta el 2026-10-22: TypeScript + NestJS** | — |
-| PT-2 | ¿Voz en la primera versión? | REQ-CAP-09…13 |
+| ~~PT-2~~ | ~~¿Voz en la primera versión?~~ **Resuelta el 2026-10-24 por el equipo: no.** Solo texto; REQ-CAP-09 a 13 siguen especificados, sin plan | — |
+| — | **Proveedor del modelo real.** Decidido el 2026-10-24 por el equipo: **simulado por ahora**. Falta elegir el real y que el equipo ponga su clave en `.env` | T-036 |
+| — | **Hallazgos del agente** H-AGT-01 a H-AGT-12, **aceptados por el equipo el 2026-10-25 tal como están**: sin proveedor el asistente cuenta como no disponible, guion de demostración del simulado, cuándo «no responde», lo que estaba en espera y no es una acción, cierre de la conversación, un solo modelo, sin respuesta en flujo, sin presupuesto por usuario, tres motivos de espera, tope de cuatro llamadas, quién resuelve «el viernes» y qué ve el proveedor de la agenda | `specs/07-agente/plan.md` §13 |
 | PT-3 | Correo real con usuarios de prueba o simulado | CUN-04, ENC |
 | PT-5 / D-5 | Plan Personal: ¿se modela o se declara visión? | Alcance de 02-jornada, 01-captura |
 | PT-6 / D-7 | Cifras de los límites del Plan Gratuito | Contador y aviso de límite; 01-captura, 02-jornada |
@@ -253,7 +257,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 |---|---|---|---|
 | 0 | **Base SDD**: este archivo, `AGENTS.md`, glosario, trazabilidad, resolver PT-1 e INC-01 | — | **Cerrada el 2026-10-22** |
 | 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023, T-006, T-016, T-012, T-007 y T-022 hechas. **Google conectado con una cuenta real.** T-008 y T-024 hechas. T-013 a T-015 hechas, **con la lectura real probada**: la API ya consulta la agenda. T-025 hecha: **la web muestra la agenda de hoy con los compromisos reales**. **T-017 hecha: registrar un compromiso** con la duración por defecto de una hora (H-AG-01). **T-018 hecha:** conflicto con su causa y alternativas, y nueva comprobación al confirmar. **T-019 hecha:** modificar y cancelar compromisos; cancelar también como control directo. **T-009 y T-027 hechas:** cambio de zona horaria, también desde Ajustes en la web, con los compromisos que se verán a otra hora. De la fase 1 quedan T-021 (agenda en el móvil) y las tareas personales (CUN-03, sin especificar entero) |
-| 2 | Capa de agente: intención, herramientas, confirmación | 01, 03 vía conversación + CAP | Especificado, sin plan |
+| 2 | Capa de agente: intención, herramientas, confirmación | 01, 03 vía conversación + CAP | **Plan aprobado el 2026-10-25. En curso: T-029.** Sin voz (PT-2), proveedor simulado por ahora, solo agenda y la tarea en espera. Área nueva `specs/07-agente` con REQ-AGT-01 y 02 propuestos, y REQ-CUN01-13 nuevo. Tareas T-029 a T-036 |
 | 3 | Planificación de jornada | 02 | Especificado |
 | 4 | Equipos: disponibilidad, coordinación, delegación, seguimiento. Desde D-17, también la aplicación móvil del colaborador | 05 a 09 | Parcial (falta 06; 08 en borrador); diseño desfasado (INC-14) |
 | 5 | Comunicaciones asistidas y resúmenes | 04, 10 | Parcial (10 bloqueado) |
@@ -272,7 +276,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 
 **Fuera del hito:** el agente (fase 2), la delegación y el seguimiento del equipo (fase 4, CUN-08 en borrador), y la vista móvil del gerente. La API ya deja al colaborador usar la web (T-026), pero el hito no lo muestra.
 
-**Siguiente paso concreto:** planificar la fase 2, el agente. Sigue pendiente contrastar web y móvil con Figma (INC-15) y especificar las tareas personales (CUN-03). Sigue pendiente que el equipo revise H-AG-09, H-AG-10 y H-WEB-01. Sigue pendiente contrastar las pantallas de acceso con Figma (INC-15).
+**Siguiente paso concreto:** T-029 a T-035, en orden (`specs/07-agente/tasks.md`). Sigue pendiente contrastar web y móvil con Figma (INC-15) y especificar las tareas personales (CUN-03). Sigue pendiente que el equipo revise H-AG-09, H-AG-10 y H-WEB-01. Sigue pendiente contrastar las pantallas de acceso con Figma (INC-15).
 
 ---
 
@@ -283,6 +287,8 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-25 | 2.18.1 | **El equipo aprueba el plan del agente** con REQ-AGT-01, REQ-AGT-02, REQ-CUN01-13 y los hallazgos H-AGT-01 a 12 tal como están. Empieza T-029 | `SPEC.md`, `specs/07-agente/` | Equipo (aprobación), registrado por Claude |
+| 2026-10-24 | 2.18.0 | **Fase 2: plan del agente propuesto.** Decisiones del equipo: **PT-2 resuelta, sin voz**; **proveedor del modelo simulado por ahora**; **solo agenda, y una tarea queda en espera** hasta CUN-03. Área nueva `specs/07-agente` con su spec (REQ-AGT-01 contexto de la conversación y REQ-AGT-02 lo que todavía no hace, los dos propuestos), `plan.md` y `tasks.md` (T-029 a T-036). Nuevo **REQ-CUN01-13**: la consulta por conversación responde con la agenda tal como está. Doce hallazgos H-AGT y tres decisiones nuevas en `02-agenda`. Decisiones de captura en `01-captura` §11. Sin cambios de código. 151 requisitos | `SPEC.md`, `specs/07-agente/`, `specs/02-agenda/spec.md`, `specs/01-captura/spec.md`, `specs/glosario.md`, `specs/trazabilidad.md`, `tools/trazabilidad.py`, `PROPUESTA-TECNICA.md`, `AGENTS.md` | Equipo (decisiones), redactado por Claude |
 | 2026-10-24 | 2.17.4 | **El equipo prueba el móvil en un teléfono Android** con Expo Go, contra la API de desarrollo por la IP del equipo: T-028 y T-021 quedan probadas. El hito del presentable queda completo también en el teléfono. Expo Go para el SDK 57 se instala desde expo.dev/go, porque la tienda ya trae el 58 | `SPEC.md`, `specs/06-acceso/tasks.md`, `specs/02-agenda/tasks.md` | Equipo (prueba), registrado por Claude |
 | 2026-10-24 | 2.17.3 | **T-021 hecha en Expo web: la agenda en el móvil.** Hoy con el huso, los compromisos en la zona del perfil y su marca de cancelado o invitado; el detalle de cada uno, con «Cancelar compromiso» y su tarjeta de confirmación en los propios y vigentes; la capa de captura, desde el estado vacío y desde el asa, que deja lo pedido en espera. **CUN01-06, 10 y 12 implementados**: con T-028, **el hito del presentable queda completo** en el navegador. No se pudo contrastar con Figma (INC-15) y falta probarlo en un teléfono. 191 pruebas, `verificar` completo en verde | `apps/movil`, `specs/02-agenda/plan.md`, `tasks.md`, `specs/trazabilidad.md`, `SPEC.md` | Claude |
 | 2026-10-24 | 2.17.2 | **T-028 hecha en Expo web: acceso en el móvil.** Entrar y Primer ingreso con los textos de la web, la zona buscada en una lista o la del teléfono; la sesión en el almacenamiento seguro y su renovación; las tres secciones con Ajustes y «Cerrar sesión». La API admite solo los orígenes de `CORS_ORIGENES`. Las pruebas del móvil tienen su propia API y su base (`nexoai_e2e_movil_prueba`). Falta probarlo en un teléfono. 188 pruebas, `verificar` completo en verde | `apps/movil`, `apps/api/src/main.ts`, `apps/api/src/plataforma/cors.ts`, `apps/api/test/plataforma/cors.spec.ts`, `apps/web/e2e/arrancar-api.mjs`, `turbo.json`, `.env.example`, `AGENTS.md`, `specs/06-acceso/plan.md`, `tasks.md`, `SPEC.md` | Claude |
