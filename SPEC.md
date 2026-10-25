@@ -3,7 +3,7 @@
 **Qué es este archivo:** la fuente de verdad del proyecto y el índice de todas las demás especificaciones. Es un documento **vivo**: cambia cada vez que cambia el proyecto, y cambia **antes** que el código.
 **Método:** Spec-Driven Development, modo **spec-anchored** (§2).
 **Equipo:** Franco, Aixa, Vasco · Curso de Diseño de Software · Entregable 2
-**Versión:** 2.18.1 · **Última actualización:** 25 de octubre de 2026 · Registro completo en §11
+**Versión:** 2.18.2 · **Última actualización:** 25 de octubre de 2026 · Registro completo en §11
 
 ---
 
@@ -257,7 +257,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 |---|---|---|---|
 | 0 | **Base SDD**: este archivo, `AGENTS.md`, glosario, trazabilidad, resolver PT-1 e INC-01 | — | **Cerrada el 2026-10-22** |
 | 1 | Acceso, modelo de datos, agenda y tareas personales: dominio, API y Operaciones (AD-09), sin agente. La interfaz solo consulta y ofrece los controles de DP-01; no hay formularios de creación (R-42) | 01, 03 + ACC | **En curso.** Planes aprobados, 23 tareas, T-001 a T-005, T-010, T-011, T-020 (en web), T-023, T-006, T-016, T-012, T-007 y T-022 hechas. **Google conectado con una cuenta real.** T-008 y T-024 hechas. T-013 a T-015 hechas, **con la lectura real probada**: la API ya consulta la agenda. T-025 hecha: **la web muestra la agenda de hoy con los compromisos reales**. **T-017 hecha: registrar un compromiso** con la duración por defecto de una hora (H-AG-01). **T-018 hecha:** conflicto con su causa y alternativas, y nueva comprobación al confirmar. **T-019 hecha:** modificar y cancelar compromisos; cancelar también como control directo. **T-009 y T-027 hechas:** cambio de zona horaria, también desde Ajustes en la web, con los compromisos que se verán a otra hora. De la fase 1 quedan T-021 (agenda en el móvil) y las tareas personales (CUN-03, sin especificar entero) |
-| 2 | Capa de agente: intención, herramientas, confirmación | 01, 03 vía conversación + CAP | **Plan aprobado el 2026-10-25. En curso: T-029.** Sin voz (PT-2), proveedor simulado por ahora, solo agenda y la tarea en espera. Área nueva `specs/07-agente` con REQ-AGT-01 y 02 propuestos, y REQ-CUN01-13 nuevo. Tareas T-029 a T-036 |
+| 2 | Capa de agente: intención, herramientas, confirmación | 01, 03 vía conversación + CAP | **Plan aprobado el 2026-10-25. T-029 hecha: puerto del proveedor, simulado y no configurado.** Sin voz (PT-2), proveedor simulado por ahora, solo agenda y la tarea en espera. Área nueva `specs/07-agente` con REQ-AGT-01 y 02 propuestos, y REQ-CUN01-13 nuevo. Tareas T-029 a T-036 |
 | 3 | Planificación de jornada | 02 | Especificado |
 | 4 | Equipos: disponibilidad, coordinación, delegación, seguimiento. Desde D-17, también la aplicación móvil del colaborador | 05 a 09 | Parcial (falta 06; 08 en borrador); diseño desfasado (INC-14) |
 | 5 | Comunicaciones asistidas y resúmenes | 04, 10 | Parcial (10 bloqueado) |
@@ -276,7 +276,7 @@ Encontradas al construir este archivo. **No se corrigieron**: cada una es una de
 
 **Fuera del hito:** el agente (fase 2), la delegación y el seguimiento del equipo (fase 4, CUN-08 en borrador), y la vista móvil del gerente. La API ya deja al colaborador usar la web (T-026), pero el hito no lo muestra.
 
-**Siguiente paso concreto:** T-029 a T-035, en orden (`specs/07-agente/tasks.md`). Sigue pendiente contrastar web y móvil con Figma (INC-15) y especificar las tareas personales (CUN-03). Sigue pendiente que el equipo revise H-AG-09, H-AG-10 y H-WEB-01. Sigue pendiente contrastar las pantallas de acceso con Figma (INC-15).
+**Siguiente paso concreto:** T-030 a T-035, en orden (`specs/07-agente/tasks.md`). Sigue pendiente contrastar web y móvil con Figma (INC-15) y especificar las tareas personales (CUN-03). Sigue pendiente que el equipo revise H-AG-09, H-AG-10 y H-WEB-01. Sigue pendiente contrastar las pantallas de acceso con Figma (INC-15).
 
 ---
 
@@ -287,6 +287,7 @@ La versión sube así: **mayor** cuando cambia un principio de §3 o el alcance 
 
 | Fecha | Versión | Cambio | Archivos | Quién |
 |---|---|---|---|---|
+| 2026-10-25 | 2.18.2 | **T-029 hecha: puerto del proveedor de modelo.** `ProveedorModelo` con `ModeloSimulado` (guion de frases, fechas relativas en la zona de la referencia) y `ModeloNoConfigurado` (siempre no disponible, H-AGT-01); `LlamadorModelo` con 30 s, dos reintentos y el registro de cada llamada con su costo; selección con `MODELO_PROVEEDOR`. Contrato compartido para el proveedor real. Una prueba impide el SDK de un proveedor fuera de `src/agente/modelo/` (P-06). LangGraph.js 1.4.21 y `@langchain/core` 1.2.17. Ajuste del plan: el guion es TypeScript. 20 pruebas nuevas; 211 en total, `verificar` completo en verde. `agenda.sincronizacion-periodica` (T-014) falló una vez por tiempo con todo en marcha | `apps/api/src/agente`, `apps/api/src/app.module.ts`, `apps/api/test/agente`, `apps/api/package.json`, `pnpm-lock.yaml`, `.env.example`, `specs/07-agente/plan.md`, `tasks.md`, `SPEC.md` | Claude |
 | 2026-10-25 | 2.18.1 | **El equipo aprueba el plan del agente** con REQ-AGT-01, REQ-AGT-02, REQ-CUN01-13 y los hallazgos H-AGT-01 a 12 tal como están. Empieza T-029 | `SPEC.md`, `specs/07-agente/` | Equipo (aprobación), registrado por Claude |
 | 2026-10-24 | 2.18.0 | **Fase 2: plan del agente propuesto.** Decisiones del equipo: **PT-2 resuelta, sin voz**; **proveedor del modelo simulado por ahora**; **solo agenda, y una tarea queda en espera** hasta CUN-03. Área nueva `specs/07-agente` con su spec (REQ-AGT-01 contexto de la conversación y REQ-AGT-02 lo que todavía no hace, los dos propuestos), `plan.md` y `tasks.md` (T-029 a T-036). Nuevo **REQ-CUN01-13**: la consulta por conversación responde con la agenda tal como está. Doce hallazgos H-AGT y tres decisiones nuevas en `02-agenda`. Decisiones de captura en `01-captura` §11. Sin cambios de código. 151 requisitos | `SPEC.md`, `specs/07-agente/`, `specs/02-agenda/spec.md`, `specs/01-captura/spec.md`, `specs/glosario.md`, `specs/trazabilidad.md`, `tools/trazabilidad.py`, `PROPUESTA-TECNICA.md`, `AGENTS.md` | Equipo (decisiones), redactado por Claude |
 | 2026-10-24 | 2.17.4 | **El equipo prueba el móvil en un teléfono Android** con Expo Go, contra la API de desarrollo por la IP del equipo: T-028 y T-021 quedan probadas. El hito del presentable queda completo también en el teléfono. Expo Go para el SDK 57 se instala desde expo.dev/go, porque la tienda ya trae el 58 | `SPEC.md`, `specs/06-acceso/tasks.md`, `specs/02-agenda/tasks.md` | Equipo (prueba), registrado por Claude |

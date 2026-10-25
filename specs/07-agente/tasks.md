@@ -19,7 +19,16 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
 - **Contenido:** `AgenteModule`; puerto `ProveedorModelo`; `ModeloSimulado` con guion (reglas por patrón, fechas relativas a la referencia) y `ModeloNoConfigurado`; `LlamadorModelo` con 30 s, dos reintentos y `ModeloNoDisponible`; selección con `MODELO_PROVEEDOR`; `precios-modelo.ts`; guion de demostración; LangGraph.js 1.4.21 y `@langchain/core` 1.2.17 instalados tras pasar la auditoría
 - **Hecho cuando:** el simulado y el no configurado pasan el mismo contrato; un proveedor que tarda más del límite o falla dos veces da `ModeloNoDisponible`; ningún archivo fuera de `src/agente/modelo/` importa un SDK de proveedor
 - **Prueba:** `agente.contrato-del-proveedor`
-- **Estado:** pendiente
+- **Estado:** hecha · 25 de octubre de 2026. 20 pruebas; 211 en el monorepo, `verificar` completo en verde
+- **Notas de implementación:**
+  - `src/agente/modelo/`: el puerto (`proveedor-modelo.ts`), `ModeloSimulado`, `ModeloNoConfigurado`, `LlamadorModelo`, `precios-modelo.ts` y el contrato. `AgenteModule` lo elige con `MODELO_PROVEEDOR` (`no-configurado` por defecto; `simulado` nunca en producción), documentado en `.env.example`.
+  - **El contrato es código compartido** (`contrato.ts`), como el del calendario: lo pasan el simulado y el no configurado, y lo pasará el proveedor real (T-036). Un proveedor que no responde también cumple si lo dice con `ModeloNoDisponible`.
+  - `LlamadorModelo.llamar` no lanza: devuelve la respuesta o el error, y siempre el registro de la llamada (proveedor, modelo, uso, costo, duración, intentos, desenlace), que T-030 guardará. El límite se impone aunque el proveedor no atienda la señal.
+  - Un modelo sin precio da costo **desconocido** (nulo), nunca cero.
+  - *Ajuste del plan §3:* el guion de demostración es `guion-demostracion.ts`, no un `.json`, para que lo compile y lo compruebe TypeScript. Cubre registrar, consultar (con «por la mañana», «por la tarde», «por la noche») y recordar una tarea; mover y cancelar no, porque necesitan el id que da una consulta.
+  - Una prueba recorre `src/` y falla si algún archivo fuera de `src/agente/modelo/` importa el SDK de un proveedor (P-06).
+  - LangGraph.js 1.4.21 y `@langchain/core` 1.2.17, con la auditoría limpia. LangGraph trae como dependencia `@langchain/langgraph-checkpoint` 1.2.1, publicada el 21 de octubre de 2026: no la fijamos nosotros. El rastreo de LangSmith queda apagado (sin variables `LANGSMITH_*`): nada sale hacia LangChain.
+  - **Prueba intermitente, ajena a esta tarea:** en la primera ejecución de `verificar`, `agenda.sincronizacion-periodica` (T-014) superó su límite de 5 s por 181 ms con todo el monorepo en marcha. Sola y en la segunda ejecución completa, pasó.
 
 ### T-030 · Auditoría de llamadas y herramientas, con costo e idempotencia
 

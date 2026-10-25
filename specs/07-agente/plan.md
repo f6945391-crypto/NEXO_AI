@@ -77,7 +77,7 @@ type RespuestaModelo = {
 
 ### El simulado
 
-Un **guion**: lista de reglas «si el último mensaje de la persona encaja con este patrón, responde esto», donde la respuesta es un texto o llamadas a herramientas con argumentos. Los argumentos pueden usar fechas relativas a la referencia (`{hoy}`, `{mañana}`, `{viernes}`) que el simulado resuelve. Las pruebas escriben su propio guion; la demostración usa `apps/api/src/agente/modelo/guion-demostracion.json`, con los ejemplos de la web y algunas variantes. **Lo que no está en el guion recibe «No sé hacer eso todavía»**, nunca una invención (H-AGT-02).
+Un **guion**: lista de reglas «si el último mensaje de la persona encaja con este patrón, responde esto», donde la respuesta es un texto o llamadas a herramientas con argumentos. Los argumentos pueden usar fechas relativas a la referencia (`{hoy}`, `{mañana}`, `{viernes}`) que el simulado resuelve. Las pruebas escriben su propio guion; la demostración usa `apps/api/src/agente/modelo/guion-demostracion.ts`, con los ejemplos de la web y algunas variantes (*ajuste de T-029: en TypeScript y no en JSON, para que se compile y se compruebe*). **Lo que no está en el guion recibe «No sé hacer eso todavía»**, nunca una invención (H-AGT-02).
 
 ## 4. El grafo (LangGraph.js)
 
@@ -152,7 +152,7 @@ Reglas comunes:
 | Memoria | En esta versión |
 |---|---|
 | Conversación | Los turnos de la conversación abierta, desde el punto de control. Como mucho los 20 últimos (H-AGT-05) |
-| Perfil | Zona horaria y fecha y hora de referencia en esa zona, con el día de la semana: «Hoy es viernes 24 de octubre de 2026, 10:32, hora de Lima» |
+| Perfil | Zona horaria y fecha y hora de referencia en esa zona, con el día de la semana: «Hoy es sábado 24 de octubre de 2026, 10:32, hora de Lima» |
 | Operativa | **No se manda la agenda.** El modelo la pide con `agenda.consultar`, solo el rango que necesita, y solo ve título y horas (H-AGT-12) |
 | Semántica | No entra: no hay todavía nada que buscar por significado |
 
