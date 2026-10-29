@@ -18,7 +18,7 @@ Decidido por el equipo el 24 de octubre de 2026.
 | Decisión | Valor |
 |---|---|
 | Entrada | **Solo texto.** La voz queda para una versión posterior (PT-2). REQ-CAP-09 a 13 siguen especificados, sin plan |
-| Proveedor del modelo | **Simulado por ahora.** El proveedor real se elige más adelante, detrás de la interfaz propia (P-06) |
+| Proveedor del modelo | **Simulado por ahora.** El proveedor real se elige más adelante, detrás de la interfaz propia (P-06). **Para probar, desde el 29 de octubre de 2026: Groq, en su nivel gratuito** |
 | Qué hace | **Solo agenda:** consultar, registrar, modificar y cancelar compromisos por conversación, en la web y en la capa de captura del móvil |
 | Una tarea | El asistente la reconoce, lo dice y la deja **en espera**, sin registrarla, hasta que existan las tareas personales (CUN-03) |
 
@@ -92,3 +92,4 @@ Detectadas al escribir `plan.md` el 24 de octubre de 2026. Lo que asume el plan 
 | 10 | Como mucho cuatro llamadas al modelo por mensaje (H-AGT-10) | Costo, fallos |
 | 11 | Las fechas relativas las resuelve el modelo con la fecha de referencia; la tarjeta muestra el día de la semana para que la persona lo compruebe (H-AGT-11) | REQ-CUN01-01, REQ-CAP-24 |
 | 12 | El modelo solo ve título y horas del rango que pide (H-AGT-12) | P-10, minimización |
+| 13 | Con el proveedor de prueba, su límite de uso por minuto cuenta como «no disponible»: lo pedido queda en espera. Lo que se le envía puede quedar en sus servidores, así que se prueba con un calendario sin datos personales (H-AGT-13, 29 de octubre de 2026) | REQ-CUN01-11, P-10 |

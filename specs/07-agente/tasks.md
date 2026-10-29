@@ -6,7 +6,7 @@
 
 Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
 
-**Orden:** T-029 → T-030 → T-031 → T-032 → T-033 → T-034 → T-035. T-036 espera al proveedor real.
+**Orden:** T-029 → T-030 → T-031 → T-032 → T-036 → T-033 → T-034 → T-035. *Cambiado el 29 de octubre de 2026: el equipo eligió Groq para probar, y T-036 se adelanta para poder conversar con el agente apenas esté T-032.*
 
 ---
 
@@ -90,11 +90,12 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
 
 ## 4. Después
 
-### T-036 · Proveedor real y conjunto de evaluación
+### T-036 · Proveedor compatible con la API de OpenAI (Groq) y conjunto de evaluación
 
-- **Habilita:** P-06 · `PROPUESTA-TECNICA.md` §7.5 · H-AGT-01, H-AGT-06, H-AGT-07
-- **Depende de:** T-032 y de que el equipo elija proveedor y ponga su clave en `.env`
-- **Contenido:** implementación del puerto para el proveedor elegido; sus precios; conjunto fijo de frases con el resultado esperado (fechas relativas, sin fin, datos que faltan, tareas, pedidos fuera de alcance), ejecutable contra el proveedor configurado
-- **Hecho cuando:** el proveedor real pasa el contrato de T-029 y el conjunto de evaluación
-- **Prueba:** `agente.evaluacion`
-- **Estado:** bloqueada: falta elegir proveedor
+- **Habilita:** P-06 · `PROPUESTA-TECNICA.md` §7.5 · plan §3.1 · H-AGT-01, H-AGT-13
+- **Depende de:** T-029; la evaluación, de T-032
+- **Origen:** el equipo eligió Groq en su nivel gratuito el 29 de octubre de 2026, para probar sin pagar
+- **Contenido:** `ModeloCompatibleOpenAI` sobre `fetch`, sin SDK, con las variables del plan §3.1; sus errores según el plan; `MODELO_PRECIOS`; servidor local que imita la API para las pruebas; conjunto fijo de frases con el resultado esperado (fechas relativas, sin fin, datos que faltan, tareas, pedidos fuera de alcance), que se ejecuta a mano contra el proveedor configurado y nunca en la integración continua
+- **Hecho cuando:** el adaptador pasa el contrato de T-029 contra el servidor local; un 429 y una clave rechazada dan `ModeloNoDisponible`; la clave no aparece en ningún registro; el equipo conversa con el agente usando su clave de Groq
+- **Pruebas:** `agente.contrato-del-proveedor` (ampliada), `agente.evaluacion` (a mano)
+- **Estado:** pendiente

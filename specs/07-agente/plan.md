@@ -15,7 +15,7 @@ Este plan dice **dónde y cómo** se cumple cada requisito. Lo que la especifica
 
 | Pieza | Para qué |
 |---|---|
-| Puerto `ProveedorModelo` y dos implementaciones: **simulada** y **no configurada** | P-06. El proveedor real se añade después como un archivo más, sin tocar nada de lo demás |
+| Puerto `ProveedorModelo` y tres implementaciones: **simulada**, **no configurada** y **compatible con la API de OpenAI** (Groq para probar, §3.1) | P-06. Cada proveedor es un archivo más, sin tocar nada de lo demás |
 | Grafo del asistente con LangGraph.js | Interpreta, llama herramientas y **se interrumpe** al proponer una Operación hasta que la persona decide (P-03) |
 | Herramientas de agenda | Consultan la réplica o **proponen** Operaciones `agenda.*`. Ninguna escribe (P-01, AD-09) |
 | Auditoría de llamadas al modelo y de herramientas, con costo | P-07 |
@@ -75,7 +75,23 @@ type RespuestaModelo = {
 - **Un solo modelo** para todo en esta versión (H-AGT-06).
 - Los nombres de herramienta van con guion bajo (`agenda_consultar`), porque varios proveedores no admiten el punto. El nombre interno sigue siendo `agenda.consultar`.
 
-### El simulado
+### 3.1 Proveedor compatible con la API de OpenAI (Groq para probar)
+
+**Decidido por el equipo el 29 de octubre de 2026:** para probar sin pagar, Groq en su nivel gratuito. Como Groq, Cerebras, OpenRouter y Ollama hablan el mismo formato de chat con herramientas, un solo adaptador, `modelo/modelo-compatible-openai.ts`, sirve para todos; cambiar de uno a otro es cambiar `.env`.
+
+| Variable | Contenido |
+|---|---|
+| `MODELO_PROVEEDOR` | `compatible-openai` |
+| `MODELO_URL` | Raíz de la API, por ejemplo `https://api.groq.com/openai/v1` |
+| `MODELO_NOMBRE` | `openai/gpt-oss-120b` para empezar: usa herramientas, de una en una |
+| `MODELO_CLAVE` | La pone el equipo; nunca va en el repositorio ni en el chat |
+| `MODELO_PRECIOS` | Opcional: dólares por millón de tokens de entrada y de salida, `0,0` en el nivel gratuito. Sin ella, el costo queda desconocido (P-07) |
+
+- **Sin SDK:** `fetch` a `POST {MODELO_URL}/chat/completions`. Los argumentos de cada llamada llegan como texto JSON y se interpretan con `JSON.parse`; si no se pueden interpretar, es un fallo del modelo.
+- **Errores:** sin respuesta, 429 (límite de uso del nivel gratuito, H-AGT-13), 5xx y clave rechazada (401, 403) dan `ModeloNoDisponible`; cualquier otro, `FalloDelModelo`. La clave nunca se escribe en el registro.
+- Cumple el contrato de T-029. La prueba automática usa un servidor local que imita la API; nunca llama a Groq.
+
+### 3.2 El simulado
 
 Un **guion**: lista de reglas «si el último mensaje de la persona encaja con este patrón, responde esto», donde la respuesta es un texto o llamadas a herramientas con argumentos. Los argumentos pueden usar fechas relativas a la referencia (`{hoy}`, `{mañana}`, `{viernes}`) que el simulado resuelve. Las pruebas escriben su propio guion; la demostración usa `apps/api/src/agente/modelo/guion-demostracion.ts`, con los ejemplos de la web y algunas variantes (*ajuste de T-029: en TypeScript y no en JSON, para que se compile y se compruebe*). **Lo que no está en el guion recibe «No sé hacer eso todavía»**, nunca una invención (H-AGT-02).
 
@@ -247,7 +263,7 @@ Las tablas nuevas con `organizacion_id` entran en `MODELOS_CON_ORGANIZACION`. Ni
 
 | REQ / principio | Prueba | Tipo |
 |---|---|---|
-| P-06 | `agente.contrato-del-proveedor` | Integración, contra el simulado y el no configurado |
+| P-06 | `agente.contrato-del-proveedor` | Integración, contra el simulado, el no configurado y el compatible con OpenAI ante un servidor local que imita la API |
 | P-07 | `agente.herramienta-auditada-con-costo`, `agente.herramienta-idempotente` | Integración |
 | CUN01-01 | `agente.agenda.extrae-sin-inventar-fin` | Integración, con guion |
 | CUN01-03 | `agente.herramientas-solo-proponen` | Integración, con el calendario simulado que cuenta escrituras |
@@ -260,7 +276,7 @@ Las tablas nuevas con `organizacion_id` entran en `MODELOS_CON_ORGANIZACION`. Ni
 | CUN01-08 | `agente.sin-calendario-no-agenda` | Integración |
 | CAP-23 | `web.asistente-agenda-y-confirma`, `web.asistente-en-espera`, `movil.captura-propone-y-confirma`, `movil.captura-en-espera` | Extremo a extremo |
 
-**Evaluación del modelo** (`PROPUESTA-TECNICA.md` §7.5): un conjunto fijo de frases con el resultado esperado. Con el simulado solo prueba la tubería; tiene sentido cuando haya proveedor real (T-036).
+**Evaluación del modelo** (`PROPUESTA-TECNICA.md` §7.5): un conjunto fijo de frases con el resultado esperado. Con el simulado solo prueba la tubería; tiene sentido con un proveedor real, como Groq (T-036).
 
 ## 13. Hallazgos — vuelven a la especificación
 
@@ -280,3 +296,4 @@ Registrados en `spec.md` §5 y en `SPEC.md` §8. **Aceptados por el equipo el 25
 | H-AGT-10 | Tope de llamadas al modelo por mensaje | Cuatro. Superado, el turno es un fallo y no se hizo nada |
 | H-AGT-11 | Quién resuelve «el viernes» | El modelo, con la fecha de referencia y el día de la semana. El riesgo se cubre con la tarjeta, que muestra fecha larga con día de la semana (P-03), y con casos en la evaluación |
 | H-AGT-12 | Qué parte de la agenda ve el proveedor | Solo título, horas y estado del rango pedido. Nunca invitados, descripción ni lugar |
+| H-AGT-13 | El proveedor de prueba (Groq, nivel gratuito) tiene un límite bajo de tokens por minuto, y lo que recibe puede quedar en sus servidores (detectado el 29 de octubre de 2026) | El 429 cuenta como «no disponible» y lo pedido queda en espera (P-11). Las instrucciones y las herramientas se mantienen cortas. Se prueba con un calendario sin datos personales |
