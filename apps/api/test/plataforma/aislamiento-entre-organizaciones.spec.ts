@@ -108,6 +108,8 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
           duracionMs: 1,
         },
       });
+      // Y el estado de su grafo (T-032)
+      await base.puntoControlAgente.create({ data: { organizacionId, conversacionId: conversacion.id, datos: {} } });
     }
     deA = aislarPorOrganizacion(base, orgA);
   });

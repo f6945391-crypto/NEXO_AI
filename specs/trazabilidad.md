@@ -9,14 +9,14 @@
 
 | Área | Requisitos | pendiente | en curso | implementado | verificado | retirado |
 |---|---|---|---|---|---|---|
-| 01-captura | 24 | 24 | 0 | 0 | 0 | 0 |
+| 01-captura | 24 | 22 | 2 | 0 | 0 | 0 |
 | 02-agenda | 13 | 0 | 3 | 10 | 0 | 0 |
 | 02-jornada | 24 | 24 | 0 | 0 | 0 | 0 |
 | 03-tareas | 26 | 26 | 0 | 0 | 0 | 0 |
 | 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
 | 05-equipos | 17 | 17 | 0 | 0 | 0 | 0 |
 | 06-acceso | 17 | 2 | 0 | 15 | 0 | 0 |
-| 07-agente | 2 | 2 | 0 | 0 | 0 | 0 |
+| 07-agente | 2 | 1 | 1 | 0 | 0 | 0 |
 
 ## Requisitos
 
@@ -24,8 +24,8 @@
 |---|---|---|---|---|---|---|
 | REQ-CAP-01 | 01-captura | CUN-01 y CUN-03, flujo principal paso 1 | 2 | T-034, T-035 | — | pendiente |
 | REQ-CAP-02 | 01-captura | CUN-01 paso 2, CUN-03 paso 2 | 2 | T-032, T-033 | — | pendiente |
-| REQ-CAP-03 | 01-captura | RN-ER-03 | 2 | T-032 | — | pendiente |
-| REQ-CAP-04 | 01-captura | CUN-01 y CUN-03, excepción «información insuficiente»; regla de producto R-20 | 2 | T-032 | — | pendiente |
+| REQ-CAP-03 | 01-captura | RN-ER-03 | 2 | T-032 | agente.interrumpe-hasta-decidir | en curso |
+| REQ-CAP-04 | 01-captura | CUN-01 y CUN-03, excepción «información insuficiente»; regla de producto R-20 | 2 | T-032 | agente.pregunta-de-uno-en-uno | en curso |
 | REQ-CAP-05 | 01-captura | decisión de producto; RN-OP-01 | 2 | — | — | pendiente |
 | REQ-CAP-06 | 01-captura | decisión de producto | 2 | T-032 | — | pendiente |
 | REQ-CAP-07 | 01-captura | regla de producto R-1; `../02-jornada/spec.md` REQ-CUN02-08 | 2 | — | — | pendiente |
@@ -48,11 +48,11 @@
 | REQ-CAP-24 | 01-captura | regla de producto R-42; `SPEC.md` P-11 | 2 | T-033 | — | pendiente |
 | REQ-CUN01-01 | 02-agenda | CUN-01 flujo principal, pasos 1 y 2 | 2 | T-031 | agente.agenda.extrae-sin-inventar-fin | en curso |
 | REQ-CUN01-02 | 02-agenda | CUN-01 flujo principal, paso 3 | 1 | T-016, T-017, T-019 | agenda.consulta-solapes-antes-de-proponer | implementado |
-| REQ-CUN01-03 | 02-agenda | RN-ER-03 | 1 | T-012, T-017 | agenda.sin-confirmar-no-escribe-ni-notifica | implementado |
-| REQ-CUN01-04 | 02-agenda | CUN-01 flujo principal, pasos 5 y 6 | 1 | T-017, T-019 | agenda.confirmar-registra-lo-mostrado | implementado |
-| REQ-CUN01-05 | 02-agenda | CUN-01 FA-01 | 1 | T-016, T-018 | agenda.conflicto-identifica-causa-y-ofrece-alternativas | implementado |
+| REQ-CUN01-03 | 02-agenda | RN-ER-03 | 1 | T-012, T-017, T-032 | agenda.sin-confirmar-no-escribe-ni-notifica | implementado |
+| REQ-CUN01-04 | 02-agenda | CUN-01 flujo principal, pasos 5 y 6 | 1 | T-017, T-019, T-032 | agenda.confirmar-registra-lo-mostrado | implementado |
+| REQ-CUN01-05 | 02-agenda | CUN-01 FA-01 | 1 | T-016, T-018, T-032 | agenda.conflicto-identifica-causa-y-ofrece-alternativas | implementado |
 | REQ-CUN01-06 | 02-agenda | CUN-01 FA-02 | 1 | T-019, T-021 | agenda.cancelar-requiere-confirmacion | implementado |
-| REQ-CUN01-07 | 02-agenda | CUN-01 EX-01 | 1 | T-017 | agenda.datos-faltantes-no-crea-operacion | implementado |
+| REQ-CUN01-07 | 02-agenda | CUN-01 EX-01 | 1 | T-017, T-032 | agenda.datos-faltantes-no-crea-operacion | implementado |
 | REQ-CUN01-08 | 02-agenda | CUN-01 EX-02, RN-OP-01, REQ-ACC-08 | 1 | T-015, T-017, T-031 | agenda.sin-permiso-no-invoca-proveedor | implementado |
 | REQ-CUN01-09 | 02-agenda | RN-OP-01, RN-EST-01 | 1 | T-014, T-015 | agenda.solo-eventos-propios | implementado |
 | REQ-CUN01-10 | 02-agenda | decisión de arquitectura AD-07; necesaria para CUN-05 y CUN-06 | 1 | T-014, T-015, T-021, T-025 | agenda.horas-con-zona-horaria | implementado |
@@ -171,5 +171,5 @@
 | REQ-ACC-15 | 06-acceso | Requisito del sistema; D-17 | 1 | T-026 | acceso.solo-el-responsable-asigna-tareas | implementado |
 | REQ-ACC-16 | 06-acceso | Requisito del sistema | 4 | — | — | pendiente |
 | REQ-ACC-17 | 06-acceso | Requisito del sistema | 4 | — | — | pendiente |
-| REQ-AGT-01 | 07-agente | `PROPUESTA-TECNICA.md` §7.4, memoria de conversación; glosario, «Conversación» | 2 | T-032 | — | pendiente |
+| REQ-AGT-01 | 07-agente | `PROPUESTA-TECNICA.md` §7.4, memoria de conversación; glosario, «Conversación» | 2 | T-032 | agente.conversacion-con-contexto | en curso |
 | REQ-AGT-02 | 07-agente | decisión del equipo, 24 de octubre de 2026; REQ-CAP-02, REQ-CAP-23 | 2 | T-033 | — | pendiente |

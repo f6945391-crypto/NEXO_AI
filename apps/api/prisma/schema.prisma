@@ -45,6 +45,7 @@ model Organizacion {
   conversaciones   ConversacionAgente[]
   llamadasModelo   LlamadaModelo[]
   invocaciones     InvocacionHerramienta[]
+  puntosControl    PuntoControlAgente[]
 
   @@map("organizacion")
 }
@@ -179,6 +180,7 @@ model ConversacionAgente {
   operaciones  Operacion[]
   llamadas     LlamadaModelo[]
   invocaciones InvocacionHerramienta[]
+  puntoControl PuntoControlAgente?
 
   @@index([perfilId, estado])
   @@index([organizacionId])
@@ -245,6 +247,23 @@ model InvocacionHerramienta {
   @@unique([conversacionId, idLlamada])
   @@index([organizacionId])
   @@map("invocacion_herramienta")
+}
+
+// Estado del grafo del asistente de una conversación (specs/07-agente/plan.md §4.3) · T-032. Lo que el
+// punto de control de LangGraph tiene en memoria, serializado: así una propuesta que espera la decisión
+// de la persona sobrevive a un reinicio (P-03). Se conservan los 10 últimos puntos.
+model PuntoControlAgente {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizacionId String   @map("organizacion_id") @db.Uuid
+  conversacionId String   @unique @map("conversacion_id") @db.Uuid
+  datos          Json
+  actualizadoEn  DateTime @default(now()) @updatedAt @map("actualizado_en") @db.Timestamptz(3)
+
+  organizacion Organizacion       @relation(fields: [organizacionId], references: [id])
+  conversacion ConversacionAgente @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+
+  @@index([organizacionId])
+  @@map("punto_control_agente")
 }
 
 // Permiso concedido a una integración externa (specs/06-acceso/plan.md §3) · T-007. Una fila por alcance:

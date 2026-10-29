@@ -139,7 +139,7 @@ Si la persona escribe otra cosa mientras hay una propuesta pendiente («mejor a 
 
 ### 4.3 Persistencia y confirmación
 
-- **Punto de control propio sobre Prisma** (`BaseCheckpointSaver`), en lugar del paquete de LangGraph para Postgres: aquel crea sus tablas fuera de Prisma Migrate y fuera del filtro por organización. Tabla `punto_control_agente` (§10).
+- **Punto de control propio sobre Prisma** (`BaseCheckpointSaver`), en lugar del paquete de LangGraph para Postgres: aquel crea sus tablas fuera de Prisma Migrate y fuera del filtro por organización. Tabla `punto_control_agente` (§10). *Ajuste de T-032: es una subclase del punto de control en memoria de LangGraph que carga y guarda una fila por conversación.*
 - La confirmación sigue siendo **una sola**, la de Operaciones (AD-09): la ruta de decisión (§9) llama a `OperacionesService.confirmar` o `descartar`, y con su desenlace reanuda el grafo. El grafo no ejecuta nada por su cuenta.
 - Si la Operación se confirma por otra vía (un control directo, otro dispositivo), al siguiente mensaje el grafo lee su estado y la da por cerrada.
 
@@ -232,7 +232,7 @@ La respuesta llega entera, sin flujo (H-AGT-07); la interfaz muestra que el asis
 | Tabla o campo | Contenido |
 |---|---|
 | `conversacion_agente` | `id`, perfil, organización, `estado` (`abierta`, `cerrada`), `abierta_en`, `cerrada_en` |
-| `punto_control_agente` | conversación, id del punto, punto padre, punto y metadatos serializados (bytes), escrituras pendientes, `creado_en`. Se conservan los 10 últimos por conversación |
+| `punto_control_agente` | Una fila por conversación con sus puntos y escrituras serializados (*ajuste de T-032*). Se conservan los 10 últimos puntos |
 | `llamada_modelo`, `invocacion_herramienta` | §8 |
 | `operacion.motivo_espera` | Enumeración de §7, nula salvo en `en_espera` |
 | `operacion.conversacion_id` | Conversación de la que salió, nula para los controles directos |

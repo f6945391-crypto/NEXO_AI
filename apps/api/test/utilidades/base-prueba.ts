@@ -44,5 +44,5 @@ export async function crearCuentaLista(
 }
 
 export async function vaciarTablas(): Promise<void> {
-  await ejecutarSql('TRUNCATE invocacion_herramienta, llamada_modelo, conversacion_agente, evento_agenda, sincronizacion_calendario, consentimiento_integracion, operacion, sesion_renovacion, evento_auditoria, perfil_usuario, organizacion CASCADE');
+  await ejecutarSql('TRUNCATE punto_control_agente, invocacion_herramienta, llamada_modelo, conversacion_agente, evento_agenda, sincronizacion_calendario, consentimiento_integracion, operacion, sesion_renovacion, evento_auditoria, perfil_usuario, organizacion CASCADE');
 }

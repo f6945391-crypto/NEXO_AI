@@ -70,7 +70,16 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
 - **Contenido:** grafo de LangGraph.js con `interpretar`, `herramientas`, `preguntar`, `esperar_decision` y `comunicar`; punto de control sobre Prisma (`punto_control_agente`); instrucciones; contexto con la fecha de referencia; `GET /asistente/conversacion`, `POST /asistente/mensajes`, `POST /asistente/decisiones`; contratos en `packages/contratos/src/asistente.ts`
 - **Hecho cuando:** con un guion, «Agéndame dentista el jueves a las 4» devuelve una tarjeta y nada se escribe hasta decidir; tras reconstruir el grafo, confirmar reanuda la conversación y el resultado sale de la Operación; «Agéndame algo con Vasco» pregunta solo el día; «mejor a las 5» antes de confirmar cambia la misma propuesta, y después de confirmar ya no la relaciona; elegir una alternativa no llama al modelo
 - **Pruebas:** `agente.interrumpe-hasta-decidir`, `agente.conversacion-con-contexto`, `agente.pregunta-de-uno-en-uno`
-- **Estado:** pendiente
+- **Estado:** hecha · 29 de octubre de 2026. 9 pruebas, sobre las rutas HTTP, con el modelo y el calendario simulados
+- **Notas de implementación:**
+  - `src/agente/grafo/grafo-asistente.ts`: los cinco nodos del plan §4.2. El grafo se compila en cada petición y sus nodos cierran sobre la identidad de quien pide, que nunca pasa por el estado ni por el modelo (P-04). Comprobado antes con un script: al reanudar, LangGraph vuelve a ejecutar el nodo que se interrumpió, así que `esperar_decision` no hace nada antes de `interrupt()`.
+  - **Tras proponer, el grafo espera sin volver al modelo**: la tarjeta la muestra el código. Comunicar el resultado y preguntar lo que falta tampoco llaman al modelo.
+  - Sin permiso de calendario, la frase la pone el código: qué permiso falta y dónde se conecta (REQ-CUN01-08).
+  - Una acción a la vez: si el modelo propone dos en el mismo turno, la segunda recibe `UNA_ACCION_A_LA_VEZ`.
+  - Un mensaje nuevo con una propuesta pendiente la descarta y se interpreta en la misma conversación (REQ-AGT-01). Si la propuesta se decidió por otra vía, se da por cerrada y el mensaje abre una conversación nueva.
+  - Hasta T-033, un modelo que no responde da un turno `fallo` que dice que no se creó ni se envió nada.
+  - Rutas `GET /asistente/conversacion`, `POST /asistente/mensajes` y `POST /asistente/decisiones`, con sus contratos en `packages/contratos/src/asistente.ts`. Una alternativa solo vale si es una de las que ofreció la tarjeta.
+  - *Ajuste del plan §4.3 y §10:* el punto de control es una **subclase del punto de control en memoria de LangGraph** que carga y guarda una sola fila por conversación (`punto_control_agente`, octava migración), con los 10 últimos puntos. Reutiliza la lógica oficial en lugar de reescribirla, y no hace falta depender directamente de `@langchain/langgraph-checkpoint`. Las escrituras de una conversación se guardan de una en una, porque LangGraph las hace a la vez.
 
 ### T-033 · Modo degradado: la cola en espera y su trabajador
 
