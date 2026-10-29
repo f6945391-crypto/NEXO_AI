@@ -87,8 +87,15 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
 - **Depende de:** T-032, T-014
 - **Contenido:** encolar con `ModeloNoDisponible`, sin calendario y para las tareas (`captura.guardar_tarea`); trabajo `procesar-en-espera` en BullMQ, cada minuto, en el proceso trabajador; procesar con `referencia = capturadaEn`; la misma fila pasa a `propuesta`, o se cierra sin efecto (H-AGT-04)
 - **Hecho cuando:** con el no configurado, un mensaje queda en espera con su motivo y no se crea nada; al cambiar a un simulado que responde, el trabajador lo propone y «mañana» es el día siguiente a la captura, no al proceso; una tarea queda en espera con «función por llegar» y el trabajador no la toca; lo que espera al calendario se procesa al conectarlo
-- **Pruebas:** `agente.sin-modelo-queda-en-espera`, `agente.en-espera-desde-la-captura`, `agente.tarea-queda-en-espera`
-- **Estado:** pendiente
+- **Pruebas:** `agente.sin-modelo-queda-en-espera`, `agente.en-espera-desde-la-captura`, `agente.tarea-queda-en-espera`, `agente.sin-calendario-no-agenda` (ampliada)
+- **Estado:** hecha · 29 de octubre de 2026. 7 pruebas nuevas
+- **Notas de implementación:**
+  - `OperacionesService.encolar` guarda lo pedido en `en_espera`, con su motivo, la frase y el momento de la captura. Su tarjeta no se puede confirmar y dice por qué espera, con un texto distinto por motivo (REQ-CAP-23). `proponer` acepta `desdeEnEspera`: la misma fila pasa a propuesta.
+  - El grafo encola en tres casos, y el aviso lo escribe el código: el modelo no responde (`asistente.solicitud`, `asistente_no_disponible`), falta el calendario (`permiso_faltante`) y lo pedido es una tarea (`captura.guardar_tarea`, tipo `tareas.registrar`, `funcion_por_llegar`). Una tarea guardada no necesita otra vuelta del modelo.
+  - `ProcesadorEnEspera.repasar()`: hasta 20 por pasada, por orden de captura. Lo que espera al calendario, solo si ya está conectado. Cada uno pasa por el grafo con `referencia = capturadaEn` (REQ-CAP-24); si sale una acción, la misma fila queda propuesta; si no, se responde en la conversación y la fila se cierra como `descartada` (H-AGT-04). Si el asistente sigue sin responder, para. Con una tarjeta esperando a la persona, lo deja para la pasada siguiente. Las tareas no se tocan.
+  - `TrabajadorEnEspera`: un trabajo de BullMQ cada minuto en el proceso trabajador, que ahora carga también el módulo del agente.
+  - El procesador lee lo encolado de todas las organizaciones con `sinAislar`, como el trabajador del calendario; queda justificado en el plan §7.
+  - Las opciones del llamador (tiempo límite y esperas) son ahora un proveedor, para que las pruebas no esperen los reintentos de 1 y 3 segundos.
 
 ## 3. Clientes
 

@@ -189,6 +189,7 @@ La cola es la tabla `operacion` en estado `en_espera` (AD-09, `specs/02-agenda/p
 - Lo encolado tiene `tipo: 'asistente.solicitud'`, la frase en `solicitudOriginal` y el momento del mensaje en `capturadaEn`. No tiene ejecutor: no se puede confirmar.
 - **Trabajador** `procesar-en-espera` (BullMQ, en el proceso trabajador): cada minuto toma lo encolado por orden de captura, si su motivo ya no aplica, y lo pasa por el grafo con `referencia = capturadaEn`. Si resulta en una acción, **la misma fila** pasa a `propuesta` con su tipo, su carga y su tarjeta reales, y espera la confirmación de siempre. Si no es una acción (una consulta, un dato que falta), la respuesta queda en la conversación y la fila se cierra como `descartada`, sin efecto (H-AGT-04).
 - Con el asistente caído, la agenda se sigue consultando (no depende del modelo) y los controles directos funcionan (DP-01). Ya está hecho en la fase 1.
+- *Ajustes de T-033:* el procesador lee lo encolado de todas las organizaciones con `sinAislar`, igual que el trabajador del calendario (`specs/02-agenda/plan.md` §4): no atiende a nadie en concreto, solo lee identificadores y la identidad de cada perfil, y atiende cada solicitud aislada por su organización. Atiende hasta 20 por pasada, solo lo que espera al calendario si ya está conectado, y no pone una tarjeta encima de otra que espera a la persona.
 - **Retirar algo de la cola** sigue abierto en `SPEC.md` §8. La API lo permite desde T-012, pero ninguna pantalla lo ofrece hasta que se decida.
 
 ## 8. Auditoría y costo (P-07)

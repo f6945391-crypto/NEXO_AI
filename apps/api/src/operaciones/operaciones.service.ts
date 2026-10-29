@@ -3,6 +3,7 @@ import {
   OperacionRespuesta,
   VistaConfirmacion,
   type EstadoOperacion,
+  type MotivoEspera,
   type OperacionSolicitud,
 } from '@nexoai/contratos';
 import type { Operacion } from '../generado/prisma/client';
@@ -44,6 +45,13 @@ function camposFaltantes(bruta: unknown, issues: readonly { path: readonly Prope
 
 const unirConY = (partes: string[]) => (partes.length > 1 ? `${partes.slice(0, -1).join(', ')} y ${partes.at(-1)}` : (partes[0] ?? ''));
 
+// Por qué no se puede confirmar algo en espera, dicho a la persona (REQ-CAP-23: ni error ni fuera del plan)
+const MOTIVOS_DE_ESPERA: Readonly<Record<MotivoEspera, string>> = {
+  asistente_no_disponible: 'El asistente no respondía. Lo retoma en cuanto vuelva.',
+  permiso_faltante: 'Falta el permiso de tu calendario de Google. Se retoma cuando lo conectes.',
+  funcion_por_llegar: 'Las tareas llegan en una próxima versión. Queda guardado hasta entonces.',
+};
+
 const noEncontrada = () => errorApi(404, 'OPERACION_NO_ENCONTRADA', 'No existe esa operación.');
 
 @Injectable()
@@ -53,11 +61,13 @@ export class OperacionesService {
     private readonly registro: RegistroOperaciones,
   ) {}
 
-  // `conversacionId`: la conversación del asistente de la que sale la propuesta (T-031); no viene del cliente
+  // `conversacionId`: la conversación del asistente de la que sale la propuesta (T-031); no viene del cliente.
+  // `desdeEnEspera`: lo pedido estaba en espera y el asistente lo interpretó al volver: la misma fila pasa a
+  // propuesta, con la frase y el momento de la captura (T-033, plan §7).
   async proponer(
     contexto: ContextoSolicitud,
     solicitud: OperacionSolicitud,
-    extra: { conversacionId?: string } = {},
+    extra: { conversacionId?: string; desdeEnEspera?: string } = {},
   ): Promise<OperacionRespuesta> {
     const ejecutor = this.registro.obtener(solicitud.tipo);
     if (!ejecutor) throw errorApi(400, 'OPERACION_DESCONOCIDA', 'Esa acción no existe.');
@@ -80,6 +90,13 @@ export class OperacionesService {
     const propuesta = await ejecutor.proponer(contexto, carga.data);
     const [vistaPropuesta, cargaFinal] = 'vista' in propuesta ? [propuesta.vista, propuesta.carga] : [propuesta, carga.data];
     const vista = VistaConfirmacion.parse(vistaPropuesta);
+    if (extra.desdeEnEspera) {
+      const pasada = await this.datos(contexto).operacion.updateMany({
+        where: { id: extra.desdeEnEspera, perfilId: contexto.perfilId, estado: 'en_espera' },
+        data: { tipo: solicitud.tipo, origen: solicitud.origen, carga: cargaFinal as object, vistaConfirmacion: vista, estado: 'propuesta', motivoEspera: null },
+      });
+      if (pasada.count === 1) return aRespuesta(await this.buscar(contexto, extra.desdeEnEspera));
+    }
     const op = await this.datos(contexto).operacion.create({
       data: {
         organizacionId: contexto.organizacionId,
@@ -135,6 +152,52 @@ export class OperacionesService {
       });
     }
     return aRespuesta(actualizada);
+  }
+
+  // P-11 · T-033 · plan §7: guarda lo pedido sin crear ni enviar nada. No se puede confirmar: no tiene
+  // ejecutor. Con `desdeEnEspera`, la misma fila cambia de motivo (lo que esperaba al asistente resultó una tarea).
+  async encolar(
+    contexto: ContextoSolicitud,
+    datos: {
+      tipo: string;
+      carga: object;
+      motivo: MotivoEspera;
+      solicitudOriginal: string;
+      capturadaEn: Date;
+      conversacionId: string | null;
+      desdeEnEspera?: string;
+    },
+  ): Promise<OperacionRespuesta> {
+    const vista: VistaConfirmacion = {
+      accion: 'Atender lo que pediste',
+      datos: [{ etiqueta: 'Lo que pediste', valor: datos.solicitudOriginal }],
+      irreversible: null,
+      confirmable: false,
+      motivoNoConfirmable: MOTIVOS_DE_ESPERA[datos.motivo],
+    };
+    if (datos.desdeEnEspera) {
+      const cambiada = await this.datos(contexto).operacion.updateMany({
+        where: { id: datos.desdeEnEspera, perfilId: contexto.perfilId, estado: 'en_espera' },
+        data: { tipo: datos.tipo, carga: datos.carga, motivoEspera: datos.motivo, vistaConfirmacion: vista },
+      });
+      if (cambiada.count === 1) return aRespuesta(await this.buscar(contexto, datos.desdeEnEspera));
+    }
+    const op = await this.datos(contexto).operacion.create({
+      data: {
+        organizacionId: contexto.organizacionId,
+        perfilId: contexto.perfilId,
+        tipo: datos.tipo,
+        origen: 'agente',
+        solicitudOriginal: datos.solicitudOriginal.slice(0, 2000),
+        carga: datos.carga,
+        vistaConfirmacion: vista,
+        estado: 'en_espera',
+        motivoEspera: datos.motivo,
+        capturadaEn: datos.capturadaEn,
+        conversacionId: datos.conversacionId,
+      },
+    });
+    return aRespuesta(op);
   }
 
   async descartar(contexto: ContextoSolicitud, id: string): Promise<OperacionRespuesta> {

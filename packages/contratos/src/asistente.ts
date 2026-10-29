@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ListaAgenda } from './agente';
+import { ListaAgenda, MotivoEspera } from './agente';
 import { OperacionRespuesta } from './operaciones';
 
 // Conversación con el asistente (specs/07-agente/plan.md §9) · T-032. Lo que ven la web y la capa de
@@ -7,10 +7,6 @@ import { OperacionRespuesta } from './operaciones';
 // (REQ-CAP-23): una respuesta, una tarjeta, una pregunta, algo en espera o un fallo.
 
 const Instante = z.iso.datetime({ offset: true });
-
-// specs/07-agente/plan.md §7 · H-AGT-09
-export const MotivoEspera = z.enum(['asistente_no_disponible', 'permiso_faltante', 'funcion_por_llegar']);
-export type MotivoEspera = z.infer<typeof MotivoEspera>;
 
 const base = { id: z.uuid(), en: Instante };
 

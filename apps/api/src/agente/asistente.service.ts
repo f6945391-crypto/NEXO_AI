@@ -75,11 +75,61 @@ export class AsistenteService {
         faltante: null,
         decision: null,
         noDisponible: false,
+        enEspera: null,
         cerrada: false,
       },
       config,
     );
     return this.responder(contexto, conversacion.id, resultado, antes);
+  }
+
+  // P-11 · T-033 · plan §7: lo que esperaba al asistente o al calendario se interpreta ahora, con la fecha
+  // de la captura como referencia (REQ-CAP-24). Si resulta una acción, la misma fila pasa a propuesta y
+  // espera la confirmación de siempre; si no, la respuesta queda en la conversación y la fila se cierra sin
+  // efecto (H-AGT-04). Devuelve qué pasó, para que el trabajador sepa si seguir.
+  async atenderEnEspera(contexto: ContextoSolicitud, operacionId: string): Promise<'propuesta' | 'atendida' | 'no_disponible' | 'ocupada' | 'sin_cambios'> {
+    const op = await this.datos(contexto).operacion.findFirst({ where: { id: operacionId, perfilId: contexto.perfilId, estado: 'en_espera' } });
+    if (!op || op.motivoEspera === 'funcion_por_llegar') return 'sin_cambios';
+    const texto = op.solicitudOriginal ?? '';
+    const previa = op.conversacionId ? await this.datos(contexto).conversacionAgente.findFirst({ where: { id: op.conversacionId, estado: 'abierta' } }) : null;
+    const conversacion = previa ?? (await this.abierta(contexto)) ?? (await this.abrir(contexto));
+    const { grafo, config } = await this.grafo(contexto, conversacion.id);
+    // Con una tarjeta esperando a la persona, no se le pone otra encima: se atiende en la siguiente pasada
+    if ((await grafo.getState(config)).next.includes('esperar_decision')) return 'ocupada';
+
+    const resultado = (await grafo.invoke(
+      {
+        mensajes: [{ rol: 'persona', texto }],
+        turnos: [turnoPersona(texto)],
+        referencia: { instante: op.capturadaEn.toISOString(), zonaHoraria: await this.zona(contexto) },
+        vueltas: 0,
+        pendiente: null,
+        llamadas: null,
+        faltante: null,
+        decision: null,
+        noDisponible: false,
+        enEspera: op.id,
+        cerrada: false,
+      },
+      config,
+    )) as EstadoAsistente;
+    await this.cerrarSiHaceFalta(contexto, conversacion.id, resultado);
+
+    const despues = await this.datos(contexto).operacion.findFirstOrThrow({ where: { id: op.id } });
+    if (despues.estado === 'propuesta') return 'propuesta';
+    if (despues.estado !== 'en_espera' || despues.motivoEspera === 'funcion_por_llegar') return 'atendida';
+    if (resultado.noDisponible) return 'no_disponible';
+    // Sigue sin calendario: queda como estaba
+    if (despues.motivoEspera === 'permiso_faltante' && !(await this.tieneCalendario(contexto))) return 'sin_cambios';
+    await this.operaciones.descartar(contexto, op.id);
+    return 'atendida';
+  }
+
+  private async tieneCalendario(contexto: ContextoSolicitud): Promise<boolean> {
+    const permiso = await this.datos(contexto).consentimientoIntegracion.findFirst({
+      where: { perfilId: contexto.perfilId, proveedor: 'google', alcance: 'calendario', estado: 'concedido' },
+    });
+    return permiso !== null;
   }
 
   async decidir(contexto: ContextoSolicitud, decision: DecisionAsistente): Promise<RespuestaAsistente> {
@@ -150,7 +200,7 @@ export class AsistenteService {
 
   private async grafo(contexto: ContextoSolicitud, conversacionId: string) {
     const punto = await PuntoControlConversacion.cargar(this.datos(contexto), contexto.organizacionId, conversacionId);
-    const grafo = construirGrafo({ llamadas: this.llamadas, ejecutor: this.ejecutor }, contexto, conversacionId, punto);
+    const grafo = construirGrafo({ llamadas: this.llamadas, ejecutor: this.ejecutor, operaciones: this.operaciones }, contexto, conversacionId, punto);
     return { grafo, config: { configurable: { thread_id: conversacionId } } };
   }
 

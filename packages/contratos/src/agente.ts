@@ -48,6 +48,10 @@ export const ArgsCancelarEvento = z.strictObject({
 });
 export type ArgsCancelarEvento = z.infer<typeof ArgsCancelarEvento>;
 
+// specs/07-agente/plan.md §7 · H-AGT-09: por qué espera algo que se pidió
+export const MotivoEspera = z.enum(['asistente_no_disponible', 'permiso_faltante', 'funcion_por_llegar']);
+export type MotivoEspera = z.infer<typeof MotivoEspera>;
+
 // REQ-AGT-02: una tarea se reconoce y queda en espera hasta que existan las tareas personales
 export const ClaseTarea = z.enum(['tarea', 'pendiente_sin_fecha', 'esperando_de_alguien']);
 export type ClaseTarea = z.infer<typeof ClaseTarea>;
@@ -86,5 +90,7 @@ export type ListaAgenda = z.infer<typeof ListaAgenda>;
 export const TurnoDeHerramienta = z.discriminatedUnion('tipo', [
   z.strictObject({ tipo: z.literal('agenda'), lista: ListaAgenda }),
   z.strictObject({ tipo: z.literal('propuesta'), operacion: OperacionRespuesta }),
+  // T-033: lo pedido quedó guardado sin crear nada (REQ-AGT-02, REQ-CAP-23)
+  z.strictObject({ tipo: z.literal('en_espera'), texto: z.string(), motivo: MotivoEspera, operacionId: z.uuid() }),
 ]);
 export type TurnoDeHerramienta = z.infer<typeof TurnoDeHerramienta>;

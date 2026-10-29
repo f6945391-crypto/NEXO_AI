@@ -5,6 +5,7 @@ import { ConversacionAsistente, IngresoRespuesta, RespuestaAsistente, type Turno
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { ModeloSimulado, type ReglaGuion } from '../../src/agente/modelo/modelo-simulado';
+import { OPCIONES_LLAMADOR } from '../../src/agente/modelo/llamador-modelo';
 import { PROVEEDOR_MODELO } from '../../src/agente/modelo/proveedor-modelo';
 import { AppModule } from '../../src/app.module';
 import { crearOrganizacion } from '../../src/identidad/alta-cuentas';
@@ -49,6 +50,9 @@ describe('T-032 · conversación con el asistente', () => {
     const modulo = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(PROVEEDOR_MODELO)
       .useValue(simulado)
+      // Sin las esperas de 1 y 3 segundos entre reintentos
+      .overrideProvider(OPCIONES_LLAMADOR)
+      .useValue({ limiteMs: 2_000, esperasMs: [0, 0] })
       .overrideProvider(PROVEEDOR_CALENDARIO)
       .useValue(calendario)
       .compile();
@@ -175,11 +179,11 @@ describe('T-032 · conversación con el asistente', () => {
       expect(r).toMatchObject({ pendiente: null, cerrada: false });
     });
 
-    it('con el modelo caído no se crea nada y se dice (el modo en espera llega con T-033)', async () => {
+    it('con el modelo caído no se propone nada: queda en espera (T-033)', async () => {
       simulado.caer();
       const r = await enviar('Agéndame dentista el viernes a las 4');
-      expect(tipos(r.turnos)).toEqual(['persona', 'fallo']);
-      expect(await prisma.operacion.count()).toBe(0);
+      expect(tipos(r.turnos)).toEqual(['persona', 'en_espera']);
+      expect(await prisma.operacion.count({ where: { estado: 'propuesta' } })).toBe(0);
     });
   });
 });

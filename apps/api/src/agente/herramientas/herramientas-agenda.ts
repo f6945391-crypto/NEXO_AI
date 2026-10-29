@@ -188,7 +188,7 @@ export class HerramientasAgenda implements OnModuleInit {
     return this.operaciones.proponer(
       contexto,
       { tipo, carga, origen: 'agente', solicitudOriginal: entorno.solicitudOriginal.slice(0, 2000) },
-      { conversacionId: entorno.conversacionId },
+      { conversacionId: entorno.conversacionId, ...(entorno.enEspera ? { desdeEnEspera: entorno.enEspera } : {}) },
     );
   }
 }

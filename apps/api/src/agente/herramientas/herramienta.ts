@@ -10,6 +10,8 @@ export interface EntornoHerramienta {
   solicitudOriginal: string;
   // Desde cuándo se resuelven «hoy» y «mañana» (REQ-CAP-24)
   referencia: { instante: Date; zonaHoraria: string };
+  // T-033: la Operación en espera que se está atendiendo; lo que se proponga ocupa esa misma fila
+  enEspera?: string;
 }
 
 export interface ResultadoHerramienta {

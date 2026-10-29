@@ -3,11 +3,13 @@ import { AgendaModule } from '../agenda/agenda.module';
 import { IntegracionesModule } from '../integraciones/integraciones.module';
 import { AsistenteController } from './asistente.controller';
 import { AsistenteService } from './asistente.service';
+import { ProcesadorEnEspera } from './en-espera';
 import { EjecutorHerramientas } from './herramientas/ejecutor-herramientas';
 import { HerramientasAgenda } from './herramientas/herramientas-agenda';
+import { HerramientasCaptura } from './herramientas/herramientas-captura';
 import { LlamadasAuditadas } from './llamadas-auditadas';
 import { GUION_DEMOSTRACION } from './modelo/guion-demostracion';
-import { LlamadorModelo } from './modelo/llamador-modelo';
+import { LlamadorModelo, OPCIONES_LLAMADOR, OPCIONES_POR_DEFECTO } from './modelo/llamador-modelo';
 import { ModeloCompatibleOpenAI } from './modelo/modelo-compatible-openai';
 import { ModeloNoConfigurado } from './modelo/modelo-no-configurado';
 import { ModeloSimulado } from './modelo/modelo-simulado';
@@ -43,12 +45,15 @@ export function crearProveedorModelo(entorno: NodeJS.ProcessEnv = process.env): 
   controllers: [AsistenteController],
   providers: [
     { provide: PROVEEDOR_MODELO, useFactory: () => crearProveedorModelo() },
+    { provide: OPCIONES_LLAMADOR, useValue: OPCIONES_POR_DEFECTO },
     LlamadorModelo,
     LlamadasAuditadas,
     EjecutorHerramientas,
     HerramientasAgenda,
+    HerramientasCaptura,
     AsistenteService,
+    ProcesadorEnEspera,
   ],
-  exports: [PROVEEDOR_MODELO, LlamadorModelo, LlamadasAuditadas, EjecutorHerramientas],
+  exports: [PROVEEDOR_MODELO, LlamadorModelo, LlamadasAuditadas, EjecutorHerramientas, AsistenteService, ProcesadorEnEspera],
 })
 export class AgenteModule {}
