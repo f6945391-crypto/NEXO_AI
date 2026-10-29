@@ -12,7 +12,8 @@
     "migrar": "prisma migrate deploy",
     "semilla": "node dist/cli/semilla.js",
     "crear-cuenta": "node dist/cli/crear-cuenta.js",
-    "probar-calendario": "node dist/cli/probar-calendario.js"
+    "probar-calendario": "node dist/cli/probar-calendario.js",
+    "evaluar-asistente": "node dist/cli/evaluar-asistente.js"
   },
   "dependencies": {
     "@langchain/core": "1.2.17",

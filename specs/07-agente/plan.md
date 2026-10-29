@@ -174,7 +174,7 @@ Reglas comunes:
 
 ### 6.1 Instrucciones
 
-Un texto fijo en `instrucciones.ts`, versionado con el código. Dice qué puede hacer (solo agenda), que nunca invente fechas, horas ni compromisos, que no ponga hora de fin si no se dijo, que pregunte en vez de suponer, y que diga lo que todavía no sabe hacer. **No contiene ninguna regla de negocio que el código no compruebe también** (P-02).
+Un texto fijo en `instrucciones.ts`, versionado con el código. *Ajustado en T-036 tras la primera evaluación contra Groq: el modelo pedía confirmación en texto en vez de llamar a la herramienta.* Dice qué puede hacer (solo agenda), que nunca invente fechas, horas ni compromisos, que no ponga hora de fin si no se dijo, que pregunte en vez de suponer, y que diga lo que todavía no sabe hacer. **No contiene ninguna regla de negocio que el código no compruebe también** (P-02).
 
 ## 7. Modo degradado (P-11, REQ-CUN01-11, REQ-CAP-24)
 

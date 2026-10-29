@@ -1,10 +1,13 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { createServer, type Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { join, relative, sep } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { crearProveedorModelo } from '../../src/agente/agente.module';
 import { contratoDelProveedor, peticionDeContrato } from '../../src/agente/modelo/contrato';
 import { GUION_DEMOSTRACION } from '../../src/agente/modelo/guion-demostracion';
 import { LlamadorModelo } from '../../src/agente/modelo/llamador-modelo';
+import { ModeloCompatibleOpenAI } from '../../src/agente/modelo/modelo-compatible-openai';
 import { ModeloNoConfigurado } from '../../src/agente/modelo/modelo-no-configurado';
 import { ModeloSimulado, SIN_REGLA, type ReglaGuion } from '../../src/agente/modelo/modelo-simulado';
 import { costoUsd } from '../../src/agente/modelo/precios-modelo';
@@ -136,6 +139,115 @@ describe('agente.contrato-del-proveedor', () => {
       expect(crearProveedorModelo({ MODELO_PROVEEDOR: 'simulado' }).nombre).toBe('simulado');
       expect(() => crearProveedorModelo({ MODELO_PROVEEDOR: 'simulado', NODE_ENV: 'production' })).toThrow();
       expect(() => crearProveedorModelo({ MODELO_PROVEEDOR: 'otro' })).toThrow(/desconocido/);
+    });
+  });
+
+  // T-036 · plan §3.1: el adaptador compatible con la API de OpenAI (Groq), contra un servidor local que la
+  // imita. Nunca se llama a Groq desde las pruebas.
+  describe('compatible con la API de OpenAI', () => {
+    const CLAVE = 'clave-secreta-de-prueba';
+    let servidor: Server;
+    let url: string;
+    let recibidas: { autorizacion: string | undefined; cuerpo: Record<string, unknown> }[] = [];
+    // Lo que responde el servidor a la próxima petición
+    let responder: (cuerpo: Record<string, unknown>) => { estado: number; cuerpo: unknown } = () => ({ estado: 200, cuerpo: {} });
+
+    beforeAll(async () => {
+      servidor = createServer((peticion, respuesta) => {
+        let datos = '';
+        peticion.on('data', (parte) => (datos += parte));
+        peticion.on('end', () => {
+          const cuerpo = JSON.parse(datos || '{}') as Record<string, unknown>;
+          recibidas.push({ autorizacion: peticion.headers.authorization, cuerpo });
+          const r = peticion.url === '/v1/chat/completions' ? responder(cuerpo) : { estado: 404, cuerpo: {} };
+          respuesta.writeHead(r.estado, { 'Content-Type': 'application/json' }).end(typeof r.cuerpo === 'string' ? r.cuerpo : JSON.stringify(r.cuerpo));
+        });
+      });
+      await new Promise<void>((resolve) => servidor.listen(0, '127.0.0.1', resolve));
+      url = `http://127.0.0.1:${(servidor.address() as AddressInfo).port}/v1/`;
+    });
+
+    afterAll(() => new Promise<void>((resolve) => servidor.close(() => resolve())));
+
+    const adaptador = () => new ModeloCompatibleOpenAI({ url, modelo: 'modelo-de-prueba', clave: CLAVE });
+    const conTexto = (texto: string) => ({ estado: 200, cuerpo: { model: 'modelo-de-prueba', choices: [{ message: { content: texto } }], usage: { prompt_tokens: 120, completion_tokens: 8 } } });
+    const conHerramienta = () => ({
+      estado: 200,
+      cuerpo: {
+        model: 'modelo-de-prueba',
+        choices: [{ message: { content: null, tool_calls: [{ id: 'call_1', type: 'function', function: { name: 'agenda_consultar', arguments: '{"desde":"2026-10-24","hasta":"2026-10-24"}' } }] } }],
+        usage: { prompt_tokens: 150, completion_tokens: 20 },
+      },
+    });
+
+    beforeEach(() => {
+      recibidas = [];
+      responder = (cuerpo) => {
+        const mensajes = cuerpo.messages as { role: string; content: string }[];
+        return mensajes.at(-1)?.content === 'Hola' ? conTexto('Hola, ¿qué hacemos?') : conHerramienta();
+      };
+    });
+
+    it('cumple el contrato de T-029', async () => {
+      for (const paso of contratoDelProveedor(adaptador(), { texto: 'Hola', herramienta: '¿Qué tengo mañana?' })) await paso.ejecutar();
+    });
+
+    it('manda la clave en la cabecera, las instrucciones como sistema y las herramientas como funciones', async () => {
+      await adaptador().responder(peticion('¿Qué tengo mañana?'), new AbortController().signal);
+      const { autorizacion, cuerpo } = recibidas.at(-1)!;
+      expect(autorizacion).toBe(`Bearer ${CLAVE}`);
+      expect(cuerpo).toMatchObject({ model: 'modelo-de-prueba', tool_choice: 'auto', max_tokens: 200 });
+      expect((cuerpo.messages as unknown[])[0]).toMatchObject({ role: 'system' });
+      expect((cuerpo.tools as unknown[])[0]).toMatchObject({ type: 'function', function: { name: 'agenda_consultar', parameters: { type: 'object' } } });
+    });
+
+    it('interpreta las llamadas a herramientas y los tokens, y devuelve el historial en el formato del proveedor', async () => {
+      const r = await adaptador().responder(peticion('¿Qué tengo mañana?'), new AbortController().signal);
+      expect(r).toMatchObject({ texto: null, llamadas: [{ id: 'call_1', nombre: 'agenda_consultar', argumentos: { desde: '2026-10-24' } }], uso: { tokensEntrada: 150, tokensSalida: 20 } });
+      await adaptador().responder(
+        {
+          ...peticion('x'),
+          mensajes: [
+            { rol: 'persona', texto: 'x' },
+            { rol: 'asistente', texto: null, llamadas: r.llamadas },
+            { rol: 'herramienta', llamadaId: 'call_1', contenido: '{"compromisos":[]}' },
+          ],
+        },
+        new AbortController().signal,
+      );
+      expect((recibidas.at(-1)!.cuerpo.messages as unknown[]).slice(1)).toEqual([
+        { role: 'user', content: 'x' },
+        { role: 'assistant', content: null, tool_calls: [{ id: 'call_1', type: 'function', function: { name: 'agenda_consultar', arguments: '{"desde":"2026-10-24","hasta":"2026-10-24"}' } }] },
+        { role: 'tool', tool_call_id: 'call_1', content: '{"compromisos":[]}' },
+      ]);
+    });
+
+    it.each([429, 401, 403, 500, 503])('un %i cuenta como no disponible (H-AGT-03, H-AGT-13)', async (estado) => {
+      responder = () => ({ estado, cuerpo: { error: { message: `rechazada ${CLAVE}` } } });
+      const error = await adaptador().responder(peticion('Hola'), new AbortController().signal).catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(ModeloNoDisponible);
+      // La clave no aparece en ningún mensaje de error
+      expect(String((error as Error).message)).not.toContain(CLAVE);
+    });
+
+    it('un 400 o unos argumentos que no son JSON son un fallo del modelo, sin reintentar', async () => {
+      responder = () => ({ estado: 400, cuerpo: { error: { message: 'tool_use_failed' } } });
+      expect(await adaptador().responder(peticion('Hola'), new AbortController().signal).catch((e: unknown) => e)).toBeInstanceOf(FalloDelModelo);
+      responder = () => ({ estado: 200, cuerpo: { choices: [{ message: { tool_calls: [{ id: 'c', function: { name: 'agenda_consultar', arguments: '{roto' } }] } }] } });
+      const r = await new LlamadorModelo(adaptador(), { limiteMs: 2_000, esperasMs: [0, 0] }).llamar(peticion('Hola'));
+      expect(r).toMatchObject({ ok: false, registro: { intentos: 1, desenlace: 'error' } });
+    });
+
+    it('sin red, no disponible', async () => {
+      const sinRed = new ModeloCompatibleOpenAI({ url: 'http://127.0.0.1:9/v1', modelo: 'x', clave: null });
+      expect(await sinRed.responder(peticion('Hola'), new AbortController().signal).catch((e: unknown) => e)).toBeInstanceOf(ModeloNoDisponible);
+    });
+
+    it('MODELO_PRECIOS fija el costo del modelo configurado; sin él, desconocido', () => {
+      expect(costoUsd('modelo-con-precio', { tokensEntrada: 1, tokensSalida: 1 })).toBeNull();
+      crearProveedorModelo({ MODELO_PROVEEDOR: 'compatible-openai', MODELO_URL: url, MODELO_NOMBRE: 'modelo-con-precio', MODELO_PRECIOS: '0,0' });
+      expect(costoUsd('modelo-con-precio', { tokensEntrada: 1_000, tokensSalida: 500 })).toBe(0);
+      expect(() => crearProveedorModelo({ MODELO_PROVEEDOR: 'compatible-openai' })).toThrow(/MODELO_URL/);
     });
   });
 
