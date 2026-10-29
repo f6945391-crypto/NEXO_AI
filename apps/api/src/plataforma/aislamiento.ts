@@ -16,6 +16,10 @@ export const MODELOS_CON_ORGANIZACION: ReadonlySet<string> = new Set([
   'ConsentimientoIntegracion',
   'EventoAgenda',
   'SincronizacionCalendario',
+  // T-030: el agente
+  'ConversacionAgente',
+  'LlamadaModelo',
+  'InvocacionHerramienta',
 ]);
 
 export class ErrorDeAislamiento extends Error {

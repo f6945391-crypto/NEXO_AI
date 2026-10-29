@@ -42,6 +42,9 @@ model Organizacion {
   consentimientos  ConsentimientoIntegracion[]
   eventosAgenda    EventoAgenda[]
   sincronizaciones SincronizacionCalendario[]
+  conversaciones   ConversacionAgente[]
+  llamadasModelo   LlamadaModelo[]
+  invocaciones     InvocacionHerramienta[]
 
   @@map("organizacion")
 }
@@ -66,6 +69,9 @@ model PerfilUsuario {
   consentimientos    ConsentimientoIntegracion[]
   eventosAgenda      EventoAgenda[]
   sincronizacion     SincronizacionCalendario?
+  conversaciones     ConversacionAgente[]
+  llamadasModelo     LlamadaModelo[]
+  invocaciones       InvocacionHerramienta[]
 
   @@index([organizacionId])
   @@map("perfil_usuario")
@@ -128,12 +134,117 @@ model Operacion {
   // Se rellena al reclamar la confirmación: solo una confirmación lo consigue
   confirmadaEn      DateTime?       @map("confirmada_en") @db.Timestamptz(3)
   ejecutadaEn       DateTime?       @map("ejecutada_en") @db.Timestamptz(3)
+  // T-030 · specs/07-agente/plan.md §7: por qué espera; nulo salvo en en_espera (H-AGT-09)
+  motivoEspera      MotivoEspera?   @map("motivo_espera")
+  // Conversación de la que salió; nula para los controles directos
+  conversacionId    String?         @map("conversacion_id") @db.Uuid
 
-  organizacion Organizacion  @relation(fields: [organizacionId], references: [id])
-  perfil       PerfilUsuario @relation(fields: [perfilId], references: [id])
+  organizacion Organizacion        @relation(fields: [organizacionId], references: [id])
+  perfil       PerfilUsuario       @relation(fields: [perfilId], references: [id])
+  conversacion ConversacionAgente? @relation(fields: [conversacionId], references: [id])
 
   @@index([organizacionId, perfilId, estado])
   @@map("operacion")
+}
+
+// specs/07-agente/plan.md §7 · T-030
+enum MotivoEspera {
+  asistente_no_disponible
+  permiso_faltante
+  // Una tarea, hasta que existan las tareas personales (REQ-AGT-02)
+  funcion_por_llegar
+
+  @@map("motivo_espera")
+}
+
+// Conversación con el asistente (specs/07-agente/plan.md §10) · T-030. Se cierra al cerrarse su acción
+// (REQ-AGT-01, H-AGT-05).
+enum EstadoConversacion {
+  abierta
+  cerrada
+
+  @@map("estado_conversacion")
+}
+
+model ConversacionAgente {
+  id             String             @id @default(uuid()) @db.Uuid
+  organizacionId String             @map("organizacion_id") @db.Uuid
+  perfilId       String             @map("perfil_id") @db.Uuid
+  estado         EstadoConversacion
+  abiertaEn      DateTime           @default(now()) @map("abierta_en") @db.Timestamptz(3)
+  cerradaEn      DateTime?          @map("cerrada_en") @db.Timestamptz(3)
+
+  organizacion Organizacion            @relation(fields: [organizacionId], references: [id])
+  perfil       PerfilUsuario           @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  operaciones  Operacion[]
+  llamadas     LlamadaModelo[]
+  invocaciones InvocacionHerramienta[]
+
+  @@index([perfilId, estado])
+  @@index([organizacionId])
+  @@map("conversacion_agente")
+}
+
+// P-07 · T-030: cada llamada al proveedor del modelo, también las que fallan, con su costo.
+enum DesenlaceLlamada {
+  ok
+  no_disponible
+  error
+
+  @@map("desenlace_llamada")
+}
+
+model LlamadaModelo {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizacionId String           @map("organizacion_id") @db.Uuid
+  perfilId       String           @map("perfil_id") @db.Uuid
+  conversacionId String?          @map("conversacion_id") @db.Uuid
+  proveedor      String
+  modelo         String?
+  tokensEntrada  Int?             @map("tokens_entrada")
+  tokensSalida   Int?             @map("tokens_salida")
+  // Nulo si el modelo no tiene precio conocido: costo desconocido, nunca cero
+  costoUsd       Decimal?         @map("costo_usd") @db.Decimal(12, 6)
+  duracionMs     Int              @map("duracion_ms")
+  intentos       Int
+  desenlace      DesenlaceLlamada
+  error          String?
+  ocurridaEn     DateTime         @default(now()) @map("ocurrida_en") @db.Timestamptz(3)
+
+  organizacion Organizacion            @relation(fields: [organizacionId], references: [id])
+  perfil       PerfilUsuario           @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  conversacion ConversacionAgente?     @relation(fields: [conversacionId], references: [id])
+  invocaciones InvocacionHerramienta[]
+
+  @@index([organizacionId, ocurridaEn])
+  @@map("llamada_modelo")
+}
+
+// P-07 · T-030: cada herramienta ejecutada, con argumentos y resultado. El id de la llamada que dio el
+// proveedor, único por conversación, hace que repetir un paso no repita su efecto.
+model InvocacionHerramienta {
+  id              String   @id @default(uuid()) @db.Uuid
+  organizacionId  String   @map("organizacion_id") @db.Uuid
+  perfilId        String   @map("perfil_id") @db.Uuid
+  conversacionId  String   @map("conversacion_id") @db.Uuid
+  llamadaModeloId String?  @map("llamada_modelo_id") @db.Uuid
+  idLlamada       String   @map("id_llamada")
+  herramienta     String
+  argumentos      Json
+  resultado       Json?
+  error           String?
+  operacionId     String?  @map("operacion_id") @db.Uuid
+  duracionMs      Int      @map("duracion_ms")
+  ocurridaEn      DateTime @default(now()) @map("ocurrida_en") @db.Timestamptz(3)
+
+  organizacion  Organizacion       @relation(fields: [organizacionId], references: [id])
+  perfil        PerfilUsuario      @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  conversacion  ConversacionAgente @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+  llamadaModelo LlamadaModelo?     @relation(fields: [llamadaModeloId], references: [id])
+
+  @@unique([conversacionId, idLlamada])
+  @@index([organizacionId])
+  @@map("invocacion_herramienta")
 }
 
 // Permiso concedido a una integración externa (specs/06-acceso/plan.md §3) · T-007. Una fila por alcance:

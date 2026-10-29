@@ -92,4 +92,7 @@ process.env.GOOGLE_CLIENT_ID ||= 'prueba-e2e.apps.googleusercontent.com';
 process.env.GOOGLE_CLIENT_SECRET ||= 'prueba-e2e';
 process.env.GOOGLE_REDIRECT_URI ||= `http://localhost:${process.env.PUERTO}/integraciones/google/retorno`;
 process.env.TOKENS_CLAVE_CIFRADO ||= Buffer.alloc(32, 7).toString('base64');
+// T-030: el asistente de las pruebas es el simulado con su guion, nunca el proveedor real del .env (H-AGT-13)
+process.env.MODELO_PROVEEDOR = 'simulado';
+delete process.env.MODELO_CLAVE;
 desdeApi('./dist/main.js');

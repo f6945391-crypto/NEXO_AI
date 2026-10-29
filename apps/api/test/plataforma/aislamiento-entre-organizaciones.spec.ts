@@ -91,6 +91,23 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
       await base.sincronizacionCalendario.create({
         data: { organizacionId, perfilId, ventanaDesde: ahora, ventanaHasta: ahora, ultimaSincronizacion: ahora },
       });
+      // Y una conversación con el asistente, con una llamada al modelo y una herramienta (T-030).
+      const conversacion = await base.conversacionAgente.create({ data: { organizacionId, perfilId, estado: 'abierta' } });
+      const llamada = await base.llamadaModelo.create({
+        data: { organizacionId, perfilId, conversacionId: conversacion.id, proveedor: 'simulado', duracionMs: 1, intentos: 1, desenlace: 'ok' },
+      });
+      await base.invocacionHerramienta.create({
+        data: {
+          organizacionId,
+          perfilId,
+          conversacionId: conversacion.id,
+          llamadaModeloId: llamada.id,
+          idLlamada: 'llamada-1',
+          herramienta: 'agenda.consultar',
+          argumentos: {},
+          duracionMs: 1,
+        },
+      });
     }
     deA = aislarPorOrganizacion(base, orgA);
   });

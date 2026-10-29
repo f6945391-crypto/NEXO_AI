@@ -37,7 +37,12 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
 - **Contenido:** migración con `conversacion_agente`, `llamada_modelo`, `invocacion_herramienta`, `operacion.motivo_espera` y `operacion.conversacion_id`; las tablas nuevas en `MODELOS_CON_ORGANIZACION`; `LlamadorModelo` registra cada llamada con su costo; `EjecutorHerramientas` valida, audita y devuelve el resultado guardado si la llamada se repite
 - **Hecho cuando:** cada llamada al modelo, también las fallidas, deja su fila con tokens y costo; ejecutar dos veces la misma llamada de herramienta crea una sola Operación; la prueba de aislamiento cubre las tablas nuevas
 - **Pruebas:** `agente.herramienta-auditada-con-costo`, `agente.herramienta-idempotente`, `plataforma.aislamiento-entre-organizaciones` (ampliada)
-- **Estado:** pendiente
+- **Estado:** hecha · 29 de octubre de 2026. 9 pruebas nuevas, y la de aislamiento cubre ya nueve tablas
+- **Notas de implementación:**
+  - Séptima migración, `20261029000000_agente`, generada con `prisma migrate diff` desde la base de desarrollo. Las tres tablas nuevas entran en `MODELOS_CON_ORGANIZACION`.
+  - `LlamadasAuditadas.llamar` envuelve al `LlamadorModelo` de T-029 y guarda cada llamada, también la que no respondió, con su costo. Costo nulo es desconocido, nunca cero.
+  - `EjecutorHerramientas`: registro de herramientas, sus definiciones para el modelo (`z.toJSONSchema` del contrato, nombre con guion bajo) y su ejecución. Valida los argumentos antes de nada y **reserva la llamada antes de ejecutarla**: dos ejecuciones de la misma llamada, incluso simultáneas, ejecutan una; la repetida recibe lo guardado. Un error de la API (`DATOS_FALTANTES`, `EVENTO_NO_MODIFICABLE`…) vuelve al modelo con su código; uno inesperado solo dice que no se pudo, y el detalle queda en el registro del servidor.
+  - **Las pruebas nunca llaman al proveedor real**, aunque el `.env` tenga uno: `vitest.config.mts` fija `MODELO_PROVEEDOR=no-configurado` y quita la clave, y la API de las pruebas de extremo a extremo arranca con el simulado (`arrancar-api.mjs`).
 
 ## 2. Herramientas y grafo
 

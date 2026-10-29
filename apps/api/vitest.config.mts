@@ -12,6 +12,11 @@ process.env.JWT_SECRETO ??= 'solo-para-pruebas';
 // Clave de prueba de 32 bytes para cifrar tokens de Google (T-007). La real vive en .env.
 process.env.TOKENS_CLAVE_CIFRADO ??= Buffer.alloc(32, 7).toString('base64');
 
+// T-030: las pruebas nunca llaman a un proveedor de modelo real, aunque el .env tenga uno (Groq, H-AGT-13).
+// La que necesita un modelo inyecta el simulado.
+process.env.MODELO_PROVEEDOR = 'no-configurado';
+delete process.env.MODELO_CLAVE;
+
 // Las colas de BullMQ de las pruebas no se mezclan con las de un trabajador de desarrollo (T-014).
 process.env.COLA_PREFIJO ??= 'nexoai-prueba';
 process.env.REDIS_URL ??= 'redis://localhost:6379';
