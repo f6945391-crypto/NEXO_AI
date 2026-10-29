@@ -1,0 +1,90 @@
+import { z } from 'zod';
+import { OperacionRespuesta } from './operaciones';
+
+// Herramientas del agente (specs/07-agente/plan.md §5) · T-031. Los argumentos que da el modelo: fechas y
+// horas **en la zona de la persona y sin desfase**. El código las convierte (P-05, decisión 16 de
+// 02-agenda), así el modelo nunca escribe un desfase equivocado. De estos esquemas sale lo que ve el modelo.
+
+const Fecha = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .describe('Fecha en la zona de la persona, AAAA-MM-DD');
+const Hora = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+  .describe('Hora en la zona de la persona, HH:mm de 24 horas');
+const Titulo = z.string().trim().min(1).max(200);
+
+export const ArgsConsultarAgenda = z
+  .strictObject({
+    desde: Fecha.describe('Primer día del rango, AAAA-MM-DD'),
+    hasta: Fecha.describe('Último día del rango, incluido, AAAA-MM-DD'),
+    horaDesde: Hora.optional().describe('Solo desde esta hora, HH:mm; por ejemplo 12:00 para «por la tarde»'),
+    horaHasta: Hora.optional().describe('Solo hasta esta hora, HH:mm'),
+  })
+  .describe('Lee los compromisos de la persona entre dos fechas');
+export type ArgsConsultarAgenda = z.infer<typeof ArgsConsultarAgenda>;
+
+// Todo opcional: lo que la persona no dijo no se inventa. Si falta algo, la herramienta dice qué (REQ-CUN01-07)
+export const ArgsRegistrarEvento = z.strictObject({
+  titulo: Titulo.optional().describe('Título breve del compromiso'),
+  fecha: Fecha.optional(),
+  horaInicio: Hora.optional(),
+  horaFin: Hora.optional().describe('Solo si la persona dijo cuándo termina; si no, omítela'),
+});
+export type ArgsRegistrarEvento = z.infer<typeof ArgsRegistrarEvento>;
+
+export const ArgsModificarEvento = z.strictObject({
+  eventoId: z.uuid().describe('Id del compromiso, tal como lo dio agenda_consultar'),
+  titulo: Titulo.optional(),
+  fecha: Fecha.optional().describe('Fecha nueva; sin ella, el mismo día'),
+  horaInicio: Hora.optional().describe('Hora nueva de inicio; sin ella, la misma hora'),
+  horaFin: Hora.optional().describe('Hora nueva de fin; sin ella, se conserva la duración'),
+});
+export type ArgsModificarEvento = z.infer<typeof ArgsModificarEvento>;
+
+export const ArgsCancelarEvento = z.strictObject({
+  eventoId: z.uuid().describe('Id del compromiso, tal como lo dio agenda_consultar'),
+});
+export type ArgsCancelarEvento = z.infer<typeof ArgsCancelarEvento>;
+
+// REQ-AGT-02: una tarea se reconoce y queda en espera hasta que existan las tareas personales
+export const ClaseTarea = z.enum(['tarea', 'pendiente_sin_fecha', 'esperando_de_alguien']);
+export type ClaseTarea = z.infer<typeof ClaseTarea>;
+
+export const ArgsGuardarTarea = z.strictObject({
+  texto: z.string().trim().min(1).max(500).describe('Lo que hay que hacer, con las palabras de la persona'),
+  clase: ClaseTarea,
+});
+export type ArgsGuardarTarea = z.infer<typeof ArgsGuardarTarea>;
+
+// REQ-CUN01-13: la lista de compromisos la arma el código con los datos de la réplica, no el modelo.
+export const CompromisoListado = z.strictObject({
+  id: z.uuid(),
+  titulo: z.string(),
+  // «Sábado 31 de octubre»
+  dia: z.string(),
+  // «09:00 – 10:00» en la zona de la persona, o «Todo el día»
+  horario: z.string(),
+  // «Hora de Madrid: 17:00 – 17:30» si el compromiso está en otra zona
+  enSuZona: z.string().nullable(),
+  cancelado: z.boolean(),
+  invitado: z.boolean(),
+});
+export type CompromisoListado = z.infer<typeof CompromisoListado>;
+
+export const ListaAgenda = z.strictObject({
+  // «Del sábado 31 de octubre al lunes 2 de noviembre, de 12:00 a 20:00»
+  rango: z.string(),
+  // «Hora de Lima (GMT-5)» (REQ-CUN01-10)
+  zona: z.string(),
+  compromisos: z.array(CompromisoListado),
+});
+export type ListaAgenda = z.infer<typeof ListaAgenda>;
+
+// Lo que una herramienta deja para la interfaz, sin pasar por el modelo
+export const TurnoDeHerramienta = z.discriminatedUnion('tipo', [
+  z.strictObject({ tipo: z.literal('agenda'), lista: ListaAgenda }),
+  z.strictObject({ tipo: z.literal('propuesta'), operacion: OperacionRespuesta }),
+]);
+export type TurnoDeHerramienta = z.infer<typeof TurnoDeHerramienta>;

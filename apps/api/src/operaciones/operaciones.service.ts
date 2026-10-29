@@ -53,7 +53,12 @@ export class OperacionesService {
     private readonly registro: RegistroOperaciones,
   ) {}
 
-  async proponer(contexto: ContextoSolicitud, solicitud: OperacionSolicitud): Promise<OperacionRespuesta> {
+  // `conversacionId`: la conversación del asistente de la que sale la propuesta (T-031); no viene del cliente
+  async proponer(
+    contexto: ContextoSolicitud,
+    solicitud: OperacionSolicitud,
+    extra: { conversacionId?: string } = {},
+  ): Promise<OperacionRespuesta> {
     const ejecutor = this.registro.obtener(solicitud.tipo);
     if (!ejecutor) throw errorApi(400, 'OPERACION_DESCONOCIDA', 'Esa acción no existe.');
     this.comprobarAutoridad(contexto, ejecutor);
@@ -82,6 +87,7 @@ export class OperacionesService {
         tipo: solicitud.tipo,
         origen: solicitud.origen,
         solicitudOriginal: solicitud.solicitudOriginal ?? null,
+        conversacionId: extra.conversacionId ?? null,
         carga: cargaFinal as object,
         vistaConfirmacion: vista,
         estado: 'propuesta',

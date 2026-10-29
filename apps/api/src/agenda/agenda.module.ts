@@ -24,6 +24,6 @@ import { SincronizadorCalendario } from './sincronizador-calendario';
     ModificarCompromiso,
     CancelarCompromiso,
   ],
-  exports: [SincronizadorCalendario, ReplicaEventosRepositorio],
+  exports: [SincronizadorCalendario, ReplicaEventosRepositorio, ConsultaAgendaService],
 })
 export class AgendaModule {}

@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
+import { AgendaModule } from '../agenda/agenda.module';
+import { IntegracionesModule } from '../integraciones/integraciones.module';
 import { EjecutorHerramientas } from './herramientas/ejecutor-herramientas';
+import { HerramientasAgenda } from './herramientas/herramientas-agenda';
 import { LlamadasAuditadas } from './llamadas-auditadas';
 import { GUION_DEMOSTRACION } from './modelo/guion-demostracion';
 import { LlamadorModelo } from './modelo/llamador-modelo';
@@ -23,11 +26,13 @@ export function crearProveedorModelo(entorno: NodeJS.ProcessEnv = process.env): 
 }
 
 @Module({
+  imports: [AgendaModule, IntegracionesModule],
   providers: [
     { provide: PROVEEDOR_MODELO, useFactory: () => crearProveedorModelo() },
     LlamadorModelo,
     LlamadasAuditadas,
     EjecutorHerramientas,
+    HerramientasAgenda,
   ],
   exports: [PROVEEDOR_MODELO, LlamadorModelo, LlamadasAuditadas, EjecutorHerramientas],
 })

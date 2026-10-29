@@ -53,7 +53,15 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
 - **Contenido:** contratos en `packages/contratos/src/agente.ts`; `agenda.consultar`, `agenda.registrar_evento`, `agenda.modificar_evento`, `agenda.cancelar_evento`; conversión de hora local a instante con la zona del perfil; lista de compromisos armada por el código; `PERMISO_GOOGLE_FALTANTE` sin llamar a nada
 - **Hecho cuando:** sin `horaFin`, la propuesta termina una hora después y la tarjeta lo dice; ninguna herramienta escribe en el calendario simulado; la consulta devuelve exactamente los compromisos de la réplica en ese rango, con los cancelados marcados; sin calendario conectado, no se llama al proveedor de calendario
 - **Pruebas:** `agente.agenda.extrae-sin-inventar-fin`, `agente.herramientas-solo-proponen`, `agente.agenda.consulta-tal-cual`, `agente.sin-calendario-no-agenda`
-- **Estado:** pendiente
+- **Estado:** hecha · 29 de octubre de 2026. 8 pruebas
+- **Notas de implementación:**
+  - Contratos en `packages/contratos/src/agente.ts`: los argumentos de cada herramienta, todos con fecha `AAAA-MM-DD` y hora `HH:mm` en la zona de la persona; la lista de compromisos (`ListaAgenda`) y lo que una herramienta deja para la interfaz (`TurnoDeHerramienta`). También el de `captura.guardar_tarea`, que se implementa en T-033.
+  - `HerramientasAgenda` registra las cuatro en el `EjecutorHerramientas` de T-030. La zona es la de la referencia de la conversación, que es la del perfil.
+  - **Registrar:** los cuatro argumentos son opcionales en el contrato, para que el modelo no tenga que inventar nada. Si falta algo, responde `DATOS_FALTANTES` con los campos en el orden en que se preguntan (fecha, hora de inicio, título) y no crea ninguna Operación. Sin `horaFin` no se manda fin, y la Operación pone una hora, como dice la tarjeta.
+  - **Modificar:** lo que no se dice se conserva: el mismo día, la misma hora del compromiso vista en la zona de la persona, y la duración (T-019).
+  - **Consultar:** como mucho 31 días; con horas, cada día tiene su ventana. Al modelo solo le llegan id, título, horas locales, si es de todo el día, si está cancelado y si es propio (H-AGT-12); la lista que ve la persona la arma el código (REQ-CUN01-13).
+  - Las Operaciones propuestas por el agente guardan la frase de la persona y su conversación (`OperacionesService.proponer` acepta la conversación aparte, que no llega del cliente).
+  - Sin permiso de calendario, cada herramienta responde `PERMISO_GOOGLE_FALTANTE` sin leer ni escribir nada.
 
 ### T-032 · Grafo del asistente con interrupción, conversación y rutas
 
