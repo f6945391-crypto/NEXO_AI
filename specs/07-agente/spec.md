@@ -92,4 +92,6 @@ Detectadas al escribir `plan.md` el 24 de octubre de 2026. Lo que asume el plan 
 | 10 | Como mucho cuatro llamadas al modelo por mensaje (H-AGT-10) | Costo, fallos |
 | 11 | Las fechas relativas las resuelve el modelo con la fecha de referencia; la tarjeta muestra el día de la semana para que la persona lo compruebe (H-AGT-11) | REQ-CUN01-01, REQ-CAP-24 |
 | 12 | El modelo solo ve título y horas del rango que pide (H-AGT-12) | P-10, minimización |
+| 14 | Del estado guardado de cada conversación se conservan los 2 últimos puntos, no 10. **Aceptada por el equipo el 29 de octubre de 2026** (H-AGT-14) | P-07, almacenamiento |
+| 15 | Lo que devuelven las herramientas, y en especial los títulos de compromisos escritos por otras personas, llega al modelo marcado como datos que no son instrucciones. **Aceptada por el equipo el 29 de octubre de 2026** (H-AGT-15) | P-01, P-03 |
 | 13 | Con el proveedor de prueba, su límite de uso por minuto cuenta como «no disponible»: lo pedido queda en espera. Lo que se le envía puede quedar en sus servidores, así que se prueba con un calendario sin datos personales (H-AGT-13, 29 de octubre de 2026) | REQ-CUN01-11, P-10 |

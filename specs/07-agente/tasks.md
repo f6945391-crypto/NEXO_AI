@@ -132,6 +132,16 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
   - Como en la web, el aviso de espera se prueba con una tarea; la caída del asistente la cubren las pruebas de la API.
   - **Corrección del 29 de octubre de 2026**, la misma que en la web (T-034): lo escrito se ve al instante, y la lista baja sola hasta lo último.
 
+### T-037 · Estado guardado más pequeño y contenido externo marcado
+
+- **Habilita:** P-01, P-03, P-07 · plan §13 · H-AGT-14, H-AGT-15
+- **Depende de:** T-032, T-036
+- **Origen:** `INFORME-LANGGRAPH.md`, contraste con lo que recomienda la comunidad de LangGraph, aceptado por el equipo el 29 de octubre de 2026
+- **Contenido:** el punto de control conserva 2 puntos; el resultado de `agenda.consultar` lleva un aviso de contenido externo y, por compromiso, quién lo escribió; una línea en las instrucciones; un caso malicioso en la evaluación, con la historia de una consulta ya hecha
+- **Hecho cuando:** una conversación guardada tiene como mucho 2 puntos y una propuesta pendiente se sigue confirmando tras recargar; el modelo recibe el aviso y la autoría de cada título; contra Groq, un título que pide cancelarlo todo no lleva a proponer nada
+- **Pruebas:** `agente.interrumpe-hasta-decidir` (ampliada), `agente.agenda.consulta-tal-cual` (ampliada), `agente.evaluacion` (a mano, con el caso nuevo)
+- **Estado:** pendiente
+
 ## 4. Después
 
 ### T-036 · Proveedor compatible con la API de OpenAI (Groq) y conjunto de evaluación
