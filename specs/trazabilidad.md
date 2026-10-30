@@ -9,7 +9,7 @@
 
 | Área | Requisitos | pendiente | en curso | implementado | verificado | retirado |
 |---|---|---|---|---|---|---|
-| 01-captura | 24 | 20 | 4 | 0 | 0 | 0 |
+| 01-captura | 24 | 17 | 3 | 4 | 0 | 0 |
 | 02-agenda | 13 | 0 | 0 | 13 | 0 | 0 |
 | 02-jornada | 24 | 24 | 0 | 0 | 0 | 0 |
 | 03-tareas | 26 | 26 | 0 | 0 | 0 | 0 |
@@ -22,12 +22,12 @@
 
 | Requisito | Área | Origen | Fase | Tarea | Prueba | Estado |
 |---|---|---|---|---|---|---|
-| REQ-CAP-01 | 01-captura | CUN-01 y CUN-03, flujo principal paso 1 | 2 | T-034, T-035 | — | pendiente |
+| REQ-CAP-01 | 01-captura | CUN-01 y CUN-03, flujo principal paso 1 | 2 | T-034, T-035 | movil.captura-propone-y-confirma | en curso |
 | REQ-CAP-02 | 01-captura | CUN-01 paso 2, CUN-03 paso 2 | 2 | T-032, T-033 | agente.tarea-queda-en-espera | en curso |
-| REQ-CAP-03 | 01-captura | RN-ER-03 | 2 | T-032 | agente.interrumpe-hasta-decidir | en curso |
-| REQ-CAP-04 | 01-captura | CUN-01 y CUN-03, excepción «información insuficiente»; regla de producto R-20 | 2 | T-032 | agente.pregunta-de-uno-en-uno | en curso |
+| REQ-CAP-03 | 01-captura | RN-ER-03 | 2 | T-032, T-035 | agente.interrumpe-hasta-decidir | implementado |
+| REQ-CAP-04 | 01-captura | CUN-01 y CUN-03, excepción «información insuficiente»; regla de producto R-20 | 2 | T-032, T-035 | agente.pregunta-de-uno-en-uno | implementado |
 | REQ-CAP-05 | 01-captura | decisión de producto; RN-OP-01 | 2 | — | — | pendiente |
-| REQ-CAP-06 | 01-captura | decisión de producto | 2 | T-032 | — | pendiente |
+| REQ-CAP-06 | 01-captura | decisión de producto | 2 | T-032, T-035 | agente.contrato-del-proveedor | en curso |
 | REQ-CAP-07 | 01-captura | regla de producto R-1; `../02-jornada/spec.md` REQ-CUN02-08 | 2 | — | — | pendiente |
 | REQ-CAP-08 | 01-captura | CUN-03; `../04-comunicaciones/spec.md` REQ-CUN04-14; regla de producto R-12 | 2 | — | — | pendiente |
 | REQ-CAP-09 | 01-captura | decisión de producto | 2 | — | — | pendiente |
@@ -44,8 +44,8 @@
 | REQ-CAP-20 | 01-captura | regla de producto R-9 | 2 | — | — | pendiente |
 | REQ-CAP-21 | 01-captura | regla de producto R-8; propuesta técnica §9, minimización | 2 | — | — | pendiente |
 | REQ-CAP-22 | 01-captura | propuesta técnica §5, «las escrituras se encolan y se reintentan» | 2 | — | — | pendiente |
-| REQ-CAP-23 | 01-captura | regla de producto derivada de los cuatro blancos; RN-OP-01 | 2 | T-033, T-034, T-035 | — | pendiente |
-| REQ-CAP-24 | 01-captura | regla de producto R-42; `SPEC.md` P-11 | 2 | T-033 | agente.en-espera-desde-la-captura | en curso |
+| REQ-CAP-23 | 01-captura | regla de producto derivada de los cuatro blancos; RN-OP-01 | 2 | T-033, T-034, T-035 | movil.captura-en-espera | implementado |
+| REQ-CAP-24 | 01-captura | regla de producto R-42; `SPEC.md` P-11 | 2 | T-033, T-035 | agente.en-espera-desde-la-captura | implementado |
 | REQ-CUN01-01 | 02-agenda | CUN-01 flujo principal, pasos 1 y 2 | 2 | T-031, T-034 | agente.agenda.extrae-sin-inventar-fin | implementado |
 | REQ-CUN01-02 | 02-agenda | CUN-01 flujo principal, paso 3 | 1 | T-016, T-017, T-019 | agenda.consulta-solapes-antes-de-proponer | implementado |
 | REQ-CUN01-03 | 02-agenda | RN-ER-03 | 1 | T-012, T-017, T-032 | agenda.sin-confirmar-no-escribe-ni-notifica | implementado |

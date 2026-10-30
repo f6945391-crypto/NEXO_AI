@@ -21,5 +21,15 @@
     "correo": "agenda-vacia-movil@nexoai.test",
     "rol": "colaborador",
     "plan": "empresarial"
+  },
+  "captura": {
+    "correo": "captura-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "capturaEspera": {
+    "correo": "captura-espera-movil@nexoai.test",
+    "rol": "colaborador",
+    "plan": "empresarial"
   }
 }

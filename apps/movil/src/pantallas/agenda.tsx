@@ -20,7 +20,7 @@ type Estado =
 
 type Cancelacion = { tipo: 'detalle' } | { tipo: 'confirmando'; propuesta: OperacionRespuesta } | { tipo: 'ocupado' };
 
-export function AgendaHoy({ alSalir, alAbrirCaptura }: { alSalir: () => void; alAbrirCaptura: () => void }) {
+export function AgendaHoy({ alSalir, alAbrirCaptura, version = 0 }: { alSalir: () => void; alAbrirCaptura: () => void; version?: number }) {
   const [nivel, setNivel] = useState<(typeof NIVELES)[number]>('Hoy');
   const [estado, setEstado] = useState<Estado>({ tipo: 'cargando' });
   const [abierto, setAbierto] = useState<EventoAgenda | null>(null);
@@ -48,9 +48,10 @@ export function AgendaHoy({ alSalir, alAbrirCaptura }: { alSalir: () => void; al
     }
   }, [alSalir]);
 
+  // T-035: también cuando el asistente deja algo hecho
   useEffect(() => {
     void cargar();
-  }, [cargar]);
+  }, [cargar, version]);
 
   function abrir(evento: EventoAgenda) {
     setAbierto(evento);

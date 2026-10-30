@@ -122,7 +122,13 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
 - **Contenido:** `captura.tsx` sobre las mismas rutas, con `sesion.ts`; la misma tarjeta que la web; al confirmar, la agenda se vuelve a pedir; lo que espera se ve al abrir la capa
 - **Hecho cuando:** en Expo web, con el guion de demostración, se registra un compromiso desde la capa y aparece en Hoy; con el asistente no configurado, lo pedido queda en espera y sigue al volver a abrir la capa
 - **Pruebas:** `movil.captura-propone-y-confirma`, `movil.captura-en-espera` (extremo a extremo)
-- **Estado:** pendiente
+- **Estado:** hecha en Expo web · 29 de octubre de 2026. 2 pruebas de extremo a extremo nuevas y `agenda.estado-vacio-abre-captura` al día. **Falta probarla en un teléfono** con Expo Go, como se hizo con T-028
+- **Notas de implementación:**
+  - `src/pantallas/captura.tsx` habla con las mismas rutas que la web (`/asistente/conversacion`, `/mensajes`, `/decisiones`) con `conSesion`, y muestra la misma tarjeta: acción, datos, lo irreversible, el conflicto y sus alternativas, y «Confirmar» o «Descartar». Lo que queda en espera se ve como aviso tranquilo y el fallo como alerta (REQ-CAP-23).
+  - Al abrir la capa se pide la conversación abierta: lo que espera confirmación o quedó en espera sigue ahí.
+  - Cuando algo queda hecho, `Inicio` sube un contador y la agenda de Hoy se vuelve a pedir.
+  - La prueba del estado vacío (T-021) cambia: lo pedido ya no queda en espera sin más, sino que el asistente lo propone.
+  - Como en la web, el aviso de espera se prueba con una tarea; la caída del asistente la cubren las pruebas de la API.
 
 ## 4. Después
 

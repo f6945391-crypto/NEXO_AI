@@ -20,10 +20,12 @@ const SECCIONES: Record<Seccion, { nombre: string; pregunta: string }> = {
 
 const NOMBRE_PLAN = { gratuito: 'Gratuito', personal: 'Personal', empresarial: 'Empresarial' } as const;
 
-export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido: (seccion: Seccion, abrirCaptura: () => void) => ReactNode }) {
+// T-035: `version` sube cada vez que el asistente deja algo hecho, para que la sección vuelva a pedir sus datos
+export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido: (seccion: Seccion, abrirCaptura: () => void, version: number) => ReactNode }) {
   const [seccion, setSeccion] = useState<Seccion>('agenda');
   const [ajustes, setAjustes] = useState(false);
   const [captura, setCaptura] = useState(false);
+  const [version, setVersion] = useState(0);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
 
   useEffect(() => {
@@ -50,13 +52,13 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={estilos.cuerpo}>{contenido(seccion, () => setCaptura(true))}</ScrollView>
+      <ScrollView contentContainerStyle={estilos.cuerpo}>{contenido(seccion, () => setCaptura(true), version)}</ScrollView>
 
       {/* El asa: abre la capa de captura sin salir de la sección (glosario, «Asa») */}
       <Pressable accessibilityRole="button" accessibilityLabel="Pedir algo al asistente" onPress={() => setCaptura(true)} style={estilos.asa}>
         <Text style={estilos.asaTexto}>Pedir algo</Text>
       </Pressable>
-      <CapaCaptura visible={captura} alCerrar={() => setCaptura(false)} />
+      <CapaCaptura visible={captura} alCerrar={() => setCaptura(false)} alCambiarAgenda={() => setVersion((v) => v + 1)} alSalir={alSalir} />
 
       <View accessibilityRole="tablist" style={estilos.pestanas}>
         {(Object.keys(SECCIONES) as Seccion[]).map((clave) => (

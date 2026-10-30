@@ -53,7 +53,7 @@ test.describe('agenda.cancelar-requiere-confirmacion', () => {
 });
 
 test.describe('agenda.estado-vacio-abre-captura', () => {
-  test('sin compromisos hoy, la acción abre la capa de captura, lo pedido queda en espera y no hay formulario', async ({ page }) => {
+  test('sin compromisos hoy, la acción abre la capa de captura, lo pedido llega como propuesta y no hay formulario', async ({ page }) => {
     await entrar(page, cuentas.agendaVacia.correo);
     await expect(page.getByText('Hoy no tienes compromisos')).toBeVisible();
     // R-42: en la agenda no hay ningún campo para crear nada
@@ -65,7 +65,8 @@ test.describe('agenda.estado-vacio-abre-captura', () => {
     await expect(entrada).toBeFocused();
     await entrada.fill('Agéndame una reunión mañana a las 10');
     await page.getByRole('button', { name: 'Enviar' }).click();
-    await expect(page.getByRole('alert')).toContainText('No se ha enviado a nadie ni se ha creado nada.');
-    await expect(page.getByText('En espera', { exact: true })).toBeVisible();
+    // T-035: el asistente lo propone, y nada se registra hasta confirmar (antes quedaba en espera, R-42)
+    await expect(page.getByLabel('Para confirmar')).toContainText('Registrar este compromiso en tu calendario de Google');
+    await expect(page.getByRole('button', { name: 'Confirmar' })).toBeVisible();
   });
 });
