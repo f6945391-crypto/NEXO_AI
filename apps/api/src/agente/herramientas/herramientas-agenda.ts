@@ -13,6 +13,7 @@ import type { ContextoSolicitud } from '../../identidad/contexto';
 import { ClienteGoogle, permisoFaltante } from '../../integraciones/cliente-google';
 import { OperacionesService } from '../../operaciones/operaciones.service';
 import { EjecutorHerramientas } from './ejecutor-herramientas';
+import { AVISO_CONTENIDO_EXTERNO } from './contenido-externo';
 import type { EntornoHerramienta, ResultadoHerramienta } from './herramienta';
 import { armarLista, describirRango } from './lista-agenda';
 
@@ -132,7 +133,9 @@ export class HerramientasAgenda implements OnModuleInit {
           todoElDia: e.todoElDia,
           cancelado: e.estado === 'cancelado',
           propio: e.esOrganizador,
+          autor: e.esOrganizador ? 'la persona' : 'otra persona (invitación)',
         })),
+        aviso: AVISO_CONTENIDO_EXTERNO,
         nota: 'La persona ya ve esta lista, armada con su agenda. No la repitas.',
       },
       turno,

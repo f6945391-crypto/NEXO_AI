@@ -7,8 +7,9 @@ import type { PrismaDeOrganizacion } from '../../plataforma/aislamiento';
 // de LangGraph para Postgres se descartó porque crea sus tablas fuera de Prisma Migrate y del filtro por
 // organización. Así, una propuesta que espera la decisión de la persona sobrevive a un reinicio (P-03).
 
-// Puntos que se conservan por conversación: el grafo solo necesita el último y su padre
-export const PUNTOS_CONSERVADOS = 10;
+// H-AGT-14 · T-037: el grafo solo necesita el último punto y su padre. NexoAI no usa el «viaje en el tiempo»
+// de LangGraph, y cada punto es una copia completa del estado: con 10, una conversación corta ya ocupaba 40 KB.
+export const PUNTOS_CONSERVADOS = 2;
 
 type Puntos = MemorySaver['storage'][string];
 type Escrituras = MemorySaver['writes'];
