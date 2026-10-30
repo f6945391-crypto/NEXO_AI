@@ -95,7 +95,7 @@ describe('T-032 · conversación con el asistente', () => {
       expect(tipos(hecha.turnos)).toEqual(['resultado']);
       const resultado = hecha.turnos[0] as Extract<TurnoAsistente, { tipo: 'resultado' }>;
       expect(resultado.operacion.estado).toBe('ejecutada');
-      expect(resultado.texto).toMatch(/^Listo: «Dentista» quedó en tu calendario el .+, de 16:00 – 17:00 \(hora de lima/);
+      expect(resultado.texto).toMatch(/^Listo: «Dentista» quedó en tu calendario el .+, de 16:00 – 17:00 \(hora de Lima \(GMT-5\)\)\.$/);
       expect(hecha).toMatchObject({ pendiente: null, cerrada: true });
       // Tras proponer, el grafo espera sin volver al modelo, y comunicar el resultado tampoco lo llama
       expect(simulado.peticiones).toHaveLength(1);
@@ -165,7 +165,7 @@ describe('T-032 · conversación con el asistente', () => {
       await enviar('Hola');
       const peticion = simulado.peticiones.at(-1)!;
       expect(peticion.referencia.zonaHoraria).toBe('America/Lima');
-      expect(peticion.sistema).toMatch(/Ahora es (lunes|martes|miércoles|jueves|viernes|sábado|domingo), \d+ de \w+ de \d{4}, \d{2}:\d{2}, hora de lima/);
+      expect(peticion.sistema).toMatch(/Ahora es (lunes|martes|miércoles|jueves|viernes|sábado|domingo), \d+ de \w+ de \d{4}, \d{2}:\d{2}, hora de Lima \(GMT-5\)\./);
     });
   });
 

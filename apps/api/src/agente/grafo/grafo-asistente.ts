@@ -70,6 +70,12 @@ const turnoTexto = (texto: string): TurnoAsistente => ({ id: randomUUID(), en: a
 const turnoFallo = (texto: string): TurnoAsistente => ({ id: randomUUID(), en: ahora(), tipo: 'fallo', texto });
 const deAsistente = (texto: string): MensajeModelo => ({ rol: 'asistente', texto, llamadas: [] });
 
+// «Hora de Lima (GMT-5)» dentro de una frase: solo la primera letra en minúscula
+export const zonaEnFrase = (zona: string, instante: Date) => {
+  const nombre = nombreDeZona(zona, instante);
+  return nombre.charAt(0).toLowerCase() + nombre.slice(1);
+};
+
 const ultimaFrase = (mensajes: MensajeModelo[]) => {
   const persona = mensajes.findLast((m) => m.rol === 'persona');
   return persona?.rol === 'persona' ? persona.texto : '';
@@ -87,7 +93,7 @@ function textoDelResultado(op: OperacionRespuesta, zona: string): string {
   const evento = EventoAgenda.safeParse(op.resultado);
   if (!evento.success) return 'Listo.';
   const { titulo, inicio, fin, todoElDia } = evento.data;
-  const cuando = `el ${fechaLarga(new Date(inicio), zona)}${todoElDia ? '' : `, de ${horario(new Date(inicio), new Date(fin), zona)}`} (${nombreDeZona(zona, new Date(inicio)).toLowerCase()})`;
+  const cuando = `el ${fechaLarga(new Date(inicio), zona)}${todoElDia ? '' : `, de ${horario(new Date(inicio), new Date(fin), zona)}`} (${zonaEnFrase(zona, new Date(inicio))})`;
   if (op.tipo === 'agenda.cancelar') return `Listo: cancelé «${titulo}», que era ${cuando}.`;
   if (op.tipo === 'agenda.modificar') return `Listo: «${titulo}» quedó ${cuando}.`;
   return `Listo: «${titulo}» quedó en tu calendario ${cuando}.`;

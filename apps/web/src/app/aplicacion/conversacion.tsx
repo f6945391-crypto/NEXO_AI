@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, type FormEvent, type RefObject } from 'react';
+import { useEffect, useRef, useState, useTransition, type FormEvent, type RefObject } from 'react';
 import type { ConversacionAsistente, DecisionAsistente, OperacionRespuesta, TurnoAsistente } from '@nexoai/contratos';
 import { decidirEnAsistente, enviarAlAsistente } from '../acciones';
 import { IconoEnviar } from './iconos';
@@ -171,13 +171,22 @@ export function Conversacion({
   const [error, setError] = useState<string | null>(null);
   const [ocupado, enTransicion] = useTransition();
 
-  function aplicar(r: Awaited<ReturnType<typeof enviarAlAsistente>>, reiniciar: boolean) {
+  const final = useRef<HTMLDivElement>(null);
+
+  // Lo último que se dijo queda siempre a la vista
+  useEffect(() => {
+    final.current?.scrollIntoView?.({ block: 'end' });
+  }, [turnos.length, ocupado]);
+
+  // `provisional`: el mensaje de la persona que ya se muestra, mientras el asistente responde. La respuesta
+  // trae el definitivo, que lo reemplaza.
+  function aplicar(r: Awaited<ReturnType<typeof enviarAlAsistente>>, provisional?: string) {
     if (!r.respuesta) {
       setError(r.error ?? 'El asistente no pudo responder.');
       return;
     }
     const { respuesta } = r;
-    setTurnos((previos) => (reiniciar ? respuesta.turnos : [...previos, ...respuesta.turnos]));
+    setTurnos((previos) => [...previos.filter((t) => t.id !== provisional), ...respuesta.turnos]);
     setPendiente(respuesta.pendiente);
     setCerrada(respuesta.cerrada);
   }
@@ -188,12 +197,16 @@ export function Conversacion({
     if (!texto || ocupado) return;
     setError(null);
     setBorrador('');
-    enTransicion(async () => aplicar(await enviarAlAsistente(texto), cerrada));
+    // Lo escrito se ve al instante, sin esperar al asistente (corrección del 29 de octubre de 2026)
+    const provisional: TurnoAsistente = { id: crypto.randomUUID(), en: new Date().toISOString(), tipo: 'persona', texto };
+    setTurnos((previos) => (cerrada ? [provisional] : [...previos, provisional]));
+    setCerrada(false);
+    enTransicion(async () => aplicar(await enviarAlAsistente(texto), provisional.id));
   }
 
   function decidir(decision: DecisionAsistente) {
     setError(null);
-    enTransicion(async () => aplicar(await decidirEnAsistente(decision), false));
+    enTransicion(async () => aplicar(await decidirEnAsistente(decision)));
   }
 
   function usarEjemplo(ejemplo: string) {
@@ -235,6 +248,7 @@ export function Conversacion({
             {error}
           </p>
         )}
+        <div ref={final} />
       </div>
 
       <form className="barra-entrada" onSubmit={enviar}>

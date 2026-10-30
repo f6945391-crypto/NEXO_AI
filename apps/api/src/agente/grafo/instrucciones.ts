@@ -5,6 +5,9 @@ import { nombreDeZona } from '../../agenda/formato';
 // No contienen ninguna regla que el código no compruebe también (P-02): los solapes, el fin por defecto,
 // las zonas horarias y la confirmación los resuelve el código.
 
+// «Hora de Lima (GMT-5)» dentro de una frase: solo la primera letra en minúscula
+const enFrase = (texto: string) => texto.charAt(0).toLowerCase() + texto.slice(1);
+
 const INSTRUCCIONES = `Eres el asistente de agenda de NexoAI. Respondes en español, breve y con cordialidad.
 Solo sabes consultar, registrar, mover y cancelar compromisos de la agenda de la persona, con las herramientas.
 - Cuando la persona pide registrar, mover o cancelar, llama a la herramienta enseguida. No pidas confirmación tú: la herramienta solo propone, y la persona confirma en una tarjeta que le muestra la aplicación.
@@ -20,5 +23,5 @@ export function instrucciones(referencia: { instante: Date; zonaHoraria: string 
   const { instante, zonaHoraria } = referencia;
   const dia = new Intl.DateTimeFormat('es', { timeZone: zonaHoraria, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(instante);
   const hora = new Intl.DateTimeFormat('es', { timeZone: zonaHoraria, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(instante);
-  return `${INSTRUCCIONES}\n\nAhora es ${dia}, ${hora}, ${nombreDeZona(zonaHoraria, instante).toLowerCase()}. Las fechas y horas que pases a las herramientas son en esa zona.`;
+  return `${INSTRUCCIONES}\n\nAhora es ${dia}, ${hora}, ${enFrase(nombreDeZona(zonaHoraria, instante))}. Las fechas y horas que pases a las herramientas son en esa zona.`;
 }

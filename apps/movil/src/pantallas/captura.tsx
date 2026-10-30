@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ConversacionAsistente, RespuestaAsistente, type DecisionAsistente, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
 import { Aviso, Boton } from '../componentes';
@@ -136,7 +136,11 @@ export function CapaCaptura({
     if (visible) void cargar();
   }, [visible, cargar]);
 
-  async function hablar(ruta: string, cuerpo: unknown, reiniciar: boolean) {
+  const lista = useRef<ScrollView>(null);
+
+  // `provisional`: el mensaje de la persona que ya se muestra, mientras el asistente responde. La respuesta
+  // trae el definitivo, que lo reemplaza.
+  async function hablar(ruta: string, cuerpo: unknown, provisional?: string) {
     setError(null);
     setOcupado(true);
     try {
@@ -144,7 +148,7 @@ export function CapaCaptura({
       if (!r) return alSalir();
       const respuesta = RespuestaAsistente.safeParse(r.cuerpo);
       if (r.estado !== 200 || !respuesta.success) return setError(mensajeDeError(r.cuerpo, 'El asistente no pudo responder. Inténtalo de nuevo.'));
-      setTurnos((previos) => (reiniciar ? respuesta.data.turnos : [...previos, ...respuesta.data.turnos]));
+      setTurnos((previos) => [...previos.filter((t) => t.id !== provisional), ...respuesta.data.turnos]);
       setPendiente(respuesta.data.pendiente);
       setCerrada(respuesta.data.cerrada);
       if (respuesta.data.turnos.some((t) => t.tipo === 'resultado')) alCambiarAgenda();
@@ -159,7 +163,11 @@ export function CapaCaptura({
     const texto = borrador.trim();
     if (!texto || ocupado) return;
     setBorrador('');
-    void hablar('/asistente/mensajes', { texto }, cerrada);
+    // Lo escrito se ve al instante, sin esperar al asistente (corrección del 29 de octubre de 2026)
+    const provisional: TurnoAsistente = { id: crypto.randomUUID(), en: new Date().toISOString(), tipo: 'persona', texto };
+    setTurnos((previos) => (cerrada ? [provisional] : [...previos, provisional]));
+    setCerrada(false);
+    void hablar('/asistente/mensajes', { texto }, provisional.id);
   }
 
   return (
@@ -176,9 +184,9 @@ export function CapaCaptura({
           </View>
 
           {turnos.length > 0 && (
-            <ScrollView style={estilos.turnos} contentContainerStyle={estilos.turnosContenido}>
+            <ScrollView ref={lista} onContentSizeChange={() => lista.current?.scrollToEnd({ animated: true })} style={estilos.turnos} contentContainerStyle={estilos.turnosContenido}>
               {turnos.map((turno) => (
-                <Turno key={turno.id} turno={turno} pendiente={pendiente} ocupado={ocupado} alDecidir={(d) => void hablar('/asistente/decisiones', d, false)} />
+                <Turno key={turno.id} turno={turno} pendiente={pendiente} ocupado={ocupado} alDecidir={(d) => void hablar('/asistente/decisiones', d)} />
               ))}
             </ScrollView>
           )}

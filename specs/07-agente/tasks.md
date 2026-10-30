@@ -114,6 +114,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
   - La API de las pruebas usa el modelo simulado con el guion de demostración. *Ajuste del «Hecho cuando»:* el aviso de espera se prueba con una tarea, que el guion sí sabe guardar; la caída del asistente no se puede provocar desde el navegador y la cubren las pruebas de la API (`agente.sin-modelo-queda-en-espera`). Las dos se ven con el mismo componente.
   - `web.armazon` cambia: el ejemplo «Recuérdame llamar al dentista» ya no queda «en espera» sin más, sino reconocido como tarea (REQ-AGT-02).
   - Dos detalles de las pruebas: Next.js tiene su propio aviso de navegación con `role="alert"`, así que el fallo se busca dentro de la conversación; y la fecha de la lista lleva coma («Jueves, 29 de octubre»).
+  - **Corrección tras la prueba del equipo con Groq, el 29 de octubre de 2026:** lo escrito solo aparecía cuando llegaba la respuesta, un par de segundos después. Ahora se muestra al instante, junto a «Pensando…», y la respuesta lo reemplaza por el definitivo; además, lo último que se dijo queda siempre a la vista. Comprobado en vivo: a los 150 ms ya se ve el mensaje. En el mismo cambio, la zona dentro de una frase del asistente sale «hora de Lima (GMT-5)» y no «hora de lima (gmt-5)».
 
 ### T-035 · La capa de captura móvil, conectada
 
@@ -129,6 +130,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
   - Cuando algo queda hecho, `Inicio` sube un contador y la agenda de Hoy se vuelve a pedir.
   - La prueba del estado vacío (T-021) cambia: lo pedido ya no queda en espera sin más, sino que el asistente lo propone.
   - Como en la web, el aviso de espera se prueba con una tarea; la caída del asistente la cubren las pruebas de la API.
+  - **Corrección del 29 de octubre de 2026**, la misma que en la web (T-034): lo escrito se ve al instante, y la lista baja sola hasta lo último.
 
 ## 4. Después
 

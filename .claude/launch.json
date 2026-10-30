@@ -8,6 +8,12 @@
       "port": 3000
     },
     {
+      "name": "trabajador",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["apps/api/dist/trabajador.js"],
+      "port": 3990
+    },
+    {
       "name": "web",
       "runtimeExecutable": "npx.cmd",
       "runtimeArgs": ["--yes", "pnpm@12.10.1", "--filter", "@nexoai/web", "dev"],
