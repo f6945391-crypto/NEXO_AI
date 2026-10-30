@@ -378,6 +378,136 @@ body {
   cursor: default;
 }
 
+/* T-034: lo que responde el asistente. Cada tipo se ve distinto (REQ-CAP-23) */
+.turno {
+  justify-self: start;
+  max-width: 92%;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.turno__texto {
+  margin: 0;
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border-radius: var(--radio-md) var(--radio-md) var(--radio-md) var(--radio-sm);
+  background: var(--agente-suave);
+  color: var(--texto-fuerte);
+  line-height: 1.4;
+}
+
+.turno__resultado {
+  margin: 0;
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border-radius: var(--radio-md);
+  background: var(--estado-exito-suave);
+  color: var(--estado-exito);
+  line-height: 1.4;
+}
+
+.turno__fallo {
+  margin: 0;
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border-radius: var(--radio-md);
+  background: var(--estado-error-suave);
+  color: var(--estado-error);
+  line-height: 1.4;
+}
+
+.turno .aviso-espera {
+  margin-bottom: 0;
+}
+
+.pensando {
+  margin: var(--espaciado-16) 0 0;
+  color: var(--texto-suave);
+  font-size: var(--tam-etiqueta);
+}
+
+.tarjeta {
+  display: grid;
+  gap: var(--espaciado-12);
+  padding: var(--espaciado-16);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-md);
+  background: var(--superficie-base);
+}
+
+.tarjeta__accion {
+  margin: 0;
+  font-size: var(--tam-cuerpo);
+}
+
+.tarjeta__datos {
+  margin: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.tarjeta__datos div {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: var(--espaciado-8);
+}
+
+.tarjeta__datos dt {
+  color: var(--texto-suave);
+  font-size: var(--tam-etiqueta);
+}
+
+.tarjeta__datos dd {
+  margin: 0;
+}
+
+.tarjeta__irreversible,
+.tarjeta__motivo {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--estado-advertencia);
+}
+
+.tarjeta__alternativas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.tarjeta__acciones {
+  display: flex;
+  gap: var(--espaciado-8);
+}
+
+.turno-agenda {
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border-radius: var(--radio-md);
+  background: var(--superficie-elevada);
+  border: 1px solid var(--borde-base);
+}
+
+.turno-agenda__rango {
+  margin: 0 0 var(--espaciado-8);
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.turno-agenda__lista {
+  margin: 0;
+  padding-left: var(--espaciado-16);
+  display: grid;
+  gap: var(--espaciado-4, 4px);
+}
+
+.turno-agenda__horario {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.turno-agenda__dia {
+  color: var(--texto-suave);
+  font-size: var(--tam-etiqueta);
+}
+
 /* Lienzo: contexto y memoria */
 .lienzo {
   display: flex;

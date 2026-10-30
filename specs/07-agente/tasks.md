@@ -106,7 +106,14 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
 - **Contenido:** `aplicacion.tsx`: acciones de servidor para enviar y decidir; un componente por tipo de turno; la tarjeta con su conflicto y alternativas; al abrir, la conversación y lo que espera; tras confirmar, `refresh()` y la agenda al día; textos sin vocabulario interno (R-40)
 - **Hecho cuando:** con el guion de demostración, se registra un compromiso desde la conversación y aparece en Hoy; con el asistente no configurado, lo pedido se ve en espera, distinto de un fallo, y sigue ahí al recargar
 - **Pruebas:** `web.asistente-agenda-y-confirma`, `web.asistente-en-espera` (extremo a extremo)
-- **Estado:** pendiente
+- **Estado:** hecha · 29 de octubre de 2026. 4 pruebas de extremo a extremo nuevas, y `web.armazon` al día
+- **Notas de implementación:**
+  - `src/app/aplicacion/conversacion.tsx`: un componente por tipo de turno. La tarjeta muestra la acción, sus datos, lo irreversible y, si choca, el motivo y las alternativas como botones; «Confirmar» y «Descartar» solo en la tarjeta que espera decisión. Lo que queda en espera se ve como un aviso tranquilo («En espera.»), distinto del fallo (REQ-CAP-23). Mientras el asistente responde, «Pensando…».
+  - Acciones de servidor `enviarAlAsistente` y `decidirEnAsistente` (`src/app/acciones.ts`): validan con los contratos y, si algo quedó hecho, piden de nuevo la página con `refresh()`, así Hoy muestra el compromiso nuevo.
+  - La página lee la conversación abierta en el servidor (`src/lib/asistente.ts`): lo que espera confirmación o quedó en espera se ve al volver y al recargar. Tras cerrarse una acción, lo siguiente que se pide empieza en limpio (REQ-AGT-01).
+  - La API de las pruebas usa el modelo simulado con el guion de demostración. *Ajuste del «Hecho cuando»:* el aviso de espera se prueba con una tarea, que el guion sí sabe guardar; la caída del asistente no se puede provocar desde el navegador y la cubren las pruebas de la API (`agente.sin-modelo-queda-en-espera`). Las dos se ven con el mismo componente.
+  - `web.armazon` cambia: el ejemplo «Recuérdame llamar al dentista» ya no queda «en espera» sin más, sino reconocido como tarea (REQ-AGT-02).
+  - Dos detalles de las pruebas: Next.js tiene su propio aviso de navegación con `role="alert"`, así que el fallo se busca dentro de la conversación; y la fecha de la lista lleva coma («Jueves, 29 de octubre»).
 
 ### T-035 · La capa de captura móvil, conectada
 

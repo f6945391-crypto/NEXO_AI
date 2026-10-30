@@ -46,5 +46,15 @@
     "correo": "zona-e2e@nexoai.test",
     "rol": "usuario_personal",
     "plan": "personal"
+  },
+  "asistente": {
+    "correo": "asistente-e2e@nexoai.test",
+    "rol": "gerente",
+    "plan": "empresarial"
+  },
+  "asistenteEspera": {
+    "correo": "asistente-espera-e2e@nexoai.test",
+    "rol": "gerente",
+    "plan": "empresarial"
   }
 }

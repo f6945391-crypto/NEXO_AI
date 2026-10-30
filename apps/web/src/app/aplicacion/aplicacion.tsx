@@ -1,37 +1,30 @@
 'use client';
 
-import { useRef, useState, type FormEvent } from 'react';
-import type { Perfil, PermisoGoogle, Plan, Rol } from '@nexoai/contratos';
+import { useRef, useState } from 'react';
+import type { ConversacionAsistente, Perfil, PermisoGoogle, Plan, Rol } from '@nexoai/contratos';
 import type { AgendaDelDia } from '../../lib/agenda';
 import { conectarGoogle, salir } from '../acciones';
 import { CambioZona } from './cambio-zona';
+import { Conversacion } from './conversacion';
 import {
   IconoActividad,
   IconoAgenda,
   IconoAjustes,
   IconoCerrar,
   IconoContraer,
-  IconoEnviar,
   IconoExpandir,
   IconoTareas,
 } from './iconos';
 import { SECCIONES, type Seccion } from './secciones';
 
 // T-023 · design/ARQUITECTURA-VISUAL-WEB.md. Navegación 72 · conversación 528 · lienzo 840, y el
-// lienzo expandido (72 · 0 · 1368). El asistente llega en la fase 2: hasta entonces, lo que se pide
-// queda en espera y se dice con claridad que no se envió ni se creó nada (R-42, P-11).
-
-type Mensaje = { id: number; texto: string; hora: string };
+// lienzo expandido (72 · 0 · 1368). T-034: la conversación habla con el asistente (conversacion.tsx).
 
 const ICONOS: Record<Seccion, () => React.JSX.Element> = {
   agenda: IconoAgenda,
   tareas: IconoTareas,
   actividad: IconoActividad,
 };
-
-function horaActual(): string {
-  return new Intl.DateTimeFormat('es', { hour: '2-digit', minute: '2-digit', timeZoneName: 'shortOffset' }).format(new Date());
-}
 
 const NOMBRE_PLAN: Record<Plan, string> = { gratuito: 'Gratuito', personal: 'Personal', empresarial: 'Empresarial' };
 
@@ -56,6 +49,7 @@ export function Aplicacion({
   perfil,
   permisosGoogle,
   agenda,
+  conversacion,
   resultadoGoogle,
 }: {
   rol: Rol;
@@ -63,6 +57,7 @@ export function Aplicacion({
   perfil: Perfil | null;
   permisosGoogle: PermisoGoogle[];
   agenda: AgendaDelDia;
+  conversacion: ConversacionAsistente | null;
   resultadoGoogle: string | null;
 }) {
   const [seccion, setSeccion] = useState<Seccion>('agenda');
@@ -70,27 +65,12 @@ export function Aplicacion({
   const [expandido, setExpandido] = useState(false);
   const [ajustes, setAjustes] = useState(false);
   const [aviso, setAviso] = useState(resultadoGoogle ? (AVISO_GOOGLE[resultadoGoogle] ?? null) : null);
-  const [mensajes, setMensajes] = useState<Mensaje[]>([]);
-  const [borrador, setBorrador] = useState('');
   const entrada = useRef<HTMLTextAreaElement>(null);
   const actual = SECCIONES[seccion];
 
   function cambiarSeccion(nueva: Seccion) {
     setSeccion(nueva);
     setCorte(0);
-  }
-
-  function enviar(evento?: FormEvent) {
-    evento?.preventDefault();
-    const texto = borrador.trim();
-    if (!texto) return;
-    setMensajes((previos) => [...previos, { id: previos.length + 1, texto, hora: horaActual() }]);
-    setBorrador('');
-  }
-
-  function usarEjemplo(ejemplo: string) {
-    setBorrador(ejemplo);
-    entrada.current?.focus();
   }
 
   // REQ-CUN01-12: el estado vacío lleva a pedírselo al asistente, nunca a un formulario (R-42). Si el
@@ -132,62 +112,7 @@ export function Aplicacion({
         </button>
       </nav>
 
-      {!expandido && (
-        <section className="conversacion" aria-label="Asistente">
-          <div className="conversacion__contenido">
-            {mensajes.length === 0 ? (
-              <div className="blanco-inicial">
-                <h2>¿Qué hacemos?</h2>
-                <p>Pídelo con tus palabras. Antes de hacer nada que no se pueda deshacer, te lo enseño para que lo confirmes.</p>
-                <ul className="ejemplos">
-                  {actual.ejemplos.map((ejemplo) => (
-                    <li key={ejemplo}>
-                      <button type="button" className="ejemplo" onClick={() => usarEjemplo(ejemplo)}>
-                        {ejemplo}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
-              <>
-                <div className="aviso-espera" role="status">
-                  <strong>El asistente todavía no está activo en esta versión.</strong> Lo que pides queda aquí, en espera.
-                  No se ha enviado a nadie ni se ha creado nada.
-                </div>
-                <ol className="mensajes">
-                  {mensajes.map((mensaje) => (
-                    <li key={mensaje.id} className="mensaje">
-                      <p className="mensaje__texto">{mensaje.texto}</p>
-                      <p className="mensaje__estado">En espera · {mensaje.hora}</p>
-                    </li>
-                  ))}
-                </ol>
-              </>
-            )}
-          </div>
-
-          <form className="barra-entrada" onSubmit={enviar}>
-            <label htmlFor="pedido" className="solo-lector">
-              Pídele algo al asistente
-            </label>
-            <textarea
-              id="pedido"
-              ref={entrada}
-              rows={2}
-              value={borrador}
-              placeholder="Pídele algo al asistente"
-              onChange={(e) => setBorrador(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) enviar(e);
-              }}
-            />
-            <button type="submit" className="barra-entrada__enviar" aria-label="Enviar" disabled={!borrador.trim()}>
-              <IconoEnviar />
-            </button>
-          </form>
-        </section>
-      )}
+      {!expandido && <Conversacion inicial={conversacion} ejemplos={actual.ejemplos} zona={perfil?.zonaHoraria ?? undefined} entrada={entrada} />}
 
       <main className="lienzo">
         {aviso && (

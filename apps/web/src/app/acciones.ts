@@ -5,11 +5,14 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
   ClaveAlcanceGoogle,
+  DecisionAsistente,
   EnlaceGoogleRespuesta,
   IngresoRespuesta,
   IngresoSolicitud,
+  MensajeAsistente,
   OperacionRespuesta,
   PrimerIngresoSolicitud,
+  RespuestaAsistente,
   ZonaHoraria,
 } from '@nexoai/contratos';
 import {
@@ -140,6 +143,36 @@ export async function descartarOperacion(id: string): Promise<void> {
   } catch {
     // Si la API no responde, la propuesta queda sin confirmar, que tampoco cambia nada
   }
+}
+
+// T-034 · specs/07-agente/plan.md §9. La conversación con el asistente. La web solo envía lo escrito y la
+// decisión sobre una tarjeta; lo que se muestra lo arma la API, y la confirmación es la de Operaciones (AD-09).
+export type ResultadoAsistente = { respuesta?: RespuestaAsistente; error?: string };
+
+async function hablarConAsistente(ruta: string, cuerpo: unknown): Promise<ResultadoAsistente> {
+  const token = await tokenDeAcceso();
+  try {
+    const respuesta = await llamarApi(ruta, { metodo: 'POST', cuerpo, token });
+    const leida = RespuestaAsistente.safeParse(respuesta.cuerpo);
+    if (respuesta.estado !== 200 || !leida.success) return { error: mensajeDeError(respuesta.cuerpo, 'El asistente no pudo responder. Inténtalo de nuevo.') };
+    // Si algo quedó hecho, la agenda de la página se vuelve a pedir
+    if (leida.data.turnos.some((turno) => turno.tipo === 'resultado')) refresh();
+    return { respuesta: leida.data };
+  } catch {
+    return { error: SIN_CONEXION };
+  }
+}
+
+export async function enviarAlAsistente(texto: string): Promise<ResultadoAsistente> {
+  const mensaje = MensajeAsistente.safeParse({ texto });
+  if (!mensaje.success) return { error: 'Escribe qué necesitas, en menos de 2000 caracteres.' };
+  return hablarConAsistente('/asistente/mensajes', mensaje.data);
+}
+
+export async function decidirEnAsistente(decision: DecisionAsistente): Promise<ResultadoAsistente> {
+  const valida = DecisionAsistente.safeParse(decision);
+  if (!valida.success) return { error: 'No se pudo enviar tu decisión.' };
+  return hablarConAsistente('/asistente/decisiones', valida.data);
 }
 
 // REQ-ACC-12: lo único que el usuario hace con su cuenta.

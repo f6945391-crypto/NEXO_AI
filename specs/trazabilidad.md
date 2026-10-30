@@ -10,13 +10,13 @@
 | Área | Requisitos | pendiente | en curso | implementado | verificado | retirado |
 |---|---|---|---|---|---|---|
 | 01-captura | 24 | 20 | 4 | 0 | 0 | 0 |
-| 02-agenda | 13 | 0 | 3 | 10 | 0 | 0 |
+| 02-agenda | 13 | 0 | 0 | 13 | 0 | 0 |
 | 02-jornada | 24 | 24 | 0 | 0 | 0 | 0 |
 | 03-tareas | 26 | 26 | 0 | 0 | 0 | 0 |
 | 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
 | 05-equipos | 17 | 17 | 0 | 0 | 0 | 0 |
 | 06-acceso | 17 | 2 | 0 | 15 | 0 | 0 |
-| 07-agente | 2 | 0 | 2 | 0 | 0 | 0 |
+| 07-agente | 2 | 0 | 0 | 2 | 0 | 0 |
 
 ## Requisitos
 
@@ -46,7 +46,7 @@
 | REQ-CAP-22 | 01-captura | propuesta técnica §5, «las escrituras se encolan y se reintentan» | 2 | — | — | pendiente |
 | REQ-CAP-23 | 01-captura | regla de producto derivada de los cuatro blancos; RN-OP-01 | 2 | T-033, T-034, T-035 | — | pendiente |
 | REQ-CAP-24 | 01-captura | regla de producto R-42; `SPEC.md` P-11 | 2 | T-033 | agente.en-espera-desde-la-captura | en curso |
-| REQ-CUN01-01 | 02-agenda | CUN-01 flujo principal, pasos 1 y 2 | 2 | T-031 | agente.agenda.extrae-sin-inventar-fin | en curso |
+| REQ-CUN01-01 | 02-agenda | CUN-01 flujo principal, pasos 1 y 2 | 2 | T-031, T-034 | agente.agenda.extrae-sin-inventar-fin | implementado |
 | REQ-CUN01-02 | 02-agenda | CUN-01 flujo principal, paso 3 | 1 | T-016, T-017, T-019 | agenda.consulta-solapes-antes-de-proponer | implementado |
 | REQ-CUN01-03 | 02-agenda | RN-ER-03 | 1 | T-012, T-017, T-032 | agenda.sin-confirmar-no-escribe-ni-notifica | implementado |
 | REQ-CUN01-04 | 02-agenda | CUN-01 flujo principal, pasos 5 y 6 | 1 | T-017, T-019, T-032 | agenda.confirmar-registra-lo-mostrado | implementado |
@@ -56,9 +56,9 @@
 | REQ-CUN01-08 | 02-agenda | CUN-01 EX-02, RN-OP-01, REQ-ACC-08 | 1 | T-015, T-017, T-031 | agenda.sin-permiso-no-invoca-proveedor | implementado |
 | REQ-CUN01-09 | 02-agenda | RN-OP-01, RN-EST-01 | 1 | T-014, T-015 | agenda.solo-eventos-propios | implementado |
 | REQ-CUN01-10 | 02-agenda | decisión de arquitectura AD-07; necesaria para CUN-05 y CUN-06 | 1 | T-014, T-015, T-021, T-025 | agenda.horas-con-zona-horaria | implementado |
-| REQ-CUN01-11 | 02-agenda | regla de producto R-42; `SPEC.md` P-11 | 1 | T-015, T-019, T-021, T-033 | agenda.consulta-sin-proveedor-de-modelo | en curso |
+| REQ-CUN01-11 | 02-agenda | regla de producto R-42; `SPEC.md` P-11 | 1 | T-015, T-019, T-021, T-033, T-034 | agente.sin-modelo-queda-en-espera | implementado |
 | REQ-CUN01-12 | 02-agenda | derivado de la revisión de diseño de CUN-01 | 1 | T-021, T-025 | agenda.estado-vacio-abre-captura | implementado |
-| REQ-CUN01-13 | 02-agenda | CUN-01, alcance «consultar»; `PROPUESTA-TECNICA.md` §7.3; añadido el 24 de octubre de 2026 al planificar el agente | 2 | T-031 | agente.agenda.consulta-tal-cual | en curso |
+| REQ-CUN01-13 | 02-agenda | CUN-01, alcance «consultar»; `PROPUESTA-TECNICA.md` §7.3; añadido el 24 de octubre de 2026 al planificar el agente | 2 | T-031, T-034 | agente.agenda.consulta-tal-cual | implementado |
 | REQ-CUN02-01 | 02-jornada | CUN-02 flujo principal, pasos 1 a 3 | 3 | — | — | pendiente |
 | REQ-CUN02-02 | 02-jornada | CUN-02 flujo principal, paso 4 | 3 | — | — | pendiente |
 | REQ-CUN02-03 | 02-jornada | CUN-02 pasos 6 y 7; RN-ER-03 | 3 | — | — | pendiente |
@@ -171,5 +171,5 @@
 | REQ-ACC-15 | 06-acceso | Requisito del sistema; D-17 | 1 | T-026 | acceso.solo-el-responsable-asigna-tareas | implementado |
 | REQ-ACC-16 | 06-acceso | Requisito del sistema | 4 | — | — | pendiente |
 | REQ-ACC-17 | 06-acceso | Requisito del sistema | 4 | — | — | pendiente |
-| REQ-AGT-01 | 07-agente | `PROPUESTA-TECNICA.md` §7.4, memoria de conversación; glosario, «Conversación» | 2 | T-032 | agente.conversacion-con-contexto | en curso |
-| REQ-AGT-02 | 07-agente | decisión del equipo, 24 de octubre de 2026; REQ-CAP-02, REQ-CAP-23 | 2 | T-033 | agente.tarea-queda-en-espera | en curso |
+| REQ-AGT-01 | 07-agente | `PROPUESTA-TECNICA.md` §7.4, memoria de conversación; glosario, «Conversación» | 2 | T-032, T-034 | agente.conversacion-con-contexto | implementado |
+| REQ-AGT-02 | 07-agente | decisión del equipo, 24 de octubre de 2026; REQ-CAP-02, REQ-CAP-23 | 2 | T-033, T-034 | agente.tarea-queda-en-espera | implementado |

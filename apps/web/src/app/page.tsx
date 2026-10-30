@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { obtenerAgendaDelDia } from '../lib/agenda';
+import { obtenerConversacion } from '../lib/asistente';
 import { obtenerPerfil, obtenerPermisosGoogle, obtenerSesion } from '../lib/sesion';
 import { Aplicacion } from './aplicacion/aplicacion';
 
@@ -10,7 +11,8 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
   if (sesion.estado === 'caducada') redirect('/sesion/renovar?volver=/');
   if (sesion.estado === 'pendiente') redirect('/primer-ingreso');
 
-  const [perfil, permisosGoogle, { google }] = await Promise.all([obtenerPerfil(), obtenerPermisosGoogle(), searchParams]);
+  // T-034: la conversación abierta, con lo que espera tu confirmación o quedó en espera
+  const [perfil, permisosGoogle, conversacion, { google }] = await Promise.all([obtenerPerfil(), obtenerPermisosGoogle(), obtenerConversacion(), searchParams]);
   // T-025: la agenda de hoy, en la zona de la persona
   const agenda = perfil?.zonaHoraria
     ? await obtenerAgendaDelDia(perfil.zonaHoraria)
@@ -22,6 +24,7 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
       perfil={perfil}
       permisosGoogle={permisosGoogle}
       agenda={agenda}
+      conversacion={conversacion}
       resultadoGoogle={google ?? null}
     />
   );
