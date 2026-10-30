@@ -95,3 +95,51 @@ Detectadas al escribir `plan.md` el 24 de octubre de 2026. Lo que asume el plan 
 | 14 | Del estado guardado de cada conversación se conservan los 2 últimos puntos, no 10. **Aceptada por el equipo el 29 de octubre de 2026** (H-AGT-14) | P-07, almacenamiento |
 | 15 | Lo que devuelven las herramientas, y en especial los títulos de compromisos escritos por otras personas, llega al modelo marcado como datos que no son instrucciones. **Aceptada por el equipo el 29 de octubre de 2026** (H-AGT-15) | P-01, P-03 |
 | 13 | Con el proveedor de prueba, su límite de uso por minuto cuenta como «no disponible»: lo pedido queda en espera. Lo que se le envía puede quedar en sus servidores, así que se prueba con un calendario sin datos personales (H-AGT-13, 29 de octubre de 2026) | REQ-CUN01-11, P-10 |
+
+---
+
+## 6. Propuesta de cambio de REQ-AGT-01 — borrador, no aprobado
+
+**Estado:** propuesta del 29 de octubre de 2026. **No está aprobada y no cambia el requisito vigente.** REQ-AGT-01 sigue como está en §3 hasta que el equipo decida.
+
+### Por qué
+
+Al probar el agente con Groq, el equipo vio dos cosas:
+
+1. Tras cada acción confirmada, la conversación se cierra y la pantalla se vacía. Lo que la persona vio y lo que lee el modelo se pierden juntos, y se siente brusco.
+2. Preguntado «¿cuál es el resumen?», el asistente responde que solo sabe de agenda: las instrucciones no le dejan responder sobre la propia conversación.
+
+### Texto propuesto
+
+> **REQ-AGT-01 (propuesta).** MIENTRAS una conversación esté abierta, EL SISTEMA interpretará cada solicitud con los turnos recientes de esa conversación, un resumen de los anteriores y la lista de las acciones confirmadas en ella; y la mantendrá abierta hasta que se confirmen **5 acciones** o pasen **30 minutos sin actividad**. Lo que la persona ve de la conversación no se borra al cerrarse.
+>
+> **Criterio de aceptación**
+> DADO que la persona registró «Dentista, jueves 16:00 – 17:00» y lo confirmó
+> CUANDO escriba «mejor a las 5»
+> ENTONCES el asistente propone mover ese mismo compromiso a las 17:00
+> Y DADO una conversación con más mensajes de los que caben en el contexto
+> CUANDO la persona pregunte «¿qué hicimos?»
+> ENTONCES el asistente responde con el resumen y la lista de acciones, sin inventar ninguna
+> Y DADO que se cerró la conversación
+> CUANDO la persona abra la aplicación
+> ENTONCES sigue viendo la conversación anterior, separada de la nueva
+
+### Piezas
+
+| Pieza | Propuesta | Costo |
+|---|---|---|
+| Cierre | Tras 5 acciones confirmadas o 30 minutos sin uso, cifras ajustables (idea del equipo: «un máximo de cambios») | Ninguno |
+| Lo que se ve | Toda la conversación; la anterior queda arriba, separada | Bajo, en la web y el móvil |
+| Lo que lee el modelo | Los 20 últimos mensajes, un resumen de lo recortado (lo escribe el modelo) y la lista de acciones confirmadas (la escribe el código) | Una llamada más de vez en cuando; algo más de contexto |
+| Preguntas sobre la conversación | Las instrucciones permiten responder «¿qué hicimos?» o «resúmeme» | Ninguno |
+| Lo que no cambia | Cada acción pide confirmación (P-03); 2 puntos de control (H-AGT-14) | — |
+
+### Nota del equipo, 29 de octubre de 2026
+
+> No convence: **no parece apuntar a una estructura escalable y útil para el usuario.** Queda solo como consideración.
+
+Lo que la nota deja abierto, para cuando se retome:
+
+- **Qué estructura de memoria escala.** Esta propuesta sigue girando alrededor de una conversación lineal. Otras direcciones, sin evaluar: memoria estructurada por tema o por entidad (por compromiso, por persona, por proyecto), que el agente consulta con herramientas en vez de releer la conversación; memoria larga por usuario (preferencias y hechos), separada de las conversaciones (`INFORME-LANGGRAPH.md` §4).
+- **Qué es útil para la persona.** Falta saber qué espera ver y recuperar: el historial completo, lo que se hizo, o lo que queda pendiente.
+- **Referencia del equipo:** el agente de la universidad, que organiza la información de cada curso y sostiene varias preguntas largas.
