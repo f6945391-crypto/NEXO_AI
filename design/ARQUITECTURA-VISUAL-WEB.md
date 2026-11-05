@@ -32,10 +32,20 @@ En 1440x900 eso desperdicia la pantalla y, sobre todo, contradice el trabajo del
 | Columna | Ancho | Papel | Duración de su contenido |
 |---|---|---|---|
 | Navegación | 72 | Cambiar de sujeto — tres secciones y Ajustes al pie | Permanente |
-| Conversación | 528 | Área de trabajo | Efímera: se vacía al cerrar |
+| Conversación | 528 | Área de trabajo | ~~Efímera: se vacía al cerrar~~ **Desde el 5 de noviembre de 2026 (propuesta, REQ-AGT-03):** conserva la transcripción, con separadores entre episodios |
 | Lienzo | 840 | Contexto y memoria | Persistente |
 
 72 + 528 + 840 = 1440. El 528 mantiene la columna de tarjetas en ancho legible; el 840 es el mínimo donde la rejilla de disponibilidad sigue cabiendo.
+
+### Anchos menores de 1440
+
+*Añadido el 5 de noviembre de 2026, con el valor por defecto de `TRASPASO-CLAUDE-CODE.md` §7, decisión 10. Pendiente de aval. Responde a H-WEB-01 (`SPEC.md` §8).*
+
+| Ancho | Qué hace |
+|---|---|
+| 1440 o más | 72 · 528 · resto |
+| De 1024 a 1440 | **Cede primero la conversación**, hasta 400 px; después, el lienzo, que no baja de 500 px |
+| Menos de 1024 | Una sola columna: el lienzo, con la conversación como capa encima, igual que en el móvil (R-36) |
 
 ### La regla que lo sostiene todo
 
@@ -82,6 +92,23 @@ El modelo de lenguaje no puede cargar contexto indefinido, así que la conversac
 **El vaciado lo decide el usuario, no el sistema**, y siempre con advertencia previa. La advertencia dice qué se pierde concretamente —«se descartará la delegación a María Fernanda Quispe, sin confirmar»—, nunca «¿estás seguro?». Eso lo exige RN-ER-03, que `CONTEXTO.md` ya recoge.
 
 Lo cerrado no se pierde al vaciar: queda en el registro.
+
+> **Anterior.** Los tres párrafos de arriba son la versión del 26 de septiembre de 2026. Se conservan como registro.
+
+### Revisión del 5 de noviembre de 2026 — la conversación conserva la transcripción
+
+*Propuesta, pendiente de aval. Sale de `INFORME-ESTRUCTURA-Y-REESTRUCTURACION-AGENTE.md` §4: el requisito tomó la mitad «desechable» de esta sección y perdió la otra mitad (quién vacía y a dónde va lo cerrado), y el código vaciaba solo, sin advertencia. Inconsistencia INC-16.*
+
+| Qué | Cómo |
+|---|---|
+| Lo que ve la persona | La **transcripción**: todo lo que pidió y lo que pasó, también tras recargar (REQ-AGT-03) |
+| Lo que lee el modelo | Solo el **episodio** abierto y la **nota de continuidad** (REQ-AGT-01 v2). Por eso la columna puede crecer sin que el modelo cargue más |
+| Separador entre episodios | Línea fina, texto pequeño centrado y color secundario: «Jueves 29, 16:12 · Dentista registrado». Lo arma el código con el tipo de Operación y el título: registrado, movido, cancelado, descartado. Si el episodio se cerró sin acción, solo la hora. No es un turno: se deduce del cambio de episodio |
+| «Ver anteriores» | Botón secundario al inicio de la lista. Trae la página anterior, la pone arriba y **conserva la posición de lectura**. Desaparece cuando no hay más |
+| Al abrir | Los últimos episodios con sus separadores. El blanco inicial con ejemplos solo aparece si la transcripción está vacía de verdad |
+| Vaciado | No hay vaciado manual en esta fase (decisión 23 de `specs/07-agente/spec.md` §5) |
+| Modo Registro del lienzo (§4) | Sigue siendo el destino de la historia completa, con filtros. Llega con la sección Actividad; no se construye en esta revisión |
+| Textos | Sin vocabulario interno (R-40): en pantalla nunca aparecen «episodio», «turno» ni «transcripción» |
 
 ---
 

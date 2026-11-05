@@ -8,6 +8,8 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
 
 **Orden:** T-029 → T-030 → T-031 → T-032 → T-036 → T-033 → T-034 → T-035. *Cambiado el 29 de octubre de 2026: el equipo eligió Groq para probar, y T-036 se adelanta para poder conversar con el agente apenas esté T-032.*
 
+**Revisión del 5 de noviembre de 2026** (§5, plan §14): T-038 → T-039 → T-040 → T-041 → T-042. T-039 y T-040 dependen de T-038; T-042, de T-038 y T-040. Rama `modificacion/vision-nexoai`, solo en local: commits sin push. Tras cada tarea se para y se muestra el resultado.
+
 ---
 
 ## 1. Base del agente
@@ -165,3 +167,55 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
   - `MODELO_PRECIOS` registra el precio del modelo configurado; sin ella el costo queda desconocido. El `.env` del equipo todavía no la tiene: con el nivel gratuito conviene `MODELO_PRECIOS=0,0`.
   - **Evaluación:** `npx pnpm@12.10.1 --filter @nexoai/api evaluar-asistente` (`src/cli/evaluar-asistente.ts`). Ocho frases fijas, sin datos personales, contra el proveedor del `.env`; solo mira qué herramienta elige el modelo y con qué argumentos, sin tocar base ni calendario. Deja 8 segundos entre frases por el límite por minuto de Groq (H-AGT-13). Gasta cuota: nunca en la integración continua.
   - **La primera evaluación dio 4 de 8:** el modelo pedía confirmación en texto en vez de llamar a la herramienta, porque las instrucciones decían que nada se hace sin confirmar. Se ajustaron (plan §6.1): llamar a la herramienta enseguida, que la tarjeta la muestra la aplicación, y no preguntar lo que falta. Con eso, 8 de 8. Las fechas relativas («el viernes», «pasado mañana») salieron bien en las dos.
+
+## 5. Revisión de la memoria (5 de noviembre de 2026)
+
+Escritas en la pasada de documentos de la rama (P0), con su «Hecho cuando» y sus pruebas, para que cada tarea después sea código y prueba (`TRASPASO-CLAUDE-CODE.md` §9). **Pendientes de aval del equipo**, igual que los requisitos que implementan.
+
+El pulido visual que no cambia comportamiento (tarjeta en conflicto, lienzo en modo Objeto, atajos de pregunta, «Pensando», asa, anchos menores de 1440) **no es una tarea**: va en `design/` y con una línea en `SPEC.md` §11 (`TRASPASO-CLAUDE-CODE.md` §9 y §10.2).
+
+### T-038 · Transcripción propia, fuera del estado del grafo
+
+- **Requisitos:** REQ-AGT-03, REQ-AGT-01 v2 (el episodio) · plan §14.2, §14.3, §14.4, §14.6
+- **Depende de:** T-037
+- **Contenido:** migración nueva con `turno_asistente` y `conversacion_agente.ultima_actividad_en`; `TranscripcionService`; `turnos` fuera del estado y `turnosNuevos` con reductor que reemplaza; el servicio anota tras cada `invoke` y en `atenderEnEspera`; `GET /asistente/conversacion` paginado con `episodios` y su `cierre`; `episodioCerrado` y `episodioId` en `RespuestaAsistente`; cierre por inactividad al recibir un mensaje; la tabla nueva en `MODELOS_CON_ORGANIZACION`
+- **Hecho cuando:** un episodio cerrado sigue apareciendo al pedir la conversación, con su `cierre`; la página anterior llega con el cursor; el punto de control ya no contiene turnos; un reintento no duplica turnos; un episodio con 30 minutos sin actividad se cierra al llegar el siguiente mensaje y su propuesta pendiente queda descartada; otra organización y otro perfil no ven la transcripción
+- **Pruebas:** `agente.transcripcion-persiste` (nueva), `agente.episodio-caduca` (nueva), `agente.interrumpe-hasta-decidir` y `agente.conversacion-con-contexto` (ajustadas), `plataforma.aislamiento-entre-organizaciones` (ampliada)
+- **Estado:** pendiente
+
+### T-039 · Web y móvil que no se vacían
+
+- **Requisitos:** REQ-AGT-03 · plan §14.7 · `design/ARQUITECTURA-VISUAL-WEB.md` §5, revisión del 5 de noviembre
+- **Depende de:** T-038
+- **Contenido:** quitar el vaciado de `conversacion.tsx` y `captura.tsx`; separador entre episodios con el `cierre` del servidor; «Ver anteriores» con el cursor, conservando la posición; blanco inicial solo con la transcripción vacía; el móvil abre con el episodio en curso y el anterior; capturas nuevas en una carpeta con fecha, sin tocar `design/capturas/2026-11-04/`
+- **Hecho cuando:** tras confirmar y escribir otra cosa, la petición, la tarjeta y el «Listo» siguen visibles, con un separador y el mensaje nuevo debajo; al recargar la web o reabrir la capa se ve lo mismo; «Ver anteriores» trae un episodio más y desaparece cuando no hay más; en pantalla no aparecen «episodio», «turno» ni «transcripción» (R-40)
+- **Pruebas:** `web.asistente-agenda-y-confirma` (ampliada), `web.asistente-historial` (nueva), `movil.captura-propone-y-confirma` (ampliada)
+- **Estado:** pendiente
+
+### T-040 · Nota de continuidad y evaluación por trayectoria
+
+- **Requisitos:** REQ-AGT-01 v2 · plan §14.2, §14.5, §14.10 · decisión 19
+- **Depende de:** T-038
+- **Contenido:** `NotaDeContinuidad` con las 5 últimas acciones confirmadas o las de 7 días, lo menor, y lo que está en espera, marcada como datos; `interpretar` la recibe del servicio; las instrucciones permiten responder «¿qué hicimos?» con la nota; un guion del simulado que la usa; la evaluación mira la trayectoria y suma dos casos
+- **Hecho cuando:** con el simulado, tras confirmar «Dentista», «mejor a las 5» consulta y propone `agenda.modificar` con el id del evento, y nada se ejecuta sin la tarjeta; la nota no pasa de 5 acciones ni de 7 días y lleva el aviso de contenido externo; contra Groq, en **una sola corrida avisada antes**, los dos casos nuevos pasan y los nueve anteriores siguen pasando
+- **Pruebas:** `agente.nota-de-continuidad` (nueva, con guion), `agente.conversacion-con-contexto` (ajustada al criterio 2 de la v2), `agente.evaluacion` (a mano)
+- **Estado:** pendiente
+
+### T-041 · Ciclo de vida: inactividad, retención y tope del grafo
+
+- **Requisitos:** REQ-AGT-01 v2, REQ-AGT-03 · plan §14.8 · decisiones 18, 20 y 21 · H-AGT-14
+- **Depende de:** T-038
+- **Contenido:** en el trabajador, cerrar episodios inactivos, borrar los puntos de control de episodios cerrados hace más de 7 días y la transcripción de más de 90; `recursionLimit` explícito desde `TOPE_VUELTAS`
+- **Hecho cuando:** un episodio con 30 minutos sin actividad se cierra en la pasada del trabajador; un punto de control de un episodio cerrado hace 8 días desaparece y su transcripción y su auditoría siguen; un turno de hace 91 días desaparece y uno de hace 89 sigue; superar el tope del grafo termina en el turno de fallo de H-AGT-10, sin el error de LangGraph
+- **Pruebas:** `agente.retencion-puntos-de-control` (nueva), `agente.retencion-transcripcion` (nueva), `agente.episodio-caduca` (ampliada con el trabajador)
+- **Estado:** pendiente
+
+### T-042 · Alternativas de referente y enlace con la actividad (si el equipo lo acepta)
+
+- **Requisitos:** REQ-AGT-04 · plan §14.9 · H-AGT-17 · decisión 26
+- **Depende de:** T-038, T-040
+- **Contenido:** `agenda.modificar_evento` y `agenda.cancelar_evento` aceptan lo que la persona dijo en lugar del id; la búsqueda y la decisión de si hay ambigüedad son código; nodo `alternativas` sin modelo y turno `alternativas_de_referente`; decisión `referente` en `POST /asistente/decisiones`; `actividad_tipo` y `actividad_id` en cada turno que resolvió una actividad; herramienta `actividad.contexto(id)`; un caso de evaluación
+- **Hecho cuando:** con dos «Dentista», «mueve el dentista a las 5» muestra las dos y no propone nada; elegir una lleva a su tarjeta; con uno solo, se propone directo y la tarjeta dice cuál; escribir otra cosa descarta la lista; los turnos de una acción quedan ligados a su compromiso
+- **Pruebas:** `agente.alternativas-de-referente` (nueva), `web.asistente-alternativas-de-referente` (nueva), `agente.evaluacion` (a mano, un caso)
+- **Estado:** pendiente
+

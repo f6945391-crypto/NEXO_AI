@@ -150,6 +150,8 @@ R-17 dice que el hilo vive en el lienzo, y el lienzo es web. En móvil no hay li
 
 La bandeja de lo que ha vuelto es un filtro dentro de Tareas —la franja *esperando de alguien*, que ya existía—, no una sección nueva. Y el motivo de fondo sigue siendo el mismo que en web, dicho con precisión: **el hilo mantiene al agente con poco contexto y un propósito claro, y eso es lo que evita que alucine.** No es solo ahorro de coste, es fiabilidad. El asistente lee el hilo solo si se lo pides. En móvil se cumple solo, porque la conversación es la capa de captura y se descarta al confirmar.
 
+> **Revisión del 5 de noviembre de 2026 (propuesta, REQ-AGT-03).** La capa de captura ya no se descarta al confirmar: abre con el episodio en curso y el anterior, separados por una línea con la hora y lo que se hizo, «Ver anteriores» arriba y la lista abajo del todo. Lo que el asistente lee sigue siendo poco: el episodio abierto y la nota de continuidad (REQ-AGT-01 v2). Detalle en `ARQUITECTURA-VISUAL-WEB.md` §5, revisión del 5 de noviembre.
+
 ### La barra de entrada no era una barra de entrada
 
 Nunca se escribe dentro: al tocarla sube la capa de captura, que es donde pasa todo. O sea que **es un asa, no un campo**, y estaba dibujada como lo que no es, ocupando 65 px de ancho completo en todas las pantallas.

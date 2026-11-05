@@ -1,11 +1,11 @@
 # Plan técnico — Agente (fase 2)
 
-**Especificación:** `specs/07-agente/spec.md` (REQ-AGT-01, 02) y los requisitos de agenda y captura que implementa (§11)
+**Especificación:** `specs/07-agente/spec.md` (REQ-AGT-01 a 05) y los requisitos de agenda y captura que implementa (§11)
 **Fase:** 2
 **Decisiones que aplica:** AD-04, AD-05, AD-06, AD-07, AD-08, AD-09 · P-01, P-02, P-03, P-04, P-05, P-06, P-07, P-10, P-11 · DP-01
 **Decisiones del equipo del 24 de octubre de 2026:** sin voz (PT-2), proveedor simulado por ahora, solo agenda y la tarea en espera (`spec.md` §2)
 **Depende de:** `specs/02-agenda/plan.md` (Operaciones, réplica, `agenda.*`) y `specs/06-acceso/plan.md` (sesión, `@RequiereGoogle`, roles)
-**Estado:** **aprobado** por el equipo el 25 de octubre de 2026, con sus hallazgos tal como están
+**Estado:** **aprobado** por el equipo el 25 de octubre de 2026, con sus hallazgos tal como están. **§14, revisión del 5 de noviembre de 2026** (tres capas de memoria, T-038 a T-042): propuesta, pendiente de aval
 
 Este plan dice **dónde y cómo** se cumple cada requisito. Lo que la especificación no decide está en §13 como hallazgo.
 
@@ -99,6 +99,8 @@ Un **guion**: lista de reglas «si el último mensaje de la persona encaja con e
 
 ### 4.1 Estado
 
+> *Cambia con la revisión del 5 de noviembre de 2026: ver §14.*
+
 | Campo | Contenido |
 |---|---|
 | `mensajes` | Turnos de la conversación, en el formato de `MensajeModelo` (REQ-AGT-01) |
@@ -131,7 +133,7 @@ stateDiagram-v2
 | `herramientas` | Ejecuta las llamadas con `EjecutorHerramientas` (§5, §8) | No |
 | `preguntar` | Ante `DATOS_FALTANTES`, pregunta **solo el primer campo** que falta, con una frase fija por campo: «¿Qué día?», «¿A qué hora empieza?», «¿Cómo lo llamo?» (REQ-CUN01-07, REQ-CAP-04, R-20) | No |
 | `esperar_decision` | `interrupt()` con el id de la Operación. El grafo queda parado y persistido hasta que la persona decide (P-03) | No |
-| `comunicar` | Arma el resultado con lo que devolvió la Operación, no con lo propuesto (REQ-CUN01-04). Cierra la conversación (H-AGT-05) | No |
+| `comunicar` | Arma el resultado con lo que devolvió la Operación, no con lo propuesto (REQ-CUN01-04). Cierra la conversación (H-AGT-05). *Desde §14: cierra el episodio, no la transcripción* | No |
 
 Si la persona escribe otra cosa mientras hay una propuesta pendiente («mejor a las 5»), el grafo descarta esa Operación y vuelve a `interpretar` con el mensaje nuevo, dentro de la misma conversación (REQ-AGT-01).
 
@@ -164,6 +166,8 @@ Reglas comunes:
 - Pedidos que ninguna herramienta cubre (correo, delegar, planificar el día): las instrucciones piden decirlo sin intentarlo (REQ-AGT-02).
 
 ## 6. Contexto y memoria (`PROPUESTA-TECNICA.md` §7.4)
+
+> *Cambia con la revisión del 5 de noviembre de 2026: ver §14.*
 
 | Memoria | En esta versión |
 |---|---|
@@ -206,6 +210,8 @@ La cola es la tabla `operacion` en estado `en_espera` (AD-09, `specs/02-agenda/p
 
 ## 9. Rutas
 
+> *Cambia con la revisión del 5 de noviembre de 2026: ver §14.*
+
 Contratos en `packages/contratos/src/asistente.ts`. Todas `@SobreLoPropio()`.
 
 | Ruta | Qué hace | Requisitos |
@@ -229,6 +235,8 @@ Un turno del asistente tiene un `tipo`, para que la interfaz lo muestre distinto
 La respuesta llega entera, sin flujo (H-AGT-07); la interfaz muestra que el asistente está pensando.
 
 ## 10. Datos (migración nueva)
+
+> *Cambia con la revisión del 5 de noviembre de 2026: ver §14.*
 
 | Tabla o campo | Contenido |
 |---|---|
@@ -300,3 +308,121 @@ Registrados en `spec.md` §5 y en `SPEC.md` §8. **Aceptados por el equipo el 25
 | H-AGT-14 | El estado guardado de cada conversación crece por diez: el punto de control conserva 10 copias completas, y una conversación de dos o tres mensajes ya ocupa 36 a 46 KB (medido el 29 de octubre de 2026, `INFORME-LANGGRAPH.md` §1) | **Aceptado por el equipo el 29 de octubre de 2026:** se conservan 2 puntos, el último y su padre; NexoAI no usa el «viaje en el tiempo» de LangGraph. Un plazo para borrar las conversaciones cerradas queda pendiente de la decisión sobre REQ-AGT-01 |
 | H-AGT-15 | Los títulos de los compromisos entran en el contexto del modelo, y los de una invitación los escribe otra persona: pueden llevar instrucciones escondidas (inyección indirecta, `INFORME-LANGGRAPH.md` §2) | **Aceptado por el equipo el 29 de octubre de 2026:** el resultado de cada consulta lleva un aviso de que es contenido externo y cada compromiso dice si lo escribió otra persona; las instrucciones dicen que nunca se siguen órdenes de esos textos; la evaluación incluye un caso malicioso. La defensa principal sigue siendo la arquitectura: nada se ejecuta sin confirmar (P-03) |
 | H-AGT-13 | El proveedor de prueba (Groq, nivel gratuito) tiene un límite bajo de tokens por minuto, y lo que recibe puede quedar en sus servidores (detectado el 29 de octubre de 2026) | El 429 cuenta como «no disponible» y lo pedido queda en espera (P-11). Las instrucciones y las herramientas se mantienen cortas. Se prueba con un calendario sin datos personales |
+| H-AGT-16 | REQ-AGT-01 v1 ataba lo que ve la persona, lo que lee el modelo y lo que recuerda el sistema a un solo ciclo: la pantalla se vaciaba y el agente no podía referirse a lo recién hecho (5 de noviembre de 2026) | Tres capas: transcripción propia, contexto del episodio con la nota de continuidad y memoria larga reservada. §14. **Propuesto, pendiente de aval** |
+| H-AGT-17 | La transcripción crece sin forma; la unidad de memoria es la actividad (5 de noviembre de 2026) | Cada turno se liga a la actividad que resolvió; el hilo es una vista. En esta rama solo el enlace y las alternativas de referente (T-042); el detalle de actividad, después. §14.9. **Propuesto, pendiente de aval** |
+
+---
+
+## 14. Revisión del 5 de noviembre de 2026 — tres capas de memoria
+
+**Origen:** `TRASPASO-CLAUDE-CODE.md`, `INFORME-MEMORIA-AGENTE.md` §6 a §8, `INFORME-ESTRUCTURA-Y-REESTRUCTURACION-AGENTE.md` §5 a §8, `design/capturas/2026-11-04/INFORME-VISUAL-AGENTE.md` §6.
+**Requisitos:** REQ-AGT-01 v2, REQ-AGT-03, REQ-AGT-04 (y REQ-AGT-05, sin plan en esta rama).
+**Valores:** los por defecto de `spec.md` §5, decisiones 16 a 26. **Propuesta, pendiente de aval.**
+**Rama:** `modificacion/vision-nexoai`, solo en local.
+
+### 14.1 Qué cambia y qué no
+
+| Cambia | No cambia |
+|---|---|
+| El estado del grafo pierde `turnos` | Nodos, aristas, `interrupt()` y la reanudación (§4.2, §4.3) |
+| La conversación pasa a ser un **episodio**; la transcripción vive en su propia tabla | El punto de control y sus 2 puntos (H-AGT-14) |
+| `interpretar` recibe la nota de continuidad | Las herramientas de §5, salvo T-042 |
+| `GET /asistente/conversacion` devuelve la transcripción por páginas | El puerto del modelo, el simulado, el adaptador compatible y el llamador (§3) |
+| Web y móvil dejan de vaciar | Auditoría e idempotencia (§8); Operaciones y `02-agenda` |
+| El trabajador cierra episodios inactivos y borra lo vencido | La cola en espera y sus motivos (§7) |
+
+### 14.2 El grafo
+
+| Pieza | Antes | Ahora |
+|---|---|---|
+| `turnos` | Acumulaba toda la conversación dentro del estado | **Sale del estado.** Los nodos devuelven lo de esta vuelta en `turnosNuevos`, con un reductor que **reemplaza**; el servicio los anota en la transcripción tras cada `invoke` |
+| `mensajes` | 20 últimos del episodio | Igual |
+| `interpretar` | `sistema = instrucciones(referencia)` | `sistema = instrucciones(referencia) + nota`. La nota llega ya armada como texto desde el servicio, para que el grafo no lea Operaciones (§2) |
+| `comunicar` | Marca `cerrada` y se cierra la conversación | Marca el episodio como cerrado. El siguiente mensaje abre otro **sin tocar la transcripción** |
+| Instrucciones | Solo agenda | Suman que se puede responder «¿qué hicimos?» con la nota, sin inventar, y que la nota son datos: solo se usa si la persona se refiere a ello |
+| `recursionLimit` | El de LangGraph por defecto | Explícito, derivado de `TOPE_VUELTAS` (T-041) |
+
+### 14.3 El episodio
+
+- `conversacion_agente` **es el episodio**. La tabla **no se renombra** (decisión del traspaso §7, n.º 6): cambian los documentos y los nombres en el código. El `thread_id` sigue siendo su id.
+- Campo nuevo `ultima_actividad_en`. Al recibir un mensaje, si el episodio abierto lleva **30 minutos** sin actividad (decisión 18), se cierra sin efecto y se abre otro. Una propuesta pendiente en un episodio que caduca se descarta, como cuando la persona escribe otra cosa (REQ-AGT-01).
+- La sesión no tiene tabla: el cliente la deduce del hueco entre episodios.
+
+### 14.4 La transcripción
+
+| Pieza | Detalle |
+|---|---|
+| Tabla `turno_asistente` | `id` (lo genera el grafo), `organizacion_id`, `perfil_id`, `episodio_id` (a `conversacion_agente`), `en`, `tipo`, `datos` (el `TurnoAsistente` validado con zod), `actividad_tipo` y `actividad_id` nulos hasta T-042. Índice `(perfil_id, en desc)`. Entra en `MODELOS_CON_ORGANIZACION` |
+| `TranscripcionService` | `anotar(contexto, episodioId, turnos)` con `skipDuplicates`, para que un reintento no duplique; `listar(contexto, { antes, limite })` |
+| Cuándo se anota | En el servicio, después de que `invoke` guardó el punto de control: un fallo a mitad no deja turnos sin estado. También en `atenderEnEspera` |
+| Privacidad (P-10) | Se filtra por `perfil_id` además de la organización. Ninguna ruta de equipo la lee |
+| Retención | 90 días (decisión 20), por el trabajador (T-041) |
+| Datos existentes | Las conversaciones cerradas de desarrollo **no se migran**: su transcripción está dentro del punto de control y solo son datos de prueba |
+
+### 14.5 La nota de continuidad
+
+- `NotaDeContinuidad.armar(contexto)` lee con la interfaz pública de Operaciones (`listar`), sin escribir nada: las Operaciones `ejecutada` del perfil, **las 5 últimas o las de los últimos 7 días, lo que sea menor** (decisión 19), y las que están `en_espera` con su motivo.
+- Cada acción: tipo («registrado», «movido», «cancelado»), título, fecha y hora en la zona del perfil (con `agenda/formato.ts`), id del evento y hace cuánto.
+- Envuelta con `AVISO_CONTENIDO_EXTERNO` (H-AGT-15): los títulos los escribió la persona o un tercero.
+- Pesa unas 150 fichas. Se mide en `llamada_modelo` antes y después; si pesa con Groq (H-AGT-13), baja a 3.
+- El resumen escrito por el modelo para episodios más largos que la ventana **no entra en esta rama**: los episodios de agenda son cortos y el tope de 20 mensajes sigue.
+
+### 14.6 Rutas y contratos
+
+| Contrato | Cambio |
+|---|---|
+| `GET /asistente/conversacion?antes=<cursor>&limite=<n>` | Devuelve `{ episodios, turnos, episodioAbierto, pendiente, hayAnteriores, cursor }`, de lo más reciente hacia atrás. Cada turno lleva `episodioId` y `en` |
+| `episodios[]` | `{ id, abiertoEn, cierre }`, con `cierre = { en, desenlace, titulo } \| null`. `desenlace`: `registrado`, `movido`, `cancelado`, `descartado` o `sin_accion`. **Lo arma el servidor** desde la Operación del episodio; el cliente solo pinta el separador |
+| `RespuestaAsistente` | `cerrada` pasa a `episodioCerrado`; se añade `episodioId` |
+| `TurnoAsistente` | Sin tipo nuevo: el separador **no es un turno** |
+
+### 14.7 Web y móvil (T-039)
+
+- Los turnos **siempre se añaden**; se quita el vaciado al cerrar (`conversacion.tsx`, `captura.tsx`).
+- Separador entre turnos de distinto episodio, con el texto de `design/ARQUITECTURA-VISUAL-WEB.md` §5, revisión del 5 de noviembre.
+- «Ver anteriores» arriba, con el cursor, conservando la posición de lectura.
+- El blanco inicial con ejemplos, solo con la transcripción vacía.
+- El móvil abre la capa con el episodio en curso y el anterior.
+
+### 14.8 Ciclo de vida (T-041)
+
+Trabajos nuevos en el proceso trabajador, junto al de la cola en espera:
+
+| Trabajo | Qué hace |
+|---|---|
+| Cerrar episodios inactivos | Los de más de 30 minutos sin actividad, para que no esperen al siguiente mensaje |
+| Borrar puntos de control | Los de episodios cerrados hace más de 7 días (decisión 21). La transcripción y la auditoría no se tocan |
+| Borrar la transcripción vencida | Turnos de más de 90 días (decisión 20). `conversacion_agente` **no se borra**: `invocacion_herramienta` cuelga de ella y es auditoría (P-07) |
+
+Los tres usan `sinAislar` por ser trabajos de mantenimiento sobre todas las organizaciones, con la misma justificación que §7.
+
+### 14.9 Alternativas de referente y enlace con la actividad (T-042)
+
+- `agenda.modificar_evento` y `agenda.cancelar_evento` aceptan, en lugar de `eventoId`, lo que la persona dijo para identificarlo (`titulo`, `fecha`). La herramienta busca en la réplica, **en código**: una coincidencia → propone; varias → devuelve las candidatas; ninguna → lo dice.
+- Con varias, el grafo va a un nodo nuevo `alternativas`, sin modelo: turno `alternativas_de_referente` con la lista (título, fecha, hora y de quién es). Elegir viaja por `POST /asistente/decisiones` con el tipo `referente` y lleva a la tarjeta. Escribir otra cosa descarta la lista.
+- Cada turno que resolvió una actividad guarda `actividad_tipo` y `actividad_id` en `turno_asistente`. Herramienta `actividad.contexto(id)`: el hilo de una actividad (sus Operaciones y sus últimos turnos), marcado como datos, cuando la persona se refiere a ella.
+- REQ-AGT-05 (el detalle de actividad) **no tiene plan**: necesita una pantalla nueva.
+
+### 14.10 Evaluación (T-040)
+
+`evaluar-asistente` mira la **trayectoria** (la segunda llamada, no solo la primera) y suma dos casos con historia y nota: «mejor a las 5» tras confirmar debe consultar y proponer `agenda_modificar_evento` con el id; «¿qué hicimos?» debe responder con la nota y sin herramientas. Una sola corrida contra Groq, avisando antes.
+
+### 14.11 Lo que queda sin plan
+
+| Qué | Por qué |
+|---|---|
+| REQ-AGT-05, el detalle de actividad | Pantalla nueva; decisión del equipo |
+| Varias intenciones en secuencia (decisión 24) | Hace falta decidir dónde se guarda la segunda intención mientras se decide la primera, y resolverlo a la vez que REQ-CAP-10. Hasta entonces el grafo atiende una acción por mensaje, como hoy |
+| Memoria larga (capa 3): preferencias en el perfil | Después de CUN-03 |
+| Modo Registro del lienzo | Con la sección Actividad |
+| `conversacion.acciones_recientes` | La nota de continuidad cubre lo inmediato; se revisa tras T-040 |
+
+### 14.12 Requisito por requisito y verificación
+
+| REQ | Dónde se cumple | Prueba |
+|---|---|---|
+| AGT-01 v2 | Episodio (§14.3) y nota (§14.5); criterio 1 sin cambios | `agente.conversacion-con-contexto` (ajustada), `agente.nota-de-continuidad` (nueva), `agente.episodio-caduca` (nueva) |
+| AGT-03 | `turno_asistente`, `GET /asistente/conversacion` paginado, clientes sin vaciado | `agente.transcripcion-persiste` (nueva), `web.asistente-historial` (nueva), `web.asistente-agenda-y-confirma` y `movil.captura-propone-y-confirma` (ampliadas) |
+| AGT-04 | §14.9 | `agente.alternativas-de-referente` (nueva) |
+| AGT-05 | Sin plan | — |
+

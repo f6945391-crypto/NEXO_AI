@@ -41,7 +41,7 @@ Antes de la aplicación va el **acceso**, que es universal a los dos planes: `WE
 La web NO es el móvil ensanchado. Tres columnas con papeles distintos:
 
 - **Navegación, 72 px.** Solo iconos, sin texto.
-- **Conversación, 528 px.** Las tarjetas SON la interfaz: propuesta, confirmación, resultado. Es un área de trabajo **desechable**: se vacía cuando el usuario cierra una operación.
+- **Conversación, 528 px.** Las tarjetas SON la interfaz: propuesta, confirmación, resultado. Es un área de trabajo **desechable**: se vacía cuando el usuario cierra una operación. *Revisión del 5 de noviembre de 2026, propuesta: ya no se vacía; muestra la transcripción con separadores entre episodios (`ARQUITECTURA-VISUAL-WEB.md` §5).*
 - **Lienzo, 840 px.** El contexto vivo: el objeto que la conversación está manipulando, y el registro de lo ya cerrado. Es la **memoria**.
 
 **Un solo sujeto a la vez.** El lienzo muestra el sujeto de la operación en curso o de la última cerrada. Nunca algo que la conversación no esté tratando: eso es lo que hace imposible que las dos columnas se contradigan.
