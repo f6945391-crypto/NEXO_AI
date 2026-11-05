@@ -41,19 +41,47 @@ export type DecisionAsistente = z.infer<typeof DecisionAsistente>;
 
 // Respuesta de las dos rutas anteriores: solo los turnos nuevos
 export const RespuestaAsistente = z.strictObject({
-  conversacionId: z.uuid(),
+  // T-038: el episodio, una intención con su acción (glosario). Es el id de lo que antes se llamaba conversación
+  episodioId: z.uuid(),
   turnos: z.array(TurnoAsistente),
   // La Operación que espera la decisión de la persona, si hay una
   pendiente: z.uuid().nullable(),
-  // REQ-AGT-01: la acción se cerró y la próxima solicitud empieza una conversación nueva
-  cerrada: z.boolean(),
+  // REQ-AGT-01: la acción se cerró y la próxima solicitud empieza otro episodio. La transcripción sigue (REQ-AGT-03)
+  episodioCerrado: z.boolean(),
 });
 export type RespuestaAsistente = z.infer<typeof RespuestaAsistente>;
 
-// GET /asistente/conversacion: la conversación abierta, entera
-export const ConversacionAsistente = z.strictObject({
-  conversacionId: z.uuid().nullable(),
+// T-038 · plan §14.6 · REQ-AGT-03: cómo terminó un episodio, para el separador. Lo arma el servidor con su
+// Operación; el cliente solo lo pinta. Sin acción: se cerró sin confirmar ni descartar nada
+export const DesenlaceEpisodio = z.enum(['registrado', 'movido', 'cancelado', 'descartado', 'sin_accion']);
+export type DesenlaceEpisodio = z.infer<typeof DesenlaceEpisodio>;
+
+export const CierreEpisodio = z.strictObject({ en: Instante, desenlace: DesenlaceEpisodio, titulo: z.string().nullable() });
+export type CierreEpisodio = z.infer<typeof CierreEpisodio>;
+
+export const EpisodioAsistente = z.strictObject({
+  id: z.uuid(),
+  abiertoEn: Instante,
+  // Nulo mientras está abierto
+  cierre: CierreEpisodio.nullable(),
   turnos: z.array(TurnoAsistente),
+});
+export type EpisodioAsistente = z.infer<typeof EpisodioAsistente>;
+
+// GET /asistente/conversacion?antes=&limite=: la transcripción por páginas de episodios, de lo más reciente
+// hacia atrás. `antes` es el `cursor` de la página anterior
+export const ConsultaConversacion = z.strictObject({
+  antes: z.uuid().optional(),
+  limite: z.coerce.number().int().min(1).max(20).default(3),
+});
+export type ConsultaConversacion = z.infer<typeof ConsultaConversacion>;
+
+export const ConversacionAsistente = z.strictObject({
+  // Del más antiguo al más reciente de esta página
+  episodios: z.array(EpisodioAsistente),
+  episodioAbierto: z.uuid().nullable(),
   pendiente: z.uuid().nullable(),
+  hayAnteriores: z.boolean(),
+  cursor: z.uuid().nullable(),
 });
 export type ConversacionAsistente = z.infer<typeof ConversacionAsistente>;

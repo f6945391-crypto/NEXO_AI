@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -110,6 +111,10 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
       });
       // Y el estado de su grafo (T-032)
       await base.puntoControlAgente.create({ data: { organizacionId, conversacionId: conversacion.id, datos: {} } });
+      // Y su transcripción (T-038)
+      await base.turnoTranscripcion.create({
+        data: { id: randomUUID(), organizacionId, perfilId, conversacionId: conversacion.id, en: new Date(), tipo: 'texto', datos: {} },
+      });
     }
     deA = aislarPorOrganizacion(base, orgA);
   });

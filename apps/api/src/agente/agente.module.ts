@@ -3,6 +3,7 @@ import { AgendaModule } from '../agenda/agenda.module';
 import { IntegracionesModule } from '../integraciones/integraciones.module';
 import { AsistenteController } from './asistente.controller';
 import { AsistenteService } from './asistente.service';
+import { TranscripcionService } from './transcripcion';
 import { ProcesadorEnEspera } from './en-espera';
 import { EjecutorHerramientas } from './herramientas/ejecutor-herramientas';
 import { HerramientasAgenda } from './herramientas/herramientas-agenda';
@@ -52,6 +53,7 @@ export function crearProveedorModelo(entorno: NodeJS.ProcessEnv = process.env): 
     HerramientasAgenda,
     HerramientasCaptura,
     AsistenteService,
+    TranscripcionService,
     ProcesadorEnEspera,
   ],
   exports: [PROVEEDOR_MODELO, LlamadorModelo, LlamadasAuditadas, EjecutorHerramientas, AsistenteService, ProcesadorEnEspera],

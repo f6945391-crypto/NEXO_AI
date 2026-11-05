@@ -46,6 +46,7 @@ model Organizacion {
   llamadasModelo   LlamadaModelo[]
   invocaciones     InvocacionHerramienta[]
   puntosControl    PuntoControlAgente[]
+  turnos           TurnoTranscripcion[]
 
   @@map("organizacion")
 }
@@ -73,6 +74,7 @@ model PerfilUsuario {
   conversaciones     ConversacionAgente[]
   llamadasModelo     LlamadaModelo[]
   invocaciones       InvocacionHerramienta[]
+  turnos             TurnoTranscripcion[]
 
   @@index([organizacionId])
   @@map("perfil_usuario")
@@ -168,12 +170,14 @@ enum EstadoConversacion {
 }
 
 model ConversacionAgente {
-  id             String             @id @default(uuid()) @db.Uuid
-  organizacionId String             @map("organizacion_id") @db.Uuid
-  perfilId       String             @map("perfil_id") @db.Uuid
-  estado         EstadoConversacion
-  abiertaEn      DateTime           @default(now()) @map("abierta_en") @db.Timestamptz(3)
-  cerradaEn      DateTime?          @map("cerrada_en") @db.Timestamptz(3)
+  id                String             @id @default(uuid()) @db.Uuid
+  organizacionId    String             @map("organizacion_id") @db.Uuid
+  perfilId          String             @map("perfil_id") @db.Uuid
+  estado            EstadoConversacion
+  abiertaEn         DateTime           @default(now()) @map("abierta_en") @db.Timestamptz(3)
+  cerradaEn         DateTime?          @map("cerrada_en") @db.Timestamptz(3)
+  // T-038 · plan §14.3: con cada mensaje. El cierre por inactividad lo usa desde T-041
+  ultimaActividadEn DateTime           @default(now()) @map("ultima_actividad_en") @db.Timestamptz(3)
 
   organizacion Organizacion            @relation(fields: [organizacionId], references: [id])
   perfil       PerfilUsuario           @relation(fields: [perfilId], references: [id], onDelete: Cascade)
@@ -181,6 +185,7 @@ model ConversacionAgente {
   llamadas     LlamadaModelo[]
   invocaciones InvocacionHerramienta[]
   puntoControl PuntoControlAgente?
+  turnos       TurnoTranscripcion[]
 
   @@index([perfilId, estado])
   @@index([organizacionId])
@@ -370,4 +375,33 @@ model EventoAuditoria {
 
   @@index([organizacionId, ocurridoEn])
   @@map("evento_auditoria")
+}
+
+// Transcripción del asistente (specs/07-agente/plan.md §14.4) · T-038 · REQ-AGT-03. Lo que la persona vio,
+// turno a turno, en cada episodio (`conversacion_agente`). Vive fuera del punto de control: no se pierde al
+// cerrarse el episodio, y lo que lee el modelo no crece con ella. Se lee por perfil, nunca por equipo (P-10).
+model TurnoTranscripcion {
+  // Lo genera el grafo: un reintento no duplica el turno
+  id             String   @id @db.Uuid
+  organizacionId String   @map("organizacion_id") @db.Uuid
+  perfilId       String   @map("perfil_id") @db.Uuid
+  conversacionId String   @map("conversacion_id") @db.Uuid
+  // Orden estable: varios turnos de una misma vuelta pueden tener el mismo instante
+  secuencia      Int      @default(autoincrement())
+  en             DateTime @db.Timestamptz(3)
+  tipo           String
+  // El TurnoAsistente de packages/contratos, validado con zod
+  datos          Json
+  // T-042: la actividad que resolvió este turno
+  actividadTipo  String?  @map("actividad_tipo")
+  actividadId    String?  @map("actividad_id")
+
+  organizacion Organizacion       @relation(fields: [organizacionId], references: [id])
+  perfil       PerfilUsuario      @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  conversacion ConversacionAgente @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+
+  @@index([perfilId, secuencia])
+  @@index([conversacionId])
+  @@index([organizacionId])
+  @@map("turno_asistente")
 }

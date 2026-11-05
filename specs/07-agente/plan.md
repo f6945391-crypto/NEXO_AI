@@ -427,3 +427,9 @@ Los tres usan `sinAislar` por ser trabajos de mantenimiento sobre todas las orga
 | AGT-04 | §14.9 | `agente.alternativas-de-referente` (nueva) |
 | AGT-05 | Sin plan | — |
 
+### 14.13 Ajustes de la implementación
+
+| Tarea | Ajuste |
+|---|---|
+| T-038 | Sin canal `turnosNuevos`: los nodos entregan sus turnos a un recolector de la invocación (`anotar`) y el servicio los guarda tras `invoke`. Cada episodio trae sus turnos en `episodios[].turnos`; la página es de episodios y el cursor es el id del más antiguo. Modelo Prisma `TurnoTranscripcion` sobre la tabla `turno_asistente`, con `secuencia` para el orden |
+

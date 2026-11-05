@@ -183,7 +183,23 @@ El pulido visual que no cambia comportamiento (tarjeta en conflicto, lienzo en m
 - **Contenido:** migración nueva con `turno_asistente` y `conversacion_agente.ultima_actividad_en`; `TranscripcionService`; `turnos` fuera del estado y `turnosNuevos` con reductor que reemplaza; el servicio anota tras cada `invoke` y en `atenderEnEspera`; `GET /asistente/conversacion` paginado con `episodios` y su `cierre`; `episodioCerrado` y `episodioId` en `RespuestaAsistente`; `ultima_actividad_en` se actualiza con cada mensaje, sin cerrar nada todavía (el cierre por inactividad es T-041); la tabla nueva en `MODELOS_CON_ORGANIZACION`
 - **Hecho cuando:** un episodio cerrado sigue apareciendo al pedir la conversación, con su `cierre`; la página anterior llega con el cursor; el punto de control ya no contiene turnos; un reintento no duplica turnos; otra organización y otro perfil no ven la transcripción
 - **Pruebas:** `agente.transcripcion-persiste` (nueva), `agente.interrumpe-hasta-decidir` y `agente.conversacion-con-contexto` (ajustadas), `plataforma.aislamiento-entre-organizaciones` (ampliada)
-- **Estado:** pendiente
+- **Estado:** hecha · 5 de noviembre de 2026. 7 pruebas nuevas; las 70 del agente en verde
+- **«Hecho cuando», punto por punto:**
+  - ✔ Un episodio cerrado sigue al pedir la conversación, con su `cierre` (`agente.transcripcion-persiste`: «un episodio cerrado sigue…» y «descartar deja el episodio…»)
+  - ✔ La página anterior llega con el cursor (`agente.transcripcion-persiste`: «ver anteriores…»)
+  - ✔ El punto de control ya no contiene turnos (`agente.transcripcion-persiste`: «el punto de control ya no guarda…»; se decodifica y no lleva `turnos`)
+  - ✔ Un reintento no duplica turnos (`agente.transcripcion-persiste`: «un reintento no duplica turnos»)
+  - ✔ Otra organización y otro perfil no ven la transcripción (`agente.transcripcion-persiste`: «otra persona…»; `plataforma.aislamiento-entre-organizaciones`, ampliada con una fila de `turno_asistente`)
+  - ✔ La interrupción sobrevive sin turnos en el estado (`agente.interrumpe-hasta-decidir`, ajustada)
+- **Medido (B2 de `PLAN-PRUEBAS-VISUAL-Y-AGENTE.md`):** el punto de control de un episodio con una propuesta, con sus 2 puntos, ocupa **5 546 bytes** (unos 8 KB antes). **No llega a la meta de menos de 2 KB**: lo que queda son los mensajes para el modelo, con el resultado de cada herramienta, y la codificación en base64 de los bytes de LangGraph. La prueba fija el límite en 6 000 bytes para que no vuelva a crecer. Reducirlo más es una decisión aparte, no de T-038
+- **Notas de implementación (ajustes al plan §14, anotados en plan §14.13):**
+  - **Sin canal `turnosNuevos`.** Un reductor que reemplaza pierde los turnos de los nodos anteriores de la misma vuelta, y uno que acumula los guarda en el punto de control. Los nodos entregan sus turnos a `anotar`, un recolector de cada invocación que pasa `construirGrafo`; el servicio los guarda con `TranscripcionService.anotar` después de `invoke`. Ningún nodo anota antes de `interrupt()`. La prueba decodifica el punto de control y comprueba que no lleva turnos.
+  - **Cada episodio trae sus turnos** (`episodios[].turnos`) en vez de turnos sueltos con `episodioId`: el cliente no tiene que agruparlos. La página es de episodios (3 por defecto, de 1 a 20); `cursor` es el id del episodio más antiguo de la página y `antes` lo recibe.
+  - Tabla `turno_asistente` (novena migración), modelo `TurnoTranscripcion` en Prisma para no confundirlo con el `TurnoAsistente` de los contratos. `secuencia` da un orden estable a turnos con el mismo instante. Entra en `MODELOS_CON_ORGANIZACION`, y `plataforma.aislamiento-entre-organizaciones` se amplió con una fila sembrada de la tabla nueva.
+  - `cierre` del episodio: la Operación ejecutada si la hay, si no la última descartada; el título sale de lo que devolvió Google o de la carga. Un fallo o un episodio sin Operación es `sin_accion`.
+  - `RespuestaAsistente` cambia `conversacionId` por `episodioId` y `cerrada` por `episodioCerrado`. La web y el móvil solo cambian de nombre y siguen mostrando el episodio abierto: **lo que se ve no cambia hasta T-039**.
+  - `ultima_actividad_en` se actualiza con cada mensaje y cada decisión; nada lo lee todavía (T-041).
+  - La transcripción empieza vacía: las conversaciones de desarrollo anteriores no se migran (plan §14.4).
 
 ### T-039 · Web y móvil que no se vacían
 
@@ -192,6 +208,7 @@ El pulido visual que no cambia comportamiento (tarjeta en conflicto, lienzo en m
 - **Contenido:** quitar el vaciado de `conversacion.tsx` y `captura.tsx`; separador entre episodios con el `cierre` del servidor; «Ver anteriores» con el cursor, conservando la posición; blanco inicial solo con la transcripción vacía; el móvil abre con el episodio en curso y el anterior; capturas nuevas en una carpeta con fecha, sin tocar `design/capturas/2026-11-04/`
 - **Hecho cuando:** tras confirmar y escribir otra cosa, la petición, la tarjeta y el «Listo» siguen visibles, con un separador y el mensaje nuevo debajo; al recargar la web o reabrir la capa se ve lo mismo; «Ver anteriores» trae un episodio más y desaparece cuando no hay más; en pantalla no aparecen «episodio», «turno» ni «transcripción» (R-40)
 - **Pruebas:** `web.asistente-agenda-y-confirma` (ampliada), `web.asistente-historial` (nueva), `movil.captura-propone-y-confirma` (ampliada)
+- **Para las pruebas del equipo (A1 a A6):** las cuentas de `e2e/cuentas.json` no cambian de nombre; los nombres accesibles se conservan (`Para confirmar`, `Pídele algo al asistente`, `Enviar`, `Confirmar`, `Descartar`, `Asistente`, `Pedir algo al asistente`, `Cerrar`); el botón nuevo se llama `Ver anteriores` y el separador tiene `role="separator"` y un `aria-label` que dice qué es
 - **Estado:** pendiente
 
 ### T-040 · Nota de continuidad y evaluación por trayectoria
@@ -201,6 +218,7 @@ El pulido visual que no cambia comportamiento (tarjeta en conflicto, lienzo en m
 - **Contenido:** `NotaDeContinuidad` con las 5 últimas acciones confirmadas o las de 7 días, lo menor, y lo que está en espera, marcada como datos; `interpretar` la recibe del servicio; las instrucciones permiten responder «¿qué hicimos?» con la nota; un guion del simulado que la usa; la evaluación mira la trayectoria y suma dos casos
 - **Hecho cuando:** con el simulado, tras confirmar «Dentista», «mejor a las 5» consulta y propone `agenda.modificar` con el id del evento, y nada se ejecuta sin la tarjeta; la nota no pasa de 5 acciones ni de 7 días y lleva el aviso de contenido externo; contra Groq, en **una sola corrida avisada antes**, los dos casos nuevos pasan y los nueve anteriores siguen pasando
 - **Pruebas:** `agente.nota-de-continuidad` (nueva, con guion), `agente.conversacion-con-contexto` (ajustada al criterio 2 de la v2), `agente.evaluacion` (a mano)
+- **Para las pruebas del equipo (B5 a B10):** un guion del simulado que use la nota, con al menos «mejor a las 5» tras un resultado (consulta y luego modificar con el id), «¿qué hicimos?» (solo texto, sin herramientas) y «hola» con acciones en la nota (solo el saludo); `NotaDeContinuidad.armar` público, y el `sistema` completo guardado en `llamada_modelo`; los casos B6 a B9 y B15 escritos en `evaluar-asistente`
 - **Estado:** pendiente
 
 ### T-041 · Ciclo de vida: inactividad, retención y tope del grafo
@@ -210,6 +228,7 @@ El pulido visual que no cambia comportamiento (tarjeta en conflicto, lienzo en m
 - **Contenido:** cierre del episodio por inactividad, **al recibir un mensaje y en el trabajador** (*movido aquí desde T-038 el 5 de noviembre de 2026*); en el trabajador, además, borrar los puntos de control de episodios cerrados hace más de 7 días y la transcripción de más de 90; `recursionLimit` explícito desde `TOPE_VUELTAS`
 - **Hecho cuando:** un episodio sin propuesta pendiente y con 30 minutos sin actividad se cierra al llegar el siguiente mensaje y en la pasada del trabajador, y el mensaje nuevo abre otro; un episodio **con** propuesta pendiente no se cierra por inactividad mientras siga abierta H-AG-08 (ver la nota de abajo); un punto de control de un episodio cerrado hace 8 días desaparece y su transcripción y su auditoría siguen; un turno de hace 91 días desaparece y uno de hace 89 sigue; superar el tope del grafo termina en el turno de fallo de H-AGT-10, sin el error de LangGraph
 - **Pruebas:** `agente.episodio-caduca` (nueva), `agente.retencion-puntos-de-control` (nueva), `agente.retencion-transcripcion` (nueva)
+- **Para las pruebas del equipo (B11 a B13):** cada trabajo del trabajador invocable sin esperar al cron, con un método como `repasar()` de la cola en espera, y el reloj inyectable para simular 30 minutos, 7 días y 90 días
 - **Decisión abierta que la toca:** el plazo de una propuesta pendiente es **H-AG-08**, abierto en `02-agenda` (decisión 12) y en `SPEC.md` §8. No se fija aquí. Mientras siga abierto rige lo que ya asume `specs/02-agenda/plan.md` §9: la propuesta no caduca, así que tampoco se cierra el episodio que la espera
 - **Estado:** pendiente
 
@@ -220,5 +239,6 @@ El pulido visual que no cambia comportamiento (tarjeta en conflicto, lienzo en m
 - **Contenido:** `agenda.modificar_evento` y `agenda.cancelar_evento` aceptan lo que la persona dijo en lugar del id; la búsqueda y la decisión de si hay ambigüedad son código; nodo `alternativas` sin modelo y turno `alternativas_de_referente`; decisión `referente` en `POST /asistente/decisiones`; `actividad_tipo` y `actividad_id` en cada turno que resolvió una actividad; herramienta `actividad.contexto(id)`; un caso de evaluación
 - **Hecho cuando:** con dos «Dentista», «mueve el dentista a las 5» muestra las dos y no propone nada; elegir una lleva a su tarjeta; con uno solo, se propone directo y la tarjeta dice cuál; escribir otra cosa descarta la lista; los turnos de una acción quedan ligados a su compromiso
 - **Pruebas:** `agente.alternativas-de-referente` (nueva), `web.asistente-alternativas-de-referente` (nueva), `agente.evaluacion` (a mano, un caso)
+- **Para las pruebas del equipo (B14 a B17):** el turno `alternativas_de_referente` y la decisión `referente` en `packages/contratos/src/asistente.ts`, y un guion del simulado con dos «Dentista»
 - **Estado:** pendiente
 

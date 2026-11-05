@@ -3,9 +3,11 @@ import { Command } from '@langchain/langgraph';
 import {
   OperacionRespuesta,
   VistaConfirmacion,
+  type ConsultaConversacion,
   type ConversacionAsistente,
   type DecisionAsistente,
   type RespuestaAsistente,
+  type TurnoAsistente,
 } from '@nexoai/contratos';
 import type { ContextoSolicitud } from '../identidad/contexto';
 import { OperacionesService } from '../operaciones/operaciones.service';
@@ -15,11 +17,14 @@ import { construirGrafo, turnoPersona, type EstadoAsistente, type Reanudacion } 
 import { PuntoControlConversacion } from './grafo/punto-control-prisma';
 import { EjecutorHerramientas } from './herramientas/ejecutor-herramientas';
 import { LlamadasAuditadas } from './llamadas-auditadas';
+import { TranscripcionService } from './transcripcion';
 
 // specs/07-agente/plan.md §4.3 y §9 · T-032 · REQ-AGT-01. La conversación con el asistente: cada persona
 // tiene como mucho una abierta; se cierra cuando se cierra su acción (H-AGT-05), y la siguiente solicitud
 // empieza otra sin ese contexto. Decidir sobre una propuesta pasa por OperacionesService, la única
 // confirmación que existe (AD-09), y con su desenlace se reanuda el grafo.
+// T-038 · plan §14: la «conversación» de la base es el **episodio**. Lo que ve la persona se anota en la
+// transcripción después de cada invocación, y sigue visible cuando el episodio se cierra (REQ-AGT-03).
 
 const sinAccion = () => errorApi(409, 'OPERACION_NO_CONFIRMABLE', 'Esta acción ya no está esperando tu decisión.');
 
@@ -30,22 +35,27 @@ export class AsistenteService {
     private readonly operaciones: OperacionesService,
     private readonly llamadas: LlamadasAuditadas,
     private readonly ejecutor: EjecutorHerramientas,
+    private readonly transcripcion: TranscripcionService,
   ) {}
 
-  async conversacion(contexto: ContextoSolicitud): Promise<ConversacionAsistente> {
+  async conversacion(contexto: ContextoSolicitud, consulta: ConsultaConversacion = { limite: 3 }): Promise<ConversacionAsistente> {
     const abierta = await this.abierta(contexto);
-    if (!abierta) return { conversacionId: null, turnos: [], pendiente: null };
-    const { grafo, config } = await this.grafo(contexto, abierta.id);
-    const estado = await grafo.getState(config);
-    const valores = estado.values as Partial<EstadoAsistente>;
-    return { conversacionId: abierta.id, turnos: valores.turnos ?? [], pendiente: estado.next.includes('esperar_decision') ? (valores.pendiente ?? null) : null };
+    let pendiente: string | null = null;
+    if (abierta) {
+      const { grafo, config } = await this.grafo(contexto, abierta.id, []);
+      const estado = await grafo.getState(config);
+      if (estado.next.includes('esperar_decision')) pendiente = (estado.values as Partial<EstadoAsistente>).pendiente ?? null;
+    }
+    const pagina = await this.transcripcion.listar(contexto, consulta);
+    return { ...pagina, episodioAbierto: abierta?.id ?? null, pendiente };
   }
 
   async enviar(contexto: ContextoSolicitud, texto: string): Promise<RespuestaAsistente> {
     const conversacion = (await this.abierta(contexto)) ?? (await this.abrir(contexto));
-    const { grafo, config } = await this.grafo(contexto, conversacion.id);
+    await this.anotarActividad(contexto, conversacion.id);
+    const turnos: TurnoAsistente[] = [];
+    const { grafo, config } = await this.grafo(contexto, conversacion.id, turnos);
     const estado = await grafo.getState(config);
-    const antes = ((estado.values as Partial<EstadoAsistente>).turnos ?? []).length;
     const referencia = { instante: new Date().toISOString(), zonaHoraria: await this.zona(contexto) };
 
     if (estado.next.includes('esperar_decision')) {
@@ -56,18 +66,19 @@ export class AsistenteService {
       if (op && op.estado !== 'propuesta') {
         const decidida: Reanudacion = { tipo: op.estado === 'ejecutada' ? 'confirmada' : 'descartada', operacion: op };
         await this.cerrarSiHaceFalta(contexto, conversacion.id, await grafo.invoke(new Command({ resume: decidida }), config));
+        await this.transcripcion.anotar(contexto, conversacion.id, turnos);
         return this.enviar(contexto, texto);
       }
       // REQ-AGT-01: un mensaje nuevo con una propuesta pendiente la descarta y se interpreta con lo hablado
       if (op) await this.operaciones.descartar(contexto, op.id);
       const resultado = await grafo.invoke(new Command({ resume: { tipo: 'nuevo_mensaje', texto, referencia } satisfies Reanudacion }), config);
-      return this.responder(contexto, conversacion.id, resultado, antes);
+      return this.responder(contexto, conversacion.id, resultado, turnos);
     }
 
+    turnos.push(turnoPersona(texto));
     const resultado = await grafo.invoke(
       {
         mensajes: [{ rol: 'persona', texto }],
-        turnos: [turnoPersona(texto)],
         referencia,
         vueltas: 0,
         pendiente: null,
@@ -80,7 +91,7 @@ export class AsistenteService {
       },
       config,
     );
-    return this.responder(contexto, conversacion.id, resultado, antes);
+    return this.responder(contexto, conversacion.id, resultado, turnos);
   }
 
   // P-11 · T-033 · plan §7: lo que esperaba al asistente o al calendario se interpreta ahora, con la fecha
@@ -93,14 +104,15 @@ export class AsistenteService {
     const texto = op.solicitudOriginal ?? '';
     const previa = op.conversacionId ? await this.datos(contexto).conversacionAgente.findFirst({ where: { id: op.conversacionId, estado: 'abierta' } }) : null;
     const conversacion = previa ?? (await this.abierta(contexto)) ?? (await this.abrir(contexto));
-    const { grafo, config } = await this.grafo(contexto, conversacion.id);
+    const turnos: TurnoAsistente[] = [];
+    const { grafo, config } = await this.grafo(contexto, conversacion.id, turnos);
     // Con una tarjeta esperando a la persona, no se le pone otra encima: se atiende en la siguiente pasada
     if ((await grafo.getState(config)).next.includes('esperar_decision')) return 'ocupada';
 
+    turnos.push(turnoPersona(texto));
     const resultado = (await grafo.invoke(
       {
         mensajes: [{ rol: 'persona', texto }],
-        turnos: [turnoPersona(texto)],
         referencia: { instante: op.capturadaEn.toISOString(), zonaHoraria: await this.zona(contexto) },
         vueltas: 0,
         pendiente: null,
@@ -114,6 +126,7 @@ export class AsistenteService {
       config,
     )) as EstadoAsistente;
     await this.cerrarSiHaceFalta(contexto, conversacion.id, resultado);
+    await this.transcripcion.anotar(contexto, conversacion.id, turnos);
 
     const despues = await this.datos(contexto).operacion.findFirstOrThrow({ where: { id: op.id } });
     if (despues.estado === 'propuesta') return 'propuesta';
@@ -135,10 +148,11 @@ export class AsistenteService {
   async decidir(contexto: ContextoSolicitud, decision: DecisionAsistente): Promise<RespuestaAsistente> {
     const conversacion = await this.abierta(contexto);
     if (!conversacion) throw sinAccion();
-    const { grafo, config } = await this.grafo(contexto, conversacion.id);
+    const turnos: TurnoAsistente[] = [];
+    const { grafo, config } = await this.grafo(contexto, conversacion.id, turnos);
     const estado = await grafo.getState(config);
     if (!estado.next.includes('esperar_decision') || (estado.values as EstadoAsistente).pendiente !== decision.operacionId) throw sinAccion();
-    const antes = (estado.values as EstadoAsistente).turnos.length;
+    await this.anotarActividad(contexto, conversacion.id);
 
     let reanudacion: Reanudacion;
     if (decision.decision === 'confirmar') {
@@ -148,7 +162,7 @@ export class AsistenteService {
     } else {
       reanudacion = { tipo: 'alternativa', operacion: await this.proponerAlternativa(contexto, conversacion.id, decision) };
     }
-    return this.responder(contexto, conversacion.id, await grafo.invoke(new Command({ resume: reanudacion }), config), antes);
+    return this.responder(contexto, conversacion.id, await grafo.invoke(new Command({ resume: reanudacion }), config), turnos);
   }
 
   // Decisión 17 de 02-agenda: elegir una alternativa no pasa por el modelo. Solo vale una de las que ofreció
@@ -177,15 +191,23 @@ export class AsistenteService {
     );
   }
 
-  private async responder(contexto: ContextoSolicitud, conversacionId: string, resultado: unknown, antes: number): Promise<RespuestaAsistente> {
+  // El punto de control ya se guardó dentro de `invoke`: los turnos se anotan después, para que un fallo a
+  // mitad no deje en la transcripción algo que el grafo no recuerda (plan §14.4)
+  private async responder(contexto: ContextoSolicitud, episodioId: string, resultado: unknown, turnos: TurnoAsistente[]): Promise<RespuestaAsistente> {
     const estado = resultado as EstadoAsistente & { __interrupt__?: unknown[] };
-    const cerrada = await this.cerrarSiHaceFalta(contexto, conversacionId, estado);
+    const episodioCerrado = await this.cerrarSiHaceFalta(contexto, episodioId, estado);
+    await this.transcripcion.anotar(contexto, episodioId, turnos);
     return {
-      conversacionId,
-      turnos: estado.turnos.slice(antes),
+      episodioId,
+      turnos,
       pendiente: estado.__interrupt__?.length ? estado.pendiente : null,
-      cerrada,
+      episodioCerrado,
     };
+  }
+
+  // Plan §14.3: con cada mensaje o decisión. El cierre por inactividad que lo usa es de T-041
+  private async anotarActividad(contexto: ContextoSolicitud, episodioId: string): Promise<void> {
+    await this.datos(contexto).conversacionAgente.updateMany({ where: { id: episodioId, perfilId: contexto.perfilId }, data: { ultimaActividadEn: new Date() } });
   }
 
   // REQ-AGT-01, H-AGT-05: al ejecutarse o descartarse su acción, la conversación se cierra
@@ -198,9 +220,11 @@ export class AsistenteService {
     return true;
   }
 
-  private async grafo(contexto: ContextoSolicitud, conversacionId: string) {
+  // `turnos` recoge lo que la persona verá de esta invocación (plan §14.2)
+  private async grafo(contexto: ContextoSolicitud, conversacionId: string, turnos: TurnoAsistente[]) {
     const punto = await PuntoControlConversacion.cargar(this.datos(contexto), contexto.organizacionId, conversacionId);
-    const grafo = construirGrafo({ llamadas: this.llamadas, ejecutor: this.ejecutor, operaciones: this.operaciones }, contexto, conversacionId, punto);
+    const anotar = (nuevos: TurnoAsistente[]) => void turnos.push(...nuevos);
+    const grafo = construirGrafo({ llamadas: this.llamadas, ejecutor: this.ejecutor, operaciones: this.operaciones }, contexto, conversacionId, punto, anotar);
     return { grafo, config: { configurable: { thread_id: conversacionId } } };
   }
 

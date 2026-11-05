@@ -1,5 +1,6 @@
-import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Query } from '@nestjs/common';
 import {
+  ConsultaConversacion,
   DecisionAsistente,
   MensajeAsistente,
   type ConversacionAsistente,
@@ -17,9 +18,13 @@ import { AsistenteService } from './asistente.service';
 export class AsistenteController {
   constructor(private readonly asistente: AsistenteService) {}
 
+  // T-038 · REQ-AGT-03: la transcripción por páginas de episodios
   @Get('conversacion')
-  conversacion(@Contexto() contexto: ContextoSolicitud): Promise<ConversacionAsistente> {
-    return this.asistente.conversacion(contexto);
+  conversacion(
+    @Contexto() contexto: ContextoSolicitud,
+    @Query(new ValidarCon(ConsultaConversacion)) consulta: ConsultaConversacion,
+  ): Promise<ConversacionAsistente> {
+    return this.asistente.conversacion(contexto, consulta);
   }
 
   @Post('mensajes')

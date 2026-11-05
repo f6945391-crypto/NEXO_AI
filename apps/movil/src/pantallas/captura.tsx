@@ -124,7 +124,8 @@ export function CapaCaptura({
       if (!r) return alSalir();
       const conversacion = ConversacionAsistente.safeParse(r.cuerpo);
       if (r.estado === 200 && conversacion.success) {
-        setTurnos(conversacion.data.turnos);
+        // T-038: por ahora solo el episodio abierto, como antes; el historial con separadores es de T-039
+        setTurnos(conversacion.data.episodios.find((e) => e.id === conversacion.data.episodioAbierto)?.turnos ?? []);
         setPendiente(conversacion.data.pendiente);
       }
     } catch {
@@ -150,7 +151,7 @@ export function CapaCaptura({
       if (r.estado !== 200 || !respuesta.success) return setError(mensajeDeError(r.cuerpo, 'El asistente no pudo responder. Inténtalo de nuevo.'));
       setTurnos((previos) => [...previos.filter((t) => t.id !== provisional), ...respuesta.data.turnos]);
       setPendiente(respuesta.data.pendiente);
-      setCerrada(respuesta.data.cerrada);
+      setCerrada(respuesta.data.episodioCerrado);
       if (respuesta.data.turnos.some((t) => t.tipo === 'resultado')) alCambiarAgenda();
     } catch {
       setError(SIN_CONEXION);

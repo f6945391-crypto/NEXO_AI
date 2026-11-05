@@ -7,6 +7,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { ModeloSimulado, type ReglaGuion } from '../../src/agente/modelo/modelo-simulado';
 import { OPCIONES_LLAMADOR } from '../../src/agente/modelo/llamador-modelo';
 import { PROVEEDOR_MODELO } from '../../src/agente/modelo/proveedor-modelo';
+import { TranscripcionService } from '../../src/agente/transcripcion';
 import { AppModule } from '../../src/app.module';
 import { crearOrganizacion } from '../../src/identidad/alta-cuentas';
 import { ProveedorCalendarioSimulado } from '../../src/integraciones/calendario/calendario-simulado';
@@ -16,6 +17,7 @@ import { clientePrueba, crearCuentaLista, vaciarTablas } from '../utilidades/bas
 import { instante, VIERNES } from '../utilidades/fechas';
 
 // T-032 · REQ-AGT-01, REQ-CUN01-03, 04, 05, 07 · REQ-CAP-02, 03, 04, 06 · specs/07-agente/plan.md §4 y §9
+// T-038 · REQ-AGT-03 · plan §14: la transcripción, fuera del punto de control
 
 const CONTRASENA = 'una-contrasena-de-prueba';
 const calendario = new ProveedorCalendarioSimulado();
@@ -38,6 +40,7 @@ describe('T-032 · conversación con el asistente', () => {
   let prisma: PrismaClient;
   let autorizacion: string;
   let perfilId: string;
+  let organizacionId: string;
   let n = 0;
 
   const http = () => request(app.getHttpServer());
@@ -45,6 +48,15 @@ describe('T-032 · conversación con el asistente', () => {
     RespuestaAsistente.parse((await http().post('/asistente/mensajes').set('Authorization', autorizacion).send({ texto }).expect(200)).body);
   const decidir = async (cuerpo: object) =>
     RespuestaAsistente.parse((await http().post('/asistente/decisiones').set('Authorization', autorizacion).send(cuerpo).expect(200)).body);
+  const leer = async (consulta = '', token = autorizacion) =>
+    ConversacionAsistente.parse((await http().get(`/asistente/conversacion${consulta}`).set('Authorization', token).expect(200)).body);
+  // Una cuenta más, con su sesión
+  const otraCuenta = async (organizacion: string) => {
+    const correo = `otra${++n}@nexoai.test`;
+    await crearCuentaLista(prisma, { organizacionId: organizacion, correo, rol: 'usuario_personal', plan: 'personal' }, CONTRASENA, 'America/Lima');
+    const sesion = IngresoRespuesta.parse((await http().post('/auth/ingreso').send({ correo, contrasena: CONTRASENA }).expect(200)).body);
+    return `Bearer ${sesion.tokenAcceso}`;
+  };
 
   beforeAll(async () => {
     const modulo = await Test.createTestingModule({ imports: [AppModule] })
@@ -71,7 +83,7 @@ describe('T-032 · conversación con el asistente', () => {
     calendario.reiniciar();
     simulado.recuperar();
     simulado.peticiones.length = 0;
-    const organizacionId = await crearOrganizacion(prisma, 'Organización de prueba');
+    organizacionId = await crearOrganizacion(prisma, 'Organización de prueba');
     const correo = `conv${++n}@nexoai.test`;
     ({ perfilId } = await crearCuentaLista(prisma, { organizacionId, correo, rol: 'usuario_personal', plan: 'personal' }, CONTRASENA, 'America/Lima'));
     await prisma.consentimientoIntegracion.create({ data: { organizacionId, perfilId, proveedor: 'google', alcance: 'calendario', estado: 'concedido' } });
@@ -99,7 +111,7 @@ describe('T-032 · conversación con el asistente', () => {
       const resultado = hecha.turnos[0] as Extract<TurnoAsistente, { tipo: 'resultado' }>;
       expect(resultado.operacion.estado).toBe('ejecutada');
       expect(resultado.texto).toMatch(/^Listo: «Dentista» quedó en tu calendario el .+, de 16:00 – 17:00 \(hora de Lima \(GMT-5\)\)\.$/);
-      expect(hecha).toMatchObject({ pendiente: null, cerrada: true });
+      expect(hecha).toMatchObject({ pendiente: null, episodioCerrado: true });
       // Tras proponer, el grafo espera sin volver al modelo, y comunicar el resultado tampoco lo llama
       expect(simulado.peticiones).toHaveLength(1);
     });
@@ -149,7 +161,7 @@ describe('T-032 · conversación con el asistente', () => {
       const segunda = await enviar('mejor a las 5');
       expect(tipos(segunda.turnos)).toEqual(['persona', 'propuesta']);
       expect(await prisma.operacion.findUniqueOrThrow({ where: { id: primera.pendiente! } })).toMatchObject({ estado: 'descartada' });
-      expect(segunda.conversacionId).toBe(primera.conversacionId);
+      expect(segunda.episodioId).toBe(primera.episodioId);
       // El modelo recibió la conversación anterior
       const textos = simulado.peticiones.at(-1)!.mensajes.filter((m) => m.rol === 'persona').map((m) => (m as { texto: string }).texto);
       expect(textos).toEqual(['Agéndame dentista el viernes a las 4', 'mejor a las 5']);
@@ -159,7 +171,7 @@ describe('T-032 · conversación con el asistente', () => {
       const primera = await enviar('Agéndame dentista el viernes a las 4');
       await decidir({ operacionId: primera.pendiente, decision: 'confirmar' });
       const despues = await enviar('Hola');
-      expect(despues.conversacionId).not.toBe(primera.conversacionId);
+      expect(despues.episodioId).not.toBe(primera.episodioId);
       expect(simulado.peticiones.at(-1)!.mensajes).toEqual([{ rol: 'persona', texto: 'Hola' }]);
       expect(tipos(despues.turnos)).toEqual(['persona', 'texto']);
     });
@@ -180,7 +192,7 @@ describe('T-032 · conversación con el asistente', () => {
       expect(r.turnos[1]).toMatchObject({ texto: '¿Qué día?', campo: 'fecha' });
       expect(await prisma.operacion.count()).toBe(0);
       expect(simulado.peticiones).toHaveLength(1);
-      expect(r).toMatchObject({ pendiente: null, cerrada: false });
+      expect(r).toMatchObject({ pendiente: null, episodioCerrado: false });
     });
 
     it('con el modelo caído no se propone nada: queda en espera (T-033)', async () => {
@@ -188,6 +200,88 @@ describe('T-032 · conversación con el asistente', () => {
       const r = await enviar('Agéndame dentista el viernes a las 4');
       expect(tipos(r.turnos)).toEqual(['persona', 'en_espera']);
       expect(await prisma.operacion.count({ where: { estado: 'propuesta' } })).toBe(0);
+    });
+  });
+
+  describe('agente.transcripcion-persiste', () => {
+    it('un episodio cerrado sigue en la transcripción con su cierre, y el siguiente queda aparte (REQ-AGT-03)', async () => {
+      const primera = await enviar('Agéndame dentista el viernes a las 4');
+      await decidir({ operacionId: primera.pendiente, decision: 'confirmar' });
+      const segunda = await enviar('Hola');
+
+      const leida = await leer();
+      expect(leida.episodios.map((e) => e.id)).toEqual([primera.episodioId, segunda.episodioId]);
+      const [cerrado, abierto] = leida.episodios;
+      expect(tipos(cerrado!.turnos)).toEqual(['persona', 'propuesta', 'resultado']);
+      expect(cerrado!.cierre).toMatchObject({ desenlace: 'registrado', titulo: 'Dentista' });
+      expect(tipos(abierto!.turnos)).toEqual(['persona', 'texto']);
+      expect(abierto!.cierre).toBeNull();
+      expect(leida).toMatchObject({ episodioAbierto: segunda.episodioId, pendiente: null, hayAnteriores: false, cursor: null });
+      // Los turnos son los mismos que devolvió cada respuesta
+      expect(cerrado!.turnos[0]!.id).toBe(primera.turnos[0]!.id);
+    });
+
+    it('descartar deja el episodio cerrado como «descartado»', async () => {
+      const r = await enviar('Agéndame dentista el viernes a las 4');
+      await decidir({ operacionId: r.pendiente, decision: 'descartar' });
+      const [episodio] = (await leer()).episodios;
+      expect(episodio!.cierre).toMatchObject({ desenlace: 'descartado', titulo: 'Dentista' });
+      expect(tipos(episodio!.turnos)).toEqual(['persona', 'propuesta', 'texto']);
+    });
+
+    it('el punto de control ya no guarda lo que ve la persona (plan §14.2)', async () => {
+      await enviar('Agéndame dentista el viernes a las 4');
+      const guardado = (await prisma.puntoControlAgente.findFirstOrThrow()).datos as { puntos: Record<string, Record<string, [string, string, string | null]>> };
+      const textos = Object.values(guardado.puntos[''] ?? {}).map(([punto]) => Buffer.from(punto, 'base64').toString('utf8'));
+      expect(textos.length).toBeGreaterThan(0);
+      for (const texto of textos) expect(texto).not.toContain('"turnos"');
+      expect(await prisma.turnoTranscripcion.count()).toBe(2);
+      // B2 del plan de pruebas: con una propuesta y sus 2 puntos se midieron 5 546 bytes el 5 de noviembre
+      // de 2026 (unos 8 KB antes de T-038). La meta de menos de 2 KB no se alcanza: ver tasks.md, T-038
+      expect(Buffer.byteLength(JSON.stringify(guardado), 'utf8')).toBeLessThan(6_000);
+    });
+
+    it('«ver anteriores»: la página siguiente llega con el cursor, sin repetir episodios', async () => {
+      const ids: string[] = [];
+      for (let i = 0; i < 4; i++) {
+        const r = await enviar('Agéndame dentista el viernes a las 4');
+        await decidir({ operacionId: r.pendiente, decision: 'descartar' });
+        ids.push(r.episodioId);
+      }
+      const reciente = await leer('?limite=3');
+      expect(reciente.episodios.map((e) => e.id)).toEqual(ids.slice(1));
+      expect(reciente.hayAnteriores).toBe(true);
+      expect(reciente.cursor).toBe(ids[1]);
+
+      const anterior = await leer(`?limite=3&antes=${reciente.cursor}`);
+      expect(anterior.episodios.map((e) => e.id)).toEqual(ids.slice(0, 1));
+      expect(anterior).toMatchObject({ hayAnteriores: false, cursor: null });
+      await http().get('/asistente/conversacion?limite=0').set('Authorization', autorizacion).expect(400);
+    });
+
+    it('un reintento no duplica turnos', async () => {
+      const r = await enviar('Hola');
+      const contexto = { perfilId, organizacionId, rol: 'usuario_personal' as const, plan: 'personal' as const, primerIngresoPendiente: false };
+      await app.get(TranscripcionService).anotar(contexto, r.episodioId, r.turnos);
+      expect(await prisma.turnoTranscripcion.count()).toBe(2);
+    });
+
+    it('con cada mensaje se anota la última actividad del episodio', async () => {
+      const r = await enviar('Agéndame algo con Vasco');
+      const antes = (await prisma.conversacionAgente.findUniqueOrThrow({ where: { id: r.episodioId } })).ultimaActividadEn;
+      await enviar('Hola');
+      const despues = (await prisma.conversacionAgente.findUniqueOrThrow({ where: { id: r.episodioId } })).ultimaActividadEn;
+      expect(despues.getTime()).toBeGreaterThanOrEqual(antes.getTime());
+      expect(await prisma.conversacionAgente.count()).toBe(1);
+    });
+
+    it('otra persona, de la misma organización o de otra, no ve la transcripción (P-10, P-04)', async () => {
+      await enviar('Agéndame dentista el viernes a las 4');
+      const companera = await otraCuenta(organizacionId);
+      expect((await leer('', companera)).episodios).toEqual([]);
+      const ajena = await otraCuenta(await crearOrganizacion(prisma, 'Otra organización'));
+      expect((await leer('', ajena)).episodios).toEqual([]);
+      expect((await leer()).episodios).toHaveLength(1);
     });
   });
 });

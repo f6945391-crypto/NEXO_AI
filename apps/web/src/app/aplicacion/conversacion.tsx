@@ -163,7 +163,8 @@ export function Conversacion({
   zona?: string;
   entrada: RefObject<HTMLTextAreaElement | null>;
 }) {
-  const [turnos, setTurnos] = useState<TurnoAsistente[]>(inicial?.turnos ?? []);
+  // T-038: por ahora solo el episodio abierto, como antes; el historial con separadores es de T-039
+  const [turnos, setTurnos] = useState<TurnoAsistente[]>(inicial?.episodios.find((e) => e.id === inicial.episodioAbierto)?.turnos ?? []);
   const [pendiente, setPendiente] = useState<string | null>(inicial?.pendiente ?? null);
   // REQ-AGT-01: tras cerrarse una acción, lo siguiente que se pide empieza en limpio
   const [cerrada, setCerrada] = useState(false);
@@ -188,7 +189,7 @@ export function Conversacion({
     const { respuesta } = r;
     setTurnos((previos) => [...previos.filter((t) => t.id !== provisional), ...respuesta.turnos]);
     setPendiente(respuesta.pendiente);
-    setCerrada(respuesta.cerrada);
+    setCerrada(respuesta.episodioCerrado);
   }
 
   function enviar(evento?: FormEvent) {
