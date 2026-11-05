@@ -4,7 +4,7 @@
 **Notación:** EARS.
 **Plataforma:** web y móvil.
 **Estado:** fase 2. REQ-AGT-01 y REQ-AGT-02 **aprobados** por el equipo el 25 de octubre de 2026, junto con `plan.md`.
-**Revisión del 5 de noviembre de 2026** (rama `modificacion/vision-nexoai`, `TRASPASO-CLAUDE-CODE.md`): **REQ-AGT-01 v2** y **REQ-AGT-03 a 05**, con los hallazgos H-AGT-16 y H-AGT-17 y los valores por defecto de §5. **Propuestos, pendientes de aval del equipo** al revisar el commit de esta revisión. La versión anterior de REQ-AGT-01 se conserva debajo del texto nuevo.
+**Revisión del 5 de noviembre de 2026** (rama `modificacion/vision-nexoai`, `TRASPASO-CLAUDE-CODE.md`): **REQ-AGT-01 v2** y **REQ-AGT-03 a 05**, con los hallazgos H-AGT-16 y H-AGT-17 y los valores por defecto de §5. **Avalados por el equipo el 5 de noviembre de 2026**, con la enmienda del mismo día. La versión anterior de REQ-AGT-01 se conserva debajo del texto nuevo.
 
 ---
 
@@ -33,7 +33,7 @@ Decidido por el equipo el 24 de octubre de 2026.
 
 **Origen:** `PROPUESTA-TECNICA.md` §7.4, memoria de conversación; H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6 y §8.1; glosario, «Episodio» y «Nota de continuidad»
 **Tipo:** complejo
-**Versión:** 2, del 5 de noviembre de 2026. Propuesta, pendiente de aval
+**Versión:** 2, del 5 de noviembre de 2026. Avalada por el equipo el 5 de noviembre de 2026
 
 **Criterio de aceptación**
 DADO que el asistente propuso «Dentista, jueves de 16:00 a 17:00» y la persona no ha confirmado
@@ -73,7 +73,7 @@ Y lo guardado se ve como en espera, distinto de un error y de una función que s
 
 **Origen:** H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6.1 y §8.1; `design/ARQUITECTURA-VISUAL-WEB.md` §5 y §6 («lo cerrado no se pierde»)
 **Tipo:** complejo
-**Versión:** 1, del 5 de noviembre de 2026. Propuesta, pendiente de aval
+**Versión:** 1, del 5 de noviembre de 2026. Avalada por el equipo el 5 de noviembre de 2026
 
 **Criterio de aceptación**
 DADO que la persona confirmó un compromiso y el episodio se cerró
@@ -93,7 +93,7 @@ Y lo que lee el modelo no crece con la transcripción: solo el episodio abierto 
 
 **Origen:** H-AGT-17; `INFORME-MEMORIA-AGENTE.md` §6.4.5; decisión 17 de `02-agenda` (las alternativas no pasan por el modelo); P-02, P-03
 **Tipo:** complejo
-**Versión:** 1, del 5 de noviembre de 2026. Propuesta, pendiente de aval. En esta fase, la única actividad es el compromiso
+**Versión:** 1, del 5 de noviembre de 2026. Avalada por el equipo el 5 de noviembre de 2026. En esta fase, la única actividad es el compromiso
 
 **Criterio de aceptación**
 DADO que la persona tiene «Dentista» el jueves 29 y «Dentista» el 12 de noviembre
@@ -116,7 +116,7 @@ ENTONCES las alternativas se descartan y se interpreta el mensaje nuevo
 
 **Origen:** H-AGT-17; `INFORME-MEMORIA-AGENTE.md` §6.4.3 y §6.4.4; glosario, «Hilo»
 **Tipo:** complejo
-**Versión:** 1, del 5 de noviembre de 2026. Propuesta, pendiente de aval. **Sin plan en esta rama:** necesita el detalle de actividad, que es una pantalla nueva y no entra sin decisión del equipo (`TRASPASO-CLAUDE-CODE.md` §10.4). T-042 deja preparado el enlace de cada turno con su actividad
+**Versión:** 1, del 5 de noviembre de 2026. Avalada por el equipo el 5 de noviembre de 2026. **Sin plan en esta rama:** necesita el detalle de actividad, que es una pantalla nueva y no entra sin decisión del equipo (`TRASPASO-CLAUDE-CODE.md` §10.4). T-042 deja preparado el enlace de cada turno con su actividad
 
 **Criterio de aceptación**
 DADO que la persona registró «Dentista» y después lo movió por conversación
@@ -164,7 +164,7 @@ Detectadas al escribir `plan.md` el 24 de octubre de 2026. Lo que asume el plan 
 
 ### Revisión del 5 de noviembre de 2026
 
-Del traspaso del equipo (`TRASPASO-CLAUDE-CODE.md` §7) y de `INFORME-MEMORIA-AGENTE.md` §10. Se toman **los valores por defecto del traspaso**; quedan **pendientes de aval del equipo** al revisar el commit de esta revisión. Lo que asume el plan está en `plan.md` §14.
+Del traspaso del equipo (`TRASPASO-CLAUDE-CODE.md` §7) y de `INFORME-MEMORIA-AGENTE.md` §10. Se toman **los valores por defecto del traspaso**; quedan **avalados por el equipo el 5 de noviembre de 2026**, salvo el plazo de una propuesta pendiente, que sigue abierto (decisión 18, H-AG-08). Lo que asume el plan está en `plan.md` §14.
 
 | # | Decisión | Afecta |
 |---|---|---|

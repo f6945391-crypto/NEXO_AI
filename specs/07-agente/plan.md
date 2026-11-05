@@ -5,7 +5,7 @@
 **Decisiones que aplica:** AD-04, AD-05, AD-06, AD-07, AD-08, AD-09 · P-01, P-02, P-03, P-04, P-05, P-06, P-07, P-10, P-11 · DP-01
 **Decisiones del equipo del 24 de octubre de 2026:** sin voz (PT-2), proveedor simulado por ahora, solo agenda y la tarea en espera (`spec.md` §2)
 **Depende de:** `specs/02-agenda/plan.md` (Operaciones, réplica, `agenda.*`) y `specs/06-acceso/plan.md` (sesión, `@RequiereGoogle`, roles)
-**Estado:** **aprobado** por el equipo el 25 de octubre de 2026, con sus hallazgos tal como están. **§14, revisión del 5 de noviembre de 2026** (tres capas de memoria, T-038 a T-042): propuesta, pendiente de aval
+**Estado:** **aprobado** por el equipo el 25 de octubre de 2026, con sus hallazgos tal como están. **§14, revisión del 5 de noviembre de 2026** (tres capas de memoria, T-038 a T-042): avalada por el equipo el 5 de noviembre de 2026
 
 Este plan dice **dónde y cómo** se cumple cada requisito. Lo que la especificación no decide está en §13 como hallazgo.
 
@@ -308,8 +308,8 @@ Registrados en `spec.md` §5 y en `SPEC.md` §8. **Aceptados por el equipo el 25
 | H-AGT-14 | El estado guardado de cada conversación crece por diez: el punto de control conserva 10 copias completas, y una conversación de dos o tres mensajes ya ocupa 36 a 46 KB (medido el 29 de octubre de 2026, `INFORME-LANGGRAPH.md` §1) | **Aceptado por el equipo el 29 de octubre de 2026:** se conservan 2 puntos, el último y su padre; NexoAI no usa el «viaje en el tiempo» de LangGraph. Un plazo para borrar las conversaciones cerradas queda pendiente de la decisión sobre REQ-AGT-01 |
 | H-AGT-15 | Los títulos de los compromisos entran en el contexto del modelo, y los de una invitación los escribe otra persona: pueden llevar instrucciones escondidas (inyección indirecta, `INFORME-LANGGRAPH.md` §2) | **Aceptado por el equipo el 29 de octubre de 2026:** el resultado de cada consulta lleva un aviso de que es contenido externo y cada compromiso dice si lo escribió otra persona; las instrucciones dicen que nunca se siguen órdenes de esos textos; la evaluación incluye un caso malicioso. La defensa principal sigue siendo la arquitectura: nada se ejecuta sin confirmar (P-03) |
 | H-AGT-13 | El proveedor de prueba (Groq, nivel gratuito) tiene un límite bajo de tokens por minuto, y lo que recibe puede quedar en sus servidores (detectado el 29 de octubre de 2026) | El 429 cuenta como «no disponible» y lo pedido queda en espera (P-11). Las instrucciones y las herramientas se mantienen cortas. Se prueba con un calendario sin datos personales |
-| H-AGT-16 | REQ-AGT-01 v1 ataba lo que ve la persona, lo que lee el modelo y lo que recuerda el sistema a un solo ciclo: la pantalla se vaciaba y el agente no podía referirse a lo recién hecho (5 de noviembre de 2026) | Tres capas: transcripción propia, contexto del episodio con la nota de continuidad y memoria larga reservada. §14. **Propuesto, pendiente de aval** |
-| H-AGT-17 | La transcripción crece sin forma; la unidad de memoria es la actividad (5 de noviembre de 2026) | Cada turno se liga a la actividad que resolvió; el hilo es una vista. En esta rama solo el enlace y las alternativas de referente (T-042); el detalle de actividad, después. §14.9. **Propuesto, pendiente de aval** |
+| H-AGT-16 | REQ-AGT-01 v1 ataba lo que ve la persona, lo que lee el modelo y lo que recuerda el sistema a un solo ciclo: la pantalla se vaciaba y el agente no podía referirse a lo recién hecho (5 de noviembre de 2026) | Tres capas: transcripción propia, contexto del episodio con la nota de continuidad y memoria larga reservada. §14. **Avalado por el equipo el 5 de noviembre de 2026** |
+| H-AGT-17 | La transcripción crece sin forma; la unidad de memoria es la actividad (5 de noviembre de 2026) | Cada turno se liga a la actividad que resolvió; el hilo es una vista. En esta rama solo el enlace y las alternativas de referente (T-042); el detalle de actividad, después. §14.9. **Avalado por el equipo el 5 de noviembre de 2026** |
 
 ---
 
@@ -317,7 +317,7 @@ Registrados en `spec.md` §5 y en `SPEC.md` §8. **Aceptados por el equipo el 25
 
 **Origen:** `TRASPASO-CLAUDE-CODE.md`, `INFORME-MEMORIA-AGENTE.md` §6 a §8, `INFORME-ESTRUCTURA-Y-REESTRUCTURACION-AGENTE.md` §5 a §8, `design/capturas/2026-11-04/INFORME-VISUAL-AGENTE.md` §6.
 **Requisitos:** REQ-AGT-01 v2, REQ-AGT-03, REQ-AGT-04 (y REQ-AGT-05, sin plan en esta rama).
-**Valores:** los por defecto de `spec.md` §5, decisiones 16 a 26. **Propuesta, pendiente de aval.**
+**Valores:** los por defecto de `spec.md` §5, decisiones 16 a 26. **Avalada por el equipo el 5 de noviembre de 2026.**
 **Rama:** `modificacion/vision-nexoai`, solo en local.
 
 ### 14.1 Qué cambia y qué no

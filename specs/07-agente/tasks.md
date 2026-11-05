@@ -170,7 +170,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
 
 ## 5. Revisión de la memoria (5 de noviembre de 2026)
 
-Escritas en la pasada de documentos de la rama (P0), con su «Hecho cuando» y sus pruebas, para que cada tarea después sea código y prueba (`TRASPASO-CLAUDE-CODE.md` §9). **Pendientes de aval del equipo**, igual que los requisitos que implementan.
+Escritas en la pasada de documentos de la rama (P0), con su «Hecho cuando» y sus pruebas, para que cada tarea después sea código y prueba (`TRASPASO-CLAUDE-CODE.md` §9). **Avaladas por el equipo el 5 de noviembre de 2026**, con los requisitos que implementan.
 
 El pulido visual que no cambia comportamiento (tarjeta en conflicto, lienzo en modo Objeto, atajos de pregunta, «Pensando», asa, anchos menores de 1440) **no es una tarea**: va en `design/` y con una línea en `SPEC.md` §11 (`TRASPASO-CLAUDE-CODE.md` §9 y §10.2).
 

@@ -32,14 +32,14 @@ En 1440x900 eso desperdicia la pantalla y, sobre todo, contradice el trabajo del
 | Columna | Ancho | Papel | Duración de su contenido |
 |---|---|---|---|
 | Navegación | 72 | Cambiar de sujeto — tres secciones y Ajustes al pie | Permanente |
-| Conversación | 528 | Área de trabajo | ~~Efímera: se vacía al cerrar~~ **Desde el 5 de noviembre de 2026 (propuesta, REQ-AGT-03):** conserva la transcripción, con separadores entre episodios |
+| Conversación | 528 | Área de trabajo | ~~Efímera: se vacía al cerrar~~ **Desde el 5 de noviembre de 2026 (avalada, REQ-AGT-03):** conserva la transcripción, con separadores entre episodios |
 | Lienzo | 840 | Contexto y memoria | Persistente |
 
 72 + 528 + 840 = 1440. El 528 mantiene la columna de tarjetas en ancho legible; el 840 es el mínimo donde la rejilla de disponibilidad sigue cabiendo.
 
 ### Anchos menores de 1440
 
-*Añadido el 5 de noviembre de 2026, con el valor por defecto de `TRASPASO-CLAUDE-CODE.md` §7, decisión 10. Pendiente de aval. Responde a H-WEB-01 (`SPEC.md` §8).*
+*Añadido el 5 de noviembre de 2026, con el valor por defecto de `TRASPASO-CLAUDE-CODE.md` §7, decisión 10. Avalado por el equipo el 5 de noviembre de 2026. Responde a H-WEB-01 (`SPEC.md` §8).*
 
 | Ancho | Qué hace |
 |---|---|
@@ -97,7 +97,7 @@ Lo cerrado no se pierde al vaciar: queda en el registro.
 
 ### Revisión del 5 de noviembre de 2026 — la conversación conserva la transcripción
 
-*Propuesta, pendiente de aval. Sale de `INFORME-ESTRUCTURA-Y-REESTRUCTURACION-AGENTE.md` §4: el requisito tomó la mitad «desechable» de esta sección y perdió la otra mitad (quién vacía y a dónde va lo cerrado), y el código vaciaba solo, sin advertencia. Inconsistencia INC-16.*
+*Avalada por el equipo el 5 de noviembre de 2026. Sale de `INFORME-ESTRUCTURA-Y-REESTRUCTURACION-AGENTE.md` §4: el requisito tomó la mitad «desechable» de esta sección y perdió la otra mitad (quién vacía y a dónde va lo cerrado), y el código vaciaba solo, sin advertencia. Inconsistencia INC-16.*
 
 | Qué | Cómo |
 |---|---|
