@@ -15,3 +15,6 @@ playwright-report/
 test-results/
 .expo/
 apps/movil/dist/
+# Salidas locales de Claude y archivos temporales: no van al repositorio
+Claude outputs/
+.nexoai-src.tgz

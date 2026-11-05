@@ -174,13 +174,15 @@ Escritas en la pasada de documentos de la rama (P0), con su «Hecho cuando» y s
 
 El pulido visual que no cambia comportamiento (tarjeta en conflicto, lienzo en modo Objeto, atajos de pregunta, «Pensando», asa, anchos menores de 1440) **no es una tarea**: va en `design/` y con una línea en `SPEC.md` §11 (`TRASPASO-CLAUDE-CODE.md` §9 y §10.2).
 
+**Prueba intermitente conocida** (5 de noviembre de 2026, `verificar` de P0): `movil.acceso-recorrido`, de T-028, agotó los 30 s en `page.goto` la primera vez, con Expo web compilando en frío mientras corrían a la vez las pruebas de la API y de la web. Repetidas solas, las 8 pruebas del móvil pasan (1,0 min). No viene de esta revisión. Si vuelve a pasar, se mira el arranque en frío de Expo web en `apps/movil/playwright.config.ts`, sin subir el tiempo a ciegas.
+
 ### T-038 · Transcripción propia, fuera del estado del grafo
 
 - **Requisitos:** REQ-AGT-03, REQ-AGT-01 v2 (el episodio) · plan §14.2, §14.3, §14.4, §14.6
 - **Depende de:** T-037
-- **Contenido:** migración nueva con `turno_asistente` y `conversacion_agente.ultima_actividad_en`; `TranscripcionService`; `turnos` fuera del estado y `turnosNuevos` con reductor que reemplaza; el servicio anota tras cada `invoke` y en `atenderEnEspera`; `GET /asistente/conversacion` paginado con `episodios` y su `cierre`; `episodioCerrado` y `episodioId` en `RespuestaAsistente`; cierre por inactividad al recibir un mensaje; la tabla nueva en `MODELOS_CON_ORGANIZACION`
-- **Hecho cuando:** un episodio cerrado sigue apareciendo al pedir la conversación, con su `cierre`; la página anterior llega con el cursor; el punto de control ya no contiene turnos; un reintento no duplica turnos; un episodio con 30 minutos sin actividad se cierra al llegar el siguiente mensaje y su propuesta pendiente queda descartada; otra organización y otro perfil no ven la transcripción
-- **Pruebas:** `agente.transcripcion-persiste` (nueva), `agente.episodio-caduca` (nueva), `agente.interrumpe-hasta-decidir` y `agente.conversacion-con-contexto` (ajustadas), `plataforma.aislamiento-entre-organizaciones` (ampliada)
+- **Contenido:** migración nueva con `turno_asistente` y `conversacion_agente.ultima_actividad_en`; `TranscripcionService`; `turnos` fuera del estado y `turnosNuevos` con reductor que reemplaza; el servicio anota tras cada `invoke` y en `atenderEnEspera`; `GET /asistente/conversacion` paginado con `episodios` y su `cierre`; `episodioCerrado` y `episodioId` en `RespuestaAsistente`; `ultima_actividad_en` se actualiza con cada mensaje, sin cerrar nada todavía (el cierre por inactividad es T-041); la tabla nueva en `MODELOS_CON_ORGANIZACION`
+- **Hecho cuando:** un episodio cerrado sigue apareciendo al pedir la conversación, con su `cierre`; la página anterior llega con el cursor; el punto de control ya no contiene turnos; un reintento no duplica turnos; otra organización y otro perfil no ven la transcripción
+- **Pruebas:** `agente.transcripcion-persiste` (nueva), `agente.interrumpe-hasta-decidir` y `agente.conversacion-con-contexto` (ajustadas), `plataforma.aislamiento-entre-organizaciones` (ampliada)
 - **Estado:** pendiente
 
 ### T-039 · Web y móvil que no se vacían
@@ -205,9 +207,10 @@ El pulido visual que no cambia comportamiento (tarjeta en conflicto, lienzo en m
 
 - **Requisitos:** REQ-AGT-01 v2, REQ-AGT-03 · plan §14.8 · decisiones 18, 20 y 21 · H-AGT-14
 - **Depende de:** T-038
-- **Contenido:** en el trabajador, cerrar episodios inactivos, borrar los puntos de control de episodios cerrados hace más de 7 días y la transcripción de más de 90; `recursionLimit` explícito desde `TOPE_VUELTAS`
-- **Hecho cuando:** un episodio con 30 minutos sin actividad se cierra en la pasada del trabajador; un punto de control de un episodio cerrado hace 8 días desaparece y su transcripción y su auditoría siguen; un turno de hace 91 días desaparece y uno de hace 89 sigue; superar el tope del grafo termina en el turno de fallo de H-AGT-10, sin el error de LangGraph
-- **Pruebas:** `agente.retencion-puntos-de-control` (nueva), `agente.retencion-transcripcion` (nueva), `agente.episodio-caduca` (ampliada con el trabajador)
+- **Contenido:** cierre del episodio por inactividad, **al recibir un mensaje y en el trabajador** (*movido aquí desde T-038 el 5 de noviembre de 2026*); en el trabajador, además, borrar los puntos de control de episodios cerrados hace más de 7 días y la transcripción de más de 90; `recursionLimit` explícito desde `TOPE_VUELTAS`
+- **Hecho cuando:** un episodio sin propuesta pendiente y con 30 minutos sin actividad se cierra al llegar el siguiente mensaje y en la pasada del trabajador, y el mensaje nuevo abre otro; un episodio **con** propuesta pendiente no se cierra por inactividad mientras siga abierta H-AG-08 (ver la nota de abajo); un punto de control de un episodio cerrado hace 8 días desaparece y su transcripción y su auditoría siguen; un turno de hace 91 días desaparece y uno de hace 89 sigue; superar el tope del grafo termina en el turno de fallo de H-AGT-10, sin el error de LangGraph
+- **Pruebas:** `agente.episodio-caduca` (nueva), `agente.retencion-puntos-de-control` (nueva), `agente.retencion-transcripcion` (nueva)
+- **Decisión abierta que la toca:** el plazo de una propuesta pendiente es **H-AG-08**, abierto en `02-agenda` (decisión 12) y en `SPEC.md` §8. No se fija aquí. Mientras siga abierto rige lo que ya asume `specs/02-agenda/plan.md` §9: la propuesta no caduca, así que tampoco se cierra el episodio que la espera
 - **Estado:** pendiente
 
 ### T-042 · Alternativas de referente y enlace con la actividad (si el equipo lo acepta)

@@ -345,7 +345,8 @@ Registrados en `spec.md` §5 y en `SPEC.md` §8. **Aceptados por el equipo el 25
 ### 14.3 El episodio
 
 - `conversacion_agente` **es el episodio**. La tabla **no se renombra** (decisión del traspaso §7, n.º 6): cambian los documentos y los nombres en el código. El `thread_id` sigue siendo su id.
-- Campo nuevo `ultima_actividad_en`. Al recibir un mensaje, si el episodio abierto lleva **30 minutos** sin actividad (decisión 18), se cierra sin efecto y se abre otro. Una propuesta pendiente en un episodio que caduca se descarta, como cuando la persona escribe otra cosa (REQ-AGT-01).
+- Campo nuevo `ultima_actividad_en`, que T-038 actualiza con cada mensaje. **Desde T-041**, al recibir un mensaje y en el trabajador, un episodio abierto con **30 minutos** sin actividad (decisión 18) se cierra sin efecto y el mensaje abre otro.
+- **Un episodio con una propuesta pendiente no se cierra por inactividad.** Cuánto puede esperar una propuesta es **H-AG-08**, abierto (`02-agenda`, decisión 12): no se fija en esta revisión. Mientras tanto rige lo que ya asume `specs/02-agenda/plan.md` §9, la propuesta no caduca.
 - La sesión no tiene tabla: el cliente la deduce del hueco entre episodios.
 
 ### 14.4 La transcripción
@@ -390,7 +391,7 @@ Trabajos nuevos en el proceso trabajador, junto al de la cola en espera:
 
 | Trabajo | Qué hace |
 |---|---|
-| Cerrar episodios inactivos | Los de más de 30 minutos sin actividad, para que no esperen al siguiente mensaje |
+| Cerrar episodios inactivos | Los de más de 30 minutos sin actividad y **sin propuesta pendiente** (H-AG-08 abierto), para que no esperen al siguiente mensaje |
 | Borrar puntos de control | Los de episodios cerrados hace más de 7 días (decisión 21). La transcripción y la auditoría no se tocan |
 | Borrar la transcripción vencida | Turnos de más de 90 días (decisión 20). `conversacion_agente` **no se borra**: `invocacion_herramienta` cuelga de ella y es auditoría (P-07) |
 

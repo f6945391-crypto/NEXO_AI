@@ -1,6 +1,6 @@
 # Informe — Memoria y contexto del agente: por qué la conversación «se borra» y cómo estructurarla
 
-**Fecha:** 29 de octubre de 2026
+**Fecha:** 29 de octubre de 2026 · **§6.4 añadida el 5 de noviembre de 2026**
 **Alcance:** el agente de NexoAI (fase 2, T-029 a T-037) y los documentos que lo gobiernan: `specs/07-agente/spec.md` (REQ-AGT-01, §6), `specs/07-agente/plan.md` (§4, §6, §10), `specs/glosario.md` («Conversación»), `design/ARQUITECTURA-VISUAL-WEB.md` §2 e `INFORME-LANGGRAPH.md` §1, §3 y §4.
 **Qué es:** un análisis para decidir, con fuentes. **No es especificación.** Lo que el equipo acepte entra primero como hallazgo en `spec.md` §5 y `SPEC.md` §8, y después se planifica, como manda `SPEC.md` §2.1.
 **Para quién:** el equipo (Aixa, Franco, Vasco) y, si hace falta sustentarlo, el docente. Está escrito para leerse de corrido; las tablas resumen, el texto explica.
@@ -15,6 +15,7 @@
 4. [Qué se considera buena práctica, con fuentes](#4-qué-se-considera-buena-práctica-con-fuentes)
 5. [Las alternativas sobre la mesa, comparadas](#5-las-alternativas-sobre-la-mesa-comparadas)
 6. [Estructura propuesta: tres capas y tres ciclos de vida](#6-estructura-propuesta-tres-capas-y-tres-ciclos-de-vida)
+   - 6.4 [La unidad de memoria es la actividad, no el chat](#64-la-unidad-de-memoria-es-la-actividad-no-el-chat)
 7. [Cómo se traduce a LangGraph y a la base de datos](#7-cómo-se-traduce-a-langgraph-y-a-la-base-de-datos)
 8. [Qué cambia en los `.md` (el rumbo dentro del método SDD)](#8-qué-cambia-en-los-md-el-rumbo-dentro-del-método-sdd)
 9. [Lo que no conviene hacer](#9-lo-que-no-conviene-hacer)
@@ -188,6 +189,82 @@ Con esto, **REQ-AGT-01 se cumple mejor que hoy**: dentro del episodio, el modelo
 - **El sistema** guarda estados pequeños, puede borrar episodios cerrados sin perder la transcripción ni la continuidad, y tiene dónde poner la memoria larga cuando llegue.
 - **El equipo** conserva todo lo construido: grafo, interrupción, herramientas, cola en espera, auditoría. Cambia la composición del contexto, la tabla de turnos y la pantalla.
 
+### 6.4 La unidad de memoria es la actividad, no el chat
+
+**Añadido el 5 de noviembre de 2026**, a partir de la discusión del equipo sobre cómo evitar que la conversación crezca sin forma.
+
+#### 6.4.1 El problema que se discutió
+
+Con la transcripción persistente (6.1, capa 1), la conversación deja de vaciarse, pero entonces **crece**: todas las peticiones y respuestas quedan en un solo flujo. La alternativa que se miró es la de los asistentes generales como Claude o ChatGPT: un chat por tema, que la persona crea y archiva. Y la intuición del equipo de que las **actividades** (compromisos, tareas, reuniones) son «ficheros» que van acumulando lo que se dijo sobre ellas.
+
+#### 6.4.2 Por qué no copiar el chat por tema
+
+En un asistente general cada chat es abierto y sin objeto, así que tiene sentido que la persona elija dónde hablar. En NexoAI casi todo lo que se dice termina en una entidad concreta. Si la persona tuviera que elegir el chat antes de hablar, se importaría un problema: a qué chat va «mejor a las 5», chats huérfanos, archivar a mano. La unidad correcta ya está en el glosario: **Hilo**, «conversación ligada a una tarea; vive dentro de la tarea, nunca como sección propia». Solo hay que generalizarlo de tarea a actividad.
+
+#### 6.4.3 La estructura
+
+| Pieza | Qué es | Quién la crea |
+|---|---|---|
+| **Una puerta de entrada** | Un solo flujo donde la persona habla sin clasificar antes. Es la capa de captura del diseño | Existe |
+| **Transcripción** | Cronológica, paginada, por episodios (6.1, capa 1). Es un registro: puede crecer | Sistema (T-038) |
+| **Hilo de actividad** | **Vista**, no copia: el filtro de la transcripción y de las Operaciones que tocaron esa actividad. Se abre desde el detalle de la actividad; se archiva solo cuando la actividad termina | Sistema, al enlazar cada turno con la entidad que resolvió |
+| **Segunda entrada** | Desde el detalle de una actividad se puede hablar con el contexto ya fijado a ella | Diseño (lienzo o pantalla de detalle) |
+
+La persona **nunca crea un chat**: las actividades nacen de las acciones y los hilos nacen de las actividades. No hay nada que archivar a mano.
+
+#### 6.4.4 Qué lee el modelo en cada caso
+
+| Dónde habla la persona | Contexto del modelo |
+|---|---|
+| En la puerta de entrada | Instrucciones + mensajes del episodio + **nota de continuidad** (6.1, capa 2) + una herramienta `actividad.contexto(id)` que trae el hilo de una actividad **cuando la persona se refiere a ella**. Mismo patrón justo a tiempo que `agenda.consultar` |
+| Dentro de un hilo | Instrucciones + mensajes del episodio + nota de continuidad + ese hilo (sus operaciones y sus últimos turnos), ya cargado |
+
+Así la memoria «por actividad» que el equipo pedía es la capa 3 de 6.1, y el contexto no engorda con el chat: lo que crece es el registro, no lo que lee el modelo.
+
+#### 6.4.5 Cómo se resuelve a qué actividad se refiere la persona
+
+Es la pieza delicada: «mueve el dentista» puede ser uno de dos dentistas. Se resuelve en **tres niveles**, del más seguro al menos:
+
+1. **Enlace por herramienta.** El turno se liga a una actividad **solo** con un id que vino de una herramienta (`agenda.consultar`, la nota de continuidad, `actividad.contexto`). El modelo nunca inventa ni «recuerda» un id. Esto no cambia respecto de hoy (H-AG-05).
+2. **Inferencia con contexto, permitida.** El modelo puede inferir el referente cuando el contexto lo hace razonable: la actividad más reciente de la nota de continuidad, la única que coincide con el título o la fecha mencionada, la del hilo abierto. La inferencia se **hace visible en la tarjeta** («Mover «Dentista», jueves 29, 16:00 → 17:00»), y como nada se ejecuta sin confirmar (P-03), una inferencia equivocada cuesta un «Descartar», nunca una acción.
+3. **Ambigüedad: alternativas, no pregunta abierta.** Si hay más de un candidato razonable, el asistente no pregunta «¿cuál?» en texto libre: muestra **una lista de alternativas armada por el código** a partir del resultado de la consulta (título, fecha, hora, y de quién es), y la persona elige una. Es el mismo mecanismo que ya existe para las alternativas de horario en conflicto (decisión 17 de `02-agenda`): elegir no pasa por el modelo. Si la persona escribe en vez de elegir, el mensaje se interpreta con las alternativas como contexto.
+
+| Situación | Qué pasa |
+|---|---|
+| Un solo candidato claro | Se propone directamente, con la inferencia visible en la tarjeta |
+| Dos o más candidatos | Turno nuevo de tipo `alternativas_de_referente`: lista para elegir; nada se propone hasta elegir |
+| Ningún candidato | «No encuentro ningún compromiso que coincida con «dentista» esta semana. ¿Cuál quieres mover?» y, si procede, una consulta más amplia |
+| La persona escribió otra cosa mientras había alternativas | Se descartan las alternativas y se interpreta el mensaje nuevo (igual que con una propuesta pendiente, REQ-AGT-01) |
+
+Lo que decide si hay ambigüedad es **código**, no el modelo: el modelo llama a la herramienta con lo que entendió («dentista», «jueves»), la herramienta devuelve los candidatos, y si son más de uno con puntuación parecida, el grafo va a `alternativas` en vez de a `esperar_decision`. Es coherente con P-02 y con el nodo `preguntar` que ya existe para el dato que falta.
+
+#### 6.4.6 Lo que sigue chocando y hay que decidir
+
+- **Varias intenciones en una frase** («agenda el dentista el jueves y recuérdame pagar el recibo»): el grafo impone una acción a la vez. Se atienden **en secuencia**, cada una con su tarjeta, y la segunda espera a que se decida la primera. Es el mismo choque que REQ-CAP-10 (voz) y debe resolverse una sola vez.
+- **Qué actividades tienen hilo.** En esta fase, solo compromisos (lo único que existe). Tareas, reuniones y encargos entran cuando existan, con la misma regla.
+- **Retención del hilo.** Sigue la de la actividad: un compromiso pasado conserva su hilo mientras conserve el compromiso.
+
+#### 6.4.7 Borrador del hallazgo y de los requisitos
+
+Para `specs/07-agente/spec.md` §5 y §3, si el equipo lo acepta:
+
+> **H-AGT-17.** La conversación persistente (REQ-AGT-03) crece sin estructura. Se decide que la unidad de memoria del agente es la **actividad**: cada turno queda ligado a la actividad que resolvió, el hilo de una actividad es una vista sobre la transcripción y sus Operaciones, y hay una sola puerta de entrada más la entrada desde el detalle de cada actividad. La persona no crea ni archiva conversaciones.
+
+> **REQ-AGT-04.** CUANDO una solicitud se refiera a una actividad existente, EL SISTEMA la identificará con un id devuelto por una herramienta; SI el contexto permite inferir una sola actividad razonable, ENTONCES la propondrá mostrando cuál infirió; SI hay más de una, ENTONCES mostrará las candidatas para que la persona elija, sin proponer nada hasta entonces.
+>
+> **Criterio de aceptación**
+> DADO que la persona tiene «Dentista» el jueves 29 y «Dentista» el 12 de noviembre
+> CUANDO escriba «mueve el dentista a las 5»
+> ENTONCES el asistente muestra las dos como alternativas, con fecha y hora, y no propone nada
+> Y CUANDO la persona elija la del jueves 29
+> ENTONCES aparece la tarjeta de mover ese compromiso a las 17:00, pendiente de confirmar
+> Y DADO que solo existe un «Dentista» en las próximas dos semanas
+> CUANDO escriba «mueve el dentista a las 5»
+> ENTONCES el asistente propone moverlo directamente y la tarjeta dice cuál es
+
+> **REQ-AGT-05.** EL SISTEMA mostrará, desde el detalle de una actividad, el hilo de lo que se habló y se hizo sobre ella; y CUANDO la persona escriba desde ese detalle, interpretará la solicitud con esa actividad como contexto.
+
+
 ---
 
 ## 7. Cómo se traduce a LangGraph y a la base de datos
@@ -293,6 +370,8 @@ Para registrar en `spec.md` §5 cuando se decidan.
 5. **Retención de episodios cerrados en el punto de control:** propuesta, borrarlos a los 7 días; la transcripción y la auditoría ya conservan lo que importa.
 6. **Si entra la herramienta `conversacion.acciones_recientes`** en esta fase o en la siguiente.
 7. **Preferencias explícitas en el perfil (capa 3):** confirmar que quedan para después de las tareas personales (CUN-03).
+8. **Actividad como unidad de memoria (6.4):** aceptar H-AGT-17, REQ-AGT-04 y REQ-AGT-05; decidir si la lista de alternativas de referente entra en esta fase o cuando exista el detalle de actividad.
+9. **Varias intenciones en una frase (6.4.6):** en secuencia con una tarjeta cada una, resuelto una sola vez para texto y voz.
 
 ---
 
