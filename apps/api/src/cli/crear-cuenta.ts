@@ -6,8 +6,8 @@ import { cargarEntorno } from '../plataforma/entorno';
 import { crearClientePrisma } from '../plataforma/prisma';
 
 // Alta de una cuenta (REQ-ACC-01, H-ACC-01). Uso:
-//   pnpm --filter @nexoai/api crear-cuenta -- --organizacion <uuid> --correo <correo> --rol <rol> --plan <plan>
-//   pnpm --filter @nexoai/api crear-cuenta -- --nueva-organizacion "<nombre>" --correo ... --rol ... --plan ...
+//   pnpm --filter @nexoai/api crear-cuenta --organizacion <uuid> --correo <correo> --rol <rol> --plan <plan>
+//   pnpm --filter @nexoai/api crear-cuenta --nueva-organizacion "<nombre>" --correo ... --rol ... --plan ...
 
 async function principal(): Promise<void> {
   cargarEntorno();
