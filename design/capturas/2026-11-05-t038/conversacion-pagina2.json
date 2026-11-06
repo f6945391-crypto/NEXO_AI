@@ -1,0 +1,122 @@
+{
+  "episodios": [
+    {
+      "id": "ea119a30-4e94-4a4f-9823-41992e0597a7",
+      "abiertoEn": "2026-11-05T23:46:23.402Z",
+      "cierre": {
+        "en": "2026-11-05T23:46:23.631Z",
+        "desenlace": "registrado",
+        "titulo": "Revisión"
+      },
+      "turnos": [
+        {
+          "id": "f30e132d-494f-4336-a6e5-7c199d98792d",
+          "en": "2026-11-05T23:46:23.414Z",
+          "tipo": "persona",
+          "texto": "Agéndame una revisión hoy a las 23"
+        },
+        {
+          "id": "021fd0f5-be36-412a-835b-2239c2e225f7",
+          "en": "2026-11-05T23:46:23.514Z",
+          "tipo": "propuesta",
+          "operacion": {
+            "id": "15eb3342-bded-4232-a520-abf06decb417",
+            "tipo": "agenda.registrar",
+            "origen": "agente",
+            "estado": "propuesta",
+            "vistaConfirmacion": {
+              "accion": "Registrar este compromiso en tu calendario de Google",
+              "datos": [
+                {
+                  "etiqueta": "Título",
+                  "valor": "Revisión"
+                },
+                {
+                  "etiqueta": "Fecha",
+                  "valor": "jueves, 5 de noviembre de 2026"
+                },
+                {
+                  "etiqueta": "Hora",
+                  "valor": "23:00 – 00:00"
+                },
+                {
+                  "etiqueta": "Zona horaria",
+                  "valor": "Hora de Lima (GMT-5)"
+                },
+                {
+                  "etiqueta": "Duración",
+                  "valor": "1 hora, porque no indicaste la hora de fin"
+                }
+              ],
+              "irreversible": null,
+              "confirmable": true,
+              "motivoNoConfirmable": null,
+              "conflicto": null
+            },
+            "resultado": null,
+            "error": null,
+            "creadaEn": "2026-11-05T23:46:23.508Z"
+          }
+        },
+        {
+          "id": "7d06f76c-0a3b-408c-b836-311486ffd73a",
+          "en": "2026-11-05T23:46:23.604Z",
+          "tipo": "resultado",
+          "texto": "Listo: «Revisión» quedó en tu calendario el jueves, 5 de noviembre de 2026, de 23:00 – 00:00 (hora de Lima (GMT-5)).",
+          "operacion": {
+            "id": "15eb3342-bded-4232-a520-abf06decb417",
+            "tipo": "agenda.registrar",
+            "origen": "agente",
+            "estado": "ejecutada",
+            "vistaConfirmacion": {
+              "accion": "Registrar este compromiso en tu calendario de Google",
+              "datos": [
+                {
+                  "etiqueta": "Título",
+                  "valor": "Revisión"
+                },
+                {
+                  "etiqueta": "Fecha",
+                  "valor": "jueves, 5 de noviembre de 2026"
+                },
+                {
+                  "etiqueta": "Hora",
+                  "valor": "23:00 – 00:00"
+                },
+                {
+                  "etiqueta": "Zona horaria",
+                  "valor": "Hora de Lima (GMT-5)"
+                },
+                {
+                  "etiqueta": "Duración",
+                  "valor": "1 hora, porque no indicaste la hora de fin"
+                }
+              ],
+              "irreversible": null,
+              "confirmable": true,
+              "motivoNoConfirmable": null,
+              "conflicto": null
+            },
+            "resultado": {
+              "id": "2743fcda-5ea5-4cd8-9228-d3b3d45fafed",
+              "fin": "2026-11-06T00:00:00-05:00",
+              "estado": "confirmado",
+              "inicio": "2026-11-05T23:00:00-05:00",
+              "titulo": "Revisión",
+              "serieId": null,
+              "todoElDia": false,
+              "zonaHoraria": "America/Lima",
+              "esOrganizador": true
+            },
+            "error": null,
+            "creadaEn": "2026-11-05T23:46:23.508Z"
+          }
+        }
+      ]
+    }
+  ],
+  "hayAnteriores": false,
+  "cursor": null,
+  "episodioAbierto": "4a0d9f42-3986-4778-b27c-d4984e2574dd",
+  "pendiente": null
+}
