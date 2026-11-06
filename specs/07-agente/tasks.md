@@ -8,7 +8,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
 
 **Orden:** T-029 → T-030 → T-031 → T-032 → T-036 → T-033 → T-034 → T-035. *Cambiado el 29 de octubre de 2026: el equipo eligió Groq para probar, y T-036 se adelanta para poder conversar con el agente apenas esté T-032.*
 
-**Revisión del 5 de noviembre de 2026** (§5, plan §14): T-038 → T-039 → T-040 → T-041 → T-042. T-039 y T-040 dependen de T-038; T-042, de T-038 y T-040. Rama `modificacion/vision-nexoai`, solo en local: commits sin push. Tras cada tarea se para y se muestra el resultado.
+**Revisión del 5 de noviembre de 2026** (§5, plan §14): T-038 → T-039 → pulido visual (sin tarea, un commit) → T-040 → T-041 → T-042, solo si sobra tiempo. *Orden ajustado el 5 de noviembre de 2026 con `PLAN-PRUEBAS-VISUAL-Y-AGENTE.md`.* T-039 y T-040 dependen de T-038; T-042, de T-038 y T-040. **Antes, dos decisiones del equipo:** si una tarea en espera cierra el episodio (T-039) y H-AG-08 (T-041). Rama `modificacion/vision-nexoai`, solo en local: commits sin push. Tras cada tarea se para y se muestra el resultado.
 
 ---
 
@@ -205,7 +205,8 @@ El pulido visual que no cambia comportamiento (tarjeta en conflicto, lienzo en m
 
 - **Requisitos:** REQ-AGT-03 · plan §14.7 · `design/ARQUITECTURA-VISUAL-WEB.md` §5, revisión del 5 de noviembre
 - **Depende de:** T-038
-- **Contenido:** quitar el vaciado de `conversacion.tsx` y `captura.tsx`; separador entre episodios con el `cierre` del servidor; «Ver anteriores» con el cursor, conservando la posición; blanco inicial solo con la transcripción vacía; el móvil abre con el episodio en curso y el anterior; capturas nuevas en una carpeta con fecha, sin tocar `design/capturas/2026-11-04/`
+- **Contenido:** quitar el vaciado de `conversacion.tsx` y `captura.tsx`; separador entre episodios con el `cierre` del servidor; «Ver anteriores» con el cursor, conservando la posición; blanco inicial solo con la transcripción vacía; el móvil abre con el episodio en curso y el anterior; capturas nuevas en una carpeta con fecha, sin tocar `design/capturas/2026-11-04/`; la prueba de B2 pasa a medir el punto de control **tras confirmar**, no con la propuesta abierta
+- **Decisión abierta que la toca:** **¿Una tarea guardada en espera cierra el episodio?** Hoy no: el episodio sigue abierto y la tarea no tiene separador propio. Si lo cierra, el `cierre` necesita un desenlace nuevo («guardado») (`spec.md` §5, decisión 27)
 - **Hecho cuando:** tras confirmar y escribir otra cosa, la petición, la tarjeta y el «Listo» siguen visibles, con un separador y el mensaje nuevo debajo; al recargar la web o reabrir la capa se ve lo mismo; «Ver anteriores» trae un episodio más y desaparece cuando no hay más; en pantalla no aparecen «episodio», «turno» ni «transcripción» (R-40)
 - **Pruebas:** `web.asistente-agenda-y-confirma` (ampliada), `web.asistente-historial` (nueva), `movil.captura-propone-y-confirma` (ampliada)
 - **Para las pruebas del equipo (A1 a A6):** las cuentas de `e2e/cuentas.json` no cambian de nombre; los nombres accesibles se conservan (`Para confirmar`, `Pídele algo al asistente`, `Enviar`, `Confirmar`, `Descartar`, `Asistente`, `Pedir algo al asistente`, `Cerrar`); el botón nuevo se llama `Ver anteriores` y el separador tiene `role="separator"` y un `aria-label` que dice qué es

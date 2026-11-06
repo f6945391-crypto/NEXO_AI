@@ -414,6 +414,7 @@ Los tres usan `sinAislar` por ser trabajos de mantenimiento sobre todas las orga
 |---|---|
 | REQ-AGT-05, el detalle de actividad | Pantalla nueva; decisión del equipo |
 | Varias intenciones en secuencia (decisión 24) | Hace falta decidir dónde se guarda la segunda intención mientras se decide la primera, y resolverlo a la vez que REQ-CAP-10. Hasta entonces el grafo atiende una acción por mensaje, como hoy |
+| Si una tarea en espera cierra el episodio (decisión 27, abierta) | Cambia el separador y, si cierra, añade el desenlace «guardado» a `CierreEpisodio` |
 | Memoria larga (capa 3): preferencias en el perfil | Después de CUN-03 |
 | Modo Registro del lienzo | Con la sección Actividad |
 | `conversacion.acciones_recientes` | La nota de continuidad cubre lo inmediato; se revisa tras T-040 |

@@ -178,6 +178,7 @@ Del traspaso del equipo (`TRASPASO-CLAUDE-CODE.md` §7) y de `INFORME-MEMORIA-AG
 | 23 | **No hay vaciado manual** de la conversación en esta fase | REQ-AGT-03 |
 | 24 | **Varias intenciones en una frase** («agenda el dentista y recuérdame pagar el recibo») se atienden **en secuencia**, una tarjeta cada una, y la segunda espera a que se decida la primera. Se resuelve una vez para texto y voz (REQ-CAP-10) | REQ-AGT-01, REQ-CAP-10 |
 | 25 | **Voz:** fuera de esta revisión. Solo queda escrito el principio: voz → texto que la persona aprueba → el mismo flujo | PT-2, REQ-CAP-09 a 13 |
+| 27 | **Abierta.** **¿Una tarea guardada en espera cierra el episodio?** Hoy no: el episodio sigue abierto y la tarea no tiene separador propio. Si lo cierra, el `cierre` necesita un desenlace nuevo («guardado»). Se decide antes de T-039 | REQ-AGT-03, REQ-AGT-02 |
 | 26 | Las alternativas de referente (REQ-AGT-04) **las arma el código** con el resultado de la consulta; el modelo nunca elige entre candidatas parecidas. Entran en esta rama solo si hay tiempo (T-042) | REQ-AGT-04, P-02 |
 
 ---
