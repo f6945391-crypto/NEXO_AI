@@ -153,12 +153,16 @@ model Operacion {
   motivoEspera      MotivoEspera?   @map("motivo_espera")
   // Conversación de la que salió; nula para los controles directos
   conversacionId    String?         @map("conversacion_id") @db.Uuid
+  // T-067 · specs/08-administracion/plan.md §5.2 y §7.3: las de la zona de empresa viven en la organización de
+  // la empresa y no aparecen en lo del usuario
+  ambito            AmbitoOperacion @default(propio)
 
   organizacion Organizacion        @relation(fields: [organizacionId], references: [id])
   perfil       PerfilUsuario       @relation(fields: [perfilId], references: [id])
   conversacion ConversacionAgente? @relation(fields: [conversacionId], references: [id])
 
   @@index([organizacionId, perfilId, estado])
+  @@index([organizacionId, ambito, creadaEn])
   @@map("operacion")
 }
 
@@ -454,6 +458,14 @@ enum EstadoPertenencia {
   retirada
 
   @@map("estado_pertenencia")
+}
+
+// T-067 · plan §5.2
+enum AmbitoOperacion {
+  propio
+  empresa
+
+  @@map("ambito_operacion")
 }
 
 // T-066 · plan §7.1: la sesión de la aplicación y la de la zona de empresa no se mezclan

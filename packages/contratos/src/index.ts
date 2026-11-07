@@ -9,3 +9,4 @@ export * from './integraciones';
 export * from './operaciones';
 export * from './plataforma';
 export * from './actividad';
+export * from './administracion';
