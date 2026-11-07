@@ -3,17 +3,16 @@ import type { VistaConfirmacion } from '@nexoai/contratos';
 import type { Quien } from '../integraciones/calendario/proveedor-calendario';
 import { detectarConflictos, generarAlternativas, type Intervalo } from './dominio/conflictos';
 import { isoConDesfase } from './dominio/tiempo';
-import { fechaLarga, horario } from './formato';
+import { horario } from './formato';
 import { ReplicaEventosRepositorio } from './replica-eventos.repositorio';
 
 // REQ-CUN01-02, REQ-CUN01-05 · T-018, T-019. Lo que la tarjeta de confirmación dice de un horario: si
 // choca, con qué, y hasta tres alternativas (DP-02). La usan registrar y modificar, al proponer y otra
 // vez al confirmar (H-AG-07). Mira la réplica: quien la llama la sincroniza antes.
+// Decisión 28 de 02-agenda: las alternativas van solo en `conflicto.alternativas`, que los clientes pintan como
+// botones; ya no se repiten en texto en los datos de la tarjeta.
 
-export type RevisionDeHorario = Pick<VistaConfirmacion, 'confirmable' | 'motivoNoConfirmable' | 'conflicto'> & {
-  // Las alternativas en texto, para los datos de la tarjeta
-  datos: VistaConfirmacion['datos'];
-};
+export type RevisionDeHorario = Pick<VistaConfirmacion, 'confirmable' | 'motivoNoConfirmable' | 'conflicto'>;
 
 const DIA_MS = 24 * 3600_000;
 
@@ -26,7 +25,7 @@ export class RevisionHorario {
     // Lo que hay alrededor: los solapes y, si los hay, los días donde buscar alternativas
     const cercanos = await this.replica.enRango(quien, new Date(pedido.inicio.getTime() - DIA_MS), new Date(pedido.inicio.getTime() + 9 * DIA_MS));
     const choques = detectarConflictos(cercanos, pedido, ignorar);
-    if (choques.length === 0) return { confirmable: true, motivoNoConfirmable: null, conflicto: null, datos: [] };
+    if (choques.length === 0) return { confirmable: true, motivoNoConfirmable: null, conflicto: null };
 
     const alternativas = generarAlternativas(cercanos, pedido, { zonaHoraria, ignorar });
     const causas = choques.map((c) => cercanos.find((e) => e.id === c.id)!);
@@ -41,9 +40,6 @@ export class RevisionHorario {
         eventos: causas.map((e) => ({ id: e.id, titulo: e.titulo, inicio: iso(e.inicio), fin: iso(e.fin) })),
         alternativas: alternativas.map((a) => ({ inicio: iso(a.inicio), fin: iso(a.fin) })),
       },
-      datos: alternativas.length
-        ? [{ etiqueta: 'Alternativas', valor: alternativas.map((a) => `${fechaLarga(a.inicio, zonaHoraria)}, ${horario(a.inicio, a.fin, zonaHoraria)}`).join(' · ') }]
-        : [],
     };
   }
 }

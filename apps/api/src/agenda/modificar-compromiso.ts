@@ -87,9 +87,9 @@ export class ModificarCompromiso implements EjecutorOperacion<ModificacionEvento
     const fin = new Date(completa.fin!);
     const cambiaHora = inicio.getTime() !== evento.inicio.getTime() || fin.getTime() !== evento.fin.getTime();
     // Solo un horario nuevo se revisa: renombrar no tiene por qué resolver un solape que ya existía
-    const { datos: alternativas, ...revision } = cambiaHora
+    const revision = cambiaHora
       ? await this.revisionHorario.revisar(contexto, { inicio, fin }, zona, evento.id)
-      : { datos: [], confirmable: true, motivoNoConfirmable: null, conflicto: null };
+      : { confirmable: true, motivoNoConfirmable: null, conflicto: null };
     const cuando = (a: Date, b: Date) => `${fechaLarga(a, zona)}, ${horario(a, b, zona)}`;
     return {
       accion: 'Cambiar este compromiso en tu calendario de Google',
@@ -105,7 +105,6 @@ export class ModificarCompromiso implements EjecutorOperacion<ModificacionEvento
         { etiqueta: 'Zona horaria', valor: nombreDeZona(zona, inicio) },
         ...(evento.serieId ? [SOLO_ESTA_VEZ] : []),
         SIN_AVISOS,
-        ...alternativas,
       ],
       irreversible: null,
       ...revision,

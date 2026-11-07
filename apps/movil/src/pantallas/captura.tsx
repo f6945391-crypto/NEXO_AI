@@ -91,7 +91,8 @@ function Tarjeta({
   const vista = operacion.vistaConfirmacion;
   const alternativas = vista.conflicto?.alternativas ?? [];
   const choque = vista.conflicto?.eventos ?? [];
-  // Con los botones a la vista, las alternativas no se repiten en texto
+  // Con los botones a la vista, las alternativas no se repiten en texto. Desde la decisión 28 de 02-agenda la API
+  // ya no manda esa fila; el filtro queda por las propuestas guardadas antes, que todavía la traen
   const datos = activa && alternativas.length > 0 ? vista.datos.filter((d) => d.etiqueta !== 'Alternativas') : vista.datos;
   const { nombre, cuando, explicaciones } = plegada(vista.accion, vista.datos);
   return (

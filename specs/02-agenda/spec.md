@@ -323,3 +323,9 @@ Las del agente en sí están en `../07-agente/spec.md` §5. Estas son las que to
 | # | Decisión | Afecta |
 |---|---|---|
 | 27 | El choque de horario se avisa en la tarjeta de confirmación con **una sola línea** que nombra el compromiso que lo causa: «Se cruza con «título»» (con varios, «Se cruza con «A» y «B»»). Si no cabe, se corta al final. Las alternativas siguen debajo, cada una para elegirla. La explicación larga que arma el sistema (horario del otro compromiso e indicación de elegir otro) no se repite en la tarjeta; en la web queda como texto al pasar el puntero. *Tomada durante el pulido de interfaz: el requisito no fijaba el texto* | REQ-CUN01-05 |
+
+### Detectadas al cerrar pendientes · 7 de noviembre de 2026
+
+| # | Decisión | Afecta |
+|---|---|---|
+| 28 | Cuando un choque trae alternativas, **se ofrecen solo como opciones para elegir**, una por horario; los datos de la tarjeta ya no las repiten en una fila «Alternativas». Sin alternativas, la tarjeta dice que se elija otro horario. Las propuestas guardadas antes de este cambio pueden traer todavía esa fila: el móvil la oculta mientras la tarjeta espera respuesta. *Tomada a partir de la auditoría móvil (MC-06) y de la revisión de la segunda tanda* | REQ-CUN01-05 |

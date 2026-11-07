@@ -194,7 +194,8 @@ describe('T-017 y T-018 · registrar un compromiso', () => {
         expect(Date.parse(a.fin) - Date.parse(a.inicio)).toBe(3600_000);
         expect(Date.parse(a.inicio) >= instante('11:00').getTime() || Date.parse(a.fin) <= instante('10:00').getTime()).toBe(true);
       }
-      expect(r.vistaConfirmacion.datos.find((d) => d.etiqueta === 'Alternativas')?.valor).toContain(' – ');
+      // Decisión 28: las alternativas llegan como opciones para elegir, no repetidas en texto en los datos
+      expect(r.vistaConfirmacion.datos.map((d) => d.etiqueta)).not.toContain('Alternativas');
 
       await confirmar(autorizacion, r.id).expect(409);
       expect(calendario.llamadas.escrituras).toBe(0);

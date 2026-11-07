@@ -66,6 +66,8 @@ test.describe('web.asistente-agenda-y-confirma', () => {
     // No se puede confirmar, y las alternativas siguen ahí
     await expect(tarjeta.getByRole('button', { name: 'Confirmar' })).toHaveCount(0);
     await expect(tarjeta.getByRole('list', { name: 'Otros horarios' }).getByRole('button').first()).toBeVisible();
+    // Decisión 28 de 02-agenda: las alternativas son botones y no se repiten en los datos
+    await expect(tarjeta.getByText('Alternativas', { exact: true })).toHaveCount(0);
   });
 
   test('descartar no registra nada', async ({ page }) => {
