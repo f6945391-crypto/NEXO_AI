@@ -61,6 +61,10 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 # prisma.config.ts. Lee DATABASE_URL del entorno.
 FROM construccion AS migraciones
 WORKDIR /repo/apps/api
+# prisma version comprueba el motor de esquema y lo baja si el postinstall no pudo. Se hace aquí, como
+# root: el usuario node no puede escribir en node_modules, y si falta el motor la construcción falla
+# ahora y no al aplicar las migraciones.
+RUN npx prisma version
 USER node
 CMD ["npx", "prisma", "migrate", "deploy"]
 
