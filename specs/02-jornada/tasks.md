@@ -17,7 +17,8 @@ Orden: contrato → consulta → web → móvil. T-084 espera a las tareas perso
 - **Contenido:** `packages/contratos/src/actividad.ts`: `NivelActividad`, `ConsultaActividad` (nivel por defecto `dia`, fecha `AAAA-MM-DD` opcional y válida), `CompromisoOcurrido`, `AccionDelAsistente`, `EstadoCalendarioActividad` y `Actividad`; una línea en `index.ts`
 - **Hecho cuando:** la API, la web y el móvil usan este esquema y no otro; una fecha imposible o un nivel desconocido no pasan
 - **Prueba:** `actividad.consulta-valida-nivel-y-fecha` (unitaria, en `packages/contratos`)
-- **Estado:** pendiente
+- **Estado:** hecha · 7 de noviembre de 2026. 12 pruebas; 30 en `packages/contratos`
+- **Notas de implementación:** `FechaCalendario` es nuevo y propio de este contrato (Agenda pasa instantes, no fechas). Sin campo para las tareas completadas hasta T-084
 
 ### T-081 · Consulta `GET /actividad`
 
@@ -26,7 +27,11 @@ Orden: contrato → consulta → web → móvil. T-084 espera a las tareas perso
 - **Contenido:** `apps/api/src/actividad/`: `periodo.ts` (función pura), `descripcion.ts`, `ConsultaActividadService`, `ActividadController` con `@SobreLoPropio()`, `ActividadModule` (importa `AgendaModule` e `IntegracionesModule`); el módulo al final de `imports` en `app.module.ts`
 - **Hecho cuando:** con el calendario simulado, devuelve solo los compromisos terminados y no cancelados del período, y solo las Operaciones ejecutadas, con hora de ejecución, frase, datos y origen; sin calendario devuelve el registro y `sin_conectar`; nada de otra persona; funciona sin proveedor de modelo
 - **Pruebas:** `actividad.periodos` (unitaria), `actividad.compromisos-ocurridos`, `actividad.registro-del-asistente`, `actividad.sin-calendario`, `actividad.solo-lo-propio`, `actividad.sin-proveedor-de-modelo` (integración)
-- **Estado:** pendiente
+- **Estado:** hecha · 7 de noviembre de 2026. 7 pruebas unitarias y 11 de integración; 251 en la API
+- **Notas de implementación:**
+  - Las pruebas de integración eligen una zona en la que ahora es de día, para que «hace dos horas» caiga hoy a cualquier hora de ejecución.
+  - Un compromiso sembrado después de la primera lectura no aparece hasta pasados los 2 minutos de margen de la copia, igual que en Agenda (decisión 22 de `02-agenda`). No es un fallo de Actividad.
+  - Las Operaciones se ordenan por `ejecutada_en` y, a igualdad, por `creada_en`.
 
 ### T-082 · Web: sección Actividad
 
