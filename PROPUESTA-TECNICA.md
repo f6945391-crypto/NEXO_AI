@@ -165,6 +165,8 @@ La regla de dependencia: un módulo puede llamar a otro solo por su interfaz pú
 | Integración continua | GitHub Actions + Docker | Pruebas y despliegue automáticos | — |
 | Despliegue | PaaS con contenedores (Railway, Render o Fly) | No gastar el semestre en infraestructura | Kubernetes: desproporcionado |
 
+**Nota del 6 de noviembre de 2026 (despliegue).** Las imágenes de contenedor ya existen: `apps/api/Dockerfile` (API y trabajador, una sola imagen con dos comandos, más la etapa `migraciones`) y `apps/web/Dockerfile` (salida `standalone` de Next.js). Base Debian slim. `docker-compose.yml` las levanta con el perfil `aplicacion` y la integración continua las construye sin publicarlas (trabajo `imagenes`). Aún no hay PaaS elegido ni registro de imágenes. Detalle en `README.md`, «Ejecutar con contenedores».
+
 ### 4.2 Integraciones externas
 
 | Servicio | Uso | Caso de uso |

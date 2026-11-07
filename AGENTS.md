@@ -50,6 +50,7 @@ Requisitos: Node.js 22.12 o posterior (`.nvmrc`), Python 3.12 y Docker. pnpm no 
 | `npx pnpm@12.10.1 install` | Instala todo el monorepo |
 | `copy .env.example .env` | Configuración local. PostgreSQL en el puerto **5433**, porque el 5432 lo ocupa un PostgreSQL instalado en el equipo |
 | `docker compose up -d` | Levanta PostgreSQL (con pgvector) y Redis, y crea `nexoai` y `nexoai_prueba` |
+| `docker compose --profile aplicacion up --build` | Construye y levanta en contenedores las migraciones, la API, el trabajador y la web (puertos 3000 y 3001), con las variables de `.env`. Detalle en `README.md`, «Ejecutar con contenedores» |
 | `npx pnpm@12.10.1 --filter @nexoai/api migrar` | Aplica las migraciones a la base de desarrollo |
 | `npx pnpm@12.10.1 --filter @nexoai/api semilla` | Organización y dos cuentas de desarrollo; es idempotente |
 | `npx pnpm@12.10.1 --filter @nexoai/api crear-cuenta --nueva-organizacion "<nombre>" --correo <correo> --rol <rol> --plan <plan>` | Alta de una cuenta (REQ-ACC-01). La contraseña temporal se muestra una sola vez. Rol: `usuario_personal`, `gerente` o `colaborador`; plan: `gratuito`, `personal` o `empresarial`. **Sin `--` antes de las opciones:** pnpm 12 lo pasa tal cual y el script lo rechaza |
