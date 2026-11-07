@@ -274,6 +274,32 @@ describe('T-081 · consulta de Actividad', () => {
       expect(paraBeto.compromisos.map((c) => c.titulo)).toEqual(['De Beto']);
       expect(paraBeto.registro).toEqual([]);
     });
+
+    // RT-01 · H-ADM-26: lo hecho en la zona de empresa no entra en la aplicación, aunque la cuenta sea de esa empresa
+    it('una administradora con cuenta de la empresa no ve en Actividad lo que hizo en Administración', async () => {
+      const ana = await persona({ rol: 'gerente' });
+      await prisma.miembroOrganizacion.updateMany({ where: { perfilId: ana.perfilId }, data: { administrador: true } });
+      expect(await prisma.miembroOrganizacion.count({ where: { perfilId: ana.perfilId, administrador: true, estado: 'vigente' } })).toBe(1);
+      const ejecutada = (tipo: string, ambito: 'propio' | 'empresa', accion: string) =>
+        prisma.operacion.create({
+          data: {
+            organizacionId,
+            perfilId: ana.perfilId,
+            tipo,
+            ambito,
+            origen: 'control_directo',
+            carga: {},
+            vistaConfirmacion: { accion, datos: [], irreversible: null, confirmable: true, motivoNoConfirmable: null },
+            estado: 'ejecutada',
+            ejecutadaEn: new Date(),
+          },
+        });
+      await ejecutada('administracion.suspender_cuenta', 'empresa', 'Suspender una cuenta');
+      const propia = await ejecutada('agenda.cancelar', 'propio', 'Cancelar este compromiso');
+
+      const r = await consultar(ana.autorizacion);
+      expect(r.registro.map((a) => a.id)).toEqual([propia.id]);
+    });
   });
 
   describe('actividad.sin-proveedor-de-modelo', () => {

@@ -100,7 +100,8 @@ export class ConsultaActividadService {
   // REQ-CUN02-27 · H-JOR-04 a 06: solo lo ejecutado, por la hora de ejecución
   private async registro(contexto: ContextoSolicitud, periodo: Periodo, zona: string): Promise<AccionDelAsistente[]> {
     const operaciones = await this.prisma.deOrganizacion(contexto.organizacionId).operacion.findMany({
-      where: { perfilId: contexto.perfilId, estado: 'ejecutada', ejecutadaEn: { gte: periodo.desde, lt: periodo.hasta } },
+      // RT-01 · H-ADM-26: lo de la zona de empresa (ámbito «empresa») no es de la aplicación de la persona
+      where: { perfilId: contexto.perfilId, ambito: 'propio', estado: 'ejecutada', ejecutadaEn: { gte: periodo.desde, lt: periodo.hasta } },
       orderBy: [{ ejecutadaEn: 'asc' }, { creadaEn: 'asc' }],
       take: MAXIMO_ACCIONES,
     });
