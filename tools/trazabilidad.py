@@ -31,6 +31,8 @@ FASE_POR_PREFIJO = {
     "CUN08": "4",
     "ENC": "4",
     "CUN04": "5",
+    # 08-administracion: primer bloque de la fase 4, antes de CUN-05 a 09
+    "ADM": "4",
 }
 
 # Origen por defecto de los requisitos escritos en formato de una línea, que no llevan **Origen:**.
