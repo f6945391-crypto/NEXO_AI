@@ -11,7 +11,7 @@
 |---|---|---|---|---|---|---|
 | 01-captura | 25 | 18 | 3 | 4 | 0 | 0 |
 | 02-agenda | 15 | 2 | 2 | 11 | 0 | 0 |
-| 02-jornada | 24 | 24 | 0 | 0 | 0 | 0 |
+| 02-jornada | 35 | 35 | 0 | 0 | 0 | 0 |
 | 03-tareas | 26 | 26 | 0 | 0 | 0 | 0 |
 | 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
 | 05-equipos | 17 | 17 | 0 | 0 | 0 | 0 |
@@ -88,6 +88,17 @@
 | REQ-CUN02-22 | 02-jornada | regla de producto R-5 | 3 | — | — | pendiente |
 | REQ-CUN02-23 | 02-jornada | CUN-02; EN-03 leída como «período determinado», decisión D-9 | 3 | — | — | pendiente |
 | REQ-CUN02-24 | 02-jornada | regla de producto R-42; `SPEC.md` P-11 | 3 | — | — | pendiente |
+| REQ-CUN02-25 | 02-jornada | `PLAN-VALOR-USUARIO.md` hito 4; `design/ARQUITECTURA-VISUAL-MOVIL.md` §2 («Agenda y Actividad usan el mismo selector de período»; «el nivel día abre siempre por defecto») y §3 bis (el selector de período no tiene vuelta). Añadido el 7 de noviembre de 2026 | 3 | — | — | pendiente |
+| REQ-CUN02-26 | 02-jornada | `PLAN-VALOR-USUARIO.md` hito 4 y §5 («compromisos pasados»); EN-02 Evento de Agenda; R-25 (lo cancelado no se borra, pero no ocurrió). Añadido el 7 de noviembre de 2026 | 3 | — | — | pendiente |
+| REQ-CUN02-27 | 02-jornada | `PLAN-VALOR-USUARIO.md` hito 4 («qué hizo por ella, cuándo»); RN-ER-03 y P-03 (solo se ejecuta lo confirmado); DP-01 (controles directos). Añadido el 7 de noviembre de 2026 | 3 | — | — | pendiente |
+| REQ-CUN02-28 | 02-jornada | `design/ARQUITECTURA-VISUAL-MOVIL.md` §2 («El día es la costura, y por eso el nivel Hoy enseña las dos cosas: el plan y lo registrado»). Añadido el 7 de noviembre de 2026 | 3 | — | — | pendiente |
+| REQ-CUN02-29 | 02-jornada | REQ-ACC-08 (un permiso que falta no bloquea lo demás); `SPEC.md` P-11 (lo existente sigue consultable). Añadido el 7 de noviembre de 2026 | 3 | — | — | pendiente |
+| REQ-CUN02-30 | 02-jornada | REQ-CUN01-12 (el estado vacío es un requisito propio); `design/CONTEXTO.md` (listas llenas y listas vacías). Añadido el 7 de noviembre de 2026 | 3 | — | — | pendiente |
+| REQ-CUN02-31 | 02-jornada | `PLAN-VALOR-USUARIO.md` hito 4 («requisitos de consulta, sin acciones»); R-42 y DP-01 (los controles directos viven en Hoy de Agenda); REQ-CUN02-10 a 13 (el registro de tiempo llega después). Añadido el 7 de noviembre de 2026 | 3 | — | — | pendiente |
+| REQ-CUN02-32 | 02-jornada | `specs/09-tareas-personales/spec.md` (CUN-03, tareas personales); `PLAN-VALOR-USUARIO.md` hito 4 y §5 («tareas completadas»). Añadido el 7 de noviembre de 2026 para reservar su sitio: se construye cuando las tareas personales estén integradas (H-JOR-12) | 3 | — | — | pendiente |
+| REQ-CUN02-33 | 02-jornada | `design/ARQUITECTURA-VISUAL-MOVIL.md` §3 ter («Actividad contesta "cuánto"») y §3 bis; R-21 (los informes de horas quedan para después); `PLAN-VALOR-USUARIO.md` hito 4. Añadido el 7 de noviembre de 2026 | 3 | — | — | pendiente |
+| REQ-CUN02-34 | 02-jornada | REQ-CUN01-09, REQ-CUN01-10; `SPEC.md` P-04 y P-05; REQ-ACC-13. Añadido el 7 de noviembre de 2026 | 3 | — | — | pendiente |
+| REQ-CUN02-35 | 02-jornada | `SPEC.md` P-11 («lo existente sigue consultable»); REQ-CUN02-24. Añadido el 7 de noviembre de 2026 | 3 | — | — | pendiente |
 | REQ-CUN07-01 | 03-tareas | CUN-07 flujo principal, pasos 1 a 3 | 4 | — | — | pendiente |
 | REQ-CUN07-02 | 03-tareas | CUN-07 flujo principal, paso 4 | 4 | — | — | pendiente |
 | REQ-CUN07-03 | 03-tareas | CUN-07 flujo principal, pasos 6 y 7; RN-ER-02 | 4 | — | — | pendiente |
