@@ -132,6 +132,78 @@ if (perfiles.semanaLlena) {
     }
   }
 }
+// T-082, T-083 · REQ-CUN02-25 a 30, 33 (sección Actividad). La zona es una en la que ahora es de día (entre las
+// 05:00 y las 19:59), para que «hace dos horas» caiga hoy y «hace 25 horas», ayer, a cualquier hora de la prueba.
+// Las pruebas leen la zona del perfil. `actividad`: compromisos terminados hoy y ayer, uno en curso, uno por venir
+// y uno cancelado; acciones ejecutadas en la conversación y desde la pantalla, y una descartada que no se ve.
+// `actividadVacia`: nada. `actividadSinCalendario`: sin calendario, con una acción ejecutada.
+const zonaDeDia = (() => {
+  const hora = (zona) => Number(new Intl.DateTimeFormat('en-US', { timeZone: zona, hour: '2-digit', hourCycle: 'h23' }).format(new Date()));
+  return ['Pacific/Kiritimati', 'Asia/Tokyo', 'Asia/Kolkata', 'Europe/Madrid', 'America/Lima', 'Pacific/Honolulu'].find((z) => hora(z) >= 5 && hora(z) <= 19);
+})();
+const haceHoras = (h) => new Date(Date.now() - h * 3600_000);
+const reloj = (instante) => new Intl.DateTimeFormat('es', { timeZone: zonaDeDia, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(instante);
+async function ejecutada(perfilId, tipo, origen, ejecutadaEn, accion, datos, estado = 'ejecutada') {
+  await prisma.operacion.create({
+    data: {
+      organizacionId,
+      perfilId,
+      tipo,
+      origen,
+      carga: {},
+      vistaConfirmacion: { accion, datos, irreversible: null, confirmable: true, motivoNoConfirmable: null },
+      estado,
+      creadaEn: new Date(ejecutadaEn.getTime() - 60_000),
+      confirmadaEn: estado === 'ejecutada' ? ejecutadaEn : null,
+      ejecutadaEn: estado === 'ejecutada' ? ejecutadaEn : null,
+    },
+  });
+}
+for (const clave of ['actividad', 'actividadVacia', 'actividadSinCalendario'].filter((c) => perfiles[c])) {
+  await prisma.perfilUsuario.update({ where: { id: perfiles[clave] }, data: { debeCambiarContrasena: false, zonaHoraria: zonaDeDia } });
+  if (clave !== 'actividadSinCalendario') {
+    await prisma.consentimientoIntegracion.create({ data: { organizacionId, perfilId: perfiles[clave], proveedor: 'google', alcance: 'calendario', estado: 'concedido' } });
+  }
+}
+if (perfiles.actividad) {
+  const perfilId = perfiles.actividad;
+  const sembrar = (titulo, desde, hasta) => calendario.sembrar(perfilId, { titulo, inicio: haceHoras(desde), fin: haceHoras(hasta), zonaHoraria: zonaDeDia });
+  sembrar('Revisión de sprint', 3, 2);
+  sembrar('Café con Vasco', 1.5, 1);
+  sembrar('Llamada en curso', 0.5, -0.5);
+  sembrar('Clase de finanzas', -1, -2);
+  sembrar('Taller de diseño', 26, 24.5);
+  const dentista = new Date(Date.now() + 26 * 3600_000);
+  calendario.sembrar(perfilId, { titulo: 'Dentista', inicio: dentista, fin: new Date(dentista.getTime() + 3600_000), zonaHoraria: zonaDeDia });
+  // Cancelado en Google después de sincronizarse: en la réplica queda como cancelado (R-25)
+  await prisma.eventoAgenda.create({
+    data: {
+      organizacionId,
+      perfilId,
+      googleCalendarioId: 'primary',
+      googleEventoId: 'simulado-actividad-cancelado',
+      etag: '"2"',
+      titulo: 'Demo con el cliente',
+      inicio: haceHoras(4),
+      fin: haceHoras(3.5),
+      zonaHoraria: zonaDeDia,
+      todoElDia: false,
+      esOrganizador: true,
+      estado: 'cancelado',
+      sincronizadoEn: new Date(),
+    },
+  });
+  await ejecutada(perfilId, 'agenda.registrar', 'agente', haceHoras(0.8), 'Registrar este compromiso en tu calendario de Google', [
+    { etiqueta: 'Título', valor: 'Dentista' },
+    { etiqueta: 'Hora', valor: `${reloj(dentista)} – ${reloj(new Date(dentista.getTime() + 3600_000))}` },
+  ]);
+  await ejecutada(perfilId, 'agenda.cancelar', 'control_directo', haceHoras(0.7), 'Cancelar este compromiso', [{ etiqueta: 'Compromiso', valor: 'Demo con el cliente' }]);
+  await ejecutada(perfilId, 'agenda.modificar', 'agente', haceHoras(0.6), 'Cambiar este compromiso en tu calendario de Google', [{ etiqueta: 'Título', valor: 'Comité movido' }], 'descartada');
+  await ejecutada(perfilId, 'perfil.cambiar_zona_horaria', 'control_directo', haceHoras(25), 'Cambiar tu zona horaria', [{ etiqueta: 'Nueva', valor: `Hora de ${zonaDeDia.split('/').pop().replaceAll('_', ' ')}` }]);
+}
+if (perfiles.actividadSinCalendario) {
+  await ejecutada(perfiles.actividadSinCalendario, 'perfil.cambiar_zona_horaria', 'control_directo', haceHoras(0.5), 'Cambiar tu zona horaria', [{ etiqueta: 'Nueva', valor: `Hora de ${zonaDeDia.split('/').pop().replaceAll('_', ' ')}` }]);
+}
 await prisma.$disconnect();
 
 // La API corre en este mismo proceso, así Playwright la detiene al terminar.

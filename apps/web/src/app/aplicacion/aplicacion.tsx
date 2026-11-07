@@ -6,6 +6,7 @@ import type { ConversacionAsistente, Perfil, PermisoGoogle, Plan, Rol } from '@n
 import type { Agenda, NivelAgenda, VistaAgenda } from '../../lib/agenda';
 import type { CosaEnEspera } from '../../lib/asistente';
 import { conectarGoogle, salir } from '../acciones';
+import { Actividad } from './actividad';
 import { AgendaMes, AgendaSemana, ListaCompromisos } from './agenda';
 import { CambioZona } from './cambio-zona';
 import { FranjaEnEspera } from './en-espera';
@@ -114,7 +115,8 @@ export function Aplicacion({
 
   const lista = seccion === 'agenda' && agenda.estado === 'lista' ? agenda : null;
   const dia = lista?.nivel === 'dia' ? lista : null;
-  const conLista = lista !== null && (lista.nivel !== 'dia' || lista.compromisos.length > 0);
+  // T-082: Actividad pinta su propio vacío, debajo de la cabecera del período
+  const conLista = (lista !== null && (lista.nivel !== 'dia' || lista.compromisos.length > 0)) || seccion === 'actividad';
 
   // «Encargadas» es lo que encargaste a otros: el colaborador no asigna tareas (REQ-ACC-15)
   const encarga = plan === 'empresarial' && rol !== 'colaborador';
@@ -240,12 +242,8 @@ export function Aplicacion({
               <p>Cuando le pidas algo al asistente, tus tareas aparecerán aquí, ordenadas por franja.</p>
             </div>
           )}
-          {seccion === 'actividad' && (
-            <div className="vacio">
-              <h2>Todavía no hay actividad</h2>
-              <p>Aquí verás cuánto tiempo dedicaste a cada cosa y todo lo que el asistente hizo por ti.</p>
-            </div>
-          )}
+          {/* T-082 · REQ-CUN02-25: el selector de arriba elige el nivel */}
+          {seccion === 'actividad' && <Actividad corte={corteVisible} alConectarCalendario={() => setAjustes(true)} />}
         </div>
       </main>
 

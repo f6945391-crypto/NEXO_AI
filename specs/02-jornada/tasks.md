@@ -40,7 +40,12 @@ Orden: contrato → consulta → web → móvil. T-084 espera a las tareas perso
 - **Contenido:** `app/aplicacion/actividad.tsx` (cliente) y `actividad-servidor.ts` (acción de servidor que lee y formatea); en `aplicacion.tsx`, solo el montaje en lugar del vacío. Período con anterior, siguiente hasta el actual y vuelta al actual; bloques «Compromisos» y «Lo que hizo el asistente» con su cantidad; agrupación por día en Semana y Mes; vacío por nivel y por bloque; sin calendario
 - **Hecho cuando:** el recorrido de la prueba pasa con la cuenta `actividad` y la `actividadVacia`; capturas 1440 × 900 de Día, Semana, Mes y vacío
 - **Prueba:** `web.actividad` (extremo a extremo)
-- **Estado:** pendiente
+- **Estado:** hecha · 7 de noviembre de 2026. 4 pruebas; 28 de extremo a extremo en la web
+- **Notas de implementación:**
+  - La lectura es una función de servidor (`leerActividad`), llamada al cambiar de nivel o de período: el nivel lo elige el cliente, así que no va en la dirección como en Agenda. Next.js 16 avisa de que las funciones de servidor se despachan de una en una; aquí hay una sola por cambio, y la última que llega es la que cuenta.
+  - Estilos propios en `actividad.module.css` (solo variables de `globales.css`); el período, la fila y el vacío reutilizan las clases de Agenda. No se toca `globales.css` para no chocar con el carril de tareas.
+  - `aplicacion.tsx`: el montaje y que el cuerpo del lienzo sea de lista también en Actividad.
+  - La cuenta `actividad` de las pruebas vive en una zona en la que es de día al arrancar (las pruebas leen la zona del perfil).
 
 ### T-083 · Móvil: sección Actividad
 

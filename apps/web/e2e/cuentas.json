@@ -81,5 +81,20 @@
     "correo": "semana-llena-e2e@nexoai.test",
     "rol": "usuario_personal",
     "plan": "personal"
+  },
+  "actividad": {
+    "correo": "actividad-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "actividadVacia": {
+    "correo": "actividad-vacia-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "actividadSinCalendario": {
+    "correo": "actividad-sin-calendario-e2e@nexoai.test",
+    "rol": "colaborador",
+    "plan": "empresarial"
   }
 }
