@@ -14,8 +14,14 @@ export const AltaCuenta = z.strictObject({
   correo: z.email().transform((correo) => correo.toLowerCase()),
   rol: Rol,
   plan: Plan,
+  // T-065 · REQ-ADM-04: solo en una organización de empresa (H-ADM-01)
+  administrador: z.boolean().optional(),
 });
 export type AltaCuenta = z.input<typeof AltaCuenta>;
+
+// T-065 · REQ-ADM-01 · specs/08-administracion/plan.md §3.2
+export const TipoOrganizacion = z.enum(['personal', 'empresa']);
+export type TipoOrganizacion = z.infer<typeof TipoOrganizacion>;
 
 // POST /auth/ingreso — REQ-ACC-02, REQ-ACC-03 · T-004
 export const IngresoSolicitud = z.strictObject({

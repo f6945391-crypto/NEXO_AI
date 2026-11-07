@@ -23,6 +23,10 @@ export const MODELOS_CON_ORGANIZACION: ReadonlySet<string> = new Set([
   'PuntoControlAgente',
   // T-038: la transcripción
   'TurnoTranscripcion',
+  // T-065: pertenencia y equipos (specs/08-administracion/plan.md §3.2)
+  'MiembroOrganizacion',
+  'Equipo',
+  'MiembroEquipo',
 ]);
 
 export class ErrorDeAislamiento extends Error {

@@ -32,9 +32,11 @@ enum Plan {
 
 // Cliente que crea las cuentas (R-45). Tabla de sistema.
 model Organizacion {
-  id       String   @id @default(uuid()) @db.Uuid
+  id       String           @id @default(uuid()) @db.Uuid
   nombre   String
-  creadaEn DateTime @default(now()) @map("creada_en") @db.Timestamptz(3)
+  // REQ-ADM-01 · specs/08-administracion/plan.md §3.2. Una personal tiene exactamente una cuenta
+  tipo     TipoOrganizacion @default(empresa)
+  creadaEn DateTime         @default(now()) @map("creada_en") @db.Timestamptz(3)
 
   perfiles         PerfilUsuario[]
   eventosAuditoria EventoAuditoria[]
@@ -47,22 +49,28 @@ model Organizacion {
   invocaciones     InvocacionHerramienta[]
   puntosControl    PuntoControlAgente[]
   turnos           TurnoTranscripcion[]
+  miembros         MiembroOrganizacion[]
+  equipos          Equipo[]
+  miembrosEquipo   MiembroEquipo[]
 
   @@map("organizacion")
 }
 
 // EN-01 Perfil de Usuario. Rol y plan los fija la organización (REQ-ACC-12).
 model PerfilUsuario {
-  id                    String   @id @default(uuid()) @db.Uuid
-  organizacionId        String   @map("organizacion_id") @db.Uuid
-  correo                String   @unique
-  hashContrasena        String   @map("hash_contrasena")
+  id                    String       @id @default(uuid()) @db.Uuid
+  organizacionId        String       @map("organizacion_id") @db.Uuid
+  correo                String       @unique
+  hashContrasena        String       @map("hash_contrasena")
   rol                   Rol
   plan                  Plan
   // IANA; nula hasta el primer ingreso (REQ-ACC-04)
-  zonaHoraria           String?  @map("zona_horaria")
-  debeCambiarContrasena Boolean  @default(true) @map("debe_cambiar_contrasena")
-  creadoEn              DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
+  zonaHoraria           String?      @map("zona_horaria")
+  debeCambiarContrasena Boolean      @default(true) @map("debe_cambiar_contrasena")
+  // REQ-ADM-12, 13 · specs/08-administracion/plan.md §3.2
+  estado                EstadoCuenta @default(activa)
+  estadoCambiadoEn      DateTime?    @map("estado_cambiado_en") @db.Timestamptz(3)
+  creadoEn              DateTime     @default(now()) @map("creado_en") @db.Timestamptz(3)
 
   organizacion       Organizacion                @relation(fields: [organizacionId], references: [id])
   eventosAuditoria   EventoAuditoria[]
@@ -75,6 +83,8 @@ model PerfilUsuario {
   llamadasModelo     LlamadaModelo[]
   invocaciones       InvocacionHerramienta[]
   turnos             TurnoTranscripcion[]
+  pertenencias       MiembroOrganizacion[]
+  equipos            MiembroEquipo[]
 
   @@index([organizacionId])
   @@map("perfil_usuario")
@@ -404,4 +414,111 @@ model TurnoTranscripcion {
   @@index([conversacionId])
   @@index([organizacionId])
   @@map("turno_asistente")
+}
+
+// ---- 08-administracion ----
+// specs/08-administracion/plan.md §3 (opción B) · T-065. La cuenta y lo suyo se quedan en su organización;
+// la pertenencia a una empresa es una fila en la organización de la empresa (H-ADM-16).
+
+enum TipoOrganizacion {
+  personal
+  empresa
+
+  @@map("tipo_organizacion")
+}
+
+enum EstadoCuenta {
+  activa
+  suspendida
+  cerrada
+
+  @@map("estado_cuenta")
+}
+
+enum OrigenPertenencia {
+  // Cuenta propia: la dio de alta la organización
+  alta
+  // Cuenta personal que aceptó sumarse (REQ-ADM-21)
+  afiliacion
+
+  @@map("origen_pertenencia")
+}
+
+enum EstadoPertenencia {
+  invitada
+  vigente
+  rechazada
+  caducada
+  retirada
+
+  @@map("estado_pertenencia")
+}
+
+enum MotivoRetiro {
+  administrador
+  persona
+  baja
+
+  @@map("motivo_retiro")
+}
+
+// Pertenencia de una cuenta a una organización de empresa. Índices únicos parciales en el SQL de la
+// migración: un `vigente` por perfil en todo el sistema (H-ADM-04) y un `invitada` o `vigente` por
+// organización y perfil.
+model MiembroOrganizacion {
+  id                String            @id @default(uuid()) @db.Uuid
+  organizacionId    String            @map("organizacion_id") @db.Uuid
+  perfilId          String            @map("perfil_id") @db.Uuid
+  origen            OrigenPertenencia
+  estado            EstadoPertenencia
+  // H-ADM-01: el administrador es una condición de la pertenencia, no un rol de la cuenta
+  administrador     Boolean           @default(false)
+  equiposPropuestos String[]          @default([]) @map("equipos_propuestos") @db.Uuid
+  invitadaPor       String?           @map("invitada_por") @db.Uuid
+  invitadaEn        DateTime?         @map("invitada_en") @db.Timestamptz(3)
+  respondidaEn      DateTime?         @map("respondida_en") @db.Timestamptz(3)
+  retiradaEn        DateTime?         @map("retirada_en") @db.Timestamptz(3)
+  motivoRetiro      MotivoRetiro?     @map("motivo_retiro")
+  creadaEn          DateTime          @default(now()) @map("creada_en") @db.Timestamptz(3)
+
+  organizacion Organizacion  @relation(fields: [organizacionId], references: [id])
+  perfil       PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+
+  @@index([organizacionId])
+  @@index([perfilId])
+  @@map("miembro_organizacion")
+}
+
+// EN-05 Equipo de Trabajo (REQ-ADM-28)
+model Equipo {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizacionId String   @map("organizacion_id") @db.Uuid
+  nombre         String
+  creadoEn       DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
+
+  organizacion Organizacion    @relation(fields: [organizacionId], references: [id])
+  miembros     MiembroEquipo[]
+
+  @@unique([organizacionId, nombre])
+  @@index([organizacionId])
+  @@map("equipo")
+}
+
+// Un responsable por equipo como mucho (H-ADM-09): índice único parcial en el SQL de la migración.
+model MiembroEquipo {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizacionId String   @map("organizacion_id") @db.Uuid
+  equipoId       String   @map("equipo_id") @db.Uuid
+  perfilId       String   @map("perfil_id") @db.Uuid
+  responsable    Boolean  @default(false)
+  desde          DateTime @default(now()) @db.Timestamptz(3)
+
+  organizacion Organizacion  @relation(fields: [organizacionId], references: [id])
+  equipo       Equipo        @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  perfil       PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+
+  @@unique([equipoId, perfilId])
+  @@index([organizacionId])
+  @@index([perfilId])
+  @@map("miembro_equipo")
 }
