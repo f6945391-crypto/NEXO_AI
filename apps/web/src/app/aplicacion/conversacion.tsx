@@ -15,6 +15,11 @@ import { IconoEnviar } from './iconos';
 
 type Alternativa = { inicio: string; fin: string };
 
+// Pulido · REQ-CUN01-05, decisión 27 de 02-agenda: el choque de horario se dice en una línea, «Se cruza con
+// «título»». El motivo largo que arma la API queda para quien lo pida (title en la web).
+const enLista = (titulos: string[]) => (titulos.length < 2 ? titulos.join('') : `${titulos.slice(0, -1).join(', ')} y ${titulos[titulos.length - 1]}`);
+const seCruzaCon = (eventos: { titulo: string }[]) => `Se cruza con ${enLista(eventos.map((e) => `«${e.titulo}»`))}`;
+
 const hora = (iso: string, zona?: string) =>
   new Intl.DateTimeFormat('es', { timeZone: zona, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso));
 const dia = (iso: string, zona?: string) =>
@@ -35,6 +40,7 @@ function Tarjeta({
 }) {
   const vista = operacion.vistaConfirmacion;
   const alternativas: Alternativa[] = vista.conflicto?.alternativas ?? [];
+  const choque = vista.conflicto?.eventos ?? [];
   return (
     <article className="tarjeta" aria-label="Para confirmar">
       <h3 className="tarjeta__accion">{vista.accion}</h3>
@@ -47,7 +53,12 @@ function Tarjeta({
         ))}
       </dl>
       {vista.irreversible && <p className="tarjeta__irreversible">{vista.irreversible}</p>}
-      {!vista.confirmable && vista.motivoNoConfirmable && <p className="tarjeta__motivo">{vista.motivoNoConfirmable}</p>}
+      {!vista.confirmable && choque.length > 0 && (
+        <p className="tarjeta__motivo tarjeta__motivo--choque" title={vista.motivoNoConfirmable ?? undefined}>
+          {seCruzaCon(choque)}
+        </p>
+      )}
+      {!vista.confirmable && choque.length === 0 && vista.motivoNoConfirmable && <p className="tarjeta__motivo">{vista.motivoNoConfirmable}</p>}
       {activa && alternativas.length > 0 && (
         <ul className="tarjeta__alternativas" aria-label="Otros horarios">
           {alternativas.map((a) => (

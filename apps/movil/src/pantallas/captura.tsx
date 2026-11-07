@@ -20,9 +20,15 @@ const hora = (iso: string, zona?: string) =>
   new Intl.DateTimeFormat('es', { timeZone: zona, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso));
 const dia = (iso: string, zona?: string) => new Intl.DateTimeFormat('es', { timeZone: zona, weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso));
 
+// Pulido · REQ-CUN01-05, decisión 27 de 02-agenda: el choque de horario se dice en una línea, «Se cruza con
+// «título»». El motivo largo que arma la API no se pinta aquí.
+const enLista = (titulos: string[]) => (titulos.length < 2 ? titulos.join('') : `${titulos.slice(0, -1).join(', ')} y ${titulos[titulos.length - 1]}`);
+const seCruzaCon = (eventos: { titulo: string }[]) => `Se cruza con ${enLista(eventos.map((e) => `«${e.titulo}»`))}`;
+
 function Tarjeta({ operacion, activa, ocupado, alDecidir }: { operacion: OperacionRespuesta; activa: boolean; ocupado: boolean; alDecidir: (d: DecisionAsistente) => void }) {
   const vista = operacion.vistaConfirmacion;
   const alternativas = vista.conflicto?.alternativas ?? [];
+  const choque = vista.conflicto?.eventos ?? [];
   return (
     // P-03: la acción exacta, sus datos y qué es irreversible, antes de ejecutarla
     <View accessibilityLabel="Para confirmar" style={estilos.tarjeta}>
@@ -34,7 +40,12 @@ function Tarjeta({ operacion, activa, ocupado, alDecidir }: { operacion: Operaci
         </View>
       ))}
       {vista.irreversible && <Text style={estilos.advertencia}>{vista.irreversible}</Text>}
-      {!vista.confirmable && vista.motivoNoConfirmable && <Text style={estilos.advertencia}>{vista.motivoNoConfirmable}</Text>}
+      {!vista.confirmable && choque.length > 0 && (
+        <Text numberOfLines={1} style={estilos.advertencia}>
+          {seCruzaCon(choque)}
+        </Text>
+      )}
+      {!vista.confirmable && choque.length === 0 && vista.motivoNoConfirmable && <Text style={estilos.advertencia}>{vista.motivoNoConfirmable}</Text>}
       {activa &&
         alternativas.map((a) => (
           <Boton

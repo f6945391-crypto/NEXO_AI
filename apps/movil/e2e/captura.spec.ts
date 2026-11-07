@@ -40,6 +40,19 @@ test.describe('movil.captura-propone-y-confirma', () => {
     await expect(page.getByText(/^Listo: «Revisión» quedó en tu calendario/)).toBeVisible();
     await expect(page.getByRole('separator', { name: /Se registró «Revisión»$/ })).toBeVisible();
   });
+
+  // Pulido · REQ-CUN01-05: la cuenta semanaLlena tiene «Llamada con proveedores» mañana de 10:00 a 11:00
+  test('un choque de horario se avisa en una línea que nombra el compromiso con el que se cruza', async ({ page }) => {
+    await entrar(page, cuentas.semanaLlena.correo);
+    await pedir(page, 'Agéndame una revisión mañana a las 10');
+    const tarjeta = page.getByLabel('Para confirmar').last();
+    const aviso = tarjeta.getByText('Se cruza con «Llamada con proveedores»', { exact: true });
+    await expect(aviso).toBeVisible();
+    const alto = await aviso.evaluate((p) => p.getBoundingClientRect().height / parseFloat(getComputedStyle(p).fontSize));
+    expect(alto).toBeLessThan(2);
+    await expect(tarjeta.getByRole('button', { name: 'Confirmar' })).toHaveCount(0);
+    await expect(tarjeta.getByRole('button', { name: 'Descartar' })).toBeVisible();
+  });
 });
 
 test.describe('movil.captura-en-espera', () => {

@@ -54,6 +54,20 @@ test.describe('web.asistente-agenda-y-confirma', () => {
     await expect(page.getByText('¿Qué hacemos?')).toHaveCount(0);
   });
 
+  // Pulido · REQ-CUN01-05: la cuenta semanaLlena tiene «Llamada con proveedores» mañana de 10:00 a 11:00
+  test('un choque de horario se avisa en una línea que nombra el compromiso con el que se cruza (REQ-CUN01-05)', async ({ page }) => {
+    await entrar(page, cuentas.semanaLlena.correo);
+    await pedir(page, 'Agéndame una revisión mañana a las 10');
+    const tarjeta = page.getByRole('article', { name: 'Para confirmar' }).last();
+    const aviso = tarjeta.locator('.tarjeta__motivo');
+    await expect(aviso).toHaveText('Se cruza con «Llamada con proveedores»');
+    const alto = await aviso.evaluate((p) => p.getBoundingClientRect().height / parseFloat(getComputedStyle(p).fontSize));
+    expect(alto).toBeLessThan(2);
+    // No se puede confirmar, y las alternativas siguen ahí
+    await expect(tarjeta.getByRole('button', { name: 'Confirmar' })).toHaveCount(0);
+    await expect(tarjeta.getByRole('list', { name: 'Otros horarios' }).getByRole('button').first()).toBeVisible();
+  });
+
   test('descartar no registra nada', async ({ page }) => {
     await entrar(page, cuentas.asistente.correo);
     await pedir(page, 'Agéndame una llamada mañana a las 9');
