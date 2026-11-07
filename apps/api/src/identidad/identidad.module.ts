@@ -7,7 +7,8 @@ import { requerirVariable } from '../plataforma/entorno';
 import { AutenticacionController } from './autenticacion.controller';
 import { AutenticacionService } from './autenticacion.service';
 import { CambiarZonaHoraria } from './cambiar-zona-horaria';
-import { AutenticacionGuard, PrimerIngresoGuard, RolGuard } from './guardas';
+import { AlcanceGuard, AutenticacionGuard, PrimerIngresoGuard } from './guardas';
+import { IngresoEmpresaController } from './ingreso-empresa.controller';
 import { PerfilController } from './perfil.controller';
 
 // specs/06-acceso/plan.md §2. El limitador guarda sus contadores en memoria: basta mientras haya un
@@ -19,14 +20,15 @@ import { PerfilController } from './perfil.controller';
     // T-009: el cambio de zona horaria lee la réplica de la agenda
     AgendaModule,
   ],
-  controllers: [AutenticacionController, PerfilController],
+  controllers: [AutenticacionController, PerfilController, IngresoEmpresaController],
   providers: [
     AutenticacionService,
     CambiarZonaHoraria,
     // Se ejecutan en este orden.
     { provide: APP_GUARD, useClass: AutenticacionGuard },
     { provide: APP_GUARD, useClass: PrimerIngresoGuard },
-    { provide: APP_GUARD, useClass: RolGuard },
+    { provide: APP_GUARD, useClass: AlcanceGuard },
   ],
+  exports: [AutenticacionService],
 })
 export class IdentidadModule {}

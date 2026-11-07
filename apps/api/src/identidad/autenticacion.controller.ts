@@ -52,7 +52,7 @@ export class AutenticacionController {
     return this.autenticacion.completarPrimerIngreso(contexto, cuerpo.contrasenaNueva, cuerpo.zonaHoraria);
   }
   @Get('sesion')
-  sesion(@Contexto() contexto: ContextoSolicitud): SesionActual {
-    return contexto;
+  sesion(@Contexto() contexto: ContextoSolicitud): Promise<SesionActual> {
+    return this.autenticacion.sesionActual(contexto);
   }
 }
