@@ -54,7 +54,13 @@ Orden: contrato → consulta → web → móvil. T-084 espera a las tareas perso
 - **Contenido:** `pantallas/actividad.tsx` con el selector y la disposición de `pantallas/agenda.tsx` y los formatos de `agenda/dia.ts`; en `aplicacion.tsx`, solo el montaje en lugar del vacío
 - **Hecho cuando:** el mismo recorrido que la web pasa sobre Expo web a 390 × 844; capturas de Día, Semana, Mes y vacío
 - **Prueba:** `movil.actividad` (extremo a extremo)
-- **Estado:** pendiente
+- **Estado:** hecha · 7 de noviembre de 2026. 4 pruebas; 18 de extremo a extremo en el móvil
+- **Notas de implementación:**
+  - Lee `GET /actividad` con `conSesion` y formatea con `agenda/dia.ts` (sin tocarlo). Vuelve a leer cuando el asistente deja algo hecho (`version`, T-035).
+  - La hora de cada fila va arriba, en `marca/base` para los compromisos y en `agente/base` para las acciones (§3, «Dato de apoyo»); los datos de la acción, en pares etiqueta / valor.
+  - Sin calendario, remite a Ajustes en la web, como Agenda en el móvil.
+  - En `aplicacion.tsx`, solo una rama del montaje. La entrada `actividad` de `VACIOS` queda sin uso; se retira al integrar para no chocar con el carril de tareas, que toca la misma constante.
+  - En Expo web, el selector no expone `aria-selected`: la prueba comprueba el nivel por su contenido.
 
 ### T-084 · Tareas completadas en Actividad
 

@@ -46,5 +46,20 @@
     "correo": "semana-llena-movil@nexoai.test",
     "rol": "usuario_personal",
     "plan": "personal"
+  },
+  "actividad": {
+    "correo": "actividad-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "actividadVacia": {
+    "correo": "actividad-vacia-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "actividadSinCalendario": {
+    "correo": "actividad-sin-calendario-movil@nexoai.test",
+    "rol": "colaborador",
+    "plan": "empresarial"
   }
 }

@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SesionActual } from '@nexoai/contratos';
 import { Entrar } from './pantallas/entrar';
+import { ActividadPantalla } from './pantallas/actividad';
 import { AgendaHoy } from './pantallas/agenda';
 import { Inicio, type Seccion } from './pantallas/inicio';
 import { PrimerIngreso } from './pantallas/primer-ingreso';
@@ -52,6 +53,9 @@ export function Aplicacion() {
           contenido={(seccion, abrirCaptura, version, lienzo) =>
             seccion === 'agenda' ? (
               <AgendaHoy alSalir={cerrarSesion} alAbrirCaptura={abrirCaptura} alCambiarNivel={lienzo.alCambiarNivel} mostrar={lienzo.mostrar} version={version} />
+            ) : seccion === 'actividad' ? (
+              // T-083 · REQ-CUN02-25
+              <ActividadPantalla alSalir={cerrarSesion} version={version} />
             ) : (
               <View style={estilos.vacio}>
                 <Text style={estilos.vacioTitulo}>{VACIOS[seccion].titulo}</Text>
