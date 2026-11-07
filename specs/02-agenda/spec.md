@@ -29,6 +29,12 @@ CUANDO solicite «Agéndame una reunión con Vasco el viernes a las 10»
 ENTONCES el sistema extrae fecha, hora de inicio, hora de fin estimada y título, y los presenta al usuario antes de registrar
 
 > **Precisado el 22 de octubre de 2026 (H-AG-01, decisión 1).** Si la solicitud no indica la hora de fin, la hora de fin estimada es una hora después del inicio. La calcula el código, no el modelo.
+>
+> **Precisado el 6 de noviembre de 2026 (decisión 19).** Si la hora de fin dicha es igual o anterior a la de inicio, termina **al día siguiente**: «de 11 pm a 12» va de 23:00 a 00:00 del día siguiente. La tarjeta dice «porque no indicaste la hora de fin» **solo** cuando la solicitud no la indicó.
+>
+> DADO un usuario habilitado
+> CUANDO solicite «Agéndame una reunión hoy de 11 pm a 1 am»
+> ENTONCES la propuesta va de 23:00 a 01:00 del día siguiente, y la tarjeta lo muestra sin decir que faltó la hora de fin
 
 ---
 
@@ -205,6 +211,12 @@ CUANDO pregunte «¿Qué tengo mañana por la tarde?»
 ENTONCES la respuesta lista los tres, con su hora y su zona, y marca el cancelado como tal
 Y no aparece ningún compromiso que no esté en su agenda
 
+> **Precisado el 6 de noviembre de 2026 (decisión 18).** «Tal como están registrados» es tal como están **en el calendario de Google en ese momento**: la consulta del asistente actualiza la copia local antes de responder, sin margen de tiempo. Detectado al probar: un compromiso creado en Google menos de 2 minutos después de la última lectura no aparecía.
+>
+> DADO que la persona creó «Mirar» en su calendario de Google hace 30 segundos
+> CUANDO pregunte «¿qué tengo hoy?»
+> ENTONCES la respuesta incluye «Mirar»
+
 ---
 
 ## Decisiones tomadas durante el diseño que no estaban en el Entregable 1
@@ -236,7 +248,7 @@ Pendientes de revisión. Lo que asume el plan mientras tanto está en `plan.md` 
 | 14 | Al mover o cancelar un compromiso con invitados, no se les avisa, y la tarjeta de confirmación lo dice (H-AG-11, detectada en T-019) | REQ-CUN01-06 |
 | 13 | En la web, el estado vacío lleva a la barra de entrada de la conversación, porque la web no tiene capa de captura (H-AG-10, detectada en T-025) | REQ-CUN01-12 |
 | 12 | La réplica cubre al menos 335 días por delante: se vuelve a leer completa cada 30 días (H-AG-09, detectada en T-014) | REQ-CUN01-09 |
-| 12 | Sin decidir si una propuesta sin respuesta caduca (H-AG-08) | REQ-CUN01-03 |
+| 12 | ~~Sin decidir si una propuesta sin respuesta caduca (H-AG-08)~~ **Decidida por el equipo el 6 de noviembre de 2026:** Una propuesta sin respuesta **caduca a las 24 horas**: el trabajador la pasa a `descartada` (no espera al siguiente mensaje, para que no quede una propuesta zombi en la agenda ni en la cola) y deja en la transcripción un turno visible: «Esta propuesta caducó; no se hizo nada». Nunca desaparece en silencio. Vale para toda propuesta, salga del asistente o no. *Hay dos decisiones con el número 12 (INC-18); esta es la de H-AG-08* | REQ-CUN01-03 |
 
 ### Detectadas al planificar el agente · 24 de octubre de 2026
 
@@ -247,3 +259,10 @@ Las del agente en sí están en `../07-agente/spec.md` §5. Estas son las que to
 | 15 | La consulta por conversación necesita su propio requisito: se añade REQ-CUN01-13. La lista de compromisos la arma el código con los datos de la réplica; el modelo solo la introduce | REQ-CUN01-13 |
 | 16 | El modelo da la fecha y la hora en la zona del perfil, sin desfase; el código las convierte (P-05). Así nunca escribe un desfase equivocado | REQ-CUN01-01, 10 |
 | 17 | Elegir una alternativa en la tarjeta no pasa por el modelo: el código descarta la propuesta y propone otra con ese horario | REQ-CUN01-05 |
+
+### Detectadas al probar el agente · 6 de noviembre de 2026
+
+| # | Decisión | Afecta |
+|---|---|---|
+| 18 | La consulta **del asistente** actualiza la copia del calendario antes de responder, sin el margen de 2 minutos; las pantallas lo conservan. Al conectar o volver a conectar Google, la copia se actualiza en seguida | REQ-CUN01-13 |
+| 19 | Una hora de fin igual o anterior a la de inicio termina al día siguiente; la tarjeta solo dice que faltó la hora de fin si de verdad faltó | REQ-CUN01-01 |

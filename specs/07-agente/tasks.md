@@ -8,7 +8,7 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
 
 **Orden:** T-029 → T-030 → T-031 → T-032 → T-036 → T-033 → T-034 → T-035. *Cambiado el 29 de octubre de 2026: el equipo eligió Groq para probar, y T-036 se adelanta para poder conversar con el agente apenas esté T-032.*
 
-**Revisión del 5 de noviembre de 2026** (§5, plan §14): T-038 → T-039 → pulido visual (sin tarea, un commit) → T-040 → T-041 → T-042, solo si sobra tiempo. *Orden ajustado el 5 de noviembre de 2026 con `PLAN-PRUEBAS-VISUAL-Y-AGENTE.md`.* T-039 y T-040 dependen de T-038; T-042, de T-038 y T-040. **Antes, dos decisiones del equipo:** si una tarea en espera cierra el episodio (T-039) y H-AG-08 (T-041). Rama `modificacion/vision-nexoai`, solo en local: commits sin push. Tras cada tarea se para y se muestra el resultado.
+**Revisión del 5 de noviembre de 2026** (§5, plan §14): T-038 → T-039 → **T-043** → T-040 → pulido visual (sin tarea, un commit) → T-041 → T-042, solo si sobra tiempo. *Orden ajustado el 5 de noviembre de 2026 con `PLAN-PRUEBAS-VISUAL-Y-AGENTE.md`, y el 6 de noviembre de 2026 con `PLAN-VALOR-USUARIO.md` (hito 1).* T-039 y T-040 dependen de T-038; T-042, de T-038 y T-040. Las dos decisiones previas quedaron tomadas el 6 de noviembre de 2026 (decisiones 27 y 28 del spec). Rama `modificacion/vision-nexoai`, solo en local: commits sin push. Tras cada tarea se para y se muestra el resultado.
 
 ---
 
@@ -206,7 +206,7 @@ El pulido visual que no cambia comportamiento (tarjeta en conflicto, lienzo en m
 - **Requisitos:** REQ-AGT-03 · plan §14.7 · `design/ARQUITECTURA-VISUAL-WEB.md` §5, revisión del 5 de noviembre
 - **Depende de:** T-038
 - **Contenido:** quitar el vaciado de `conversacion.tsx` y `captura.tsx`; separador entre episodios con el `cierre` del servidor; «Ver anteriores» con el cursor, conservando la posición; blanco inicial solo con la transcripción vacía; el móvil abre con el episodio en curso y el anterior; capturas nuevas en una carpeta con fecha, sin tocar `design/capturas/2026-11-04/`; la prueba de B2 pasa a medir el punto de control **tras confirmar**, no con la propuesta abierta
-- **Decisión abierta que la toca:** **¿Una tarea guardada en espera cierra el episodio?** Hoy no: el episodio sigue abierto y la tarea no tiene separador propio. Si lo cierra, el `cierre` necesita un desenlace nuevo («guardado») (`spec.md` §5, decisión 27)
+- **Decisión 27, tomada:** guardar una tarea en espera cierra el episodio con el desenlace `guardado` y el separador «Tarea guardada». Entra aquí: el nodo `herramientas` marca el cierre, y `DesenlaceEpisodio` suma `guardado`
 - **Hecho cuando:** tras confirmar y escribir otra cosa, la petición, la tarjeta y el «Listo» siguen visibles, con un separador y el mensaje nuevo debajo; al recargar la web o reabrir la capa se ve lo mismo; «Ver anteriores» trae un episodio más y desaparece cuando no hay más; en pantalla no aparecen «episodio», «turno» ni «transcripción» (R-40)
 - **Pruebas:** `web.asistente-agenda-y-confirma` (ampliada), `web.asistente-historial` (nueva), `movil.captura-propone-y-confirma` (ampliada)
 - **Para las pruebas del equipo (A1 a A6):** las cuentas de `e2e/cuentas.json` no cambian de nombre; los nombres accesibles se conservan (`Para confirmar`, `Pídele algo al asistente`, `Enviar`, `Confirmar`, `Descartar`, `Asistente`, `Pedir algo al asistente`, `Cerrar`); el botón nuevo se llama `Ver anteriores` y el separador tiene `role="separator"` y un `aria-label` que dice qué es
@@ -230,7 +230,7 @@ El pulido visual que no cambia comportamiento (tarjeta en conflicto, lienzo en m
 - **Hecho cuando:** un episodio sin propuesta pendiente y con 30 minutos sin actividad se cierra al llegar el siguiente mensaje y en la pasada del trabajador, y el mensaje nuevo abre otro; un episodio **con** propuesta pendiente no se cierra por inactividad mientras siga abierta H-AG-08 (ver la nota de abajo); un punto de control de un episodio cerrado hace 8 días desaparece y su transcripción y su auditoría siguen; un turno de hace 91 días desaparece y uno de hace 89 sigue; superar el tope del grafo termina en el turno de fallo de H-AGT-10, sin el error de LangGraph
 - **Pruebas:** `agente.episodio-caduca` (nueva), `agente.retencion-puntos-de-control` (nueva), `agente.retencion-transcripcion` (nueva)
 - **Para las pruebas del equipo (B11 a B13):** cada trabajo del trabajador invocable sin esperar al cron, con un método como `repasar()` de la cola en espera, y el reloj inyectable para simular 30 minutos, 7 días y 90 días
-- **Decisión abierta que la toca:** el plazo de una propuesta pendiente es **H-AG-08**, abierto en `02-agenda` (decisión 12) y en `SPEC.md` §8. No se fija aquí. Mientras siga abierto rige lo que ya asume `specs/02-agenda/plan.md` §9: la propuesta no caduca, así que tampoco se cierra el episodio que la espera
+- **Caducidad (H-AG-08, decidida el 6 de noviembre de 2026):** una propuesta de más de 24 horas la caduca el trabajador: Operación a `descartada`, turno visible «Esta propuesta caducó; no se hizo nada», episodio cerrado como `descartado`. Nunca al siguiente mensaje ni en silencio. **Hecho cuando**, además: una propuesta de hace 25 horas queda descartada en la pasada del trabajador, con su turno en la transcripción, y una de hace 23 horas sigue. Prueba: `agente.propuesta-caduca` (nueva)
 - **Estado:** pendiente
 
 ### T-042 · Alternativas de referente y enlace con la actividad (si el equipo lo acepta)
@@ -241,5 +241,15 @@ El pulido visual que no cambia comportamiento (tarjeta en conflicto, lienzo en m
 - **Hecho cuando:** con dos «Dentista», «mueve el dentista a las 5» muestra las dos y no propone nada; elegir una lleva a su tarjeta; con uno solo, se propone directo y la tarjeta dice cuál; escribir otra cosa descarta la lista; los turnos de una acción quedan ligados a su compromiso
 - **Pruebas:** `agente.alternativas-de-referente` (nueva), `web.asistente-alternativas-de-referente` (nueva), `agente.evaluacion` (a mano, un caso)
 - **Para las pruebas del equipo (B14 a B17):** el turno `alternativas_de_referente` y la decisión `referente` en `packages/contratos/src/asistente.ts`, y un guion del simulado con dos «Dentista»
+- **Estado:** pendiente
+
+### T-043 · La agenda del asistente al día y el fin a medianoche
+
+- **Requisitos:** REQ-CUN01-13 y REQ-CUN01-01, precisados el 6 de noviembre de 2026 · `02-agenda`, decisiones 18 y 19
+- **Origen:** prueba del equipo del 6 de noviembre de 2026 con su calendario real: «¿qué tengo hoy?» respondió con una copia de casi 2 minutos y no vio un compromiso recién creado en Google; «de 11 pm a 12» se rechazó por la hora de fin y la tarjeta dijo que no se había indicado
+- **Depende de:** T-039
+- **Contenido:** `agenda.consultar`, y la búsqueda del compromiso al modificar o cancelar, actualizan la copia antes de leer, sin margen; las pantallas conservan el margen de 2 minutos. Al volver de conectar Google, la copia se actualiza en seguida. En `agenda.registrar_evento` y `agenda.modificar_evento`, una hora de fin igual o anterior a la de inicio se lleva al día siguiente. La tarjeta muestra la fecha de fin cuando es otro día
+- **Hecho cuando:** un compromiso que aparece en Google entre dos consultas seguidas del asistente sale en la segunda; tras conectar Google, la copia tiene fecha de sincronización posterior a la conexión sin esperar al trabajador; «de 11 pm a 12» propone de 23:00 a 00:00 del día siguiente y «de 11 pm a 1 am», de 23:00 a 01:00, sin «no indicaste la hora de fin»; `GET /agenda/eventos` sigue sin volver a leer Google antes de 2 minutos
+- **Pruebas:** `agente.agenda.consulta-tal-cual` (ampliada), `agente.agenda.fin-al-dia-siguiente` (nueva), `acceso.google-conectar-sincroniza` (nueva)
 - **Estado:** pendiente
 
