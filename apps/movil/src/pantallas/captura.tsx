@@ -25,20 +25,45 @@ const dia = (iso: string, zona?: string) => new Intl.DateTimeFormat('es', { time
 const enLista = (titulos: string[]) => (titulos.length < 2 ? titulos.join('') : `${titulos.slice(0, -1).join(', ')} y ${titulos[titulos.length - 1]}`);
 const seCruzaCon = (eventos: { titulo: string }[]) => `Se cruza con ${enLista(eventos.map((e) => `«${e.titulo}»`))}`;
 
+// H-CAP-01: lo esencial de la tarjeta plegada, en una línea, con los datos que trae la propia tarjeta y en este
+// orden. No se inventa nada: de la duración solo se quita su explicación («1 hora, porque…» → «1 hora»).
+const ESENCIALES = ['Título', 'Compromiso', 'Título nuevo', 'Fecha', 'Hora', 'Cuándo', 'Ahora', 'Nueva', 'Duración'];
+function lineaEsencial(datos: { etiqueta: string; valor: string }[]): string {
+  const valores = ESENCIALES.flatMap((etiqueta) => {
+    const dato = datos.find((d) => d.etiqueta === etiqueta);
+    if (!dato) return [];
+    return [etiqueta === 'Duración' ? dato.valor.split(',')[0] : dato.valor];
+  });
+  // Una tarjeta con otros datos: los dos primeros, tal cual
+  if (valores.length === 0) return datos.filter((d) => d.etiqueta !== 'Alternativas').slice(0, 2).map((d) => d.valor).join(' · ');
+  return valores.join(' · ');
+}
+
 function Tarjeta({ operacion, activa, ocupado, alDecidir }: { operacion: OperacionRespuesta; activa: boolean; ocupado: boolean; alDecidir: (d: DecisionAsistente) => void }) {
+  const [detalles, setDetalles] = useState(false);
   const vista = operacion.vistaConfirmacion;
   const alternativas = vista.conflicto?.alternativas ?? [];
   const choque = vista.conflicto?.eventos ?? [];
+  // Con los botones a la vista, las alternativas no se repiten en texto
+  const datos = activa && alternativas.length > 0 ? vista.datos.filter((d) => d.etiqueta !== 'Alternativas') : vista.datos;
+  const esencial = lineaEsencial(vista.datos);
   return (
-    // P-03: la acción exacta, sus datos y qué es irreversible, antes de ejecutarla
+    // P-03: la acción exacta, sus datos y qué es irreversible, antes de ejecutarla. H-CAP-01: plegada por
+    // defecto; «Ver detalles» muestra todos los datos en la misma tarjeta (REQ-CAP-01)
     <View accessibilityLabel="Para confirmar" style={estilos.tarjeta}>
       <Text style={estilos.accion}>{vista.accion}</Text>
-      {vista.datos.map((d) => (
-        <View key={d.etiqueta}>
-          <Text style={estilos.suave}>{d.etiqueta}</Text>
-          <Text style={estilos.cuerpo}>{d.valor}</Text>
-        </View>
-      ))}
+      {esencial !== '' && (
+        <Text numberOfLines={2} style={estilos.esencial}>
+          {esencial}
+        </Text>
+      )}
+      {detalles &&
+        datos.map((d) => (
+          <View key={d.etiqueta}>
+            <Text style={estilos.suave}>{d.etiqueta}</Text>
+            <Text style={estilos.cuerpo}>{d.valor}</Text>
+          </View>
+        ))}
       {vista.irreversible && <Text style={estilos.advertencia}>{vista.irreversible}</Text>}
       {!vista.confirmable && choque.length > 0 && (
         <Text numberOfLines={1} style={estilos.advertencia}>
@@ -57,7 +82,16 @@ function Tarjeta({ operacion, activa, ocupado, alDecidir }: { operacion: Operaci
           />
         ))}
       {activa && vista.confirmable && <Boton texto="Confirmar" deshabilitado={ocupado} alPulsar={() => alDecidir({ operacionId: operacion.id, decision: 'confirmar' })} />}
-      {activa && <Boton texto="Descartar" secundario deshabilitado={ocupado} alPulsar={() => alDecidir({ operacionId: operacion.id, decision: 'descartar' })} />}
+      <View style={estilos.fila}>
+        {activa && (
+          <View style={estilos.enFila}>
+            <Boton texto="Descartar" secundario deshabilitado={ocupado} alPulsar={() => alDecidir({ operacionId: operacion.id, decision: 'descartar' })} />
+          </View>
+        )}
+        <View style={estilos.enFila}>
+          <Boton texto={detalles ? 'Ocultar detalles' : 'Ver detalles'} secundario expandido={detalles} alPulsar={() => setDetalles((d) => !d)} />
+        </View>
+      </View>
     </View>
   );
 }
@@ -303,6 +337,9 @@ const estilos = StyleSheet.create({
   agenda: { gap: espaciado[4], padding: espaciado[12], borderRadius: 12, borderWidth: 1, borderColor: color.borde.base, backgroundColor: color.superficie.elevada },
   tarjeta: { gap: espaciado[8], padding: espaciado[16], borderRadius: 12, borderWidth: 1, borderColor: color.borde.fuerte, backgroundColor: color.superficie.base },
   accion: { fontSize: tipografia.cuerpo, fontWeight: '700', color: color.texto.fuerte },
+  esencial: { fontSize: tipografia.etiqueta, lineHeight: 20, color: color.texto.fuerte },
+  fila: { flexDirection: 'row', gap: espaciado[8] },
+  enFila: { flex: 1 },
   advertencia: { fontSize: tipografia.etiqueta, lineHeight: 20, color: color.estado.advertencia },
   resultado: { padding: espaciado[12], borderRadius: 12, backgroundColor: '#E6F4EC', color: color.estado.exito, fontSize: tipografia.cuerpo },
   espera: { padding: espaciado[12], borderRadius: 12, backgroundColor: '#FDF3E0' },

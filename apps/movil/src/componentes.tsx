@@ -10,16 +10,19 @@ export function Boton({
   alPulsar,
   deshabilitado,
   secundario,
+  expandido,
 }: {
   texto: string;
   alPulsar: () => void;
   deshabilitado?: boolean;
   secundario?: boolean;
+  // Para los botones que pliegan y despliegan algo (H-CAP-01)
+  expandido?: boolean;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ disabled: !!deshabilitado }}
+      accessibilityState={{ disabled: !!deshabilitado, expanded: expandido }}
       disabled={deshabilitado}
       onPress={alPulsar}
       style={[estilos.boton, secundario && estilos.botonSecundario, deshabilitado && estilos.botonDeshabilitado]}
