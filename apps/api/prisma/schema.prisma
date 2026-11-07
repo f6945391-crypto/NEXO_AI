@@ -553,6 +553,8 @@ model MiembroEquipo {
   @@index([organizacionId])
   @@index([perfilId])
   @@map("miembro_equipo")
+}
+
 // ---- 09-tareas-personales ----
 
 // EN-04 Tarea, solo lo personal (specs/09-tareas-personales/plan.md §3.1) · T-047. H-TP-19: se llama
