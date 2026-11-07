@@ -39,7 +39,7 @@ type Estado =
   | { tipo: 'error'; mensaje: string }
   | { tipo: 'lista'; eventos: EventoAgenda[] };
 
-type Nivel = (typeof NIVELES)[number];
+export type Nivel = (typeof NIVELES)[number];
 
 // Las fechas que pinta cada nivel alrededor del foco
 function fechasDelNivel(nivel: Nivel, foco: string): string[] {
@@ -54,7 +54,17 @@ const contarCompromisos = (n: number) => (n === 0 ? 'sin compromisos' : n === 1 
 
 type Cancelacion = { tipo: 'detalle' } | { tipo: 'confirmando'; propuesta: OperacionRespuesta } | { tipo: 'ocupado' };
 
-export function AgendaHoy({ alSalir, alAbrirCaptura, version = 0 }: { alSalir: () => void; alAbrirCaptura: () => void; version?: number }) {
+export function AgendaHoy({
+  alSalir,
+  alAbrirCaptura,
+  alCambiarNivel,
+  version = 0,
+}: {
+  alSalir: () => void;
+  alAbrirCaptura: () => void;
+  alCambiarNivel?: (nivel: Nivel) => void;
+  version?: number;
+}) {
   const [nivel, setNivel] = useState<Nivel>('Hoy');
   const [zona, setZona] = useState<string | null>(null);
   const [foco, setFoco] = useState<string | null>(null);
@@ -63,6 +73,9 @@ export function AgendaHoy({ alSalir, alAbrirCaptura, version = 0 }: { alSalir: (
   const [cancelacion, setCancelacion] = useState<Cancelacion>({ tipo: 'detalle' });
   const [aviso, setAviso] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Quien la pinta sabe en qué nivel está: la franja «en espera» solo va sobre Hoy (REQ-CAP-25)
+  useEffect(() => alCambiarNivel?.(nivel), [nivel, alCambiarNivel]);
 
   // La zona del perfil, una vez: con ella se sabe qué fecha es hoy (P-05)
   useEffect(() => {

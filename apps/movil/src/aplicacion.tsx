@@ -49,9 +49,9 @@ export function Aplicacion() {
       {estado === 'aplicacion' && (
         <Inicio
           alSalir={cerrarSesion}
-          contenido={(seccion, abrirCaptura, version) =>
+          contenido={(seccion, abrirCaptura, version, lienzo) =>
             seccion === 'agenda' ? (
-              <AgendaHoy alSalir={cerrarSesion} alAbrirCaptura={abrirCaptura} version={version} />
+              <AgendaHoy alSalir={cerrarSesion} alAbrirCaptura={abrirCaptura} alCambiarNivel={lienzo.alCambiarNivel} version={version} />
             ) : (
               <View style={estilos.vacio}>
                 <Text style={estilos.vacioTitulo}>{VACIOS[seccion].titulo}</Text>

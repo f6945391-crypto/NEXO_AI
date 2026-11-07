@@ -41,5 +41,15 @@ test.describe('movil.en-espera-visible', () => {
 
     await pedirYCerrar(page, 'Recuérdame llamar a Lucía');
     await expect(page.getByRole('button', { name: '2 cosas en espera' })).toBeVisible();
+
+    // REQ-CAP-25 y decisión 26 de 02-agenda: la franja va sobre la agenda de hoy. En Semana y Mes no se muestra
+    await page.getByRole('tab', { name: 'Semana' }).click();
+    await expect(page.getByRole('button', { name: 'Semana siguiente' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /en espera$/ })).toHaveCount(0);
+    await page.getByRole('tab', { name: 'Mes' }).click();
+    await expect(page.getByRole('button', { name: 'Mes siguiente' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /en espera$/ })).toHaveCount(0);
+    await page.getByRole('tab', { name: 'Hoy' }).click();
+    await expect(page.getByRole('button', { name: '2 cosas en espera' })).toBeVisible();
   });
 });

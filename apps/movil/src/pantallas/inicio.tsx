@@ -1,7 +1,8 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Perfil } from '@nexoai/contratos';
 import { Boton } from '../componentes';
+import type { Nivel } from './agenda';
 import { CapaCaptura } from './captura';
 import { FranjaEnEspera } from './en-espera';
 import { conSesion } from '../sesion';
@@ -12,8 +13,13 @@ import { etiquetarZona } from '../zonas';
 // cabecera, encima y con «Cerrar» (R-34, R-43). El asa abre la capa de captura sobre la sección (R-36, T-021).
 // T-045 · REQ-CAP-25: encima de la agenda, la franja con lo que está en espera. Se vuelve a pedir al cerrar la
 // capa, que es donde algo puede quedar en espera.
+// Pulido · REQ-CAP-25, decisión 26 de 02-agenda: la franja va solo sobre el nivel Hoy, como en la web. La agenda
+// avisa de su nivel con `alCambiarNivel`.
 
 export type Seccion = 'agenda' | 'tareas' | 'actividad';
+
+// Lo que Inicio ofrece a la sección que pinta
+export type Lienzo = { alCambiarNivel: (nivel: Nivel) => void };
 
 const SECCIONES: Record<Seccion, { nombre: string; pregunta: string }> = {
   agenda: { nombre: 'Agenda', pregunta: 'Lo que va a pasar' },
@@ -24,13 +30,15 @@ const SECCIONES: Record<Seccion, { nombre: string; pregunta: string }> = {
 const NOMBRE_PLAN = { gratuito: 'Gratuito', personal: 'Personal', empresarial: 'Empresarial' } as const;
 
 // T-035: `version` sube cada vez que el asistente deja algo hecho, para que la sección vuelva a pedir sus datos
-export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido: (seccion: Seccion, abrirCaptura: () => void, version: number) => ReactNode }) {
+export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido: (seccion: Seccion, abrirCaptura: () => void, version: number, lienzo: Lienzo) => ReactNode }) {
   const [seccion, setSeccion] = useState<Seccion>('agenda');
   const [ajustes, setAjustes] = useState(false);
   const [captura, setCaptura] = useState(false);
   const [version, setVersion] = useState(0);
   const [esperas, setEsperas] = useState(0);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
+  const [nivel, setNivel] = useState<Nivel>('Hoy');
+  const alCambiarNivel = useCallback((nuevo: Nivel) => setNivel(nuevo), []);
 
   useEffect(() => {
     if (!ajustes || perfil) return;
@@ -57,8 +65,8 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
       </View>
 
       <ScrollView contentContainerStyle={estilos.cuerpo}>
-        {seccion === 'agenda' && <FranjaEnEspera version={version + esperas} alSalir={alSalir} />}
-        {contenido(seccion, () => setCaptura(true), version)}
+        {seccion === 'agenda' && nivel === 'Hoy' && <FranjaEnEspera version={version + esperas} alSalir={alSalir} />}
+        {contenido(seccion, () => setCaptura(true), version, { alCambiarNivel })}
       </ScrollView>
 
       {/* El asa: abre la capa de captura sin salir de la sección (glosario, «Asa») */}
