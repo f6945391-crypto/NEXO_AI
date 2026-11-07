@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { IdentidadModule } from '../identidad/identidad.module';
+import { AdministracionController } from './administracion.controller';
+import { EJECUTORES_DE_CUENTAS } from './ejecutores-cuentas';
 import { LecturasAdministracion } from './lecturas';
 import { OperacionesEmpresaController } from './operaciones-empresa.controller';
 
@@ -7,7 +9,7 @@ import { OperacionesEmpresaController } from './operaciones-empresa.controller';
 // importa ni la agenda, ni el agente, ni la captura, ni es importado por ellos.
 @Module({
   imports: [IdentidadModule],
-  controllers: [OperacionesEmpresaController],
-  providers: [LecturasAdministracion],
+  controllers: [AdministracionController, OperacionesEmpresaController],
+  providers: [LecturasAdministracion, ...EJECUTORES_DE_CUENTAS],
 })
 export class AdministracionModule {}
