@@ -18,3 +18,7 @@ apps/movil/dist/
 # Salidas locales de Claude y archivos temporales: no van al repositorio
 Claude outputs/
 .nexoai-src.tgz
+# Paquetes de npm, configuraciones locales de Playwright con puertos propios y la copia de Redis
+*.tgz
+apps/*/playwright.local.config.ts
+dump.rdb
