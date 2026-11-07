@@ -231,9 +231,10 @@ body {
   color: var(--marca-base);
 }
 
-.navegacion__ajustes {
+.navegacion__pie {
+  display: grid;
+  gap: var(--espaciado-8);
   border-top: 1px solid var(--borde-base);
-  border-radius: 0 0 var(--radio-md) var(--radio-md);
   padding-top: var(--espaciado-8);
 }
 

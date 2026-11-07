@@ -44,6 +44,40 @@ test.describe('web.administracion-solo-para-administradores', () => {
     await page.goto('/administracion');
     await expect(page).toHaveURL(/\/administracion\/equipos$/);
   });
+
+  // REQ-ADM-05 · plan §7.1: la entrada desde la aplicación, al pie de la navegación y encima de Ajustes
+  async function entrarEnLaAplicacion(page: Page, correo: string) {
+    await page.goto('/entrar');
+    await page.getByLabel('Correo').fill(correo);
+    await page.getByLabel('Contraseña').fill(cuentas.contrasenaTemporal);
+    await page.getByRole('button', { name: 'Entrar' }).click();
+    await expect(page.getByRole('navigation', { name: 'Secciones' })).toBeVisible();
+  }
+
+  test('la administradora ve «Administración» encima de Ajustes, y abre la entrada de la zona en otra pestaña', async ({ page }) => {
+    await entrarEnLaAplicacion(page, cuentas.administradora.correo);
+    const navegacion = page.getByRole('navigation', { name: 'Secciones' });
+    const entrada = navegacion.getByRole('link', { name: 'Administración' });
+    await expect(entrada).toBeVisible();
+    await expect(entrada).toHaveAttribute('title', 'Administración');
+    await expect(entrada).toHaveAttribute('target', '_blank');
+    await expect(entrada).toHaveAttribute('rel', 'noopener');
+    const [arriba, abajo] = await Promise.all([entrada.boundingBox(), navegacion.getByRole('button', { name: 'Ajustes' }).boundingBox()]);
+    expect(arriba!.y).toBeLessThan(abajo!.y);
+
+    // Otra pestaña, sin la sesión de la aplicación: pide entrar en la zona
+    const [pestana] = await Promise.all([page.context().waitForEvent('page'), entrada.click()]);
+    await expect(pestana).toHaveURL(/\/administracion\/entrar$/);
+    await expect(pestana.getByLabel('Correo')).toBeVisible();
+    await pestana.close();
+  });
+
+  test('una cuenta personal sin empresa no ve «Administración» en la navegación', async ({ page }) => {
+    await entrarEnLaAplicacion(page, cuentas.personalSinEmpresa.correo);
+    const navegacion = page.getByRole('navigation', { name: 'Secciones' });
+    await expect(navegacion.getByRole('button', { name: 'Ajustes' })).toBeVisible();
+    await expect(navegacion.getByRole('link', { name: 'Administración' })).toHaveCount(0);
+  });
 });
 
 test.describe('web.administracion-cuentas', () => {

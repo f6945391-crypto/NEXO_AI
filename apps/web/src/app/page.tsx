@@ -36,6 +36,7 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
     <Aplicacion
       rol={sesion.sesion.rol}
       plan={sesion.sesion.plan}
+      administrador={sesion.sesion.administrador}
       perfil={perfil}
       permisosGoogle={permisosGoogle}
       agenda={agenda}

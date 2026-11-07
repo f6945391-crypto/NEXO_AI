@@ -76,6 +76,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Prueba:** `web.administracion-solo-para-administradores` · también `web.administracion-cuentas` (extremo a extremo)
 - **Estado:** hecha
 - **Nota (7 de noviembre de 2026):** en la zona aparte del plan §7 (`app/(empresa)/administracion/`), no como entrada dentro de la aplicación: el enlace desde la aplicación queda para T-071 o la integración. Quien no puede entrar en la zona vuelve a su entrada, no a `/`. En una fila afiliada todavía no hay «Quitar de la organización» (T-070, T-071). Pruebas: `web.administracion-solo-para-administradores`, `web.administracion-cuentas`
+- **Nota (7 de noviembre de 2026, pendientes de la tanda 4):** la entrada desde la aplicación ya está: «Administración» al pie de la navegación, encima de Ajustes, solo si `GET /auth/sesion` trae `administrador`; abre `/administracion/entrar` en otra pestaña, sin compartir la sesión. Un responsable que no administra no la ve, porque la sesión no dice si lo es: entra por la dirección de la zona. Prueba: `web.administracion-solo-para-administradores`
 
 ---
 

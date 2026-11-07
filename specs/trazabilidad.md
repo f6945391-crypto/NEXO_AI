@@ -17,8 +17,8 @@
 | 05-equipos | 17 | 17 | 0 | 0 | 0 | 0 |
 | 06-acceso | 17 | 2 | 0 | 15 | 0 | 0 |
 | 07-agente | 5 | 2 | 1 | 2 | 0 | 0 |
-| 08-administracion | 32 | 15 | 5 | 12 | 0 | 0 |
-| 09-tareas-personales | 20 | 20 | 0 | 0 | 0 | 0 |
+| 08-administracion | 32 | 15 | 4 | 13 | 0 | 0 |
+| 09-tareas-personales | 20 | 1 | 0 | 19 | 0 | 0 |
 
 ## Requisitos
 
@@ -196,7 +196,7 @@
 | REQ-ADM-02 | 08-administracion | decisión del equipo del 6 de noviembre de 2026; REQ-ACC-16, REQ-ACC-17; P-10; glosario, «Gerente» (se es responsable de un equipo, no de la organización) | 4 | T-068 | administracion.administrar-no-es-ver | implementado |
 | REQ-ADM-03 | 08-administracion | decisión de diseño (H-ADM-01) | 4 | T-068 | administracion.nunca-sin-administrador | implementado |
 | REQ-ADM-04 | 08-administracion | REQ-ACC-01; H-ACC-01; decisión de diseño (H-ADM-02) | 4 | T-065 | administracion.primer-administrador-en-el-arranque | implementado |
-| REQ-ADM-05 | 08-administracion | decisión de diseño (H-ADM-10); `SPEC.md` §1, «la web, para la coordinación y el seguimiento» | 4 | T-066, T-069 | web.administracion-solo-para-administradores | en curso |
+| REQ-ADM-05 | 08-administracion | decisión de diseño (H-ADM-10); `SPEC.md` §1, «la web, para la coordinación y el seguimiento» | 4 | T-066, T-069 | web.administracion-solo-para-administradores | implementado |
 | REQ-ADM-06 | 08-administracion | P-04; REQ-ACC-12 | 4 | T-066 | administracion.solo-el-administrador | implementado |
 | REQ-ADM-07 | 08-administracion | decisión de diseño (H-ADM-11); P-04; P-11 | 4 | T-067 | administracion.el-asistente-no-administra | en curso |
 | REQ-ADM-08 | 08-administracion | decisión del equipo del 6 de noviembre de 2026; REQ-ACC-17 | 4 | T-068, T-069 | administracion.lista-de-personas | implementado |

@@ -14,6 +14,7 @@ import { FranjaEnEspera } from './en-espera';
 import { Conversacion } from './conversacion';
 import {
   IconoActividad,
+  IconoAdministracion,
   IconoAgenda,
   IconoAjustes,
   IconoCerrar,
@@ -64,6 +65,7 @@ const AVISO_GOOGLE: Record<string, { texto: string; tono: 'exito' | 'advertencia
 export function Aplicacion({
   rol,
   plan,
+  administrador,
   perfil,
   permisosGoogle,
   agenda,
@@ -76,6 +78,8 @@ export function Aplicacion({
 }: {
   rol: Rol;
   plan: Plan;
+  // T-069 · REQ-ADM-05: según GET /auth/sesion; solo pinta, la zona decide al entrar (P-04)
+  administrador: boolean;
   perfil: Perfil | null;
   permisosGoogle: PermisoGoogle[];
   agenda: Agenda;
@@ -154,9 +158,18 @@ export function Aplicacion({
             );
           })}
         </div>
-        <button type="button" className="navegacion__boton navegacion__ajustes" aria-label="Ajustes" title="Ajustes" onClick={() => setAjustes(true)}>
-          <IconoAjustes />
-        </button>
+        <div className="navegacion__pie">
+          {/* specs/08-administracion/plan.md §7.1: la zona de empresa se abre aparte y con su propia entrada; no
+              comparte la sesión de la aplicación */}
+          {administrador && (
+            <a className="navegacion__boton" href="/administracion/entrar" target="_blank" rel="noopener" aria-label="Administración" title="Administración">
+              <IconoAdministracion />
+            </a>
+          )}
+          <button type="button" className="navegacion__boton" aria-label="Ajustes" title="Ajustes" onClick={() => setAjustes(true)}>
+            <IconoAjustes />
+          </button>
+        </div>
       </nav>
 
       {!expandido && <Conversacion inicial={conversacion} ejemplos={actual.ejemplos} zona={perfil?.zonaHoraria ?? undefined} entrada={entrada} />}

@@ -30,6 +30,14 @@ export const IconoAjustes = () => (
   </svg>
 );
 
+// T-069 · REQ-ADM-05: la zona de empresa, al pie de la navegación
+export const IconoAdministracion = () => (
+  <svg {...comunes}>
+    <rect x="4" y="3" width="16" height="18" rx="1" />
+    <path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4" />
+  </svg>
+);
+
 export const IconoExpandir = () => (
   <svg {...comunes}>
     <path d="M15 4h5v5M9 20H4v-5M20 4l-7 7M4 20l7-7" />
