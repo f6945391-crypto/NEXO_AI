@@ -148,6 +148,8 @@ export class AsistenteService {
   async decidir(contexto: ContextoSolicitud, decision: DecisionAsistente): Promise<RespuestaAsistente> {
     const conversacion = await this.abierta(contexto);
     if (!conversacion) throw sinAccion();
+    // T-051 elige entre candidatas; hasta entonces no hay ninguna que elegir
+    if (decision.decision === 'referente') throw sinAccion();
     const turnos: TurnoAsistente[] = [];
     const { grafo, config } = await this.grafo(contexto, conversacion.id, turnos);
     const estado = await grafo.getState(config);

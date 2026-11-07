@@ -11,6 +11,11 @@ const QUE_PASO: Record<CierreEpisodio['desenlace'], (titulo: string | null) => s
   cancelado: (t) => (t ? `Se canceló «${t}»` : 'Compromiso cancelado'),
   descartado: (t) => (t ? `Se descartó «${t}»` : 'Propuesta descartada'),
   guardado: () => 'Tarea guardada',
+  // T-046 · 09-tareas-personales plan §8: lo que se hizo con una tarea por conversación
+  hecho: (t) => (t ? `Se marcó hecha «${t}»` : 'Tarea hecha'),
+  reabierto: (t) => (t ? `Se reabrió «${t}»` : 'Tarea reabierta'),
+  cambiado: (t) => (t ? `Se cambió «${t}»` : 'Tarea cambiada'),
+  quitado: (t) => (t ? `Se descartó la tarea «${t}»` : 'Tarea descartada'),
   sin_accion: () => null,
 };
 

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ListaAgenda, MotivoEspera } from './agente';
 import { OperacionRespuesta } from './operaciones';
+import { CandidatasDeReferente, ListaTareas } from './tareas';
 
 // Conversación con el asistente (specs/07-agente/plan.md §9) · T-032. Lo que ven la web y la capa de
 // captura del móvil. Cada turno tiene un tipo, para que la interfaz muestre distinto lo que es distinto
@@ -24,6 +25,10 @@ export const TurnoAsistente = z.discriminatedUnion('tipo', [
   z.strictObject({ ...base, tipo: z.literal('resultado'), texto: z.string(), operacion: OperacionRespuesta }),
   z.strictObject({ ...base, tipo: z.literal('en_espera'), texto: z.string(), motivo: MotivoEspera, operacionId: z.uuid().nullable() }),
   z.strictObject({ ...base, tipo: z.literal('fallo'), texto: z.string() }),
+  // T-050 · REQ-CUN03-14: las tareas pendientes armadas por el código, como la lista de agenda
+  z.strictObject({ ...base, tipo: z.literal('tareas'), lista: ListaTareas }),
+  // T-051 · REQ-CUN03-15, REQ-AGT-04: varias tareas encajan; la persona elige una y ve su tarjeta
+  z.strictObject({ ...base, tipo: z.literal('alternativas_de_referente'), lista: CandidatasDeReferente }),
 ]);
 export type TurnoAsistente = z.infer<typeof TurnoAsistente>;
 
@@ -36,13 +41,18 @@ export const DecisionAsistente = z.discriminatedUnion('decision', [
   z.strictObject({ operacionId: z.uuid(), decision: z.literal('confirmar') }),
   z.strictObject({ operacionId: z.uuid(), decision: z.literal('descartar') }),
   z.strictObject({ operacionId: z.uuid(), decision: z.literal('alternativa'), alternativa: z.strictObject({ inicio: Instante, fin: Instante }) }),
+  // T-051 · plan §14.9: elegir una de las candidatas. Lo propone el código, sin pasar por el modelo
+  z.strictObject({ decision: z.literal('referente'), referenteId: z.uuid() }),
 ]);
 export type DecisionAsistente = z.infer<typeof DecisionAsistente>;
 
 // T-038 · plan §14.6 · REQ-AGT-03: cómo terminó un episodio, para el separador. Lo arma el servidor con su
 // Operación; el cliente solo lo pinta. Sin acción: se cerró sin confirmar ni descartar nada
-// `guardado` (decisión 27): una tarea quedó en espera; a propósito no es `registrado`, porque la tarea aún no existe
-export const DesenlaceEpisodio = z.enum(['registrado', 'movido', 'cancelado', 'descartado', 'guardado', 'sin_accion']);
+// `guardado` (decisión 27): una tarea quedó en espera; a propósito no es `registrado`, porque la tarea aún no existe.
+// Desde T-050 ya no se produce: registrar una tarea da `registrado`. Se conserva para lo ya transcrito.
+// T-046 · 09-tareas-personales plan §6: `hecho`, `reabierto`, `cambiado` y `quitado` (una tarea descartada,
+// distinto de `descartado`, que es una propuesta descartada)
+export const DesenlaceEpisodio = z.enum(['registrado', 'movido', 'cancelado', 'descartado', 'guardado', 'hecho', 'reabierto', 'cambiado', 'quitado', 'sin_accion']);
 export type DesenlaceEpisodio = z.infer<typeof DesenlaceEpisodio>;
 
 export const CierreEpisodio = z.strictObject({ en: Instante, desenlace: DesenlaceEpisodio, titulo: z.string().nullable() });
