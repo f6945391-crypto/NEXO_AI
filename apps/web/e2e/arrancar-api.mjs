@@ -79,9 +79,13 @@ if (empresas.Acme && perfiles.acmeResponsable) {
 process.env.CALENDARIO_SIMULADO = '1';
 const { calendarioDeDemostracion: calendario } = desdeApi('./dist/integraciones/calendario/calendario-simulado.js');
 // T-034: dos cuentas más para conversar con el asistente, que es el simulado con su guion
-for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial', 'agendaSemana', 'enEspera', 'historialLargo', 'semanaLlena'].filter((c) => perfiles[c])) {
+// T-050: las cuentas de «en espera» no conectan el calendario: desde que las tareas existen, lo que queda en
+// espera en estas pruebas es un compromiso sin permiso de calendario
+const SIN_CALENDARIO = ['asistenteEspera', 'capturaEspera', 'enEspera'];
+for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial', 'agendaSemana', 'enEspera', 'historialLargo', 'semanaLlena', 'tareas', 'tareasVacio'].filter((c) => perfiles[c])) {
   const perfilId = perfiles[clave];
   await prisma.perfilUsuario.update({ where: { id: perfilId }, data: { debeCambiarContrasena: false, zonaHoraria: 'America/Lima' } });
+  if (SIN_CALENDARIO.includes(clave)) continue;
   await prisma.consentimientoIntegracion.create({
     data: { organizacionId, perfilId, proveedor: 'google', alcance: 'calendario', estado: 'concedido' },
   });
@@ -226,6 +230,57 @@ if (perfiles.actividad) {
 }
 if (perfiles.actividadSinCalendario) {
   await ejecutada(perfiles.actividadSinCalendario, 'perfil.cambiar_zona_horaria', 'control_directo', haceHoras(0.5), 'Cambiar tu zona horaria', [{ etiqueta: 'Nueva', valor: `Hora de ${zonaDeDia.split('/').pop().replaceAll('_', ' ')}` }]);
+}
+// T-052 a T-055 · 09-tareas-personales: tareas en las tres franjas, una hecha ayer y un compromiso hoy, para
+// ver la sección Tareas y el grupo «Tareas para este día» de Hoy. Cada tarea con la Operación que la creó
+// (AD-09), como si la hubiera confirmado la persona. La otra cuenta no tiene ninguna.
+if (perfiles.tareas) {
+  const perfilId = perfiles.tareas;
+  const enDias = (n) => new Date(Date.parse(`${hoy}T12:00:00Z`) + n * 24 * 3600_000).toISOString().slice(0, 10);
+  const fecha = (dia) => (dia ? new Date(`${dia}T00:00:00Z`) : null);
+  calendario.sembrar(perfilId, { titulo: 'Dentista', inicio: aLas(hoy, '10:00'), fin: aLas(hoy, '11:00'), zonaHoraria: 'America/Lima' });
+  const tareas = [
+    { texto: 'Pagar el recibo', fecha: hoy, horaLimite: '23:00', creada: -2 },
+    { texto: 'Renovar el DNI', fecha: enDias(-3), creada: -10 },
+    { texto: 'Enviar la tesis', fecha: enDias(5), creada: -4 },
+    { texto: 'Llamar al dentista', creada: -1 },
+    { texto: 'Devolver el libro', creada: -5 },
+    { texto: 'Presupuesto', deQuien: 'Juan', esperadaDesde: enDias(-6), fecha: enDias(7), creada: -6 },
+    { texto: 'Comprar el regalo', creada: -3, hecha: -1 },
+  ];
+  for (const t of tareas) {
+    const creadaEn = new Date(Date.now() + t.creada * 24 * 3600_000);
+    const op = await prisma.operacion.create({
+      data: {
+        organizacionId,
+        perfilId,
+        tipo: 'tareas.registrar',
+        origen: 'agente',
+        carga: { texto: t.texto },
+        vistaConfirmacion: { accion: 'Nueva tarea', datos: [], irreversible: null, confirmable: true, motivoNoConfirmable: null },
+        estado: 'ejecutada',
+        creadaEn,
+        confirmadaEn: creadaEn,
+        ejecutadaEn: creadaEn,
+      },
+    });
+    await prisma.tareaPersonal.create({
+      data: {
+        organizacionId,
+        perfilId,
+        texto: t.texto,
+        fecha: fecha(t.fecha),
+        horaLimite: t.horaLimite ?? null,
+        zonaHoraria: 'America/Lima',
+        deQuien: t.deQuien ?? null,
+        esperadaDesde: fecha(t.esperadaDesde),
+        estado: t.hecha ? 'hecha' : 'pendiente',
+        hechaEn: t.hecha ? new Date(Date.now() + t.hecha * 24 * 3600_000) : null,
+        operacionOrigenId: op.id,
+        creadaEn,
+      },
+    });
+  }
 }
 await prisma.$disconnect();
 

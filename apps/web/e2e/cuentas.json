@@ -132,5 +132,15 @@
     "plan": "personal",
     "organizacion": "personal",
     "lista": true
+  },
+  "tareas": {
+    "correo": "tareas-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "tareasVacio": {
+    "correo": "tareas-vacio-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
   }
 }

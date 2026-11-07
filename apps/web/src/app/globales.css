@@ -1194,3 +1194,134 @@ body {
 .en-espera__motivo {
   color: var(--texto-suave);
 }
+
+/* T-052, T-053 · 09-tareas-personales: la sección Tareas y el grupo «Tareas para este día» de Hoy */
+.lienzo__cuerpo--lista > .vacio,
+.tareas__vacio .vacio {
+  margin: 0 auto;
+}
+
+.tareas__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tarea {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaciado-16);
+  padding: var(--espaciado-12) 0;
+  border-top: 1px solid var(--borde-base);
+}
+
+.tarea__cuerpo {
+  min-width: 0;
+}
+
+.tarea p {
+  margin: 0;
+}
+
+.tarea__texto {
+  font-weight: 600;
+}
+
+.tarea__detalle {
+  margin-top: 2px;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.tarea__detalle--vencida {
+  color: var(--estado-error);
+}
+
+.etiqueta--vencida {
+  background: var(--estado-error-suave);
+  color: var(--estado-error);
+}
+
+.tarea__acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-16);
+  flex-shrink: 0;
+}
+
+.tarea__acciones .boton {
+  min-height: 36px;
+  padding: var(--espaciado-8) var(--espaciado-16);
+}
+
+.tarea--hecha .tarea__texto {
+  color: var(--texto-suave);
+  text-decoration: line-through;
+}
+
+.tareas__hechas {
+  margin-top: var(--espaciado-24);
+}
+
+.tareas__ver-hechas {
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  padding: var(--espaciado-8) 0;
+  border: none;
+  background: none;
+  color: var(--marca-base);
+  cursor: pointer;
+}
+
+.tareas__deshacer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--espaciado-12);
+}
+
+.tareas-del-dia {
+  margin-top: var(--espaciado-32);
+}
+
+.tareas-del-dia__titulo {
+  margin: 0 0 var(--espaciado-8);
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* La lista de tareas y las candidatas en la conversación (T-050, T-051) */
+.turno-tareas__grupo {
+  margin: var(--espaciado-8) 0 0;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.turno-tareas__vencida {
+  color: var(--estado-error);
+}
+
+.candidatas {
+  list-style: none;
+  margin: var(--espaciado-8) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.candidatas .boton {
+  width: 100%;
+  text-align: left;
+}
+
+.candidatas__detalle {
+  display: block;
+  font-weight: 400;
+  font-size: var(--tam-etiqueta);
+}

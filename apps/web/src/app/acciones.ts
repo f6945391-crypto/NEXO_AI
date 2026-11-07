@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
   ClaveAlcanceGoogle,
+  ControlTarea,
   ConversacionAsistente,
   DecisionAsistente,
   EnlaceGoogleRespuesta,
@@ -15,6 +16,7 @@ import {
   PrimerIngresoSolicitud,
   RespuestaAsistente,
   ZonaHoraria,
+  type TareaPersonal,
 } from '@nexoai/contratos';
 import {
   borrarTokens,
@@ -202,4 +204,55 @@ export async function salir(): Promise<void> {
   }
   await borrarTokens();
   redirect('/entrar');
+}
+
+// T-052, T-053 · REQ-CUN03-09, 10, 11 · H-TP-07. Los controles de una tarea. «Hecho», «Recibido» y «Reabrir»
+// no llevan tarjeta: la API propone y confirma en un paso, por Operaciones. Descartar sí: se propone, la web
+// pinta la tarjeta tal como llega y se confirma o se deja. Crear y cambiar no tienen camino aquí (R-42).
+export type ResultadoControl = { tarea?: TareaPersonal; error?: string };
+
+async function controlDeTarea(id: string, accion: 'hecha' | 'reabrir'): Promise<ResultadoControl> {
+  const token = await tokenDeAcceso();
+  try {
+    const respuesta = await llamarApi(`/tareas/${encodeURIComponent(id)}/${accion}`, { metodo: 'POST', token });
+    const control = ControlTarea.safeParse(respuesta.cuerpo);
+    if (respuesta.estado !== 200 || !control.success) return { error: mensajeDeError(respuesta.cuerpo, 'No se pudo cambiar la tarea. Inténtalo de nuevo.') };
+    refresh();
+    return { tarea: control.data.tarea };
+  } catch {
+    return { error: SIN_CONEXION };
+  }
+}
+
+export async function marcarHecha(id: string): Promise<ResultadoControl> {
+  return controlDeTarea(id, 'hecha');
+}
+
+export async function reabrirTarea(id: string): Promise<ResultadoControl> {
+  return controlDeTarea(id, 'reabrir');
+}
+
+export async function proponerDescartarTarea(id: string): Promise<ResultadoPropuesta> {
+  const token = await tokenDeAcceso();
+  try {
+    const respuesta = await llamarApi('/operaciones', { metodo: 'POST', cuerpo: { tipo: 'tareas.descartar', carga: { tareaId: id }, origen: 'control_directo' }, token });
+    if (respuesta.estado !== 201) return { error: mensajeDeError(respuesta.cuerpo) };
+    return { propuesta: OperacionRespuesta.parse(respuesta.cuerpo) };
+  } catch {
+    return { error: SIN_CONEXION };
+  }
+}
+
+export async function confirmarDescartarTarea(operacionId: string): Promise<{ error?: string }> {
+  const token = await tokenDeAcceso();
+  try {
+    const respuesta = await llamarApi(`/operaciones/${encodeURIComponent(operacionId)}/confirmar`, { metodo: 'POST', token });
+    if (respuesta.estado !== 200 || OperacionRespuesta.parse(respuesta.cuerpo).estado !== 'ejecutada') {
+      return { error: mensajeDeError(respuesta.cuerpo, 'No se pudo descartar la tarea. Inténtalo de nuevo.') };
+    }
+  } catch {
+    return { error: SIN_CONEXION };
+  }
+  refresh();
+  return {};
 }

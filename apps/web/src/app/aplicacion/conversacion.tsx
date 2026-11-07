@@ -91,7 +91,21 @@ function Tarjeta({
   );
 }
 
-function Turno({ turno, pendiente, ocupado, zona, alDecidir }: { turno: TurnoAsistente; pendiente: string | null; ocupado: boolean; zona?: string; alDecidir: (d: DecisionAsistente) => void }) {
+function Turno({
+  turno,
+  pendiente,
+  ocupado,
+  zona,
+  esUltimo,
+  alDecidir,
+}: {
+  turno: TurnoAsistente;
+  pendiente: string | null;
+  ocupado: boolean;
+  zona?: string;
+  esUltimo: boolean;
+  alDecidir: (d: DecisionAsistente) => void;
+}) {
   switch (turno.tipo) {
     case 'persona':
       return (
@@ -130,6 +144,55 @@ function Turno({ turno, pendiente, ocupado, zona, alDecidir }: { turno: TurnoAsi
               </ol>
             )}
           </section>
+        </li>
+      );
+    // T-050 · REQ-CUN03-14: las tareas pendientes armadas por la API, tal como están, por franja
+    case 'tareas':
+      return (
+        <li className="turno">
+          <section className="turno-agenda" aria-label={turno.lista.alcance}>
+            <p className="turno-agenda__rango">{turno.lista.alcance}</p>
+            {turno.lista.grupos.length === 0 ? (
+              <p className="turno__texto">No tienes tareas pendientes.</p>
+            ) : (
+              turno.lista.grupos.map((grupo) => (
+                <div key={grupo.franja}>
+                  <p className="turno-tareas__grupo">{grupo.nombre}</p>
+                  <ol className="turno-agenda__lista" aria-label={grupo.nombre}>
+                    {grupo.tareas.map((t) => (
+                      <li key={t.id}>
+                        {t.texto}
+                        {t.espera && <span className="turno-agenda__dia"> · {t.espera}</span>}
+                        {t.cuando && <span className={`turno-agenda__dia${t.vencida ? ' turno-tareas__vencida' : ''}`}> · {t.cuando}</span>}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              ))
+            )}
+          </section>
+        </li>
+      );
+    // T-051 · REQ-CUN03-15: varias tareas encajan; elegir una la propone el código, sin pasar por el modelo
+    case 'alternativas_de_referente':
+      return (
+        <li className="turno">
+          <p className="turno__texto">{turno.lista.texto}</p>
+          <ul className="candidatas" aria-label={turno.lista.texto}>
+            {turno.lista.candidatas.map((c) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  className="boton boton--secundario"
+                  disabled={ocupado || !esUltimo || pendiente !== null}
+                  onClick={() => alDecidir({ decision: 'referente', referenteId: c.id })}
+                >
+                  {c.titulo}
+                  {c.detalle && <span className="candidatas__detalle">{c.detalle}</span>}
+                </button>
+              </li>
+            ))}
+          </ul>
         </li>
       );
     case 'propuesta':
@@ -292,7 +355,15 @@ export function Conversacion({
               elemento.clase === 'separador' ? (
                 <Separador key={elemento.id} texto={textoDelSeparador(elemento.cierre, zonaVista)} />
               ) : (
-                <Turno key={elemento.turno.id} turno={elemento.turno} pendiente={pendiente} ocupado={ocupado} zona={zona} alDecidir={decidir} />
+                <Turno
+                  key={elemento.turno.id}
+                  turno={elemento.turno}
+                  pendiente={pendiente}
+                  ocupado={ocupado}
+                  zona={zona}
+                  esUltimo={elemento === ultimo}
+                  alDecidir={decidir}
+                />
               ),
             )}
           </ol>

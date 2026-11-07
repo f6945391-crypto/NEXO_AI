@@ -2,9 +2,10 @@
 
 import { useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import type { ConversacionAsistente, Perfil, PermisoGoogle, Plan, Rol } from '@nexoai/contratos';
+import type { ConversacionAsistente, Perfil, PermisoGoogle, Plan, Rol, TareasDelDia } from '@nexoai/contratos';
 import type { Agenda, NivelAgenda, VistaAgenda } from '../../lib/agenda';
 import type { CosaEnEspera } from '../../lib/asistente';
+import type { Tareas } from '../../lib/tareas';
 import { conectarGoogle, salir } from '../acciones';
 import { Actividad } from './actividad';
 import { AgendaMes, AgendaSemana, ListaCompromisos } from './agenda';
@@ -21,6 +22,7 @@ import {
   IconoTareas,
 } from './iconos';
 import { SECCIONES, type Seccion } from './secciones';
+import { FRANJAS, franjaVacia, SeccionTareas, TareasParaEsteDia } from './tareas';
 
 // T-023 · design/ARQUITECTURA-VISUAL-WEB.md. Navegación 72 · conversación 528 · lienzo 840, y el
 // lienzo expandido (72 · 0 · 1368). T-034: la conversación habla con el asistente (conversacion.tsx).
@@ -69,6 +71,8 @@ export function Aplicacion({
   enEspera,
   conversacion,
   resultadoGoogle,
+  tareas,
+  tareasDelDia,
 }: {
   rol: Rol;
   plan: Plan;
@@ -79,6 +83,9 @@ export function Aplicacion({
   enEspera: CosaEnEspera[];
   conversacion: ConversacionAsistente | null;
   resultadoGoogle: string | null;
+  // T-052, T-053 · 09-tareas-personales
+  tareas: Tareas;
+  tareasDelDia: TareasDelDia | null;
 }) {
   const [seccion, setSeccion] = useState<Seccion>('agenda');
   const [corte, setCorte] = useState(0);
@@ -115,8 +122,12 @@ export function Aplicacion({
 
   const lista = seccion === 'agenda' && agenda.estado === 'lista' ? agenda : null;
   const dia = lista?.nivel === 'dia' ? lista : null;
-  // T-082: Actividad pinta su propio vacío, debajo de la cabecera del período
-  const conLista = (lista !== null && (lista.nivel !== 'dia' || lista.compromisos.length > 0)) || seccion === 'actividad';
+  // T-053: con tareas del día, Hoy es una lista aunque no haya compromisos (el estado vacío va arriba)
+  const conTareasDelDia = seccion === 'agenda' && vista.nivel === 'dia' && (tareasDelDia?.tareas.length ?? 0) > 0;
+  // T-052: la franja de Tareas es una lista salvo que esté vacía del todo
+  const franja = seccion === 'tareas' ? FRANJAS[corteVisible] : undefined;
+  const conTareas = franja !== undefined && tareas.estado === 'lista' && !franjaVacia(tareas, franja);
+  const conLista = (lista !== null && (lista.nivel !== 'dia' || lista.compromisos.length > 0)) || conTareasDelDia || conTareas || seccion === 'actividad';
 
   // «Encargadas» es lo que encargaste a otros: el colaborador no asigna tareas (REQ-ACC-15)
   const encarga = plan === 'empresarial' && rol !== 'colaborador';
@@ -236,7 +247,11 @@ export function Aplicacion({
           )}
           {lista?.nivel === 'semana' && <AgendaSemana agenda={lista} irA={irA} />}
           {lista?.nivel === 'mes' && <AgendaMes agenda={lista} irA={irA} />}
-          {seccion === 'tareas' && (
+          {/* REQ-CUN03-13: debajo de los compromisos de Hoy, y nunca en Semana ni en Mes */}
+          {seccion === 'agenda' && vista.nivel === 'dia' && <TareasParaEsteDia dia={tareasDelDia} />}
+          {franja && <SeccionTareas key={franja} tareas={tareas} franja={franja} alPedir={abrirCaptura} />}
+          {/* H-TP-13: «Encargadas» es de 03-tareas, no de las tareas personales */}
+          {seccion === 'tareas' && !franja && (
             <div className="vacio">
               <h2>Nada en «{cortes[corteVisible]}»</h2>
               <p>Cuando le pidas algo al asistente, tus tareas aparecerán aquí, ordenadas por franja.</p>

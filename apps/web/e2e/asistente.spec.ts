@@ -80,16 +80,18 @@ test.describe('web.asistente-agenda-y-confirma', () => {
 test.describe('web.asistente-en-espera', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('lo que queda en espera se ve como en espera, no como un fallo, y sigue ahí al recargar (REQ-CAP-23, REQ-AGT-02)', async ({ page }) => {
+  // T-050: una tarea ya no queda en espera; lo que espera aquí es un compromiso sin el calendario conectado
+  // (la cuenta asistenteEspera no lo tiene)
+  test('lo que queda en espera se ve como en espera, no como un fallo, y sigue ahí al recargar (REQ-CAP-23, REQ-ACC-08)', async ({ page }) => {
     await entrar(page, cuentas.asistenteEspera.correo);
-    await pedir(page, 'Recuérdame pagar el recibo antes del sábado');
-    const aviso = page.getByText(/^En espera\. Lo guardé como tarea: «pagar el recibo antes del sábado»/);
+    await pedir(page, 'Agéndame una reunión mañana a las 10');
+    const aviso = page.getByText(/^En espera\. Para eso necesito permiso para ver y editar tu calendario de Google/);
     await expect(aviso).toBeVisible();
     // Ningún fallo en la conversación (Next.js tiene su propio aviso de navegación, fuera de ella)
     await expect(page.getByRole('region', { name: 'Asistente' }).getByRole('alert')).toHaveCount(0);
 
     await page.reload();
-    await expect(page.getByText('Recuérdame pagar el recibo antes del sábado')).toBeVisible();
+    await expect(page.getByText('Agéndame una reunión mañana a las 10')).toBeVisible();
     await expect(aviso).toBeVisible();
   });
 
@@ -148,10 +150,12 @@ test.describe('web.asistente-historial', () => {
     await expect(boton).toHaveCount(0);
   });
 
-  test('guardar una tarea deja la línea «Tarea guardada», no «registrado» (decisión 27)', async ({ page }) => {
+  // T-050: registrar una tarea cierra como cualquier registro; «Tarea guardada» ya no se produce
+  test('confirmar una tarea deja la línea «Se registró», con su texto', async ({ page }) => {
     await entrar(page, cuentas.asistenteEspera.correo);
     await pedir(page, 'Recuérdame comprar pan');
-    await expect(page.getByRole('separator', { name: /· Tarea guardada$/ })).toBeVisible();
+    await page.getByRole('article', { name: 'Para confirmar' }).getByRole('button', { name: 'Confirmar' }).click();
+    await expect(page.getByRole('separator', { name: /· Se registró «Comprar pan»$/ })).toBeVisible();
   });
 });
 
@@ -165,13 +169,14 @@ test.describe('web.en-espera-visible', () => {
     // Sin nada en espera, no hay franja
     await expect(lienzo.getByRole('region', { name: 'En espera' })).toHaveCount(0);
 
-    await pedir(page, 'Recuérdame pagar el recibo');
+    // T-050: sin el calendario conectado (la cuenta enEspera no lo tiene), un compromiso queda en espera
+    await pedir(page, 'Agéndame una llamada mañana a las 9');
     const franja = lienzo.getByRole('region', { name: 'En espera' });
     const resumen = franja.getByRole('button', { name: /^1 cosa en espera/ });
     await expect(resumen).toBeVisible();
     await expect(resumen).toHaveAttribute('aria-expanded', 'false');
 
-    await pedir(page, 'Recuérdame llamar al dentista');
+    await pedir(page, 'Agéndame una reunión con Vasco el viernes a las 10');
     await expect(franja.getByRole('button', { name: /^2 cosas en espera/ })).toBeVisible();
 
     // Sigue ahí al recargar, y al abrirla dice qué se pidió y por qué espera
@@ -179,8 +184,8 @@ test.describe('web.en-espera-visible', () => {
     await franja.getByRole('button', { name: /^2 cosas en espera/ }).click();
     const cosas = franja.getByRole('listitem');
     await expect(cosas).toHaveCount(2);
-    await expect(cosas.locator('.en-espera__pedido')).toHaveText(['«Recuérdame llamar al dentista»', '«Recuérdame pagar el recibo»']);
-    await expect(cosas.first().locator('.en-espera__motivo')).toHaveText('Las tareas llegan en una próxima versión. Queda guardado hasta entonces.');
+    await expect(cosas.locator('.en-espera__pedido')).toHaveText(['«Agéndame una reunión con Vasco el viernes a las 10»', '«Agéndame una llamada mañana a las 9»']);
+    await expect(cosas.first().locator('.en-espera__motivo')).toHaveText('Falta el permiso de tu calendario de Google. Se retoma cuando lo conectes.');
     // Retirar sigue siendo una decisión abierta: la lista no tiene botones
     await expect(franja.getByRole('list').getByRole('button')).toHaveCount(0);
     // R-40: la interfaz no se nombra a sí misma
@@ -188,7 +193,7 @@ test.describe('web.en-espera-visible', () => {
 
     // Solo encima de la agenda de hoy
     await page.getByRole('tab', { name: 'Semana' }).click();
-    await expect(page.getByRole('region', { name: /^Semana del / })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Semana' })).toHaveAttribute('aria-selected', 'true');
     await expect(franja).toHaveCount(0);
   });
 });

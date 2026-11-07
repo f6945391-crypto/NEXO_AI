@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { fechaValida, obtenerAgenda, type NivelAgenda } from '../lib/agenda';
 import { obtenerConversacion, obtenerEnEspera } from '../lib/asistente';
 import { obtenerPerfil, obtenerPermisosGoogle, obtenerSesion } from '../lib/sesion';
+import { obtenerTareas, obtenerTareasDelDia } from '../lib/tareas';
 import { Aplicacion } from './aplicacion/aplicacion';
 
 // La aplicación: navegación, conversación y lienzo (T-023). También para el colaborador (T-026, REQ-ACC-13).
@@ -13,11 +14,13 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
 
   // T-034: la conversación abierta, con lo que espera tu confirmación o quedó en espera
   // T-045: lo que está en espera, para la franja del lienzo
-  const [perfil, permisosGoogle, conversacion, enEspera, { google, nivel, fecha }] = await Promise.all([
+  // T-052: las tareas, para la sección Tareas
+  const [perfil, permisosGoogle, conversacion, enEspera, tareas, { google, nivel, fecha }] = await Promise.all([
     obtenerPerfil(),
     obtenerPermisosGoogle(),
     obtenerConversacion(),
     obtenerEnEspera(),
+    obtenerTareas(),
     searchParams,
   ]);
   // T-025: la agenda, en la zona de la persona. T-044: el nivel y la fecha van en la dirección, así una
@@ -26,6 +29,9 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
   const agenda = perfil?.zonaHoraria
     ? await obtenerAgenda(perfil.zonaHoraria, vista)
     : ({ estado: 'error', mensaje: 'No pudimos leer tu zona horaria.' } as const);
+  // T-053 · REQ-CUN03-13: las tareas del día que muestra Hoy, en la zona del perfil
+  const diaDeHoy = agenda.estado === 'lista' && agenda.nivel === 'dia' ? agenda.fechaIso : perfil?.zonaHoraria ? new Intl.DateTimeFormat('en-CA', { timeZone: perfil.zonaHoraria }).format(new Date()) : null;
+  const tareasDelDia = vista.nivel === 'dia' && diaDeHoy ? await obtenerTareasDelDia(vista.fecha ?? diaDeHoy) : null;
   return (
     <Aplicacion
       rol={sesion.sesion.rol}
@@ -37,6 +43,8 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
       enEspera={enEspera}
       conversacion={conversacion}
       resultadoGoogle={google ?? null}
+      tareas={tareas}
+      tareasDelDia={tareasDelDia}
     />
   );
 }
