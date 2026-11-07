@@ -160,12 +160,15 @@ export function CapaCaptura({
   visible,
   alCerrar,
   alCambiarAgenda,
+  alCambiarPendiente,
   alSalir,
 }: {
   visible: boolean;
   alCerrar: () => void;
   // Algo quedó hecho: la agenda se vuelve a pedir
   alCambiarAgenda: () => void;
+  // H-CAP-04: si queda una propuesta esperando decisión, para que el asa lo señale
+  alCambiarPendiente: (hay: boolean) => void;
   alSalir: () => void;
 }) {
   const [borrador, setBorrador] = useState('');
@@ -227,6 +230,8 @@ export function CapaCaptura({
   useEffect(() => {
     if (visible) void cargar();
   }, [visible, cargar]);
+
+  useEffect(() => alCambiarPendiente(pendiente !== null), [pendiente, alCambiarPendiente]);
 
   const lista = useRef<ScrollView>(null);
 

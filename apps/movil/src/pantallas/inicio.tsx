@@ -38,6 +38,9 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
   const [captura, setCaptura] = useState(false);
   const [version, setVersion] = useState(0);
   const [esperas, setEsperas] = useState(0);
+  // H-CAP-04: hay una propuesta esperando decisión. Se sabe por la capa, sin otra llamada: hasta que la capa
+  // se abre por primera vez, el asa no lo señala
+  const [porDecidir, setPorDecidir] = useState(false);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [nivel, setNivel] = useState<Nivel>('Hoy');
   const alCambiarNivel = useCallback((nuevo: Nivel) => setNivel(nuevo), []);
@@ -96,8 +99,14 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
       </ScrollView>
 
       {/* El asa: abre la capa de captura sin salir de la sección (glosario, «Asa») */}
-      <Pressable accessibilityRole="button" accessibilityLabel="Pedir algo al asistente" onPress={() => setCaptura(true)} style={estilos.asa}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={porDecidir ? 'Pedir algo al asistente, hay algo esperando tu decisión' : 'Pedir algo al asistente'}
+        onPress={() => setCaptura(true)}
+        style={estilos.asa}
+      >
         <Text style={estilos.asaTexto}>Pedir algo</Text>
+        {porDecidir && <View style={estilos.asaPunto} />}
       </Pressable>
       <CapaCaptura
         visible={captura}
@@ -106,6 +115,7 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
           setEsperas((e) => e + 1);
         }}
         alCambiarAgenda={() => setVersion((v) => v + 1)}
+        alCambiarPendiente={setPorDecidir}
         alSalir={alSalir}
       />
 
@@ -171,6 +181,8 @@ const estilos = StyleSheet.create({
   cuerpo: { flexGrow: 1, paddingHorizontal: espaciado[16], paddingBottom: espaciado[24], gap: espaciado[16] },
   asa: { position: 'absolute', right: espaciado[16], bottom: 72, minHeight: 48, paddingHorizontal: espaciado[20], justifyContent: 'center', borderRadius: 24, backgroundColor: color.agente.base },
   asaTexto: { fontSize: tipografia.etiqueta, fontWeight: '700', color: color.texto.inverso },
+  // Algo espera decisión: un punto en la esquina, con borde para que se separe del asa
+  asaPunto: { position: 'absolute', top: 0, right: 0, width: espaciado[12], height: espaciado[12], borderRadius: espaciado[12] / 2, borderWidth: 2, borderColor: color.superficie.base, backgroundColor: color.estado.advertencia },
   pestanas: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: color.borde.base, backgroundColor: color.superficie.base },
   pestana: { flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center' },
   pestanaTexto: { fontSize: tipografia.etiqueta, color: color.texto.suave },
