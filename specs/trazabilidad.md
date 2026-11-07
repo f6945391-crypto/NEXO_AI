@@ -9,8 +9,8 @@
 
 | Área | Requisitos | pendiente | en curso | implementado | verificado | retirado |
 |---|---|---|---|---|---|---|
-| 01-captura | 24 | 17 | 3 | 4 | 0 | 0 |
-| 02-agenda | 13 | 0 | 2 | 11 | 0 | 0 |
+| 01-captura | 25 | 18 | 3 | 4 | 0 | 0 |
+| 02-agenda | 15 | 2 | 2 | 11 | 0 | 0 |
 | 02-jornada | 24 | 24 | 0 | 0 | 0 | 0 |
 | 03-tareas | 26 | 26 | 0 | 0 | 0 | 0 |
 | 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
@@ -46,6 +46,7 @@
 | REQ-CAP-22 | 01-captura | propuesta técnica §5, «las escrituras se encolan y se reintentan» | 2 | — | — | pendiente |
 | REQ-CAP-23 | 01-captura | regla de producto derivada de los cuatro blancos; RN-OP-01 | 2 | T-033, T-034, T-035 | movil.captura-en-espera | implementado |
 | REQ-CAP-24 | 01-captura | regla de producto R-42; `SPEC.md` P-11 | 2 | T-033, T-035 | agente.en-espera-desde-la-captura | implementado |
+| REQ-CAP-25 | 01-captura | P-11 («lo pedido queda en cola, visible como en espera»); REQ-CAP-23; `design/ARQUITECTURA-VISUAL-WEB.md` §6 (lo en espera va al registro); hallazgo 4.1-d de `design/capturas/2026-11-04/INFORME-VISUAL-AGENTE.md` (hoy lo en espera solo vive en la conversación); `PLAN-VALOR-USUARIO.md` hito 1. Añadido el 6 de noviembre de 2026 | 2 | T-045 | web.en-espera-visible, movil.en-espera-visible | pendiente |
 | REQ-CUN01-01 | 02-agenda | CUN-01 flujo principal, pasos 1 y 2 | 2 | T-031, T-034, T-043 | agente.agenda.extrae-sin-inventar-fin | en curso |
 | REQ-CUN01-02 | 02-agenda | CUN-01 flujo principal, paso 3 | 1 | T-016, T-017, T-019 | agenda.consulta-solapes-antes-de-proponer | implementado |
 | REQ-CUN01-03 | 02-agenda | RN-ER-03 | 1 | T-012, T-017, T-032 | agenda.sin-confirmar-no-escribe-ni-notifica | implementado |
@@ -59,6 +60,8 @@
 | REQ-CUN01-11 | 02-agenda | regla de producto R-42; `SPEC.md` P-11 | 1 | T-015, T-019, T-021, T-033, T-034 | agente.sin-modelo-queda-en-espera | implementado |
 | REQ-CUN01-12 | 02-agenda | derivado de la revisión de diseño de CUN-01 | 1 | T-021, T-025 | agenda.estado-vacio-abre-captura | implementado |
 | REQ-CUN01-13 | 02-agenda | CUN-01, alcance «consultar»; `PROPUESTA-TECNICA.md` §7.3; añadido el 24 de octubre de 2026 al planificar el agente | 2 | T-031, T-034, T-043 | agente.agenda.consulta-tal-cual | en curso |
+| REQ-CUN01-14 | 02-agenda | CUN-01, alcance «consultar»; `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1 (Semana: «los siete días uno debajo de otro, cada uno con sus bloques»); `design/ARQUITECTURA-VISUAL-WEB.md` §9, punto 2; `PLAN-VALOR-USUARIO.md` hito 2. Añadido el 6 de noviembre de 2026 | 2 | T-044 | web.agenda-semana-y-mes, movil.agenda-semana-y-mes | pendiente |
+| REQ-CUN01-15 | 02-agenda | CUN-01, alcance «consultar»; `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1 (Mes: «rejilla de calendario con un punto por cada dos compromisos»); `PLAN-VALOR-USUARIO.md` hito 2. Añadido el 6 de noviembre de 2026 | 2 | T-044 | web.agenda-semana-y-mes, movil.agenda-semana-y-mes | pendiente |
 | REQ-CUN02-01 | 02-jornada | CUN-02 flujo principal, pasos 1 a 3 | 3 | — | — | pendiente |
 | REQ-CUN02-02 | 02-jornada | CUN-02 flujo principal, paso 4 | 3 | — | — | pendiente |
 | REQ-CUN02-03 | 02-jornada | CUN-02 pasos 6 y 7; RN-ER-03 | 3 | — | — | pendiente |

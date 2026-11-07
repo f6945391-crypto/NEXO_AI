@@ -390,6 +390,29 @@ Y «mañana» se resuelve respecto del momento en que se capturó, no del moment
 
 ---
 
+### REQ-CAP-25
+
+**Requisito:** MIENTRAS el usuario tenga capturas en espera, EL SISTEMA las mostrará fuera de la conversación, como una franja sobre la agenda de hoy con la cantidad; CUANDO el usuario abra la franja, verá cada captura con lo que pidió y el motivo de la espera en palabras llanas; y CUANDO no quede nada en espera, la franja no se mostrará.
+
+**Origen:** P-11 («lo pedido queda en cola, visible como en espera»); REQ-CAP-23; `design/ARQUITECTURA-VISUAL-WEB.md` §6 (lo en espera va al registro); hallazgo 4.1-d de `design/capturas/2026-11-04/INFORME-VISUAL-AGENTE.md` (hoy lo en espera solo vive en la conversación); `PLAN-VALOR-USUARIO.md` hito 1. Añadido el 6 de noviembre de 2026
+**Tipo:** dirigido por estado
+**Plataforma:** web (lienzo) y móvil (Inicio)
+
+**Criterio de aceptación**
+DADO un usuario con una tarea guardada en espera y una solicitud encolada porque el asistente no respondía
+CUANDO abra la agenda
+ENTONCES ve «2 cosas en espera» sobre la lista de hoy
+Y CUANDO abra la franja
+ENTONCES ve las dos, cada una con la frase que escribió y su motivo: «las tareas llegan en una próxima versión» y «el asistente no respondía»
+Y no hay ningún control para retirarlas (sigue abierto en `SPEC.md` §8)
+Y CUANDO el trabajador atienda la solicitud encolada
+ENTONCES la franja dice «1 cosa en espera»
+Y DADO que no queda nada en espera
+CUANDO abra la agenda
+ENTONCES la franja no aparece
+
+---
+
 ## 9. Trazabilidad
 
 | Sección | Caso de uso | Nivel de venta |
@@ -402,6 +425,7 @@ Y «mañana» se resuelve respecto del momento en que se capturó, no del moment
 | 6, memo por lugar | CUN-01 | Personal |
 | 7, sensores | Transversal | Según la función |
 | 8, sin conexión | Transversal | Gratuito |
+| 8, REQ-CAP-25, lo en espera fuera de la conversación | Transversal | Gratuito |
 
 ---
 

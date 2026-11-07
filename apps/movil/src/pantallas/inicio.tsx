@@ -3,12 +3,15 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { Perfil } from '@nexoai/contratos';
 import { Boton } from '../componentes';
 import { CapaCaptura } from './captura';
+import { FranjaEnEspera } from './en-espera';
 import { conSesion } from '../sesion';
 import { color, espaciado, tipografia } from '../tokens';
 import { etiquetarZona } from '../zonas';
 
 // T-028 · design/ARQUITECTURA-VISUAL-MOVIL.md §2. Tres secciones con pestañas abajo (R-32) y Ajustes en la
 // cabecera, encima y con «Cerrar» (R-34, R-43). El asa abre la capa de captura sobre la sección (R-36, T-021).
+// T-045 · REQ-CAP-25: encima de la agenda, la franja con lo que está en espera. Se vuelve a pedir al cerrar la
+// capa, que es donde algo puede quedar en espera.
 
 export type Seccion = 'agenda' | 'tareas' | 'actividad';
 
@@ -26,6 +29,7 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
   const [ajustes, setAjustes] = useState(false);
   const [captura, setCaptura] = useState(false);
   const [version, setVersion] = useState(0);
+  const [esperas, setEsperas] = useState(0);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
 
   useEffect(() => {
@@ -52,13 +56,24 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={estilos.cuerpo}>{contenido(seccion, () => setCaptura(true), version)}</ScrollView>
+      <ScrollView contentContainerStyle={estilos.cuerpo}>
+        {seccion === 'agenda' && <FranjaEnEspera version={version + esperas} alSalir={alSalir} />}
+        {contenido(seccion, () => setCaptura(true), version)}
+      </ScrollView>
 
       {/* El asa: abre la capa de captura sin salir de la sección (glosario, «Asa») */}
       <Pressable accessibilityRole="button" accessibilityLabel="Pedir algo al asistente" onPress={() => setCaptura(true)} style={estilos.asa}>
         <Text style={estilos.asaTexto}>Pedir algo</Text>
       </Pressable>
-      <CapaCaptura visible={captura} alCerrar={() => setCaptura(false)} alCambiarAgenda={() => setVersion((v) => v + 1)} alSalir={alSalir} />
+      <CapaCaptura
+        visible={captura}
+        alCerrar={() => {
+          setCaptura(false);
+          setEsperas((e) => e + 1);
+        }}
+        alCambiarAgenda={() => setVersion((v) => v + 1)}
+        alSalir={alSalir}
+      />
 
       <View accessibilityRole="tablist" style={estilos.pestanas}>
         {(Object.keys(SECCIONES) as Seccion[]).map((clave) => (

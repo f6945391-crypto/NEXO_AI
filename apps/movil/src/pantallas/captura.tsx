@@ -13,6 +13,8 @@ import { color, espaciado, tipografia } from '../tokens';
 // Cada tipo de turno se ve distinto: la tarjeta que espera tu confirmación, lo que quedó en espera y un fallo.
 // T-039 · REQ-AGT-03: la capa ya no se vacía. Abre con lo que se está pidiendo y lo anterior, separados por
 // una línea con la hora y lo que se hizo, y «Ver anteriores» trae lo más viejo.
+// Pulido · «Ver anteriores» visible: el botón se queda pegado arriba de la lista aunque se haga scroll,
+// mientras quede algo anterior (`stickyHeaderIndices`, que en Expo web es `position: sticky`).
 
 const hora = (iso: string, zona?: string) =>
   new Intl.DateTimeFormat('es', { timeZone: zona, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso));
@@ -226,13 +228,17 @@ export function CapaCaptura({
                 }
                 lista.current?.scrollToEnd({ animated: true });
               }}
+              stickyHeaderIndices={cursor ? [0] : undefined}
               style={estilos.turnos}
               contentContainerStyle={estilos.turnosContenido}
             >
               {cursor && (
-                <Pressable accessibilityRole="button" onPress={() => void traerAnteriores()} disabled={trayendo} style={estilos.anteriores}>
-                  <Text style={estilos.anterioresTexto}>{trayendo ? 'Trayendo…' : 'Ver anteriores'}</Text>
-                </Pressable>
+                // Con fondo propio: lo que pasa por debajo al hacer scroll no se transparenta
+                <View style={estilos.anterioresFranja}>
+                  <Pressable accessibilityRole="button" onPress={() => void traerAnteriores()} disabled={trayendo} style={estilos.anteriores}>
+                    <Text style={estilos.anterioresTexto}>{trayendo ? 'Trayendo…' : 'Ver anteriores'}</Text>
+                  </Pressable>
+                </View>
               )}
               {elementos.map((elemento) => {
                 if (elemento.clase === 'turno') {
@@ -296,7 +302,8 @@ const estilos = StyleSheet.create({
   separador: { flexDirection: 'row', alignItems: 'center', gap: espaciado[8], paddingVertical: espaciado[4] },
   separadorLinea: { flex: 1, height: 1, backgroundColor: color.borde.base },
   separadorTexto: { fontSize: 12, color: color.texto.suave },
-  anteriores: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: espaciado[16], borderWidth: 1, borderColor: color.borde.fuerte, borderRadius: 12 },
+  anterioresFranja: { alignItems: 'center', paddingBottom: espaciado[4], backgroundColor: color.superficie.base },
+  anteriores: { alignSelf: 'center', backgroundColor: color.superficie.base, minHeight: 44, justifyContent: 'center', paddingHorizontal: espaciado[16], borderWidth: 1, borderColor: color.borde.fuerte, borderRadius: 12 },
   anterioresTexto: { fontSize: tipografia.etiqueta, fontWeight: '600', color: color.marca.base },
   entrada: { minHeight: 72, padding: espaciado[12], borderWidth: 1, borderColor: color.borde.fuerte, borderRadius: 12, fontSize: tipografia.cuerpo, color: color.texto.fuerte, textAlignVertical: 'top' },
 });

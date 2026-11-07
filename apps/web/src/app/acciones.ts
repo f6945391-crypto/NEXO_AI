@@ -156,8 +156,9 @@ async function hablarConAsistente(ruta: string, cuerpo: unknown): Promise<Result
     const respuesta = await llamarApi(ruta, { metodo: 'POST', cuerpo, token });
     const leida = RespuestaAsistente.safeParse(respuesta.cuerpo);
     if (respuesta.estado !== 200 || !leida.success) return { error: mensajeDeError(respuesta.cuerpo, 'El asistente no pudo responder. Inténtalo de nuevo.') };
-    // Si algo quedó hecho, la agenda de la página se vuelve a pedir
-    if (leida.data.turnos.some((turno) => turno.tipo === 'resultado')) refresh();
+    // Si algo quedó hecho, la agenda de la página se vuelve a pedir; si algo quedó en espera, la franja
+    // del lienzo también (T-045, REQ-CAP-25)
+    if (leida.data.turnos.some((turno) => turno.tipo === 'resultado' || turno.tipo === 'en_espera')) refresh();
     return { respuesta: leida.data };
   } catch {
     return { error: SIN_CONEXION };

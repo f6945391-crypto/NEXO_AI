@@ -224,3 +224,19 @@ Se generan con `generarAlternativas(eventos, rangoPedido, banda, zonaHoraria)`:
 7. **Añadido al implementarla (T-016):** los horarios candidatos van **cada 15 minutos**, las alternativas **no se solapan entre sí** y **nunca se propone un horario que ya pasó**.
 
 **Para revertirla o cambiarla:** es una función pura con sus parámetros. Cambiar el criterio es cambiar esta lista y sus pruebas unitarias, sin tocar ninguna otra pieza.
+
+## 10. Revisión del 6 de noviembre de 2026 — Semana y Mes, y lo en espera visible
+
+**Origen:** `PLAN-VALOR-USUARIO.md` hitos 1 y 2; REQ-CUN01-14, REQ-CUN01-15 (esta área) y REQ-CAP-25 (`01-captura`); decisiones 20 a 23 de `spec.md`. **Propuesta, pendiente de aval.** Rama `modificacion/vision-nexoai`.
+
+| Pieza | Cambia | No cambia |
+|---|---|---|
+| API | **Nada.** `GET /agenda/eventos?desde&hasta` (§5) ya devuelve hasta 31 días; `GET /operaciones?estado=en_espera` ya lista lo en espera | Rutas, contratos, réplica, sincronización, Operaciones |
+| Web (`apps/web`) | `lib/agenda.ts` suma la lectura por semana y por mes reutilizando `medianoche` y `desfase`; el lienzo pinta Semana (siete días con sus bloques, hoy destacado) y Mes (rejilla, puntos, atenuados de otros meses) con navegación anterior/siguiente y «Volver a hoy»; elegir un día de la rejilla abre Hoy en esa fecha. Franja «en espera» sobre la lista de hoy, con la cantidad y el detalle al abrir | La conversación, la tarjeta, Ajustes |
+| Móvil (`apps/movil`) | `pantallas/agenda.tsx` y `agenda/dia.ts`: los mismos dos niveles con la forma de `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1; franja «en espera» en Inicio | La capa de captura, salvo el pulido de «Ver anteriores» |
+| Lectura | Semana: una lectura de lunes 00:00 a lunes 00:00 en la zona del perfil. Mes: una lectura del 1 al 1 del siguiente (hasta 31 días). Ambas con el margen de 2 minutos de la copia local (decisión 22) | — |
+| Textos | Sin vocabulario interno (R-40). Motivos de la espera en palabras llanas: «el asistente no respondía», «falta conectar el calendario», «las tareas llegan en una próxima versión» | — |
+
+**Verificación:** `web.agenda-semana-y-mes`, `movil.agenda-semana-y-mes`, `web.en-espera-visible`, `movil.en-espera-visible` (extremo a extremo, con el calendario simulado y compromisos registrados por la conversación o por Operaciones).
+
+**Lo que queda fuera:** retirar algo de la cola desde la franja (`SPEC.md` §8, abierto); el modo Registro del lienzo (con Actividad); Semana y Mes en la sección Actividad.

@@ -56,7 +56,7 @@ for (const [clave, cuenta] of Object.entries(cuentas)) {
 process.env.CALENDARIO_SIMULADO = '1';
 const { calendarioDeDemostracion: calendario } = desdeApi('./dist/integraciones/calendario/calendario-simulado.js');
 // T-034: dos cuentas más para conversar con el asistente, que es el simulado con su guion
-for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial'].filter((c) => perfiles[c])) {
+for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial', 'agendaSemana', 'enEspera', 'historialLargo'].filter((c) => perfiles[c])) {
   const perfilId = perfiles[clave];
   await prisma.perfilUsuario.update({ where: { id: perfilId }, data: { debeCambiarContrasena: false, zonaHoraria: 'America/Lima' } });
   await prisma.consentimientoIntegracion.create({
@@ -82,6 +82,36 @@ if (perfiles.zona) calendario.sembrar(perfiles.zona, {
   fin: new Date(Date.now() + 30 * 3600_000),
   zonaHoraria: 'America/Lima',
 });
+// T-044 · REQ-CUN01-14, REQ-CUN01-15: una semana con días llenos, uno vacío y un cancelado, y algo la semana
+// siguiente. Las fechas cuentan desde el lunes de esta semana en Lima, para que la semana y el mes las incluyan.
+if (perfiles.agendaSemana) {
+  const enDias = (dia, n) => new Date(Date.parse(`${dia}T12:00:00Z`) + n * 24 * 3600_000).toISOString().slice(0, 10);
+  const lunes = enDias(hoy, -((new Date(`${hoy}T12:00:00Z`).getUTCDay() + 6) % 7));
+  const sembrar = (n, hora, horaFin, titulo) =>
+    calendario.sembrar(perfiles.agendaSemana, { titulo, inicio: aLas(enDias(lunes, n), hora), fin: aLas(enDias(lunes, n), horaFin), zonaHoraria: 'America/Lima' });
+  sembrar(0, '09:00', '10:00', 'Planificación semanal');
+  for (const [hora, fin, titulo] of [['09:00', '10:00', 'Revisión de diseño'], ['11:00', '12:00', 'Almuerzo con Vasco'], ['16:00', '17:00', 'Clase de finanzas']]) sembrar(2, hora, fin, titulo);
+  for (const [hora, fin] of [['08:00', '09:00'], ['10:00', '11:00'], ['12:00', '13:00'], ['14:00', '15:00'], ['17:00', '18:00']]) sembrar(3, hora, fin, `Entrevista de las ${hora}`);
+  // Uno que se canceló en Google después de sincronizarse: en la réplica queda como cancelado (R-25)
+  await prisma.eventoAgenda.create({
+    data: {
+      organizacionId,
+      perfilId: perfiles.agendaSemana,
+      googleCalendarioId: 'primary',
+      googleEventoId: 'simulado-cancelado-e2e',
+      etag: '"2"',
+      titulo: 'Demo con el cliente',
+      inicio: aLas(enDias(lunes, 4), '15:00'),
+      fin: aLas(enDias(lunes, 4), '16:00'),
+      zonaHoraria: 'America/Lima',
+      todoElDia: false,
+      esOrganizador: true,
+      estado: 'cancelado',
+      sincronizadoEn: new Date(),
+    },
+  });
+  sembrar(8, '10:00', '11:00', 'Revisión trimestral');
+}
 await prisma.$disconnect();
 
 // La API corre en este mismo proceso, así Playwright la detiene al terminar.

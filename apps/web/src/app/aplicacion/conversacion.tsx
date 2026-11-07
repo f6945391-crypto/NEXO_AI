@@ -255,6 +255,7 @@ export function Conversacion({
   return (
     <section className="conversacion" aria-label="Asistente">
       <div className="conversacion__contenido" ref={contenido}>
+        {/* Pegajoso: sigue a la vista arriba mientras quede algo anterior que traer */}
         {cursor && (
           <button type="button" className="ver-anteriores" onClick={traerAnteriores} disabled={trayendo}>
             {trayendo ? 'Trayendo…' : 'Ver anteriores'}

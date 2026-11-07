@@ -1,0 +1,1000 @@
+From b1eb30645439b7a24b7aa1ba180913b3f80359f8 Mon Sep 17 00:00:00 2001
+From: "Claude (carril B)" <claude@nexoai.local>
+Date: Fri, 6 Nov 2026 22:28:49 -0500
+Subject: [PATCH 1/3] =?UTF-8?q?T-044=20=C2=B7=20Semana=20y=20mes=20en=20la?=
+ =?UTF-8?q?=20web?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+REQ-CUN01-14 y REQ-CUN01-15. El lienzo de Agenda ya responde a los niveles:
+
+- Semana: los siete días de lunes a domingo, uno debajo de otro, con sus
+  compromisos en la zona del perfil. Hoy lleva borde/fuerte y la etiqueta
+  «Hoy». Los días vacíos dicen «Sin compromisos»; lo cancelado se marca
+  como en Hoy. Semana anterior, siguiente y «Esta semana».
+- Mes: rejilla de lunes a domingo, días de otros meses atenuados, un punto
+  por cada dos compromisos (como mucho tres). Lo cancelado no cuenta. Tocar
+  un día lo abre en Hoy para esa fecha, con «Volver a hoy».
+- El nivel y la fecha van en la dirección (?nivel=semana&fecha=…), así la
+  página que se vuelve a pedir tras una confirmación trae la misma vista.
+- obtenerAgenda(zona, vista) reemplaza a obtenerAgendaDelDia y reutiliza
+  medianoche, desfase y horario. Una sola consulta por vista.
+
+Prueba: web.agenda-semana-y-mes, con la cuenta agendaSemana sembrada desde
+el lunes de esta semana en Lima.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_017P4pWjdkAXxnUi83Ee7Yva
+---
+ apps/web/e2e/agenda.spec.ts                |  93 ++++++++++++
+ apps/web/e2e/arrancar-api.mjs              |  32 +++-
+ apps/web/e2e/cuentas.json                  |   5 +
+ apps/web/src/app/aplicacion/agenda.tsx     | 162 ++++++++++++++++++++
+ apps/web/src/app/aplicacion/aplicacion.tsx |  93 +++++++-----
+ apps/web/src/app/aplicacion/iconos.tsx     |  13 ++
+ apps/web/src/app/globales.css              | 160 +++++++++++++++++++
+ apps/web/src/app/page.tsx                  |  13 +-
+ apps/web/src/lib/agenda.ts                 | 169 ++++++++++++++++++---
+ 9 files changed, 677 insertions(+), 63 deletions(-)
+ create mode 100644 apps/web/src/app/aplicacion/agenda.tsx
+
+diff --git a/apps/web/e2e/agenda.spec.ts b/apps/web/e2e/agenda.spec.ts
+index 23d005e..2368c0c 100644
+--- a/apps/web/e2e/agenda.spec.ts
++++ b/apps/web/e2e/agenda.spec.ts
+@@ -53,3 +53,96 @@ test.describe('agenda.estado-vacio-abre-captura', () => {
+     await expect(page.locator('main input')).toHaveCount(0);
+   });
+ });
++
++// T-044 · REQ-CUN01-14, REQ-CUN01-15. La cuenta agendaSemana tiene compromisos sembrados desde el lunes de
++// esta semana en Lima (e2e/arrancar-api.mjs): uno el lunes, tres el miércoles, cinco el jueves, uno
++// cancelado el viernes y uno el martes de la semana siguiente.
++const hoyEnLima = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
++const enDias = (dia: string, n: number) => new Date(Date.parse(`${dia}T12:00:00Z`) + n * 24 * 3600_000).toISOString().slice(0, 10);
++const lunes = enDias(hoyEnLima, -((new Date(`${hoyEnLima}T12:00:00Z`).getUTCDay() + 6) % 7));
++const nombreDe = (dia: string) =>
++  new Intl.DateTimeFormat('es', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(`${dia}T12:00:00Z`));
++const mayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
++const nombreDeMes = (dia: string) => mayuscula(new Intl.DateTimeFormat('es', { timeZone: 'UTC', month: 'long', year: 'numeric' }).format(new Date(`${dia}T12:00:00Z`)));
++const escapar = (texto: string) => texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
++
++test.describe('web.agenda-semana-y-mes', () => {
++  // Tokio a propósito: los días se cortan en la zona del perfil (Lima), no en la del navegador
++  test.use({ viewport: { width: 1440, height: 900 }, timezoneId: 'Asia/Tokyo' });
++
++  test('Semana muestra los siete días de lunes a domingo con sus compromisos, hoy destacado, y pasa de semana (REQ-CUN01-14)', async ({ page }) => {
++    await entrar(page, cuentas.agendaSemana.correo);
++    await page.getByRole('tab', { name: 'Semana' }).click();
++    await expect(page.getByRole('tab', { name: 'Semana' })).toHaveAttribute('aria-selected', 'true');
++
++    const semana = page.getByRole('region', { name: /^Semana del / });
++    const dias = semana.locator('.semana__dia');
++    await expect(dias).toHaveCount(7);
++    await expect(semana.getByRole('heading', { level: 3 })).toHaveText(Array.from({ length: 7 }, (_, i) => new RegExp(`^${escapar(mayuscula(nombreDe(enDias(lunes, i))))}`)));
++    await expect(semana.getByText(/^Hora de Lima \(GMT-5\)$/)).toBeVisible();
++
++    // Hoy destacado
++    const hoy = semana.locator('[aria-current="date"]');
++    await expect(hoy).toHaveCount(1);
++    await expect(hoy.getByRole('heading')).toHaveText(`${mayuscula(nombreDe(hoyEnLima))}Hoy`);
++
++    await expect(dias.nth(0).locator('.compromiso__titulo')).toHaveText(['Planificación semanal']);
++    await expect(dias.nth(1).getByText('Sin compromisos')).toBeVisible();
++    await expect(dias.nth(2).locator('.compromiso__titulo')).toHaveText(['Revisión de diseño', 'Almuerzo con Vasco', 'Clase de finanzas']);
++    await expect(dias.nth(2).locator('.compromiso__horario')).toHaveText(['09:00 – 10:00', '11:00 – 12:00', '16:00 – 17:00']);
++    await expect(dias.nth(3).locator('.compromiso')).toHaveCount(5);
++    // Lo cancelado se marca como en Hoy
++    await expect(dias.nth(4).locator('.compromiso--cancelado .compromiso__titulo')).toHaveText('Demo con el clienteCancelado');
++    await expect(dias.nth(6).getByText('Sin compromisos')).toBeVisible();
++
++    await page.getByRole('button', { name: 'Semana siguiente' }).click();
++    await expect(dias.nth(0).getByRole('heading')).toHaveText(mayuscula(nombreDe(enDias(lunes, 7))));
++    await expect(dias.nth(1).locator('.compromiso__titulo')).toHaveText(['Revisión trimestral']);
++    await expect(semana.locator('[aria-current="date"]')).toHaveCount(0);
++
++    await page.getByRole('button', { name: 'Semana anterior' }).click();
++    await expect(dias.nth(0).locator('.compromiso__titulo')).toHaveText(['Planificación semanal']);
++    await page.getByRole('button', { name: 'Semana anterior' }).click();
++    await expect(dias.nth(0).getByRole('heading')).toHaveText(mayuscula(nombreDe(enDias(lunes, -7))));
++    await page.getByRole('button', { name: 'Esta semana' }).click();
++    await expect(semana.locator('[aria-current="date"]')).toHaveCount(1);
++    await expect(page.getByRole('button', { name: 'Esta semana' })).toHaveCount(0);
++  });
++
++  test('Mes muestra la rejilla con un punto por cada dos compromisos, pasa de mes y un día abre ese día en Hoy (REQ-CUN01-15)', async ({ page }) => {
++    await entrar(page, cuentas.agendaSemana.correo);
++    await page.getByRole('tab', { name: 'Mes' }).click();
++    const rejilla = page.getByRole('table', { name: nombreDeMes(hoyEnLima) });
++    await expect(rejilla).toBeVisible();
++    await expect(rejilla.getByRole('columnheader')).toHaveText(['L', 'M', 'X', 'J', 'V', 'S', 'D']);
++    // Semanas en filas, siempre completas de lunes a domingo
++    const celdas = await rejilla.getByRole('cell').count();
++    expect(celdas % 7).toBe(0);
++
++    const dia = (n: number, cuantos: string) => rejilla.getByRole('button', { name: `${mayuscula(nombreDe(enDias(lunes, n)))}: ${cuantos}` });
++    await expect(dia(0, '1 compromiso').locator('.mes__punto')).toHaveCount(1);
++    await expect(dia(2, '3 compromisos').locator('.mes__punto')).toHaveCount(2);
++    await expect(dia(3, '5 compromisos').locator('.mes__punto')).toHaveCount(3);
++    // El cancelado no ocupa el día
++    await expect(dia(4, 'sin compromisos').locator('.mes__punto')).toHaveCount(0);
++    await expect(rejilla.locator('[aria-current="date"]')).toHaveCount(1);
++
++    await page.getByRole('button', { name: 'Mes siguiente' }).click();
++    const siguiente = new Date(Date.parse(`${hoyEnLima.slice(0, 7)}-01T12:00:00Z`));
++    siguiente.setUTCMonth(siguiente.getUTCMonth() + 1);
++    await expect(page.getByRole('table', { name: nombreDeMes(siguiente.toISOString().slice(0, 10)) })).toBeVisible();
++    await page.getByRole('button', { name: 'Este mes' }).click();
++    await expect(rejilla).toBeVisible();
++
++    // Tocar un día lo muestra en Hoy, con la vuelta a hoy. Se elige uno que no sea hoy.
++    const elegido = enDias(lunes, 2) === hoyEnLima ? 3 : 2;
++    const fecha = enDias(lunes, elegido);
++    await rejilla.getByRole('button', { name: new RegExp(`^${escapar(mayuscula(nombreDe(fecha)))}:`) }).click();
++    await expect(page.getByRole('tab', { name: 'Hoy' })).toHaveAttribute('aria-selected', 'true');
++    await expect(page.getByRole('heading', { level: 2, name: nombreDe(fecha) })).toBeVisible();
++    await expect(page.getByRole('list', { name: `Compromisos del ${nombreDe(fecha)}` }).getByRole('listitem')).toHaveCount(elegido === 2 ? 3 : 5);
++    await page.getByRole('button', { name: 'Volver a hoy' }).click();
++    await expect(page.getByRole('button', { name: 'Volver a hoy' })).toHaveCount(0);
++    await expect(page).toHaveURL(/\/$/);
++  });
++});
+diff --git a/apps/web/e2e/arrancar-api.mjs b/apps/web/e2e/arrancar-api.mjs
+index 42e9517..20ca067 100644
+--- a/apps/web/e2e/arrancar-api.mjs
++++ b/apps/web/e2e/arrancar-api.mjs
+@@ -56,7 +56,7 @@ for (const [clave, cuenta] of Object.entries(cuentas)) {
+ process.env.CALENDARIO_SIMULADO = '1';
+ const { calendarioDeDemostracion: calendario } = desdeApi('./dist/integraciones/calendario/calendario-simulado.js');
+ // T-034: dos cuentas más para conversar con el asistente, que es el simulado con su guion
+-for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial'].filter((c) => perfiles[c])) {
++for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial', 'agendaSemana'].filter((c) => perfiles[c])) {
+   const perfilId = perfiles[clave];
+   await prisma.perfilUsuario.update({ where: { id: perfilId }, data: { debeCambiarContrasena: false, zonaHoraria: 'America/Lima' } });
+   await prisma.consentimientoIntegracion.create({
+@@ -82,6 +82,36 @@ if (perfiles.zona) calendario.sembrar(perfiles.zona, {
+   fin: new Date(Date.now() + 30 * 3600_000),
+   zonaHoraria: 'America/Lima',
+ });
++// T-044 · REQ-CUN01-14, REQ-CUN01-15: una semana con días llenos, uno vacío y un cancelado, y algo la semana
++// siguiente. Las fechas cuentan desde el lunes de esta semana en Lima, para que la semana y el mes las incluyan.
++if (perfiles.agendaSemana) {
++  const enDias = (dia, n) => new Date(Date.parse(`${dia}T12:00:00Z`) + n * 24 * 3600_000).toISOString().slice(0, 10);
++  const lunes = enDias(hoy, -((new Date(`${hoy}T12:00:00Z`).getUTCDay() + 6) % 7));
++  const sembrar = (n, hora, horaFin, titulo) =>
++    calendario.sembrar(perfiles.agendaSemana, { titulo, inicio: aLas(enDias(lunes, n), hora), fin: aLas(enDias(lunes, n), horaFin), zonaHoraria: 'America/Lima' });
++  sembrar(0, '09:00', '10:00', 'Planificación semanal');
++  for (const [hora, fin, titulo] of [['09:00', '10:00', 'Revisión de diseño'], ['11:00', '12:00', 'Almuerzo con Vasco'], ['16:00', '17:00', 'Clase de finanzas']]) sembrar(2, hora, fin, titulo);
++  for (const [hora, fin] of [['08:00', '09:00'], ['10:00', '11:00'], ['12:00', '13:00'], ['14:00', '15:00'], ['17:00', '18:00']]) sembrar(3, hora, fin, `Entrevista de las ${hora}`);
++  // Uno que se canceló en Google después de sincronizarse: en la réplica queda como cancelado (R-25)
++  await prisma.eventoAgenda.create({
++    data: {
++      organizacionId,
++      perfilId: perfiles.agendaSemana,
++      googleCalendarioId: 'primary',
++      googleEventoId: 'simulado-cancelado-e2e',
++      etag: '"2"',
++      titulo: 'Demo con el cliente',
++      inicio: aLas(enDias(lunes, 4), '15:00'),
++      fin: aLas(enDias(lunes, 4), '16:00'),
++      zonaHoraria: 'America/Lima',
++      todoElDia: false,
++      esOrganizador: true,
++      estado: 'cancelado',
++      sincronizadoEn: new Date(),
++    },
++  });
++  sembrar(8, '10:00', '11:00', 'Revisión trimestral');
++}
+ await prisma.$disconnect();
+ 
+ // La API corre en este mismo proceso, así Playwright la detiene al terminar.
+diff --git a/apps/web/e2e/cuentas.json b/apps/web/e2e/cuentas.json
+index 4cb9047..5957e27 100644
+--- a/apps/web/e2e/cuentas.json
++++ b/apps/web/e2e/cuentas.json
+@@ -61,5 +61,10 @@
+     "correo": "historial-e2e@nexoai.test",
+     "rol": "usuario_personal",
+     "plan": "personal"
++  },
++  "agendaSemana": {
++    "correo": "agenda-semana-e2e@nexoai.test",
++    "rol": "usuario_personal",
++    "plan": "personal"
+   }
+ }
+diff --git a/apps/web/src/app/aplicacion/agenda.tsx b/apps/web/src/app/aplicacion/agenda.tsx
+new file mode 100644
+index 0000000..0628be1
+--- /dev/null
++++ b/apps/web/src/app/aplicacion/agenda.tsx
+@@ -0,0 +1,162 @@
++'use client';
++
++import type { AgendaLista, CompromisoDelDia, VistaAgenda } from '../../lib/agenda';
++import { IconoAnterior, IconoSiguiente } from './iconos';
++
++// T-044 · REQ-CUN01-14, REQ-CUN01-15 · design/ARQUITECTURA-VISUAL-MOVIL.md §3 ter. Agenda contesta «qué»:
++// la semana enseña los bloques de cada día y el mes, la forma del mes con un punto por cada dos compromisos.
++
++const INICIALES = [
++  ['L', 'lunes'],
++  ['M', 'martes'],
++  ['X', 'miércoles'],
++  ['J', 'jueves'],
++  ['V', 'viernes'],
++  ['S', 'sábado'],
++  ['D', 'domingo'],
++] as const;
++
++const mayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
++
++export function ListaCompromisos({ compromisos, nombre }: { compromisos: CompromisoDelDia[]; nombre: string }) {
++  return (
++    <ol className="agenda-dia__lista" aria-label={nombre}>
++      {compromisos.map((c) => (
++        <li key={c.id} className={`compromiso${c.cancelado ? ' compromiso--cancelado' : ''}`}>
++          <p className="compromiso__horario">{c.horario}</p>
++          <div>
++            <p className="compromiso__titulo">
++              {c.titulo}
++              {c.cancelado && <span className="etiqueta">Cancelado</span>}
++              {c.invitado && <span className="etiqueta">Invitado</span>}
++            </p>
++            {c.enSuZona && <p className="compromiso__zona">{c.enSuZona}</p>}
++          </div>
++        </li>
++      ))}
++    </ol>
++  );
++}
++
++function Periodo({
++  titulo,
++  zona,
++  nombre,
++  esActual,
++  alAnterior,
++  alSiguiente,
++  alActual,
++}: {
++  titulo: string;
++  zona: string;
++  nombre: 'Semana' | 'Mes';
++  esActual: boolean;
++  alAnterior: () => void;
++  alSiguiente: () => void;
++  alActual: () => void;
++}) {
++  const actual = nombre === 'Semana' ? 'Esta semana' : 'Este mes';
++  return (
++    <header className="periodo">
++      <div>
++        <h2 id="titulo-periodo">{titulo}</h2>
++        <p className="agenda-dia__zona">{zona}</p>
++      </div>
++      <div className="periodo__pasos">
++        {!esActual && (
++          <button type="button" className="boton boton--secundario" onClick={alActual}>
++            {actual}
++          </button>
++        )}
++        <button type="button" className="periodo__paso" aria-label={`${nombre} anterior`} title={`${nombre} anterior`} onClick={alAnterior}>
++          <IconoAnterior />
++        </button>
++        <button type="button" className="periodo__paso" aria-label={`${nombre} siguiente`} title={`${nombre} siguiente`} onClick={alSiguiente}>
++          <IconoSiguiente />
++        </button>
++      </div>
++    </header>
++  );
++}
++
++export function AgendaSemana({ agenda, irA }: { agenda: Extract<AgendaLista, { nivel: 'semana' }>; irA: (vista: VistaAgenda) => void }) {
++  return (
++    <section className="semana" aria-labelledby="titulo-periodo">
++      <Periodo
++        titulo={agenda.titulo}
++        zona={agenda.zona}
++        nombre="Semana"
++        esActual={agenda.esActual}
++        alAnterior={() => irA({ nivel: 'semana', fecha: agenda.anterior })}
++        alSiguiente={() => irA({ nivel: 'semana', fecha: agenda.siguiente })}
++        alActual={() => irA({ nivel: 'semana', fecha: null })}
++      />
++      <ol className="semana__dias">
++        {agenda.dias.map((dia) => (
++          <li key={dia.fecha} className={`semana__dia${dia.esHoy ? ' semana__dia--hoy' : ''}`} aria-current={dia.esHoy ? 'date' : undefined}>
++            <h3 className="semana__nombre">
++              {mayuscula(dia.nombre)}
++              {dia.esHoy && <span className="etiqueta">Hoy</span>}
++            </h3>
++            {dia.compromisos.length === 0 ? (
++              <p className="semana__vacio">Sin compromisos</p>
++            ) : (
++              <ListaCompromisos compromisos={dia.compromisos} nombre={`Compromisos del ${dia.nombre}`} />
++            )}
++          </li>
++        ))}
++      </ol>
++    </section>
++  );
++}
++
++export function AgendaMes({ agenda, irA }: { agenda: Extract<AgendaLista, { nivel: 'mes' }>; irA: (vista: VistaAgenda) => void }) {
++  return (
++    <section className="mes" aria-labelledby="titulo-periodo">
++      <Periodo
++        titulo={agenda.titulo}
++        zona={agenda.zona}
++        nombre="Mes"
++        esActual={agenda.esActual}
++        alAnterior={() => irA({ nivel: 'mes', fecha: agenda.anterior })}
++        alSiguiente={() => irA({ nivel: 'mes', fecha: agenda.siguiente })}
++        alActual={() => irA({ nivel: 'mes', fecha: null })}
++      />
++      <table className="mes__rejilla" aria-label={agenda.titulo}>
++        <thead>
++          <tr>
++            {INICIALES.map(([inicial, nombre]) => (
++              <th key={nombre} scope="col">
++                <abbr title={nombre}>{inicial}</abbr>
++              </th>
++            ))}
++          </tr>
++        </thead>
++        <tbody>
++          {agenda.semanas.map((semana) => (
++            <tr key={semana[0]!.fecha}>
++              {semana.map((dia) => (
++                <td key={dia.fecha}>
++                  <button
++                    type="button"
++                    className={`mes__dia${dia.delMes ? '' : ' mes__dia--fuera'}${dia.esHoy ? ' mes__dia--hoy' : ''}`}
++                    aria-label={mayuscula(dia.etiqueta)}
++                    aria-current={dia.esHoy ? 'date' : undefined}
++                    onClick={() => irA({ nivel: 'dia', fecha: dia.fecha })}
++                  >
++                    <span className="mes__numero">{dia.numero}</span>
++                    <span className="mes__puntos" aria-hidden="true">
++                      {Array.from({ length: dia.puntos }, (_, i) => (
++                        <span key={i} className="mes__punto" />
++                      ))}
++                    </span>
++                  </button>
++                </td>
++              ))}
++            </tr>
++          ))}
++        </tbody>
++      </table>
++    </section>
++  );
++}
+diff --git a/apps/web/src/app/aplicacion/aplicacion.tsx b/apps/web/src/app/aplicacion/aplicacion.tsx
+index 9df0eb5..e8756c2 100644
+--- a/apps/web/src/app/aplicacion/aplicacion.tsx
++++ b/apps/web/src/app/aplicacion/aplicacion.tsx
+@@ -1,9 +1,11 @@
+ 'use client';
+ 
+-import { useRef, useState } from 'react';
++import { useRef, useState, useTransition } from 'react';
++import { useRouter } from 'next/navigation';
+ import type { ConversacionAsistente, Perfil, PermisoGoogle, Plan, Rol } from '@nexoai/contratos';
+-import type { AgendaDelDia } from '../../lib/agenda';
++import type { Agenda, NivelAgenda, VistaAgenda } from '../../lib/agenda';
+ import { conectarGoogle, salir } from '../acciones';
++import { AgendaMes, AgendaSemana, ListaCompromisos } from './agenda';
+ import { CambioZona } from './cambio-zona';
+ import { Conversacion } from './conversacion';
+ import {
+@@ -35,6 +37,17 @@ const ESTADO_PERMISO: Record<PermisoGoogle['estado'], string> = {
+   caducado: 'Caducado',
+ };
+ 
++// T-044: el orden de los niveles es el de `SECCIONES.agenda.cortes`
++const NIVELES: NivelAgenda[] = ['dia', 'semana', 'mes'];
++
++function direccion({ nivel, fecha }: VistaAgenda): string {
++  const consulta = new URLSearchParams();
++  if (nivel !== 'dia') consulta.set('nivel', nivel);
++  if (fecha) consulta.set('fecha', fecha);
++  const texto = consulta.toString();
++  return texto ? `/?${texto}` : '/';
++}
++
+ // Vuelta de Google (T-022): qué decirle a la persona, en sus palabras.
+ const AVISO_GOOGLE: Record<string, { texto: string; tono: 'exito' | 'advertencia' }> = {
+   conectado: { texto: 'Listo: el permiso de Google quedó conectado.', tono: 'exito' },
+@@ -49,6 +62,7 @@ export function Aplicacion({
+   perfil,
+   permisosGoogle,
+   agenda,
++  vista,
+   conversacion,
+   resultadoGoogle,
+ }: {
+@@ -56,7 +70,8 @@ export function Aplicacion({
+   plan: Plan;
+   perfil: Perfil | null;
+   permisosGoogle: PermisoGoogle[];
+-  agenda: AgendaDelDia;
++  agenda: Agenda;
++  vista: VistaAgenda;
+   conversacion: ConversacionAsistente | null;
+   resultadoGoogle: string | null;
+ }) {
+@@ -67,6 +82,19 @@ export function Aplicacion({
+   const [aviso, setAviso] = useState(resultadoGoogle ? (AVISO_GOOGLE[resultadoGoogle] ?? null) : null);
+   const entrada = useRef<HTMLTextAreaElement>(null);
+   const actual = SECCIONES[seccion];
++  const router = useRouter();
++  const [cambiando, enTransicion] = useTransition();
++  // En Agenda el nivel lo dice la dirección; en las otras secciones, el estado de la página
++  const corteVisible = seccion === 'agenda' ? NIVELES.indexOf(vista.nivel) : corte;
++
++  function irA(nueva: VistaAgenda) {
++    enTransicion(() => router.push(direccion(nueva), { scroll: false }));
++  }
++
++  function elegirCorte(indice: number) {
++    if (seccion === 'agenda') irA({ nivel: NIVELES[indice] ?? 'dia', fecha: null });
++    else setCorte(indice);
++  }
+ 
+   function cambiarSeccion(nueva: Seccion) {
+     setSeccion(nueva);
+@@ -80,7 +108,9 @@ export function Aplicacion({
+     requestAnimationFrame(() => entrada.current?.focus());
+   }
+ 
+-  const conLista = seccion === 'agenda' && corte === 0 && agenda.estado === 'lista' && agenda.compromisos.length > 0;
++  const lista = seccion === 'agenda' && agenda.estado === 'lista' ? agenda : null;
++  const dia = lista?.nivel === 'dia' ? lista : null;
++  const conLista = lista !== null && (lista.nivel !== 'dia' || lista.compromisos.length > 0);
+ 
+   // «Encargadas» es lo que encargaste a otros: el colaborador no asigna tareas (REQ-ACC-15)
+   const encarga = plan === 'empresarial' && rol !== 'colaborador';
+@@ -141,13 +171,13 @@ export function Aplicacion({
+ 
+         <div className="selector" role="tablist" aria-label={seccion === 'tareas' ? 'Franjas' : 'Niveles'}>
+           {cortes.map((nombre, indice) => (
+-            <button key={nombre} type="button" role="tab" aria-selected={indice === corte} onClick={() => setCorte(indice)}>
++            <button key={nombre} type="button" role="tab" aria-selected={indice === corteVisible} onClick={() => elegirCorte(indice)}>
+               {nombre}
+             </button>
+           ))}
+         </div>
+ 
+-        <div className={`lienzo__cuerpo${conLista ? ' lienzo__cuerpo--lista' : ''}`}>
++        <div className={`lienzo__cuerpo${conLista ? ' lienzo__cuerpo--lista' : ''}`} aria-busy={cambiando || undefined}>
+           {seccion === 'agenda' && agenda.estado === 'sin-calendario' && (
+             <div className="vacio">
+               <h2>Tu agenda llega con tu calendario</h2>
+@@ -163,48 +193,43 @@ export function Aplicacion({
+               <p>{agenda.mensaje}</p>
+             </div>
+           )}
+-          {seccion === 'agenda' && agenda.estado === 'lista' && corte > 0 && (
+-            <div className="vacio">
+-              <h2>Por ahora, solo el día de hoy</h2>
+-              <p>La vista de {cortes[corte]?.toLowerCase()} llega en una próxima versión.</p>
+-            </div>
+-          )}
+-          {seccion === 'agenda' && agenda.estado === 'lista' && corte === 0 && agenda.compromisos.length === 0 && (
++          {dia && dia.compromisos.length === 0 && (
+             <div className="vacio">
+-              <h2>Hoy no tienes compromisos</h2>
++              <h2>{dia.esHoy ? 'Hoy no tienes compromisos' : `El ${dia.fecha} no tienes compromisos`}</h2>
+               <p>Para crear el primero, pídeselo al asistente con tus palabras, por ejemplo «Agéndame una reunión mañana a las 10».</p>
+               <button type="button" className="boton" onClick={abrirCaptura}>
+                 Pedírselo al asistente
+               </button>
++              {!dia.esHoy && (
++                <button type="button" className="boton boton--secundario vacio__volver" onClick={() => irA({ nivel: 'dia', fecha: null })}>
++                  Volver a hoy
++                </button>
++              )}
+             </div>
+           )}
+-          {conLista && agenda.estado === 'lista' && (
++          {dia && dia.compromisos.length > 0 && (
+             <section className="agenda-dia" aria-labelledby="titulo-dia">
+               <header className="agenda-dia__cabecera">
+-                <h2 id="titulo-dia">{agenda.fecha}</h2>
+-                {/* REQ-CUN01-10: en qué zona están las horas */}
+-                <p className="agenda-dia__zona">{agenda.zona}</p>
++                <div>
++                  <h2 id="titulo-dia">{dia.fecha}</h2>
++                  {/* REQ-CUN01-10: en qué zona están las horas */}
++                  <p className="agenda-dia__zona">{dia.zona}</p>
++                </div>
++                {/* REQ-CUN01-15: un día elegido en el mes se ve como Hoy, con la vuelta a hoy */}
++                {!dia.esHoy && (
++                  <button type="button" className="boton boton--secundario" onClick={() => irA({ nivel: 'dia', fecha: null })}>
++                    Volver a hoy
++                  </button>
++                )}
+               </header>
+-              <ol className="agenda-dia__lista" aria-label="Compromisos de hoy">
+-                {agenda.compromisos.map((c) => (
+-                  <li key={c.id} className={`compromiso${c.cancelado ? ' compromiso--cancelado' : ''}`}>
+-                    <p className="compromiso__horario">{c.horario}</p>
+-                    <div>
+-                      <p className="compromiso__titulo">
+-                        {c.titulo}
+-                        {c.cancelado && <span className="etiqueta">Cancelado</span>}
+-                        {c.invitado && <span className="etiqueta">Invitado</span>}
+-                      </p>
+-                      {c.enSuZona && <p className="compromiso__zona">{c.enSuZona}</p>}
+-                    </div>
+-                  </li>
+-                ))}
+-              </ol>
++              <ListaCompromisos compromisos={dia.compromisos} nombre={dia.esHoy ? 'Compromisos de hoy' : `Compromisos del ${dia.fecha}`} />
+             </section>
+           )}
++          {lista?.nivel === 'semana' && <AgendaSemana agenda={lista} irA={irA} />}
++          {lista?.nivel === 'mes' && <AgendaMes agenda={lista} irA={irA} />}
+           {seccion === 'tareas' && (
+             <div className="vacio">
+-              <h2>Nada en «{cortes[corte]}»</h2>
++              <h2>Nada en «{cortes[corteVisible]}»</h2>
+               <p>Cuando le pidas algo al asistente, tus tareas aparecerán aquí, ordenadas por franja.</p>
+             </div>
+           )}
+diff --git a/apps/web/src/app/aplicacion/iconos.tsx b/apps/web/src/app/aplicacion/iconos.tsx
+index 3d918e3..b2ea3f5 100644
+--- a/apps/web/src/app/aplicacion/iconos.tsx
++++ b/apps/web/src/app/aplicacion/iconos.tsx
+@@ -53,3 +53,16 @@ export const IconoCerrar = () => (
+     <path d="M6 6l12 12M18 6L6 18" />
+   </svg>
+ );
++
++// T-044: pasar al período anterior o al siguiente en Semana y Mes
++export const IconoAnterior = () => (
++  <svg {...comunes}>
++    <path d="M15 5l-7 7 7 7" />
++  </svg>
++);
++
++export const IconoSiguiente = () => (
++  <svg {...comunes}>
++    <path d="M9 5l7 7-7 7" />
++  </svg>
++);
+diff --git a/apps/web/src/app/globales.css b/apps/web/src/app/globales.css
+index 96ca53b..76250e9 100644
+--- a/apps/web/src/app/globales.css
++++ b/apps/web/src/app/globales.css
+@@ -627,6 +627,10 @@ body {
+ }
+ 
+ .agenda-dia__cabecera {
++  display: flex;
++  justify-content: space-between;
++  align-items: flex-start;
++  gap: var(--espaciado-16);
+   margin-bottom: var(--espaciado-16);
+ }
+ 
+@@ -844,6 +848,10 @@ body {
+   margin-top: var(--espaciado-16);
+ }
+ 
++.vacio .vacio__volver {
++  margin-left: var(--espaciado-8);
++}
++
+ .aviso {
+   display: flex;
+   justify-content: space-between;
+@@ -942,3 +950,155 @@ body {
+ .tarjeta-confirmacion__dato dd {
+   margin: 0;
+ }
++
++/* T-044 · REQ-CUN01-14, REQ-CUN01-15: Semana y Mes en el lienzo */
++.lienzo__cuerpo[aria-busy='true'] {
++  opacity: 0.6;
++}
++
++.periodo {
++  display: flex;
++  justify-content: space-between;
++  align-items: flex-start;
++  gap: var(--espaciado-16);
++  margin-bottom: var(--espaciado-16);
++}
++
++.periodo h2 {
++  margin: 0;
++  font-size: var(--tam-cuerpo);
++}
++
++.periodo__pasos {
++  display: flex;
++  align-items: center;
++  gap: var(--espaciado-8);
++}
++
++.periodo__paso {
++  width: 40px;
++  height: 40px;
++  display: grid;
++  place-items: center;
++  border: 1px solid var(--borde-base);
++  border-radius: var(--radio-sm);
++  background: var(--superficie-base);
++  color: var(--texto-suave);
++  cursor: pointer;
++}
++
++.periodo__paso:focus-visible,
++.mes__dia:focus-visible {
++  outline: 2px solid var(--marca-base);
++  outline-offset: 2px;
++}
++
++.semana__dias {
++  list-style: none;
++  margin: 0;
++  padding: 0;
++  display: grid;
++  gap: var(--espaciado-12);
++}
++
++/* Cada día, con sus bloques; el de hoy lleva borde/fuerte */
++.semana__dia {
++  padding: var(--espaciado-12) var(--espaciado-16);
++  border: 1px solid var(--borde-base);
++  border-radius: var(--radio-md);
++}
++
++.semana__dia--hoy {
++  border-color: var(--borde-fuerte);
++  background: var(--superficie-elevada);
++}
++
++.semana__nombre {
++  margin: 0 0 var(--espaciado-8);
++  font-size: var(--tam-etiqueta);
++}
++
++.semana__vacio {
++  margin: 0;
++  font-size: var(--tam-etiqueta);
++  color: var(--texto-suave);
++}
++
++.semana__dia .compromiso {
++  padding: var(--espaciado-8) 0;
++}
++
++/* Rejilla del mes: semanas en filas, de lunes a domingo */
++.mes__rejilla {
++  width: 100%;
++  border-collapse: separate;
++  border-spacing: var(--espaciado-4, 4px);
++  table-layout: fixed;
++}
++
++.mes__rejilla th {
++  padding-bottom: var(--espaciado-8);
++  font-size: var(--tam-micro);
++  font-weight: 600;
++  color: var(--texto-suave);
++}
++
++.mes__rejilla abbr {
++  text-decoration: none;
++}
++
++.mes__dia {
++  width: 100%;
++  min-height: 72px;
++  display: flex;
++  flex-direction: column;
++  align-items: flex-start;
++  justify-content: space-between;
++  gap: var(--espaciado-8);
++  padding: var(--espaciado-8);
++  font: inherit;
++  font-size: var(--tam-etiqueta);
++  border: 1px solid var(--borde-base);
++  border-radius: var(--radio-sm);
++  background: var(--superficie-base);
++  color: var(--texto-fuerte);
++  cursor: pointer;
++}
++
++.mes__dia:hover {
++  background: var(--superficie-elevada);
++}
++
++.mes__dia--fuera {
++  background: var(--superficie-elevada);
++  color: var(--texto-suave);
++}
++
++.mes__dia--hoy {
++  border-color: var(--borde-fuerte);
++}
++
++.mes__dia--hoy .mes__numero {
++  font-weight: 600;
++}
++
++.mes__numero {
++  font-variant-numeric: tabular-nums;
++}
++
++.mes__puntos {
++  display: flex;
++  gap: var(--espaciado-4, 4px);
++  min-height: 8px;
++}
++
++.mes__punto {
++  width: 8px;
++  height: 8px;
++  border-radius: 50%;
++  background: var(--marca-base);
++}
++
++.mes__dia--fuera .mes__punto {
++  background: var(--borde-fuerte);
++}
+diff --git a/apps/web/src/app/page.tsx b/apps/web/src/app/page.tsx
+index 318aa83..0ab88a0 100644
+--- a/apps/web/src/app/page.tsx
++++ b/apps/web/src/app/page.tsx
+@@ -1,21 +1,23 @@
+ import { redirect } from 'next/navigation';
+-import { obtenerAgendaDelDia } from '../lib/agenda';
++import { fechaValida, obtenerAgenda, type NivelAgenda } from '../lib/agenda';
+ import { obtenerConversacion } from '../lib/asistente';
+ import { obtenerPerfil, obtenerPermisosGoogle, obtenerSesion } from '../lib/sesion';
+ import { Aplicacion } from './aplicacion/aplicacion';
+ 
+ // La aplicación: navegación, conversación y lienzo (T-023). También para el colaborador (T-026, REQ-ACC-13).
+-export default async function Inicio({ searchParams }: { searchParams: Promise<{ google?: string }> }) {
++export default async function Inicio({ searchParams }: { searchParams: Promise<{ google?: string; nivel?: string; fecha?: string }> }) {
+   const sesion = await obtenerSesion();
+   if (sesion.estado === 'ninguna') redirect('/entrar');
+   if (sesion.estado === 'caducada') redirect('/sesion/renovar?volver=/');
+   if (sesion.estado === 'pendiente') redirect('/primer-ingreso');
+ 
+   // T-034: la conversación abierta, con lo que espera tu confirmación o quedó en espera
+-  const [perfil, permisosGoogle, conversacion, { google }] = await Promise.all([obtenerPerfil(), obtenerPermisosGoogle(), obtenerConversacion(), searchParams]);
+-  // T-025: la agenda de hoy, en la zona de la persona
++  const [perfil, permisosGoogle, conversacion, { google, nivel, fecha }] = await Promise.all([obtenerPerfil(), obtenerPermisosGoogle(), obtenerConversacion(), searchParams]);
++  // T-025: la agenda, en la zona de la persona. T-044: el nivel y la fecha van en la dirección, así una
++  // confirmación que vuelve a pedir la página trae la misma vista ya al día.
++  const vista = { nivel: (['semana', 'mes'].includes(nivel ?? '') ? nivel : 'dia') as NivelAgenda, fecha: fechaValida(fecha) };
+   const agenda = perfil?.zonaHoraria
+-    ? await obtenerAgendaDelDia(perfil.zonaHoraria)
++    ? await obtenerAgenda(perfil.zonaHoraria, vista)
+     : ({ estado: 'error', mensaje: 'No pudimos leer tu zona horaria.' } as const);
+   return (
+     <Aplicacion
+@@ -24,6 +26,7 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
+       perfil={perfil}
+       permisosGoogle={permisosGoogle}
+       agenda={agenda}
++      vista={vista}
+       conversacion={conversacion}
+       resultadoGoogle={google ?? null}
+     />
+diff --git a/apps/web/src/lib/agenda.ts b/apps/web/src/lib/agenda.ts
+index 21195f2..90e83b0 100644
+--- a/apps/web/src/lib/agenda.ts
++++ b/apps/web/src/lib/agenda.ts
+@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
+ import { EventoAgenda } from '@nexoai/contratos';
+ import { codigoDeError, COOKIE_ACCESO, llamarApi, mensajeDeError } from './sesion';
+ 
+-// T-025 · REQ-CUN01-10, REQ-CUN01-12. La agenda de hoy, en la zona horaria de la persona. Se lee y se
++// T-025 · REQ-CUN01-10, REQ-CUN01-12. La agenda, en la zona horaria de la persona. Se lee y se
+ // formatea en el servidor: así el navegador recibe el texto ya hecho y no hay diferencias de formato
+ // entre el servidor y el navegador.
+ 
+@@ -18,11 +18,6 @@ export type CompromisoDelDia = {
+   invitado: boolean;
+ };
+ 
+-export type AgendaDelDia =
+-  | { estado: 'lista'; fecha: string; zona: string; compromisos: CompromisoDelDia[] }
+-  | { estado: 'sin-calendario' }
+-  | { estado: 'error'; mensaje: string };
+-
+ // Desfase de la zona en un instante, como «-05:00».
+ function desfase(instante: number, zona: string): string {
+   const nombre = new Intl.DateTimeFormat('en-US', { timeZone: zona, timeZoneName: 'longOffset' })
+@@ -48,12 +43,74 @@ function horario(evento: EventoAgenda, zona: string): string {
+   return `${hora.format(new Date(evento.inicio))} – ${hora.format(new Date(evento.fin))}`;
+ }
+ 
+-export async function obtenerAgendaDelDia(zona: string): Promise<AgendaDelDia> {
++// T-044 · REQ-CUN01-14, REQ-CUN01-15. Los tres niveles: un día (hoy u otro elegido en el mes), la semana de
++// lunes a domingo y la rejilla del mes. Las fechas viajan como «2026-11-06», siempre en la zona del perfil.
++export type NivelAgenda = 'dia' | 'semana' | 'mes';
++export type VistaAgenda = { nivel: NivelAgenda; fecha: string | null };
++
++export type DiaDeSemana = { fecha: string; nombre: string; esHoy: boolean; compromisos: CompromisoDelDia[] };
++export type DiaDeMes = { fecha: string; numero: number; delMes: boolean; esHoy: boolean; total: number; puntos: number; etiqueta: string };
++
++type Base = { zona: string; hoy: string };
++export type AgendaLista =
++  | (Base & { nivel: 'dia'; fecha: string; fechaIso: string; esHoy: boolean; compromisos: CompromisoDelDia[] })
++  | (Base & { nivel: 'semana'; titulo: string; dias: DiaDeSemana[]; anterior: string; siguiente: string; esActual: boolean })
++  | (Base & { nivel: 'mes'; titulo: string; semanas: DiaDeMes[][]; anterior: string; siguiente: string; esActual: boolean });
++
++export type Agenda = ({ estado: 'lista' } & AgendaLista) | { estado: 'sin-calendario' } | { estado: 'error'; mensaje: string };
++
++const sumarDias = (fecha: string, dias: number) => new Date(Date.parse(`${fecha}T12:00:00Z`) + dias * 24 * 3600_000).toISOString().slice(0, 10);
++// 0 es lunes y 6 domingo
++const diaDeLaSemana = (fecha: string) => (new Date(`${fecha}T12:00:00Z`).getUTCDay() + 6) % 7;
++const lunesDe = (fecha: string) => sumarDias(fecha, -diaDeLaSemana(fecha));
++const primeroDeMes = (fecha: string) => `${fecha.slice(0, 7)}-01`;
++function mesDesplazado(fecha: string, meses: number): string {
++  const [anio, mes] = fecha.split('-').map(Number);
++  const d = new Date(Date.UTC(anio!, mes! - 1 + meses, 1, 12));
++  return d.toISOString().slice(0, 10);
++}
++// Una fecha de calendario, sin zona: se formatea al mediodía en UTC para que no se corra de día
++const formatoFecha = (fecha: string, opciones: Intl.DateTimeFormatOptions) =>
++  new Intl.DateTimeFormat('es', { timeZone: 'UTC', ...opciones }).format(new Date(`${fecha}T12:00:00Z`));
++
++export function fechaValida(texto: string | undefined): string | null {
++  if (!texto || !/^\d{4}-\d{2}-\d{2}$/.test(texto)) return null;
++  const d = new Date(`${texto}T12:00:00Z`);
++  return Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== texto ? null : texto;
++}
++
++// REQ-CUN01-15: un punto por cada dos compromisos, como mucho tres. Lo cancelado no cuenta: ya no ocupa el día.
++export const puntosDe = (total: number) => Math.min(3, Math.ceil(total / 2));
++
++function etiquetaZona(zona: string): string {
++  const desfaseCorto = new Intl.DateTimeFormat('en-US', { timeZone: zona, timeZoneName: 'shortOffset' }).formatToParts(new Date()).find((p) => p.type === 'timeZoneName')?.value;
++  return `Hora de ${ciudad(zona)} (${desfaseCorto ?? zona})`;
++}
++
++function aCompromiso(evento: EventoAgenda, zona: string): CompromisoDelDia {
++  return {
++    id: evento.id,
++    titulo: evento.titulo,
++    horario: evento.todoElDia ? 'Todo el día' : horario(evento, zona),
++    enSuZona: evento.todoElDia || evento.zonaHoraria === zona ? null : `Hora de ${ciudad(evento.zonaHoraria)}: ${horario(evento, evento.zonaHoraria)}`,
++    cancelado: evento.estado === 'cancelado',
++    invitado: !evento.esOrganizador,
++  };
++}
++
++// Los compromisos que tocan esa fecha, los de todo el día primero y luego por hora de inicio
++function delDia(eventos: EventoAgenda[], fecha: string, zona: string): EventoAgenda[] {
++  const desde = Date.parse(medianoche(fecha, zona));
++  const hasta = Date.parse(medianoche(diaSiguiente(fecha), zona));
++  return eventos
++    .filter((e) => Date.parse(e.inicio) < hasta && Date.parse(e.fin) > desde)
++    .sort((a, b) => Number(b.todoElDia) - Number(a.todoElDia) || Date.parse(a.inicio) - Date.parse(b.inicio));
++}
++
++async function leerEventos(desde: string, hasta: string, zona: string): Promise<EventoAgenda[] | Exclude<Agenda, { estado: 'lista' }>> {
+   const acceso = (await cookies()).get(COOKIE_ACCESO)?.value;
+   if (!acceso) return { estado: 'error', mensaje: 'Tu sesión terminó. Vuelve a entrar.' };
+-
+-  const hoy = fechaEn(Date.now(), zona);
+-  const consulta = new URLSearchParams({ desde: medianoche(hoy, zona), hasta: medianoche(diaSiguiente(hoy), zona) });
++  const consulta = new URLSearchParams({ desde: medianoche(desde, zona), hasta: medianoche(hasta, zona) });
+   let respuesta;
+   try {
+     respuesta = await llamarApi(`/agenda/eventos?${consulta}`, { token: acceso });
+@@ -65,21 +122,87 @@ export async function obtenerAgendaDelDia(zona: string): Promise<AgendaDelDia> {
+   if (respuesta.estado !== 200 || !eventos.success) {
+     return { estado: 'error', mensaje: mensajeDeError(respuesta.cuerpo, 'NexoAI no respondió como esperábamos. Inténtalo de nuevo en un momento.') };
+   }
++  return eventos.data;
++}
++
++export async function obtenerAgenda(zona: string, vista: VistaAgenda): Promise<Agenda> {
++  const hoy = fechaEn(Date.now(), zona);
++  const fecha = vista.fecha ?? hoy;
++  const base = { zona: etiquetaZona(zona), hoy };
++
++  if (vista.nivel === 'semana') {
++    const lunes = lunesDe(fecha);
++    const eventos = await leerEventos(lunes, sumarDias(lunes, 7), zona);
++    if (!Array.isArray(eventos)) return eventos;
++    const domingo = sumarDias(lunes, 6);
++    const mismoMes = lunes.slice(0, 7) === domingo.slice(0, 7);
++    const titulo = mismoMes
++      ? `${formatoFecha(lunes, { day: 'numeric' })} – ${formatoFecha(domingo, { day: 'numeric', month: 'long' })}`
++      : `${formatoFecha(lunes, { day: 'numeric', month: 'long' })} – ${formatoFecha(domingo, { day: 'numeric', month: 'long' })}`;
++    return {
++      estado: 'lista',
++      nivel: 'semana',
++      ...base,
++      titulo: `Semana del ${titulo}`,
++      esActual: lunes === lunesDe(hoy),
++      anterior: sumarDias(lunes, -7),
++      siguiente: sumarDias(lunes, 7),
++      dias: Array.from({ length: 7 }, (_, i) => {
++        const dia = sumarDias(lunes, i);
++        return {
++          fecha: dia,
++          nombre: formatoFecha(dia, { weekday: 'long', day: 'numeric', month: 'long' }),
++          esHoy: dia === hoy,
++          compromisos: delDia(eventos, dia, zona).map((e) => aCompromiso(e, zona)),
++        };
++      }),
++    };
++  }
++
++  if (vista.nivel === 'mes') {
++    const primero = primeroDeMes(fecha);
++    const siguienteMes = mesDesplazado(primero, 1);
++    const inicio = lunesDe(primero);
++    const fin = sumarDias(lunesDe(sumarDias(siguienteMes, -1)), 7);
++    const eventos = await leerEventos(inicio, fin, zona);
++    if (!Array.isArray(eventos)) return eventos;
++    const semanas: DiaDeMes[][] = [];
++    for (let dia = inicio; dia < fin; dia = sumarDias(dia, 1)) {
++      if (diaDeLaSemana(dia) === 0) semanas.push([]);
++      const total = delDia(eventos, dia, zona).filter((e) => e.estado !== 'cancelado').length;
++      const nombre = formatoFecha(dia, { weekday: 'long', day: 'numeric', month: 'long' });
++      semanas.at(-1)!.push({
++        fecha: dia,
++        numero: Number(dia.slice(8)),
++        delMes: dia.slice(0, 7) === primero.slice(0, 7),
++        esHoy: dia === hoy,
++        total,
++        puntos: puntosDe(total),
++        etiqueta: `${nombre}: ${total === 0 ? 'sin compromisos' : total === 1 ? '1 compromiso' : `${total} compromisos`}`,
++      });
++    }
++    const titulo = formatoFecha(primero, { month: 'long', year: 'numeric' });
++    return {
++      estado: 'lista',
++      nivel: 'mes',
++      ...base,
++      titulo: titulo.charAt(0).toUpperCase() + titulo.slice(1),
++      esActual: primero === primeroDeMes(hoy),
++      anterior: mesDesplazado(primero, -1),
++      siguiente: siguienteMes,
++      semanas,
++    };
++  }
+ 
+-  // Los de todo el día primero, como en el calendario
+-  const ordenados = [...eventos.data].sort((a, b) => Number(b.todoElDia) - Number(a.todoElDia));
++  const eventos = await leerEventos(fecha, diaSiguiente(fecha), zona);
++  if (!Array.isArray(eventos)) return eventos;
+   return {
+     estado: 'lista',
+-    fecha: new Intl.DateTimeFormat('es', { timeZone: zona, weekday: 'long', day: 'numeric', month: 'long' }).format(new Date()),
+-    // REQ-CUN01-10: en qué zona están las horas que se muestran
+-    zona: `Hora de ${ciudad(zona)} (${new Intl.DateTimeFormat('en-US', { timeZone: zona, timeZoneName: 'shortOffset' }).formatToParts(new Date()).find((p) => p.type === 'timeZoneName')?.value ?? zona})`,
+-    compromisos: ordenados.map((evento) => ({
+-      id: evento.id,
+-      titulo: evento.titulo,
+-      horario: evento.todoElDia ? 'Todo el día' : horario(evento, zona),
+-      enSuZona: evento.todoElDia || evento.zonaHoraria === zona ? null : `Hora de ${ciudad(evento.zonaHoraria)}: ${horario(evento, evento.zonaHoraria)}`,
+-      cancelado: evento.estado === 'cancelado',
+-      invitado: !evento.esOrganizador,
+-    })),
++    nivel: 'dia',
++    ...base,
++    fecha: formatoFecha(fecha, { weekday: 'long', day: 'numeric', month: 'long' }),
++    fechaIso: fecha,
++    esHoy: fecha === hoy,
++    compromisos: delDia(eventos, fecha, zona).map((e) => aCompromiso(e, zona)),
+   };
+ }
+-- 
+2.43.0
+

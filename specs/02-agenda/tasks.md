@@ -206,4 +206,32 @@ Estados: `pendiente` · `en curso` · `hecha`.
 
 ---
 
-**Fuera de este desglose:** las herramientas `agenda.*` del agente y su evaluación `agente.agenda.extrae-sin-inventar-fin` (fase 2), y los niveles Semana y Mes.
+**Fuera de este desglose:** las herramientas `agenda.*` del agente y su evaluación `agente.agenda.extrae-sin-inventar-fin` (fase 2). *Los niveles Semana y Mes entraron el 6 de noviembre de 2026 (§7).*
+
+---
+
+## 7. Revisión del 6 de noviembre de 2026 — Semana, Mes y lo en espera visible
+
+Plan §10. **Numeración:** sigue a `specs/07-agente/tasks.md`, que termina en T-043. Cada tarea se hace en dos carriles independientes (web y móvil) que no tocan `apps/api` ni `packages/contratos`; pueden avanzar en paralelo con T-040 y T-041 del agente.
+
+### T-044 · Semana y Mes en la agenda (web y móvil)
+
+- **Satisface:** REQ-CUN01-14, REQ-CUN01-15 · plan §10 · decisiones 20 a 23
+- **Depende de:** T-025 (web), T-021 (móvil)
+- **Contenido:** web: lectura por semana y por mes en `lib/agenda.ts`; cortes Semana y Mes del lienzo con navegación anterior/siguiente y «Volver a hoy»; elegir un día de la rejilla abre Hoy en esa fecha. Móvil: lo mismo en `pantallas/agenda.tsx`, con la forma de `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1 (siete días con sus bloques; rejilla con un punto por cada dos compromisos, hasta tres)
+- **Hecho cuando:** con el calendario simulado y compromisos en dos días distintos, Semana muestra los siete días en orden con los compromisos en su día y «Sin compromisos» en los demás, hoy destacado; Mes muestra la rejilla con las marcas correctas y los días de otros meses atenuados; elegir un día abre Hoy en esa fecha y «Volver a hoy» vuelve; pasar a la semana o al mes siguiente y volver funciona; en pantalla no aparece ninguna cifra de carga
+- **Pruebas:** `web.agenda-semana-y-mes`, `movil.agenda-semana-y-mes` (extremo a extremo)
+- **Estado:** pendiente
+
+### T-045 · Lo que está en espera se ve fuera de la conversación (web y móvil)
+
+- **Satisface:** REQ-CAP-25 · plan §10 · P-11
+- **Depende de:** T-033 (cola en espera), T-025, T-021
+- **Contenido:** franja sobre la lista de hoy en el lienzo (web) y en Inicio (móvil) con «N cosas en espera» (singular con 1), que al abrirse lista cada captura con su frase y su motivo en palabras llanas; sin control de retirar; la franja no aparece sin nada en espera. Lee `GET /operaciones?estado=en_espera`
+- **Hecho cuando:** con una tarea guardada y una solicitud encolada, la franja dice «2 cosas en espera» y al abrirla se ven las dos con su motivo; sin nada en espera, no hay franja; la franja no usa vocabulario interno
+- **Pruebas:** `web.en-espera-visible`, `movil.en-espera-visible` (extremo a extremo)
+- **Estado:** pendiente
+
+### Pulido sin tarea · «Ver anteriores» visible
+
+«Ver anteriores» queda a la vista al abrir la conversación aunque la lista esté al final (pegajoso en la parte superior, o al pie junto a la barra de entrada si lo primero no es viable en el móvil). Detectado el 6 de noviembre de 2026: el equipo escribió «ver anteriores» como mensaje porque el botón estaba fuera de la vista (prueba A4.b de `design/capturas/2026-11-06-t039/`). Va con una línea en `SPEC.md` §11, sin requisito nuevo (`TRASPASO-CLAUDE-CODE.md` §9).

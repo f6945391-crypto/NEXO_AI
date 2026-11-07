@@ -327,7 +327,11 @@ body {
   border-top: 1px solid var(--borde-base);
 }
 
+/* Pulido: se queda visible al inicio de la zona de mensajes aunque se haya desplazado (pegajoso) */
 .ver-anteriores {
+  position: sticky;
+  top: calc(-1 * var(--espaciado-24));
+  z-index: 1;
   display: block;
   margin: 0 auto var(--espaciado-16);
   padding: var(--espaciado-8) var(--espaciado-16);
@@ -338,6 +342,11 @@ body {
   background: var(--superficie-base);
   color: var(--marca-base);
   cursor: pointer;
+}
+
+.ver-anteriores:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
 }
 
 .ver-anteriores:disabled {
@@ -627,6 +636,10 @@ body {
 }
 
 .agenda-dia__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--espaciado-16);
   margin-bottom: var(--espaciado-16);
 }
 
@@ -844,6 +857,10 @@ body {
   margin-top: var(--espaciado-16);
 }
 
+.vacio .vacio__volver {
+  margin-left: var(--espaciado-8);
+}
+
 .aviso {
   display: flex;
   justify-content: space-between;
@@ -941,4 +958,229 @@ body {
 
 .tarjeta-confirmacion__dato dd {
   margin: 0;
+}
+
+/* T-044 · REQ-CUN01-14, REQ-CUN01-15: Semana y Mes en el lienzo */
+.lienzo__cuerpo[aria-busy='true'] {
+  opacity: 0.6;
+}
+
+.periodo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--espaciado-16);
+  margin-bottom: var(--espaciado-16);
+}
+
+.periodo h2 {
+  margin: 0;
+  font-size: var(--tam-cuerpo);
+}
+
+.periodo__pasos {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-8);
+}
+
+.periodo__paso {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.periodo__paso:focus-visible,
+.mes__dia:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+.semana__dias {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-12);
+}
+
+/* Cada día, con sus bloques; el de hoy lleva borde/fuerte */
+.semana__dia {
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-md);
+}
+
+.semana__dia--hoy {
+  border-color: var(--borde-fuerte);
+  background: var(--superficie-elevada);
+}
+
+.semana__nombre {
+  margin: 0 0 var(--espaciado-8);
+  font-size: var(--tam-etiqueta);
+}
+
+.semana__vacio {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.semana__dia .compromiso {
+  padding: var(--espaciado-8) 0;
+}
+
+/* Rejilla del mes: semanas en filas, de lunes a domingo */
+.mes__rejilla {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: var(--espaciado-4, 4px);
+  table-layout: fixed;
+}
+
+.mes__rejilla th {
+  padding-bottom: var(--espaciado-8);
+  font-size: var(--tam-micro);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.mes__rejilla abbr {
+  text-decoration: none;
+}
+
+.mes__dia {
+  width: 100%;
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--espaciado-8);
+  padding: var(--espaciado-8);
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  color: var(--texto-fuerte);
+  cursor: pointer;
+}
+
+.mes__dia:hover {
+  background: var(--superficie-elevada);
+}
+
+.mes__dia--fuera {
+  background: var(--superficie-elevada);
+  color: var(--texto-suave);
+}
+
+.mes__dia--hoy {
+  border-color: var(--borde-fuerte);
+}
+
+.mes__dia--hoy .mes__numero {
+  font-weight: 600;
+}
+
+.mes__numero {
+  font-variant-numeric: tabular-nums;
+}
+
+.mes__puntos {
+  display: flex;
+  gap: var(--espaciado-4, 4px);
+  min-height: 8px;
+}
+
+.mes__punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--marca-base);
+}
+
+.mes__dia--fuera .mes__punto {
+  background: var(--borde-fuerte);
+}
+
+/* T-045 · REQ-CAP-25: franja «en espera» encima de la agenda de hoy. El tinte de advertencia, completo solo aquí */
+.en-espera {
+  margin-bottom: var(--espaciado-16);
+  border-radius: var(--radio-md);
+  background: var(--estado-advertencia-suave);
+  color: var(--estado-advertencia);
+}
+
+.en-espera__resumen {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-12);
+  padding: var(--espaciado-12) var(--espaciado-16);
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  border: none;
+  border-radius: var(--radio-md);
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.en-espera__resumen:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+.en-espera__marca {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--estado-advertencia);
+}
+
+.en-espera__cuantas {
+  flex: 1;
+  font-weight: 600;
+}
+
+.en-espera__accion {
+  text-decoration: underline;
+}
+
+.en-espera__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--espaciado-16) var(--espaciado-12);
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.en-espera__lista li {
+  padding: var(--espaciado-8) var(--espaciado-12);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+}
+
+.en-espera__lista p {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  line-height: 1.4;
+}
+
+.en-espera__pedido {
+  color: var(--texto-fuerte);
+}
+
+.en-espera__motivo {
+  color: var(--texto-suave);
 }

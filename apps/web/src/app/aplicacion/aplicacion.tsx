@@ -1,10 +1,14 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import type { ConversacionAsistente, Perfil, PermisoGoogle, Plan, Rol } from '@nexoai/contratos';
-import type { AgendaDelDia } from '../../lib/agenda';
+import type { Agenda, NivelAgenda, VistaAgenda } from '../../lib/agenda';
+import type { CosaEnEspera } from '../../lib/asistente';
 import { conectarGoogle, salir } from '../acciones';
+import { AgendaMes, AgendaSemana, ListaCompromisos } from './agenda';
 import { CambioZona } from './cambio-zona';
+import { FranjaEnEspera } from './en-espera';
 import { Conversacion } from './conversacion';
 import {
   IconoActividad,
@@ -35,6 +39,17 @@ const ESTADO_PERMISO: Record<PermisoGoogle['estado'], string> = {
   caducado: 'Caducado',
 };
 
+// T-044: el orden de los niveles es el de `SECCIONES.agenda.cortes`
+const NIVELES: NivelAgenda[] = ['dia', 'semana', 'mes'];
+
+function direccion({ nivel, fecha }: VistaAgenda): string {
+  const consulta = new URLSearchParams();
+  if (nivel !== 'dia') consulta.set('nivel', nivel);
+  if (fecha) consulta.set('fecha', fecha);
+  const texto = consulta.toString();
+  return texto ? `/?${texto}` : '/';
+}
+
 // Vuelta de Google (T-022): qué decirle a la persona, en sus palabras.
 const AVISO_GOOGLE: Record<string, { texto: string; tono: 'exito' | 'advertencia' }> = {
   conectado: { texto: 'Listo: el permiso de Google quedó conectado.', tono: 'exito' },
@@ -49,6 +64,8 @@ export function Aplicacion({
   perfil,
   permisosGoogle,
   agenda,
+  vista,
+  enEspera,
   conversacion,
   resultadoGoogle,
 }: {
@@ -56,7 +73,9 @@ export function Aplicacion({
   plan: Plan;
   perfil: Perfil | null;
   permisosGoogle: PermisoGoogle[];
-  agenda: AgendaDelDia;
+  agenda: Agenda;
+  vista: VistaAgenda;
+  enEspera: CosaEnEspera[];
   conversacion: ConversacionAsistente | null;
   resultadoGoogle: string | null;
 }) {
@@ -67,6 +86,19 @@ export function Aplicacion({
   const [aviso, setAviso] = useState(resultadoGoogle ? (AVISO_GOOGLE[resultadoGoogle] ?? null) : null);
   const entrada = useRef<HTMLTextAreaElement>(null);
   const actual = SECCIONES[seccion];
+  const router = useRouter();
+  const [cambiando, enTransicion] = useTransition();
+  // En Agenda el nivel lo dice la dirección; en las otras secciones, el estado de la página
+  const corteVisible = seccion === 'agenda' ? NIVELES.indexOf(vista.nivel) : corte;
+
+  function irA(nueva: VistaAgenda) {
+    enTransicion(() => router.push(direccion(nueva), { scroll: false }));
+  }
+
+  function elegirCorte(indice: number) {
+    if (seccion === 'agenda') irA({ nivel: NIVELES[indice] ?? 'dia', fecha: null });
+    else setCorte(indice);
+  }
 
   function cambiarSeccion(nueva: Seccion) {
     setSeccion(nueva);
@@ -80,7 +112,9 @@ export function Aplicacion({
     requestAnimationFrame(() => entrada.current?.focus());
   }
 
-  const conLista = seccion === 'agenda' && corte === 0 && agenda.estado === 'lista' && agenda.compromisos.length > 0;
+  const lista = seccion === 'agenda' && agenda.estado === 'lista' ? agenda : null;
+  const dia = lista?.nivel === 'dia' ? lista : null;
+  const conLista = lista !== null && (lista.nivel !== 'dia' || lista.compromisos.length > 0);
 
   // «Encargadas» es lo que encargaste a otros: el colaborador no asigna tareas (REQ-ACC-15)
   const encarga = plan === 'empresarial' && rol !== 'colaborador';
@@ -141,13 +175,16 @@ export function Aplicacion({
 
         <div className="selector" role="tablist" aria-label={seccion === 'tareas' ? 'Franjas' : 'Niveles'}>
           {cortes.map((nombre, indice) => (
-            <button key={nombre} type="button" role="tab" aria-selected={indice === corte} onClick={() => setCorte(indice)}>
+            <button key={nombre} type="button" role="tab" aria-selected={indice === corteVisible} onClick={() => elegirCorte(indice)}>
               {nombre}
             </button>
           ))}
         </div>
 
-        <div className={`lienzo__cuerpo${conLista ? ' lienzo__cuerpo--lista' : ''}`}>
+        {/* REQ-CAP-25: encima de la agenda de hoy, mientras haya algo en espera */}
+        {seccion === 'agenda' && vista.nivel === 'dia' && <FranjaEnEspera cosas={enEspera} />}
+
+        <div className={`lienzo__cuerpo${conLista ? ' lienzo__cuerpo--lista' : ''}`} aria-busy={cambiando || undefined}>
           {seccion === 'agenda' && agenda.estado === 'sin-calendario' && (
             <div className="vacio">
               <h2>Tu agenda llega con tu calendario</h2>
@@ -163,48 +200,43 @@ export function Aplicacion({
               <p>{agenda.mensaje}</p>
             </div>
           )}
-          {seccion === 'agenda' && agenda.estado === 'lista' && corte > 0 && (
+          {dia && dia.compromisos.length === 0 && (
             <div className="vacio">
-              <h2>Por ahora, solo el día de hoy</h2>
-              <p>La vista de {cortes[corte]?.toLowerCase()} llega en una próxima versión.</p>
-            </div>
-          )}
-          {seccion === 'agenda' && agenda.estado === 'lista' && corte === 0 && agenda.compromisos.length === 0 && (
-            <div className="vacio">
-              <h2>Hoy no tienes compromisos</h2>
+              <h2>{dia.esHoy ? 'Hoy no tienes compromisos' : `El ${dia.fecha} no tienes compromisos`}</h2>
               <p>Para crear el primero, pídeselo al asistente con tus palabras, por ejemplo «Agéndame una reunión mañana a las 10».</p>
               <button type="button" className="boton" onClick={abrirCaptura}>
                 Pedírselo al asistente
               </button>
+              {!dia.esHoy && (
+                <button type="button" className="boton boton--secundario vacio__volver" onClick={() => irA({ nivel: 'dia', fecha: null })}>
+                  Volver a hoy
+                </button>
+              )}
             </div>
           )}
-          {conLista && agenda.estado === 'lista' && (
+          {dia && dia.compromisos.length > 0 && (
             <section className="agenda-dia" aria-labelledby="titulo-dia">
               <header className="agenda-dia__cabecera">
-                <h2 id="titulo-dia">{agenda.fecha}</h2>
-                {/* REQ-CUN01-10: en qué zona están las horas */}
-                <p className="agenda-dia__zona">{agenda.zona}</p>
+                <div>
+                  <h2 id="titulo-dia">{dia.fecha}</h2>
+                  {/* REQ-CUN01-10: en qué zona están las horas */}
+                  <p className="agenda-dia__zona">{dia.zona}</p>
+                </div>
+                {/* REQ-CUN01-15: un día elegido en el mes se ve como Hoy, con la vuelta a hoy */}
+                {!dia.esHoy && (
+                  <button type="button" className="boton boton--secundario" onClick={() => irA({ nivel: 'dia', fecha: null })}>
+                    Volver a hoy
+                  </button>
+                )}
               </header>
-              <ol className="agenda-dia__lista" aria-label="Compromisos de hoy">
-                {agenda.compromisos.map((c) => (
-                  <li key={c.id} className={`compromiso${c.cancelado ? ' compromiso--cancelado' : ''}`}>
-                    <p className="compromiso__horario">{c.horario}</p>
-                    <div>
-                      <p className="compromiso__titulo">
-                        {c.titulo}
-                        {c.cancelado && <span className="etiqueta">Cancelado</span>}
-                        {c.invitado && <span className="etiqueta">Invitado</span>}
-                      </p>
-                      {c.enSuZona && <p className="compromiso__zona">{c.enSuZona}</p>}
-                    </div>
-                  </li>
-                ))}
-              </ol>
+              <ListaCompromisos compromisos={dia.compromisos} nombre={dia.esHoy ? 'Compromisos de hoy' : `Compromisos del ${dia.fecha}`} />
             </section>
           )}
+          {lista?.nivel === 'semana' && <AgendaSemana agenda={lista} irA={irA} />}
+          {lista?.nivel === 'mes' && <AgendaMes agenda={lista} irA={irA} />}
           {seccion === 'tareas' && (
             <div className="vacio">
-              <h2>Nada en «{cortes[corte]}»</h2>
+              <h2>Nada en «{cortes[corteVisible]}»</h2>
               <p>Cuando le pidas algo al asistente, tus tareas aparecerán aquí, ordenadas por franja.</p>
             </div>
           )}

@@ -1,0 +1,131 @@
+From 2f023ecbb13d8bcee7b58e9991f16d052dec9cd2 Mon Sep 17 00:00:00 2001
+From: "Claude (carril B)" <claude@nexoai.local>
+Date: Fri, 6 Nov 2026 22:31:29 -0500
+Subject: [PATCH 3/3] =?UTF-8?q?Pulido=20=C2=B7=20=C2=ABVer=20anteriores?=
+ =?UTF-8?q?=C2=BB=20visible=20en=20la=20web?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+El botón «Ver anteriores» queda pegajoso arriba de la zona de mensajes:
+se ve aunque se haya desplazado la conversación, mientras quede algo
+anterior que traer. Desaparece cuando no hay más, como antes. Lleva
+también su contorno de foco.
+
+Prueba: en web.asistente-historial, «Ver anteriores» sigue a la vista
+arriba aunque se haya desplazado la conversación (cuenta historialLargo).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_017P4pWjdkAXxnUi83Ee7Yva
+---
+ apps/web/e2e/arrancar-api.mjs                |  2 +-
+ apps/web/e2e/asistente.spec.ts               | 22 ++++++++++++++++++++
+ apps/web/e2e/cuentas.json                    |  5 +++++
+ apps/web/src/app/aplicacion/conversacion.tsx |  1 +
+ apps/web/src/app/globales.css                |  9 ++++++++
+ 5 files changed, 38 insertions(+), 1 deletion(-)
+
+diff --git a/apps/web/e2e/arrancar-api.mjs b/apps/web/e2e/arrancar-api.mjs
+index 2bad0e8..a8750f0 100644
+--- a/apps/web/e2e/arrancar-api.mjs
++++ b/apps/web/e2e/arrancar-api.mjs
+@@ -56,7 +56,7 @@ for (const [clave, cuenta] of Object.entries(cuentas)) {
+ process.env.CALENDARIO_SIMULADO = '1';
+ const { calendarioDeDemostracion: calendario } = desdeApi('./dist/integraciones/calendario/calendario-simulado.js');
+ // T-034: dos cuentas más para conversar con el asistente, que es el simulado con su guion
+-for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial', 'agendaSemana', 'enEspera'].filter((c) => perfiles[c])) {
++for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial', 'agendaSemana', 'enEspera', 'historialLargo'].filter((c) => perfiles[c])) {
+   const perfilId = perfiles[clave];
+   await prisma.perfilUsuario.update({ where: { id: perfilId }, data: { debeCambiarContrasena: false, zonaHoraria: 'America/Lima' } });
+   await prisma.consentimientoIntegracion.create({
+diff --git a/apps/web/e2e/asistente.spec.ts b/apps/web/e2e/asistente.spec.ts
+index 0e16c52..079de29 100644
+--- a/apps/web/e2e/asistente.spec.ts
++++ b/apps/web/e2e/asistente.spec.ts
+@@ -112,6 +112,28 @@ test.describe('web.asistente-historial', () => {
+     await expect(page.getByText(/episodio|transcripci[oó]n|turno/i)).toHaveCount(0);
+   });
+ 
++  test('«Ver anteriores» sigue a la vista arriba aunque se haya desplazado la conversación', async ({ page }) => {
++    await entrar(page, cuentas.historialLargo.correo);
++    for (let i = 0; i < 4; i++) {
++      await pedir(page, 'Agéndame una llamada mañana a las 9');
++      await page.getByRole('article', { name: 'Para confirmar' }).last().getByRole('button', { name: 'Descartar' }).click();
++      await expect(page.getByRole('separator')).toHaveCount(i + 1);
++    }
++    await page.reload();
++    const boton = page.getByRole('button', { name: 'Ver anteriores' });
++    const zona = page.locator('.conversacion__contenido');
++    await expect(page.getByRole('separator')).toHaveCount(3);
++    // Hay más de lo que cabe: se abre al final, y el botón se ve igual
++    expect(await zona.evaluate((el) => el.scrollHeight > el.clientHeight + 200)).toBe(true);
++    await expect(boton).toBeInViewport();
++    await zona.evaluate((el) => el.scrollTo({ top: el.scrollHeight / 2 }));
++    await expect(boton).toBeInViewport();
++
++    await boton.click();
++    await expect(page.getByRole('separator')).toHaveCount(4);
++    await expect(boton).toHaveCount(0);
++  });
++
+   test('guardar una tarea deja la línea «Tarea guardada», no «registrado» (decisión 27)', async ({ page }) => {
+     await entrar(page, cuentas.asistenteEspera.correo);
+     await pedir(page, 'Recuérdame comprar pan');
+diff --git a/apps/web/e2e/cuentas.json b/apps/web/e2e/cuentas.json
+index 9580527..e5f4067 100644
+--- a/apps/web/e2e/cuentas.json
++++ b/apps/web/e2e/cuentas.json
+@@ -71,5 +71,10 @@
+     "correo": "en-espera-e2e@nexoai.test",
+     "rol": "usuario_personal",
+     "plan": "personal"
++  },
++  "historialLargo": {
++    "correo": "historial-largo-e2e@nexoai.test",
++    "rol": "usuario_personal",
++    "plan": "personal"
+   }
+ }
+diff --git a/apps/web/src/app/aplicacion/conversacion.tsx b/apps/web/src/app/aplicacion/conversacion.tsx
+index dcf244a..e2c49cf 100644
+--- a/apps/web/src/app/aplicacion/conversacion.tsx
++++ b/apps/web/src/app/aplicacion/conversacion.tsx
+@@ -255,6 +255,7 @@ export function Conversacion({
+   return (
+     <section className="conversacion" aria-label="Asistente">
+       <div className="conversacion__contenido" ref={contenido}>
++        {/* Pegajoso: sigue a la vista arriba mientras quede algo anterior que traer */}
+         {cursor && (
+           <button type="button" className="ver-anteriores" onClick={traerAnteriores} disabled={trayendo}>
+             {trayendo ? 'Trayendo…' : 'Ver anteriores'}
+diff --git a/apps/web/src/app/globales.css b/apps/web/src/app/globales.css
+index 1d04d71..7ecd540 100644
+--- a/apps/web/src/app/globales.css
++++ b/apps/web/src/app/globales.css
+@@ -327,7 +327,11 @@ body {
+   border-top: 1px solid var(--borde-base);
+ }
+ 
++/* Pulido: se queda visible al inicio de la zona de mensajes aunque se haya desplazado (pegajoso) */
+ .ver-anteriores {
++  position: sticky;
++  top: calc(-1 * var(--espaciado-24));
++  z-index: 1;
+   display: block;
+   margin: 0 auto var(--espaciado-16);
+   padding: var(--espaciado-8) var(--espaciado-16);
+@@ -340,6 +344,11 @@ body {
+   cursor: pointer;
+ }
+ 
++.ver-anteriores:focus-visible {
++  outline: 2px solid var(--marca-base);
++  outline-offset: 2px;
++}
++
+ .ver-anteriores:disabled {
+   color: var(--texto-suave);
+   cursor: default;
+-- 
+2.43.0
+

@@ -112,6 +112,28 @@ test.describe('web.asistente-historial', () => {
     await expect(page.getByText(/episodio|transcripci[oó]n|turno/i)).toHaveCount(0);
   });
 
+  test('«Ver anteriores» sigue a la vista arriba aunque se haya desplazado la conversación', async ({ page }) => {
+    await entrar(page, cuentas.historialLargo.correo);
+    for (let i = 0; i < 4; i++) {
+      await pedir(page, 'Agéndame una llamada mañana a las 9');
+      await page.getByRole('article', { name: 'Para confirmar' }).last().getByRole('button', { name: 'Descartar' }).click();
+      await expect(page.getByRole('separator')).toHaveCount(i + 1);
+    }
+    await page.reload();
+    const boton = page.getByRole('button', { name: 'Ver anteriores' });
+    const zona = page.locator('.conversacion__contenido');
+    await expect(page.getByRole('separator')).toHaveCount(3);
+    // Hay más de lo que cabe: se abre al final, y el botón se ve igual
+    expect(await zona.evaluate((el) => el.scrollHeight > el.clientHeight + 200)).toBe(true);
+    await expect(boton).toBeInViewport();
+    await zona.evaluate((el) => el.scrollTo({ top: el.scrollHeight / 2 }));
+    await expect(boton).toBeInViewport();
+
+    await boton.click();
+    await expect(page.getByRole('separator')).toHaveCount(4);
+    await expect(boton).toHaveCount(0);
+  });
+
   test('guardar una tarea deja la línea «Tarea guardada», no «registrado» (decisión 27)', async ({ page }) => {
     await entrar(page, cuentas.asistenteEspera.correo);
     await pedir(page, 'Recuérdame comprar pan');
@@ -119,3 +141,40 @@ test.describe('web.asistente-historial', () => {
   });
 });
 
+
+test.describe('web.en-espera-visible', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('lo que está en espera se ve en una franja encima de la agenda de hoy, con lo pedido y el motivo, sin retirar (REQ-CAP-25)', async ({ page }) => {
+    await entrar(page, cuentas.enEspera.correo);
+    const lienzo = page.getByRole('main');
+    // Sin nada en espera, no hay franja
+    await expect(lienzo.getByRole('region', { name: 'En espera' })).toHaveCount(0);
+
+    await pedir(page, 'Recuérdame pagar el recibo');
+    const franja = lienzo.getByRole('region', { name: 'En espera' });
+    const resumen = franja.getByRole('button', { name: /^1 cosa en espera/ });
+    await expect(resumen).toBeVisible();
+    await expect(resumen).toHaveAttribute('aria-expanded', 'false');
+
+    await pedir(page, 'Recuérdame llamar al dentista');
+    await expect(franja.getByRole('button', { name: /^2 cosas en espera/ })).toBeVisible();
+
+    // Sigue ahí al recargar, y al abrirla dice qué se pidió y por qué espera
+    await page.reload();
+    await franja.getByRole('button', { name: /^2 cosas en espera/ }).click();
+    const cosas = franja.getByRole('listitem');
+    await expect(cosas).toHaveCount(2);
+    await expect(cosas.locator('.en-espera__pedido')).toHaveText(['«Recuérdame llamar al dentista»', '«Recuérdame pagar el recibo»']);
+    await expect(cosas.first().locator('.en-espera__motivo')).toHaveText('Las tareas llegan en una próxima versión. Queda guardado hasta entonces.');
+    // Retirar sigue siendo una decisión abierta: la lista no tiene botones
+    await expect(franja.getByRole('list').getByRole('button')).toHaveCount(0);
+    // R-40: la interfaz no se nombra a sí misma
+    await expect(franja.getByText(/episodio|transcripci[oó]n|turno|operaci[oó]n/i)).toHaveCount(0);
+
+    // Solo encima de la agenda de hoy
+    await page.getByRole('tab', { name: 'Semana' }).click();
+    await expect(page.getByRole('region', { name: /^Semana del / })).toBeVisible();
+    await expect(franja).toHaveCount(0);
+  });
+});

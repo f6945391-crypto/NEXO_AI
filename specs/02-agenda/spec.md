@@ -219,6 +219,45 @@ Y no aparece ningún compromiso que no esté en su agenda
 
 ---
 
+### REQ-CUN01-14
+
+**Requisito:** CUANDO el usuario elija el nivel Semana de la agenda, EL SISTEMA mostrará los siete días de esa semana, de lunes a domingo, uno debajo de otro, cada uno con sus compromisos en la zona del usuario y el día de hoy destacado, y permitirá pasar a la semana anterior y a la siguiente.
+
+**Origen:** CUN-01, alcance «consultar»; `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1 (Semana: «los siete días uno debajo de otro, cada uno con sus bloques»); `design/ARQUITECTURA-VISUAL-WEB.md` §9, punto 2; `PLAN-VALOR-USUARIO.md` hito 2. Añadido el 6 de noviembre de 2026
+**Tipo:** dirigido por evento
+**Plataforma:** web y móvil
+
+**Criterio de aceptación**
+DADO un usuario con un compromiso el martes y dos el jueves de esta semana, y ninguno los demás días
+CUANDO elija «Semana»
+ENTONCES ve los siete días en orden, el martes con su compromiso, el jueves con los dos, y los otros cinco con «Sin compromisos»
+Y el día de hoy está destacado
+Y CUANDO pase a la semana siguiente
+ENTONCES ve los siete días de esa semana, y puede volver
+Y un compromiso cancelado se marca como en Hoy (REQ-CUN01-10)
+
+---
+
+### REQ-CUN01-15
+
+**Requisito:** CUANDO el usuario elija el nivel Mes de la agenda, EL SISTEMA mostrará la rejilla del mes, con las semanas en filas de lunes a domingo y una marca por cada dos compromisos del día, hasta tres; permitirá pasar al mes anterior y al siguiente; y CUANDO el usuario elija un día de la rejilla, lo mostrará en el nivel Hoy para esa fecha, con un control para volver al día de hoy.
+
+**Origen:** CUN-01, alcance «consultar»; `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1 (Mes: «rejilla de calendario con un punto por cada dos compromisos»); `PLAN-VALOR-USUARIO.md` hito 2. Añadido el 6 de noviembre de 2026
+**Tipo:** dirigido por evento
+**Plataforma:** web y móvil
+
+**Criterio de aceptación**
+DADO un usuario con un compromiso el día 3, tres el día 12 y ninguno el día 20
+CUANDO elija «Mes»
+ENTONCES el día 3 tiene una marca, el día 12 dos y el día 20 ninguna
+Y los días del mes anterior y siguiente que completan las filas se ven atenuados
+Y CUANDO elija el día 12
+ENTONCES ve el nivel Hoy con los tres compromisos de ese día y un control «Volver a hoy»
+Y CUANDO pase al mes siguiente
+ENTONCES ve su rejilla, y puede volver
+
+---
+
 ## Decisiones tomadas durante el diseño que no estaban en el Entregable 1
 
 Estas se detectaron al construir la interfaz y deben revisarse con el equipo:
@@ -266,3 +305,15 @@ Las del agente en sí están en `../07-agente/spec.md` §5. Estas son las que to
 |---|---|---|
 | 18 | La consulta **del asistente** actualiza la copia del calendario antes de responder, sin el margen de 2 minutos; las pantallas lo conservan. Al conectar o volver a conectar Google, la copia se actualiza en seguida | REQ-CUN01-13 |
 | 19 | Una hora de fin igual o anterior a la de inicio termina al día siguiente; la tarjeta solo dice que faltó la hora de fin si de verdad faltó | REQ-CUN01-01 |
+
+### Detectadas al especificar Semana y Mes · 6 de noviembre de 2026
+
+| # | Decisión | Afecta |
+|---|---|---|
+| 20 | La semana empieza en **lunes**; configurable más adelante con la zona y el idioma del perfil | REQ-CUN01-14, 15 |
+| 21 | En Mes, la marca es **un punto por cada dos compromisos, hasta tres**; sin cifras ni barras (diseño móvil §5.1: Agenda contesta «qué», no «cuánto») | REQ-CUN01-15 |
+| 22 | Semana y Mes leen la **copia local** con el mismo margen de 2 minutos que Hoy (decisión 18: solo la consulta del asistente fuerza la lectura). Una semana es una lectura; un mes, una lectura de la rejilla completa (hasta 42 días, con los de relleno), dentro del máximo de la ruta (`RANGO_MAXIMO_DIAS`, 366) | REQ-CUN01-14, 15 |
+| 23 | Los niveles Semana y Mes son **solo de consulta**: registrar, mover y cancelar siguen pasando por la conversación y por los controles directos de Hoy (R-42, DP-01) | REQ-CUN01-14, 15 |
+| 24 | Los tres niveles giran sobre **una sola fecha de foco**: Semana y Mes muestran el período de esa fecha; Hoy muestra el día del foco y ofrece «Volver a hoy» cuando no es hoy. Se navega con «Anterior» y «Siguiente» (nombres accesibles «Semana anterior», «Mes siguiente», etc.) y, en la web, «Esta semana» / «Este mes» cuando no se está en el actual. *Tomada al construir T-044, 6 de noviembre de 2026* | REQ-CUN01-14, 15 |
+| 25 | En Mes, **los cancelados no cuentan** para los puntos; un compromiso de varios días cuenta en cada día que toca; los días de otros meses también se pueden elegir. *Tomada al construir T-044* | REQ-CUN01-15 |
+| 26 | La franja «en espera» se muestra **en el nivel Hoy** (también con otra fecha elegida) y también sin calendario conectado; se abre y se cierra en el sitio. *La web lo hace así; el móvil la muestra en los tres niveles: unificar al nivel Hoy en el siguiente ajuste.* La frase y el motivo salen de `vistaConfirmacion` («Lo que pediste», `motivoNoConfirmable`) porque `OperacionRespuesta` no expone `motivoEspera` ni `solicitudOriginal`; los textos cortos de REQ-CAP-25 necesitan esos dos campos en el contrato y en la API (hallazgo para el carril del agente) | REQ-CAP-25 |

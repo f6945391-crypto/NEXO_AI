@@ -61,5 +61,20 @@
     "correo": "historial-e2e@nexoai.test",
     "rol": "usuario_personal",
     "plan": "personal"
+  },
+  "agendaSemana": {
+    "correo": "agenda-semana-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "enEspera": {
+    "correo": "en-espera-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "historialLargo": {
+    "correo": "historial-largo-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
   }
 }

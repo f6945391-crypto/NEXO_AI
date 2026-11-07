@@ -1,0 +1,122 @@
+[
+  {
+    "id": "A5.a",
+    "nombre": "web: persona sin historial ve el blanco inicial con ejemplos",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "A1.a",
+    "nombre": "web: tras confirmar y escribir otra cosa, la petición, la tarjeta y el «Listo» siguen visibles",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "A1.b",
+    "nombre": "web: hay un separador entre el episodio cerrado y el nuevo",
+    "ok": true,
+    "detalle": "1 separadores"
+  },
+  {
+    "id": "A1.c",
+    "nombre": "web: el separador dice cuándo y qué se hizo",
+    "ok": true,
+    "detalle": "Viernes 6, 22:22 · Se registró «Revisión»"
+  },
+  {
+    "id": "A2",
+    "nombre": "web: tras recargar se ve lo mismo (episodio cerrado + separador + abierto)",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "A6.a",
+    "nombre": "web: separador de descartado",
+    "ok": true,
+    "detalle": "Viernes 6, 22:22 · Se registró «Revisión» | Viernes 6, 22:22 · Se descartó «Llamada» | Viernes 6, 22:22 · Tarea guardada | Viernes 6, 22:22 · Se registró «Reunión»"
+  },
+  {
+    "id": "A6.b",
+    "nombre": "web: separador «Tarea guardada»",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "A6.c",
+    "nombre": "web: separador de registrado con título",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "A6.d",
+    "nombre": "web: textos sin vocabulario interno",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "A4.a",
+    "nombre": "web: existe «Ver anteriores» cuando hay más episodios",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "A4.b",
+    "nombre": "web: «Ver anteriores» a la vista al abrir (sin scroll)",
+    "ok": false,
+    "detalle": "y=-511"
+  },
+  {
+    "id": "A4.c",
+    "nombre": "web: «Ver anteriores» trae un episodio más (un separador más)",
+    "ok": true,
+    "detalle": "3 → 4"
+  },
+  {
+    "id": "A4.d",
+    "nombre": "web: el botón desaparece cuando no hay más",
+    "ok": true,
+    "detalle": "quedan 0"
+  },
+  {
+    "id": "A1.m",
+    "nombre": "móvil: tras confirmar y escribir otra cosa, todo sigue visible",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "A1.m2",
+    "nombre": "móvil: hay separador",
+    "ok": true,
+    "detalle": "1"
+  },
+  {
+    "id": "A3",
+    "nombre": "móvil: al reabrir la capa se ve el episodio anterior y el actual",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "A6.m",
+    "nombre": "móvil: separadores con «Tarea guardada» y registrado",
+    "ok": true,
+    "detalle": "Viernes 6, 22:22 · Se registró «Revisión» | Viernes 6, 22:22 · Tarea guardada | Viernes 6, 22:22 · Se registró «Reunión»"
+  },
+  {
+    "id": "A4.m",
+    "nombre": "móvil: existe «Ver anteriores»",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "A4.m2",
+    "nombre": "móvil: «Ver anteriores» trae más",
+    "ok": true,
+    "detalle": "2 → 3"
+  },
+  {
+    "id": "A6.m2",
+    "nombre": "móvil: textos sin vocabulario interno",
+    "ok": true,
+    "detalle": ""
+  }
+]

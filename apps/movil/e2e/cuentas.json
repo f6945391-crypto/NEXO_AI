@@ -31,5 +31,15 @@
     "correo": "captura-espera-movil@nexoai.test",
     "rol": "colaborador",
     "plan": "empresarial"
+  },
+  "asistente": {
+    "correo": "semana-mes-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "asistenteEspera": {
+    "correo": "en-espera-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
   }
 }

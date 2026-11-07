@@ -1,0 +1,237 @@
+From 0b051374ddc8029d6b26ccb58e426131a5ef7a49 Mon Sep 17 00:00:00 2001
+From: "Claude (carril C)" <claude@nexoai.local>
+Date: Fri, 6 Nov 2026 22:25:02 -0500
+Subject: [PATCH] =?UTF-8?q?Semana=20y=20Mes=20(REQ-CUN01-14,=2015),=20lo?=
+ =?UTF-8?q?=20en=20espera=20visible=20(REQ-CAP-25),=20T-044=20y=20T-045=20?=
+ =?UTF-8?q?(solo=20especificaci=C3=B3n)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ design/ARQUITECTURA-VISUAL-WEB.md |  2 +-
+ specs/01-captura/spec.md          | 24 +++++++++++++++
+ specs/02-agenda/plan.md           | 16 ++++++++++
+ specs/02-agenda/spec.md           | 51 +++++++++++++++++++++++++++++++
+ specs/02-agenda/tasks.md          | 30 +++++++++++++++++-
+ specs/trazabilidad.md             |  7 +++--
+ 6 files changed, 126 insertions(+), 4 deletions(-)
+
+diff --git a/design/ARQUITECTURA-VISUAL-WEB.md b/design/ARQUITECTURA-VISUAL-WEB.md
+index 8d166e2..bf60081 100644
+--- a/design/ARQUITECTURA-VISUAL-WEB.md
++++ b/design/ARQUITECTURA-VISUAL-WEB.md
+@@ -325,7 +325,7 @@ Ordenado por lo que más pesa.
+ 
+ 1. **La disposición de lienzo expandido se quedó sin cuadro.** El que había explicaba el diseño dentro de la pantalla y se eliminó. Hay que volver a dibujarla cumpliendo R-40, y llenando el lienzo con lo que de verdad se vería.
+ 2. **Ninguna de las tres secciones tiene portada.** Agenda, Tareas y Actividad existen en la navegación y no hay un cuadro que enseñe cada una al entrar. En la página está declarado como la fila 3, vacía a propósito para que se vea. Dentro de Tareas falta además la franja de **encargadas**, que es la lista de lo que delegaste.
+-2. **Los niveles de período no están dibujados en web.** En móvil Agenda y Actividad tienen selector Hoy · Semana · Mes; en web no hay ni un cuadro con él.
++2. **Los niveles de período no están dibujados en web.** En móvil Agenda y Actividad tienen selector Hoy · Semana · Mes; en web no hay ni un cuadro con él. *6 de noviembre de 2026: Semana y Mes de Agenda quedan especificados (REQ-CUN01-14 y 15) y se construyen en T-044 con la misma forma que el móvil (§5.1 de `ARQUITECTURA-VISUAL-MOVIL.md`); el cuadro de Figma se regenera después con los scripts de `design/figma/`.*
+ 3. **Rehacer los 20 cuadros de `05 Flujos · Web`**, que siguen en la jerarquía vieja —navegación de 240 con texto, una columna de 1200—. Mientras sigan ahí, el archivo cuenta dos productos web distintos, y eso pesa más que cualquier detalle visual.
+ 4. **Estados del bucle sin cuadro**: encargo vencido, recordatorio, enlace caducado a los 7 días, colaborador que revoca a mitad. Están en `specs/04-comunicaciones` §7 sin forma.
+ 5. **Caminos alternos del acceso sin cuadro**: credenciales incorrectas, permiso revocado, y cómo se ve la aplicación cuando alguien elige «ahora no». Están en `specs/06-acceso` sin forma.
+diff --git a/specs/01-captura/spec.md b/specs/01-captura/spec.md
+index ecefaf3..df3cca9 100644
+--- a/specs/01-captura/spec.md
++++ b/specs/01-captura/spec.md
+@@ -390,6 +390,29 @@ Y «mañana» se resuelve respecto del momento en que se capturó, no del moment
+ 
+ ---
+ 
++### REQ-CAP-25
++
++**Requisito:** MIENTRAS el usuario tenga capturas en espera, EL SISTEMA las mostrará fuera de la conversación, como una franja sobre la agenda de hoy con la cantidad; CUANDO el usuario abra la franja, verá cada captura con lo que pidió y el motivo de la espera en palabras llanas; y CUANDO no quede nada en espera, la franja no se mostrará.
++
++**Origen:** P-11 («lo pedido queda en cola, visible como en espera»); REQ-CAP-23; `design/ARQUITECTURA-VISUAL-WEB.md` §6 (lo en espera va al registro); hallazgo 4.1-d de `design/capturas/2026-11-04/INFORME-VISUAL-AGENTE.md` (hoy lo en espera solo vive en la conversación); `PLAN-VALOR-USUARIO.md` hito 1. Añadido el 6 de noviembre de 2026
++**Tipo:** dirigido por estado
++**Plataforma:** web (lienzo) y móvil (Inicio)
++
++**Criterio de aceptación**
++DADO un usuario con una tarea guardada en espera y una solicitud encolada porque el asistente no respondía
++CUANDO abra la agenda
++ENTONCES ve «2 cosas en espera» sobre la lista de hoy
++Y CUANDO abra la franja
++ENTONCES ve las dos, cada una con la frase que escribió y su motivo: «las tareas llegan en una próxima versión» y «el asistente no respondía»
++Y no hay ningún control para retirarlas (sigue abierto en `SPEC.md` §8)
++Y CUANDO el trabajador atienda la solicitud encolada
++ENTONCES la franja dice «1 cosa en espera»
++Y DADO que no queda nada en espera
++CUANDO abra la agenda
++ENTONCES la franja no aparece
++
++---
++
+ ## 9. Trazabilidad
+ 
+ | Sección | Caso de uso | Nivel de venta |
+@@ -402,6 +425,7 @@ Y «mañana» se resuelve respecto del momento en que se capturó, no del moment
+ | 6, memo por lugar | CUN-01 | Personal |
+ | 7, sensores | Transversal | Según la función |
+ | 8, sin conexión | Transversal | Gratuito |
++| 8, REQ-CAP-25, lo en espera fuera de la conversación | Transversal | Gratuito |
+ 
+ ---
+ 
+diff --git a/specs/02-agenda/plan.md b/specs/02-agenda/plan.md
+index 0b802f4..9c373e4 100644
+--- a/specs/02-agenda/plan.md
++++ b/specs/02-agenda/plan.md
+@@ -224,3 +224,19 @@ Se generan con `generarAlternativas(eventos, rangoPedido, banda, zonaHoraria)`:
+ 7. **Añadido al implementarla (T-016):** los horarios candidatos van **cada 15 minutos**, las alternativas **no se solapan entre sí** y **nunca se propone un horario que ya pasó**.
+ 
+ **Para revertirla o cambiarla:** es una función pura con sus parámetros. Cambiar el criterio es cambiar esta lista y sus pruebas unitarias, sin tocar ninguna otra pieza.
++
++## 10. Revisión del 6 de noviembre de 2026 — Semana y Mes, y lo en espera visible
++
++**Origen:** `PLAN-VALOR-USUARIO.md` hitos 1 y 2; REQ-CUN01-14, REQ-CUN01-15 (esta área) y REQ-CAP-25 (`01-captura`); decisiones 20 a 23 de `spec.md`. **Propuesta, pendiente de aval.** Rama `modificacion/vision-nexoai`.
++
++| Pieza | Cambia | No cambia |
++|---|---|---|
++| API | **Nada.** `GET /agenda/eventos?desde&hasta` (§5) ya devuelve hasta 31 días; `GET /operaciones?estado=en_espera` ya lista lo en espera | Rutas, contratos, réplica, sincronización, Operaciones |
++| Web (`apps/web`) | `lib/agenda.ts` suma la lectura por semana y por mes reutilizando `medianoche` y `desfase`; el lienzo pinta Semana (siete días con sus bloques, hoy destacado) y Mes (rejilla, puntos, atenuados de otros meses) con navegación anterior/siguiente y «Volver a hoy»; elegir un día de la rejilla abre Hoy en esa fecha. Franja «en espera» sobre la lista de hoy, con la cantidad y el detalle al abrir | La conversación, la tarjeta, Ajustes |
++| Móvil (`apps/movil`) | `pantallas/agenda.tsx` y `agenda/dia.ts`: los mismos dos niveles con la forma de `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1; franja «en espera» en Inicio | La capa de captura, salvo el pulido de «Ver anteriores» |
++| Lectura | Semana: una lectura de lunes 00:00 a lunes 00:00 en la zona del perfil. Mes: una lectura del 1 al 1 del siguiente (hasta 31 días). Ambas con el margen de 2 minutos de la copia local (decisión 22) | — |
++| Textos | Sin vocabulario interno (R-40). Motivos de la espera en palabras llanas: «el asistente no respondía», «falta conectar el calendario», «las tareas llegan en una próxima versión» | — |
++
++**Verificación:** `web.agenda-semana-y-mes`, `movil.agenda-semana-y-mes`, `web.en-espera-visible`, `movil.en-espera-visible` (extremo a extremo, con el calendario simulado y compromisos registrados por la conversación o por Operaciones).
++
++**Lo que queda fuera:** retirar algo de la cola desde la franja (`SPEC.md` §8, abierto); el modo Registro del lienzo (con Actividad); Semana y Mes en la sección Actividad.
+diff --git a/specs/02-agenda/spec.md b/specs/02-agenda/spec.md
+index 6e8fdea..7cd149c 100644
+--- a/specs/02-agenda/spec.md
++++ b/specs/02-agenda/spec.md
+@@ -219,6 +219,45 @@ Y no aparece ningún compromiso que no esté en su agenda
+ 
+ ---
+ 
++### REQ-CUN01-14
++
++**Requisito:** CUANDO el usuario elija el nivel Semana de la agenda, EL SISTEMA mostrará los siete días de esa semana, de lunes a domingo, uno debajo de otro, cada uno con sus compromisos en la zona del usuario y el día de hoy destacado, y permitirá pasar a la semana anterior y a la siguiente.
++
++**Origen:** CUN-01, alcance «consultar»; `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1 (Semana: «los siete días uno debajo de otro, cada uno con sus bloques»); `design/ARQUITECTURA-VISUAL-WEB.md` §9, punto 2; `PLAN-VALOR-USUARIO.md` hito 2. Añadido el 6 de noviembre de 2026
++**Tipo:** dirigido por evento
++**Plataforma:** web y móvil
++
++**Criterio de aceptación**
++DADO un usuario con un compromiso el martes y dos el jueves de esta semana, y ninguno los demás días
++CUANDO elija «Semana»
++ENTONCES ve los siete días en orden, el martes con su compromiso, el jueves con los dos, y los otros cinco con «Sin compromisos»
++Y el día de hoy está destacado
++Y CUANDO pase a la semana siguiente
++ENTONCES ve los siete días de esa semana, y puede volver
++Y un compromiso cancelado se marca como en Hoy (REQ-CUN01-10)
++
++---
++
++### REQ-CUN01-15
++
++**Requisito:** CUANDO el usuario elija el nivel Mes de la agenda, EL SISTEMA mostrará la rejilla del mes, con las semanas en filas de lunes a domingo y una marca por cada dos compromisos del día, hasta tres; permitirá pasar al mes anterior y al siguiente; y CUANDO el usuario elija un día de la rejilla, lo mostrará en el nivel Hoy para esa fecha, con un control para volver al día de hoy.
++
++**Origen:** CUN-01, alcance «consultar»; `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1 (Mes: «rejilla de calendario con un punto por cada dos compromisos»); `PLAN-VALOR-USUARIO.md` hito 2. Añadido el 6 de noviembre de 2026
++**Tipo:** dirigido por evento
++**Plataforma:** web y móvil
++
++**Criterio de aceptación**
++DADO un usuario con un compromiso el día 3, tres el día 12 y ninguno el día 20
++CUANDO elija «Mes»
++ENTONCES el día 3 tiene una marca, el día 12 dos y el día 20 ninguna
++Y los días del mes anterior y siguiente que completan las filas se ven atenuados
++Y CUANDO elija el día 12
++ENTONCES ve el nivel Hoy con los tres compromisos de ese día y un control «Volver a hoy»
++Y CUANDO pase al mes siguiente
++ENTONCES ve su rejilla, y puede volver
++
++---
++
+ ## Decisiones tomadas durante el diseño que no estaban en el Entregable 1
+ 
+ Estas se detectaron al construir la interfaz y deben revisarse con el equipo:
+@@ -266,3 +305,15 @@ Las del agente en sí están en `../07-agente/spec.md` §5. Estas son las que to
+ |---|---|---|
+ | 18 | La consulta **del asistente** actualiza la copia del calendario antes de responder, sin el margen de 2 minutos; las pantallas lo conservan. Al conectar o volver a conectar Google, la copia se actualiza en seguida | REQ-CUN01-13 |
+ | 19 | Una hora de fin igual o anterior a la de inicio termina al día siguiente; la tarjeta solo dice que faltó la hora de fin si de verdad faltó | REQ-CUN01-01 |
++
++### Detectadas al especificar Semana y Mes · 6 de noviembre de 2026
++
++| # | Decisión | Afecta |
++|---|---|---|
++| 20 | La semana empieza en **lunes**; configurable más adelante con la zona y el idioma del perfil | REQ-CUN01-14, 15 |
++| 21 | En Mes, la marca es **un punto por cada dos compromisos, hasta tres**; sin cifras ni barras (diseño móvil §5.1: Agenda contesta «qué», no «cuánto») | REQ-CUN01-15 |
++| 22 | Semana y Mes leen la **copia local** con el mismo margen de 2 minutos que Hoy (decisión 18: solo la consulta del asistente fuerza la lectura). Una semana es una lectura; un mes, una lectura de la rejilla completa (hasta 42 días, con los de relleno), dentro del máximo de la ruta (`RANGO_MAXIMO_DIAS`, 366) | REQ-CUN01-14, 15 |
++| 23 | Los niveles Semana y Mes son **solo de consulta**: registrar, mover y cancelar siguen pasando por la conversación y por los controles directos de Hoy (R-42, DP-01) | REQ-CUN01-14, 15 |
++| 24 | Los tres niveles giran sobre **una sola fecha de foco**: Semana y Mes muestran el período de esa fecha; Hoy muestra el día del foco y ofrece «Volver a hoy» cuando no es hoy. Se navega con «Anterior» y «Siguiente» (nombres accesibles «Semana anterior», «Mes siguiente», etc.) y, en la web, «Esta semana» / «Este mes» cuando no se está en el actual. *Tomada al construir T-044, 6 de noviembre de 2026* | REQ-CUN01-14, 15 |
++| 25 | En Mes, **los cancelados no cuentan** para los puntos; un compromiso de varios días cuenta en cada día que toca; los días de otros meses también se pueden elegir. *Tomada al construir T-044* | REQ-CUN01-15 |
++| 26 | La franja «en espera» se muestra **en el nivel Hoy** (también con otra fecha elegida) y también sin calendario conectado; se abre y se cierra en el sitio. *La web lo hace así; el móvil la muestra en los tres niveles: unificar al nivel Hoy en el siguiente ajuste.* La frase y el motivo salen de `vistaConfirmacion` («Lo que pediste», `motivoNoConfirmable`) porque `OperacionRespuesta` no expone `motivoEspera` ni `solicitudOriginal`; los textos cortos de REQ-CAP-25 necesitan esos dos campos en el contrato y en la API (hallazgo para el carril del agente) | REQ-CAP-25 |
+diff --git a/specs/02-agenda/tasks.md b/specs/02-agenda/tasks.md
+index 628446c..223f777 100644
+--- a/specs/02-agenda/tasks.md
++++ b/specs/02-agenda/tasks.md
+@@ -206,4 +206,32 @@ Estados: `pendiente` · `en curso` · `hecha`.
+ 
+ ---
+ 
+-**Fuera de este desglose:** las herramientas `agenda.*` del agente y su evaluación `agente.agenda.extrae-sin-inventar-fin` (fase 2), y los niveles Semana y Mes.
++**Fuera de este desglose:** las herramientas `agenda.*` del agente y su evaluación `agente.agenda.extrae-sin-inventar-fin` (fase 2). *Los niveles Semana y Mes entraron el 6 de noviembre de 2026 (§7).*
++
++---
++
++## 7. Revisión del 6 de noviembre de 2026 — Semana, Mes y lo en espera visible
++
++Plan §10. **Numeración:** sigue a `specs/07-agente/tasks.md`, que termina en T-043. Cada tarea se hace en dos carriles independientes (web y móvil) que no tocan `apps/api` ni `packages/contratos`; pueden avanzar en paralelo con T-040 y T-041 del agente.
++
++### T-044 · Semana y Mes en la agenda (web y móvil)
++
++- **Satisface:** REQ-CUN01-14, REQ-CUN01-15 · plan §10 · decisiones 20 a 23
++- **Depende de:** T-025 (web), T-021 (móvil)
++- **Contenido:** web: lectura por semana y por mes en `lib/agenda.ts`; cortes Semana y Mes del lienzo con navegación anterior/siguiente y «Volver a hoy»; elegir un día de la rejilla abre Hoy en esa fecha. Móvil: lo mismo en `pantallas/agenda.tsx`, con la forma de `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1 (siete días con sus bloques; rejilla con un punto por cada dos compromisos, hasta tres)
++- **Hecho cuando:** con el calendario simulado y compromisos en dos días distintos, Semana muestra los siete días en orden con los compromisos en su día y «Sin compromisos» en los demás, hoy destacado; Mes muestra la rejilla con las marcas correctas y los días de otros meses atenuados; elegir un día abre Hoy en esa fecha y «Volver a hoy» vuelve; pasar a la semana o al mes siguiente y volver funciona; en pantalla no aparece ninguna cifra de carga
++- **Pruebas:** `web.agenda-semana-y-mes`, `movil.agenda-semana-y-mes` (extremo a extremo)
++- **Estado:** pendiente
++
++### T-045 · Lo que está en espera se ve fuera de la conversación (web y móvil)
++
++- **Satisface:** REQ-CAP-25 · plan §10 · P-11
++- **Depende de:** T-033 (cola en espera), T-025, T-021
++- **Contenido:** franja sobre la lista de hoy en el lienzo (web) y en Inicio (móvil) con «N cosas en espera» (singular con 1), que al abrirse lista cada captura con su frase y su motivo en palabras llanas; sin control de retirar; la franja no aparece sin nada en espera. Lee `GET /operaciones?estado=en_espera`
++- **Hecho cuando:** con una tarea guardada y una solicitud encolada, la franja dice «2 cosas en espera» y al abrirla se ven las dos con su motivo; sin nada en espera, no hay franja; la franja no usa vocabulario interno
++- **Pruebas:** `web.en-espera-visible`, `movil.en-espera-visible` (extremo a extremo)
++- **Estado:** pendiente
++
++### Pulido sin tarea · «Ver anteriores» visible
++
++«Ver anteriores» queda a la vista al abrir la conversación aunque la lista esté al final (pegajoso en la parte superior, o al pie junto a la barra de entrada si lo primero no es viable en el móvil). Detectado el 6 de noviembre de 2026: el equipo escribió «ver anteriores» como mensaje porque el botón estaba fuera de la vista (prueba A4.b de `design/capturas/2026-11-06-t039/`). Va con una línea en `SPEC.md` §11, sin requisito nuevo (`TRASPASO-CLAUDE-CODE.md` §9).
+diff --git a/specs/trazabilidad.md b/specs/trazabilidad.md
+index ae7ad9d..4e1111e 100644
+--- a/specs/trazabilidad.md
++++ b/specs/trazabilidad.md
+@@ -9,8 +9,8 @@
+ 
+ | Área | Requisitos | pendiente | en curso | implementado | verificado | retirado |
+ |---|---|---|---|---|---|---|
+-| 01-captura | 24 | 17 | 3 | 4 | 0 | 0 |
+-| 02-agenda | 13 | 0 | 2 | 11 | 0 | 0 |
++| 01-captura | 25 | 18 | 3 | 4 | 0 | 0 |
++| 02-agenda | 15 | 2 | 2 | 11 | 0 | 0 |
+ | 02-jornada | 24 | 24 | 0 | 0 | 0 | 0 |
+ | 03-tareas | 26 | 26 | 0 | 0 | 0 | 0 |
+ | 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
+@@ -46,6 +46,7 @@
+ | REQ-CAP-22 | 01-captura | propuesta técnica §5, «las escrituras se encolan y se reintentan» | 2 | — | — | pendiente |
+ | REQ-CAP-23 | 01-captura | regla de producto derivada de los cuatro blancos; RN-OP-01 | 2 | T-033, T-034, T-035 | movil.captura-en-espera | implementado |
+ | REQ-CAP-24 | 01-captura | regla de producto R-42; `SPEC.md` P-11 | 2 | T-033, T-035 | agente.en-espera-desde-la-captura | implementado |
++| REQ-CAP-25 | 01-captura | P-11 («lo pedido queda en cola, visible como en espera»); REQ-CAP-23; `design/ARQUITECTURA-VISUAL-WEB.md` §6 (lo en espera va al registro); hallazgo 4.1-d de `design/capturas/2026-11-04/INFORME-VISUAL-AGENTE.md` (hoy lo en espera solo vive en la conversación); `PLAN-VALOR-USUARIO.md` hito 1. Añadido el 6 de noviembre de 2026 | 2 | T-045 | web.en-espera-visible, movil.en-espera-visible | pendiente |
+ | REQ-CUN01-01 | 02-agenda | CUN-01 flujo principal, pasos 1 y 2 | 2 | T-031, T-034, T-043 | agente.agenda.extrae-sin-inventar-fin | en curso |
+ | REQ-CUN01-02 | 02-agenda | CUN-01 flujo principal, paso 3 | 1 | T-016, T-017, T-019 | agenda.consulta-solapes-antes-de-proponer | implementado |
+ | REQ-CUN01-03 | 02-agenda | RN-ER-03 | 1 | T-012, T-017, T-032 | agenda.sin-confirmar-no-escribe-ni-notifica | implementado |
+@@ -59,6 +60,8 @@
+ | REQ-CUN01-11 | 02-agenda | regla de producto R-42; `SPEC.md` P-11 | 1 | T-015, T-019, T-021, T-033, T-034 | agente.sin-modelo-queda-en-espera | implementado |
+ | REQ-CUN01-12 | 02-agenda | derivado de la revisión de diseño de CUN-01 | 1 | T-021, T-025 | agenda.estado-vacio-abre-captura | implementado |
+ | REQ-CUN01-13 | 02-agenda | CUN-01, alcance «consultar»; `PROPUESTA-TECNICA.md` §7.3; añadido el 24 de octubre de 2026 al planificar el agente | 2 | T-031, T-034, T-043 | agente.agenda.consulta-tal-cual | en curso |
++| REQ-CUN01-14 | 02-agenda | CUN-01, alcance «consultar»; `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1 (Semana: «los siete días uno debajo de otro, cada uno con sus bloques»); `design/ARQUITECTURA-VISUAL-WEB.md` §9, punto 2; `PLAN-VALOR-USUARIO.md` hito 2. Añadido el 6 de noviembre de 2026 | 2 | T-044 | web.agenda-semana-y-mes, movil.agenda-semana-y-mes | pendiente |
++| REQ-CUN01-15 | 02-agenda | CUN-01, alcance «consultar»; `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1 (Mes: «rejilla de calendario con un punto por cada dos compromisos»); `PLAN-VALOR-USUARIO.md` hito 2. Añadido el 6 de noviembre de 2026 | 2 | T-044 | web.agenda-semana-y-mes, movil.agenda-semana-y-mes | pendiente |
+ | REQ-CUN02-01 | 02-jornada | CUN-02 flujo principal, pasos 1 a 3 | 3 | — | — | pendiente |
+ | REQ-CUN02-02 | 02-jornada | CUN-02 flujo principal, paso 4 | 3 | — | — | pendiente |
+ | REQ-CUN02-03 | 02-jornada | CUN-02 pasos 6 y 7; RN-ER-03 | 3 | — | — | pendiente |
+-- 
+2.43.0
+

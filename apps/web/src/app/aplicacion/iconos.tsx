@@ -53,3 +53,16 @@ export const IconoCerrar = () => (
     <path d="M6 6l12 12M18 6L6 18" />
   </svg>
 );
+
+// T-044: pasar al período anterior o al siguiente en Semana y Mes
+export const IconoAnterior = () => (
+  <svg {...comunes}>
+    <path d="M15 5l-7 7 7 7" />
+  </svg>
+);
+
+export const IconoSiguiente = () => (
+  <svg {...comunes}>
+    <path d="M9 5l7 7-7 7" />
+  </svg>
+);
