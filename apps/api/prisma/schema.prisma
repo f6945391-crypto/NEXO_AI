@@ -52,6 +52,8 @@ model Organizacion {
   miembros         MiembroOrganizacion[]
   equipos          Equipo[]
   miembrosEquipo   MiembroEquipo[]
+  // 09-tareas-personales
+  tareas           Tarea[]
 
   @@map("organizacion")
 }
@@ -85,6 +87,8 @@ model PerfilUsuario {
   turnos             TurnoTranscripcion[]
   pertenencias       MiembroOrganizacion[]
   equipos            MiembroEquipo[]
+  // 09-tareas-personales
+  tareas             Tarea[]
 
   @@index([organizacionId])
   @@map("perfil_usuario")
@@ -156,10 +160,15 @@ model Operacion {
   // T-067 · specs/08-administracion/plan.md §5.2 y §7.3: las de la zona de empresa viven en la organización de
   // la empresa y no aparecen en lo del usuario
   ambito            AmbitoOperacion @default(propio)
+  // 09-tareas-personales plan §3.2 · T-047: cuándo una tarea en espera pasó a propuesta «Por confirmar» (T-056).
+  // La caducidad de las propuestas (T-041) no la toca (H-TP-11)
+  convertidaEn      DateTime?       @map("convertida_en") @db.Timestamptz(3)
 
   organizacion Organizacion        @relation(fields: [organizacionId], references: [id])
   perfil       PerfilUsuario       @relation(fields: [perfilId], references: [id])
   conversacion ConversacionAgente? @relation(fields: [conversacionId], references: [id])
+  // 09-tareas-personales: la tarea que creó esta Operación `tareas.registrar`
+  tareaCreada  Tarea?
 
   @@index([organizacionId, perfilId, estado])
   @@index([organizacionId, ambito, creadaEn])
@@ -170,7 +179,8 @@ model Operacion {
 enum MotivoEspera {
   asistente_no_disponible
   permiso_faltante
-  // Una tarea, hasta que existan las tareas personales (REQ-AGT-02)
+  // Una tarea, hasta que existan las tareas personales (REQ-AGT-02). Desde T-050 ninguna herramienta lo
+  // escribe; se conserva por las filas que ya lo tienen, hasta que T-056 las convierta (09-tareas-personales §3.2)
   funcion_por_llegar
 
   @@map("motivo_espera")
@@ -543,4 +553,46 @@ model MiembroEquipo {
   @@index([organizacionId])
   @@index([perfilId])
   @@map("miembro_equipo")
+// ---- 09-tareas-personales ----
+
+// EN-04 Tarea, solo lo personal (specs/09-tareas-personales/plan.md §3.1) · T-047. Tres estados (H-TP-01); la
+// franja no se guarda: la calcula el código (tareas/dominio/franja.ts).
+enum EstadoTarea {
+  pendiente
+  hecha
+  descartada
+
+  @@map("estado_tarea")
+}
+
+model Tarea {
+  id                String      @id @default(uuid()) @db.Uuid
+  organizacionId    String      @map("organizacion_id") @db.Uuid
+  // RN-EST-01: la tarea personal es de un perfil, y solo ese perfil la ve (REQ-CUN03-19)
+  perfilId          String      @map("perfil_id") @db.Uuid
+  texto             String      @db.VarChar(200)
+  // H-TP-03: día del calendario de la persona; nula = sin fecha
+  fecha             DateTime?   @db.Date
+  // Hora límite opcional, «HH:mm» en `zonaHoraria`; solo con fecha
+  horaLimite        String?     @map("hora_limite") @db.VarChar(5)
+  // IANA en que se dijo la fecha (P-05): la del perfil al registrar o al cambiar la fecha
+  zonaHoraria       String      @map("zona_horaria")
+  // Esperando de alguien (REQ-CUN03-04, R-12): solo el nombre, sin contacto
+  deQuien           String?     @map("de_quien") @db.VarChar(80)
+  esperadaDesde     DateTime?   @map("esperada_desde") @db.Date
+  estado            EstadoTarea @default(pendiente)
+  hechaEn           DateTime?   @map("hecha_en") @db.Timestamptz(3)
+  descartadaEn      DateTime?   @map("descartada_en") @db.Timestamptz(3)
+  // La Operación tareas.registrar que la creó (AD-09); única: confirmar dos veces crea una
+  operacionOrigenId String      @unique @map("operacion_origen_id") @db.Uuid
+  creadaEn          DateTime    @default(now()) @map("creada_en") @db.Timestamptz(3)
+  actualizadaEn     DateTime    @updatedAt @map("actualizada_en") @db.Timestamptz(3)
+
+  organizacion    Organizacion  @relation(fields: [organizacionId], references: [id])
+  perfil          PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  operacionOrigen Operacion     @relation(fields: [operacionOrigenId], references: [id])
+
+  @@index([perfilId, estado, fecha])
+  @@index([organizacionId])
+  @@map("tarea")
 }

@@ -55,7 +55,7 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
     perfilB = (await crearCuenta(base, { organizacionId: orgB, correo: 'b@nexoai.test', rol: 'gerente', plan: 'empresarial' })).perfilId;
     // Una operación por organización, para cubrir también esa tabla (T-012).
     for (const [organizacionId, perfilId] of [[orgA, perfilA], [orgB, perfilB]] as const) {
-      await base.operacion.create({
+      const operacion = await base.operacion.create({
         data: {
           organizacionId,
           perfilId,
@@ -114,6 +114,8 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
       // Y un equipo con su responsable (T-065). La pertenencia a la organización la crea el alta de la cuenta.
       const equipo = await base.equipo.create({ data: { organizacionId, nombre: 'Ventas' } });
       await base.miembroEquipo.create({ data: { organizacionId, equipoId: equipo.id, perfilId, responsable: true } });
+      // Y una tarea personal, creada por esa Operación (T-047)
+      await base.tarea.create({ data: { organizacionId, perfilId, texto: 'Pagar el recibo', zonaHoraria: 'America/Lima', operacionOrigenId: operacion.id } });
       // Y su transcripción (T-038)
       await base.turnoTranscripcion.create({
         data: { id: randomUUID(), organizacionId, perfilId, conversacionId: conversacion.id, en: new Date(), tipo: 'texto', datos: {} },
