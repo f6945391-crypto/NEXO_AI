@@ -30,7 +30,7 @@ const GUION: ReglaGuion[] = [
   { si: '^mejor a las 5$', pasos: registrar('17:00') },
   { si: '^agéndame algo con vasco$', pasos: [{ llamadas: [{ nombre: 'agenda_registrar_evento', argumentos: { titulo: 'Algo con Vasco' } }] }] },
   { si: '^hola$', pasos: [{ texto: 'Hola, ¿qué hacemos?' }] },
-  { si: '^recuérdame (.+)$', pasos: [{ llamadas: [{ nombre: 'captura_guardar_tarea', argumentos: { texto: '$1', clase: 'tarea' } }] }] },
+  { si: '^recuérdame (.+)$', pasos: [{ llamadas: [{ nombre: 'tareas_registrar', argumentos: { texto: '{titulo:$1}' } }] }] },
 ];
 const simulado = new ModeloSimulado(GUION);
 
@@ -224,12 +224,16 @@ describe('T-032 · conversación con el asistente', () => {
       expect(cerrado!.turnos[0]!.id).toBe(primera.turnos[0]!.id);
     });
 
-    it('guardar una tarea en espera cierra el episodio como «guardado», no como registrado (decisión 27)', async () => {
+    it('registrar una tarea cierra el episodio como «registrado»; ya no queda en espera (T-050, decisión 27 revisada)', async () => {
       const r = await enviar('Recuérdame pagar el recibo');
-      expect(tipos(r.turnos)).toEqual(['persona', 'en_espera']);
-      expect(r).toMatchObject({ episodioCerrado: true, cierre: { desenlace: 'guardado', titulo: 'pagar el recibo' } });
+      expect(tipos(r.turnos)).toEqual(['persona', 'propuesta']);
+      const hecha = await decidir({ operacionId: r.pendiente, decision: 'confirmar' });
+      expect(hecha).toMatchObject({ episodioCerrado: true, cierre: { desenlace: 'registrado', titulo: 'Pagar el recibo' } });
+      expect(tipos(hecha.turnos)).toEqual(['resultado']);
+      expect((hecha.turnos[0] as { texto: string }).texto).toBe('Listo: «Pagar el recibo» quedó en tus tareas, en «Sin fecha».');
+      expect(await prisma.operacion.count({ where: { estado: 'en_espera' } })).toBe(0);
       const [episodio] = (await leer()).episodios;
-      expect(episodio!.cierre?.desenlace).toBe('guardado');
+      expect(episodio!.cierre?.desenlace).toBe('registrado');
       // Lo siguiente empieza otro episodio
       expect((await enviar('Hola')).episodioId).not.toBe(r.episodioId);
     });

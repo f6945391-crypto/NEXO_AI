@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Annotation, END, interrupt, START, StateGraph } from '@langchain/langgraph';
-import { EventoAgenda, TurnoDeHerramienta, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
+import { EventoAgenda, TareaPersonal, TurnoDeHerramienta, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
 import { fechaLarga, horario, nombreDeZona } from '../../agenda/formato';
 import type { ContextoSolicitud } from '../../identidad/contexto';
 import type { OperacionesService } from '../../operaciones/operaciones.service';
@@ -29,6 +29,9 @@ export const PREGUNTAS: Readonly<Record<string, string>> = {
   horaInicio: '¿A qué hora empieza?',
   titulo: '¿Cómo lo llamo?',
   cambio: '¿Qué quieres cambiar: el día, la hora o el título?',
+  // REQ-CUN03-02: de una tarea solo se pregunta qué hay que hacer, nunca para cuándo (H-TP-02)
+  texto: '¿Qué hay que hacer?',
+  cambio_tarea: '¿Qué quieres cambiar de la tarea: el texto, la fecha o de quién la esperas?',
 };
 
 // P-11, REQ-CUN01-11, REQ-CAP-24 · T-033: el aviso de lo que queda en espera lo escribe el código
@@ -62,6 +65,9 @@ export const EstadoAsistente = Annotation.Root({
   enEspera: reemplazar<string | null>(null),
   // REQ-AGT-01: la acción se cerró y el episodio termina; la transcripción sigue (REQ-AGT-03)
   cerrada: reemplazar<boolean>(false),
+  // T-051 · REQ-CUN03-15: las tareas candidatas que se ofrecieron y qué se haría con la elegida. Escribir otra
+  // cosa las descarta (plan §14.9)
+  candidatas: reemplazar<{ accion: string; ids: string[] } | null>(null),
 });
 export type EstadoAsistente = typeof EstadoAsistente.State;
 
@@ -91,6 +97,8 @@ function recortar(mensajes: MensajeModelo[]): MensajeModelo[] {
 
 // REQ-CUN01-04: el resultado sale de lo que devolvió la Operación, no de lo propuesto
 function textoDelResultado(op: OperacionRespuesta, zona: string): string {
+  const tarea = op.tipo.startsWith('tareas.') ? TareaPersonal.safeParse(op.resultado) : null;
+  if (tarea?.success) return textoDeTarea(op.tipo, tarea.data);
   const evento = EventoAgenda.safeParse(op.resultado);
   if (!evento.success) return 'Listo.';
   const { titulo, inicio, fin, todoElDia } = evento.data;
@@ -98,6 +106,18 @@ function textoDelResultado(op: OperacionRespuesta, zona: string): string {
   if (op.tipo === 'agenda.cancelar') return `Listo: cancelé «${titulo}», que era ${cuando}.`;
   if (op.tipo === 'agenda.modificar') return `Listo: «${titulo}» quedó ${cuando}.`;
   return `Listo: «${titulo}» quedó en tu calendario ${cuando}.`;
+}
+
+// T-050 · 09-tareas-personales: lo que quedó, dicho por el código y sin prometer avisos (H-TP-10)
+const DONDE: Readonly<Record<TareaPersonal['franja'], string>> = { con_fecha: 'Con fecha', sin_fecha: 'Sin fecha', esperando: 'Esperando de alguien' };
+function textoDeTarea(tipo: string, tarea: TareaPersonal): string {
+  const t = `«${tarea.texto}»`;
+  if (tipo === 'tareas.registrar') return `Listo: ${t} quedó en tus tareas, en «${DONDE[tarea.franja]}».`;
+  if (tipo === 'tareas.cambiar') return `Listo: cambié ${t}. Ahora está en «${DONDE[tarea.franja]}».`;
+  if (tipo === 'tareas.completar') return `Listo: ${t} quedó hecha.`;
+  if (tipo === 'tareas.recibido') return `Listo: marqué ${t} como recibido.`;
+  if (tipo === 'tareas.reabrir') return `Listo: ${t} vuelve a estar pendiente, en «${DONDE[tarea.franja]}».`;
+  return `Listo: descarté ${t}. Ya no aparece en tus tareas.`;
 }
 
 export interface DependenciasGrafo {
@@ -177,6 +197,8 @@ export function construirGrafo(
     let faltante: string | null = null;
     let sinCalendario = false;
     let guardada = false;
+    let candidatas: EstadoAsistente['candidatas'] = null;
+    let sinTarea: string | null = null;
 
     for (const llamada of lista) {
       // Una acción a la vez: la persona decide sobre una tarjeta antes de ver otra
@@ -191,8 +213,12 @@ export function construirGrafo(
       if (turno.success) {
         const base = { id: randomUUID(), en: ahora() };
         if (turno.data.tipo === 'agenda') turnos.push({ ...base, tipo: 'agenda', lista: turno.data.lista });
+        else if (turno.data.tipo === 'tareas') turnos.push({ ...base, tipo: 'tareas', lista: turno.data.lista });
         else if (turno.data.tipo === 'propuesta') turnos.push({ ...base, tipo: 'propuesta', operacion: turno.data.operacion });
-        else {
+        else if (turno.data.tipo === 'alternativas_de_referente') {
+          turnos.push({ ...base, tipo: 'alternativas_de_referente', lista: turno.data.lista });
+          candidatas = { accion: turno.data.lista.accion, ids: turno.data.lista.candidatas.map((c) => c.id) };
+        } else {
           turnos.push({ ...base, ...turno.data });
           guardada = true;
         }
@@ -201,6 +227,7 @@ export function construirGrafo(
       const error = (r.paraModelo as { error?: { codigo?: string; campos?: string[] } } | null)?.error;
       if (error?.codigo === 'DATOS_FALTANTES' && !faltante) faltante = error.campos?.[0] ?? 'cambio';
       if (error?.codigo === 'PERMISO_GOOGLE_FALTANTE') sinCalendario = true;
+      if (error?.codigo === 'TAREA_NO_ENCONTRADA' && !sinTarea) sinTarea = (error as { mensaje?: string }).mensaje ?? null;
     }
 
     // REQ-CUN01-08, REQ-ACC-08: el permiso que falta lo dice el código, y lo pedido queda guardado
@@ -210,6 +237,10 @@ export function construirGrafo(
     }
     // REQ-AGT-02: una tarea guardada en espera no necesita otra vuelta del modelo, y cierra el episodio (decisión 27)
     if (guardada && !pendiente) return con(turnos, { mensajes, cerrada: true, siguiente: 'fin' });
+    // T-051 · REQ-CUN03-15: con varias candidatas no se propone nada; la persona elige sin pasar por el modelo
+    if (candidatas && !pendiente) return con(turnos, { mensajes, candidatas, siguiente: 'fin' });
+    // Ninguna tarea encaja: se dice con las palabras del código, sin otra vuelta del modelo
+    if (sinTarea && !pendiente) return con([...turnos, turnoTexto(sinTarea)], { mensajes: [...mensajes, deAsistente(sinTarea)], siguiente: 'fin' });
     const siguiente: Siguiente = pendiente ? 'esperar' : faltante ? 'preguntar' : 'interpretar';
     return con(turnos, { mensajes, pendiente, faltante, siguiente });
   }

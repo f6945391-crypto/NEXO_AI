@@ -91,6 +91,8 @@ export class EjecutoresTareas implements OnModuleInit {
           ...(completa.deQuien ? [{ etiqueta: 'De quién', valor: completa.deQuien }] : []),
           { etiqueta: 'Cuándo', valor: paraCuando(completa.fecha, completa.horaLimite) },
           dondeAparece(franja),
+          // R-12, H-TP-14: esperar algo de alguien no le escribe
+          ...(completa.deQuien ? [{ etiqueta: 'Aviso', valor: `NexoAI no le escribe a ${completa.deQuien}` }] : []),
         ];
         return { vista: vista('Nueva tarea', datos), carga: completa };
       },

@@ -81,7 +81,13 @@ describe('agente.contrato-del-proveedor', () => {
         nombre: 'agenda_consultar',
         argumentos: { desde: '2026-10-24', hasta: '2026-10-24', horaDesde: '12:00', horaHasta: '20:00' },
       });
-      expect(await pedir('Recuérdame llamar al dentista')).toMatchObject({ nombre: 'captura_guardar_tarea', argumentos: { texto: 'llamar al dentista' } });
+      // T-050: una tarea se propone con su herramienta, ya no queda en espera
+      expect(await pedir('Recuérdame llamar al dentista')).toMatchObject({ nombre: 'tareas_registrar', argumentos: { texto: 'Llamar al dentista' } });
+      expect(await pedir('Pídele a María Fernanda el informe para el lunes')).toMatchObject({
+        nombre: 'tareas_registrar',
+        argumentos: { texto: 'Informe', deQuien: 'María Fernanda', fecha: '2026-10-26' },
+      });
+      expect(await pedir('¿Qué tengo pendiente esta semana?')).toMatchObject({ nombre: 'tareas_consultar', argumentos: { desde: '2026-10-23', hasta: '2026-10-25' } });
       expect(await pedir('Agéndame algo con Vasco')).toMatchObject({ argumentos: { titulo: 'Algo con Vasco' } });
     });
   });

@@ -47,15 +47,8 @@ export type ArgsCancelarEvento = z.infer<typeof ArgsCancelarEvento>;
 export const MotivoEspera = z.enum(['asistente_no_disponible', 'permiso_faltante', 'funcion_por_llegar']);
 export type MotivoEspera = z.infer<typeof MotivoEspera>;
 
-// REQ-AGT-02: una tarea se reconoce y queda en espera hasta que existan las tareas personales
-export const ClaseTarea = z.enum(['tarea', 'pendiente_sin_fecha', 'esperando_de_alguien']);
-export type ClaseTarea = z.infer<typeof ClaseTarea>;
-
-export const ArgsGuardarTarea = z.strictObject({
-  texto: z.string().trim().min(1).max(500).describe('Lo que hay que hacer, con las palabras de la persona'),
-  clase: ClaseTarea,
-});
-export type ArgsGuardarTarea = z.infer<typeof ArgsGuardarTarea>;
+// T-050: `ArgsGuardarTarea` y `ClaseTarea` se retiraron con `captura.guardar_tarea`; las tareas tienen sus
+// herramientas en tareas.ts
 
 // REQ-CUN01-13: la lista de compromisos la arma el código con los datos de la réplica, no el modelo.
 export const CompromisoListado = z.strictObject({

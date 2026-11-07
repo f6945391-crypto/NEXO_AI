@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { Command } from '@langchain/langgraph';
 import {
@@ -18,6 +19,8 @@ import { PuntoControlConversacion } from './grafo/punto-control-prisma';
 import { EjecutorHerramientas } from './herramientas/ejecutor-herramientas';
 import { LlamadasAuditadas } from './llamadas-auditadas';
 import { TranscripcionService } from './transcripcion';
+import { ConsultaTareasService } from '../tareas/consulta-tareas.service';
+import { accionDeEtiqueta, tipoDe } from './herramientas/herramientas-tareas';
 
 // specs/07-agente/plan.md §4.3 y §9 · T-032 · REQ-AGT-01. La conversación con el asistente: cada persona
 // tiene como mucho una abierta; se cierra cuando se cierra su acción (H-AGT-05), y la siguiente solicitud
@@ -25,6 +28,9 @@ import { TranscripcionService } from './transcripcion';
 // confirmación que existe (AD-09), y con su desenlace se reanuda el grafo.
 // T-038 · plan §14: la «conversación» de la base es el **episodio**. Lo que ve la persona se anota en la
 // transcripción después de cada invocación, y sigue visible cuando el episodio se cierra (REQ-AGT-03).
+
+type Grafo = ReturnType<typeof construirGrafo>;
+type Config = { configurable: { thread_id: string } };
 
 const sinAccion = () => errorApi(409, 'OPERACION_NO_CONFIRMABLE', 'Esta acción ya no está esperando tu decisión.');
 
@@ -36,6 +42,7 @@ export class AsistenteService {
     private readonly llamadas: LlamadasAuditadas,
     private readonly ejecutor: EjecutorHerramientas,
     private readonly transcripcion: TranscripcionService,
+    private readonly tareas: ConsultaTareasService,
   ) {}
 
   async conversacion(contexto: ContextoSolicitud, consulta: ConsultaConversacion = { limite: 3 }): Promise<ConversacionAsistente> {
@@ -88,6 +95,7 @@ export class AsistenteService {
         noDisponible: false,
         enEspera: null,
         cerrada: false,
+        candidatas: null,
       },
       config,
     );
@@ -122,6 +130,7 @@ export class AsistenteService {
         noDisponible: false,
         enEspera: op.id,
         cerrada: false,
+        candidatas: null,
       },
       config,
     )) as EstadoAsistente;
@@ -148,11 +157,10 @@ export class AsistenteService {
   async decidir(contexto: ContextoSolicitud, decision: DecisionAsistente): Promise<RespuestaAsistente> {
     const conversacion = await this.abierta(contexto);
     if (!conversacion) throw sinAccion();
-    // T-051 elige entre candidatas; hasta entonces no hay ninguna que elegir
-    if (decision.decision === 'referente') throw sinAccion();
     const turnos: TurnoAsistente[] = [];
     const { grafo, config } = await this.grafo(contexto, conversacion.id, turnos);
     const estado = await grafo.getState(config);
+    if (decision.decision === 'referente') return this.elegirReferente(contexto, conversacion.id, decision.referenteId, { grafo, config, estado, turnos });
     if (!estado.next.includes('esperar_decision') || (estado.values as EstadoAsistente).pendiente !== decision.operacionId) throw sinAccion();
     await this.anotarActividad(contexto, conversacion.id);
 
@@ -165,6 +173,37 @@ export class AsistenteService {
       reanudacion = { tipo: 'alternativa', operacion: await this.proponerAlternativa(contexto, conversacion.id, decision) };
     }
     return this.responder(contexto, conversacion.id, await grafo.invoke(new Command({ resume: reanudacion }), config), turnos);
+  }
+
+  // T-051 · specs/07-agente/plan.md §14.9 · REQ-CUN03-15: elegir una de las tareas candidatas no pasa por el
+  // modelo. Solo vale una de las ofrecidas en este episodio; el código propone la acción sobre ella y el grafo
+  // queda esperando la decisión sobre esa tarjeta, como si la herramienta la hubiera propuesto.
+  private async elegirReferente(
+    contexto: ContextoSolicitud,
+    episodioId: string,
+    referenteId: string,
+    { grafo, config, estado, turnos }: { grafo: Grafo; config: Config; estado: Awaited<ReturnType<Grafo['getState']>>; turnos: TurnoAsistente[] },
+  ): Promise<RespuestaAsistente> {
+    const valores = estado.values as Partial<EstadoAsistente>;
+    const candidatas = valores.candidatas;
+    if (estado.next.length > 0 || !candidatas || !candidatas.ids.includes(referenteId)) throw sinAccion();
+    await this.anotarActividad(contexto, episodioId);
+    const accion = accionDeEtiqueta(candidatas.accion);
+    const tarea = await this.tareas.porId(contexto, referenteId);
+    const ultima = [...(valores.mensajes ?? [])].reverse().find((m) => m.rol === 'persona');
+    const op = await this.operaciones.proponer(
+      contexto,
+      {
+        tipo: tipoDe(accion, tarea),
+        carga: { tareaId: referenteId },
+        origen: 'agente',
+        ...(ultima?.rol === 'persona' ? { solicitudOriginal: ultima.texto.slice(0, 2000) } : {}),
+      },
+      { conversacionId: episodioId },
+    );
+    turnos.push({ id: randomUUID(), en: new Date().toISOString(), tipo: 'propuesta', operacion: op });
+    await grafo.updateState(config, { pendiente: op.id, candidatas: null, siguiente: 'esperar' }, 'herramientas');
+    return this.responder(contexto, episodioId, await grafo.invoke(null, config), turnos);
   }
 
   // Decisión 17 de 02-agenda: elegir una alternativa no pasa por el modelo. Solo vale una de las que ofreció

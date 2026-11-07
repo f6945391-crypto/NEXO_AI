@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   EventoAgenda,
+  TareaPersonal,
   TurnoAsistente,
   type CierreEpisodio,
   type ConsultaConversacion,
@@ -21,6 +22,13 @@ const DESENLACE_POR_TIPO: Readonly<Record<string, DesenlaceEpisodio>> = {
   'agenda.registrar': 'registrado',
   'agenda.modificar': 'movido',
   'agenda.cancelar': 'cancelado',
+  // T-050, T-051 · 09-tareas-personales plan §7.1: registrar una tarea da `registrado`; ya no `guardado`
+  'tareas.registrar': 'registrado',
+  'tareas.cambiar': 'cambiado',
+  'tareas.completar': 'hecho',
+  'tareas.recibido': 'hecho',
+  'tareas.reabrir': 'reabierto',
+  'tareas.descartar': 'quitado',
 };
 
 type OperacionDelEpisodio = { tipo: string; estado: string; motivoEspera?: string | null; carga: unknown; resultado: unknown };
@@ -37,9 +45,10 @@ export function cierreDe(cerradaEn: Date | null, operaciones: OperacionDelEpisod
   if (!op) return { en: cerradaEn.toISOString(), desenlace: 'sin_accion', titulo: null };
   const desenlace = op.estado === 'descartada' ? 'descartado' : op.estado === 'en_espera' ? 'guardado' : (DESENLACE_POR_TIPO[op.tipo] ?? 'sin_accion');
   const evento = EventoAgenda.safeParse(op.resultado);
+  const tarea = TareaPersonal.safeParse(op.resultado);
   const carga = op.carga as { titulo?: unknown; texto?: unknown } | null;
   const deCarga = carga?.titulo ?? carga?.texto;
-  const titulo = evento.success ? evento.data.titulo : typeof deCarga === 'string' ? deCarga : null;
+  const titulo = evento.success ? evento.data.titulo : tarea.success ? tarea.data.texto : typeof deCarga === 'string' ? deCarga : null;
   return { en: cerradaEn.toISOString(), desenlace, titulo };
 }
 

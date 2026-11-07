@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ArgsGuardarTarea, ArgsRegistrarEvento, TurnoDeHerramienta } from './agente';
+import { ArgsRegistrarEvento, TurnoDeHerramienta } from './agente';
 import { DecisionAsistente, DesenlaceEpisodio } from './asistente';
 import {
   ArgsTareaExistente,
@@ -73,7 +73,6 @@ describe('contratos.tareas', () => {
   });
 
   it('los contratos existentes siguen validando lo mismo', () => {
-    expect(ArgsGuardarTarea.safeParse({ texto: 'Pagar', clase: 'tarea' }).success).toBe(true);
     expect(ArgsRegistrarEvento.safeParse({ titulo: 'Dentista', fecha: '2026-11-14', horaInicio: '10:00' }).success).toBe(true);
     expect(ArgsRegistrarEvento.safeParse({ fecha: '14-11-2026' }).success).toBe(false);
     expect(DecisionAsistente.safeParse({ operacionId: ID, decision: 'confirmar' }).success).toBe(true);

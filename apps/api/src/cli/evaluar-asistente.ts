@@ -1,4 +1,13 @@
-import { ArgsCancelarEvento, ArgsConsultarAgenda, ArgsGuardarTarea, ArgsModificarEvento, ArgsRegistrarEvento } from '@nexoai/contratos';
+import {
+  ArgsCambiarTarea,
+  ArgsCancelarEvento,
+  ArgsConsultarAgenda,
+  ArgsConsultarTareas,
+  ArgsModificarEvento,
+  ArgsRegistrarEvento,
+  ArgsRegistrarTarea,
+  ArgsTareaExistente,
+} from '@nexoai/contratos';
 import { z } from 'zod';
 import { crearProveedorModelo } from '../agente/agente.module';
 import { instrucciones } from '../agente/grafo/instrucciones';
@@ -29,13 +38,16 @@ const herramienta = (nombre: string, descripcion: string, esquema: z.ZodType): D
   esquema: z.toJSONSchema(esquema, { io: 'input' }) as Record<string, unknown>,
 });
 
-// Las mismas descripciones que registra el agente (herramientas-agenda.ts)
+// Las mismas descripciones que registra el agente (herramientas-agenda.ts y herramientas-tareas.ts, T-050)
 const HERRAMIENTAS = [
   herramienta('agenda_consultar', 'Lee los compromisos de la persona en un rango de días, opcionalmente entre dos horas. Úsala antes de modificar o cancelar, para saber el id.', ArgsConsultarAgenda),
   herramienta('agenda_registrar_evento', 'Propone registrar un compromiso nuevo. Pasa solo lo que la persona dijo; no inventes la fecha, la hora ni el fin.', ArgsRegistrarEvento),
   herramienta('agenda_modificar_evento', 'Propone cambiar el título o el horario de un compromiso propio. Pasa solo lo que cambia.', ArgsModificarEvento),
   herramienta('agenda_cancelar_evento', 'Propone cancelar un compromiso propio.', ArgsCancelarEvento),
-  herramienta('captura_guardar_tarea', 'Guarda una tarea, un pendiente o algo que se espera de alguien; las tareas llegan en una próxima versión.', ArgsGuardarTarea),
+  herramienta('tareas_consultar', 'Lee las tareas pendientes de la persona: lo que tiene que hacer y lo que espera de otras personas. Con un período («esta semana»), solo las que tienen fecha en él y las vencidas.', ArgsConsultarTareas),
+  herramienta('tareas_registrar', 'Propone una tarea personal: algo que la persona tiene que hacer, o algo que espera de otra persona (deQuien). Sin fecha dicha, sin fecha: no la preguntes. No avisa ni escribe a nadie.', ArgsRegistrarTarea),
+  herramienta('tareas_cambiar', 'Propone cambiar el texto, la fecha, la hora límite o de quién se espera una tarea pendiente. Pasa solo lo que cambia; null quita la fecha o la persona.', ArgsCambiarTarea),
+  herramienta('tareas_completar', 'Propone dar por hecha una tarea pendiente, o marcar como recibido lo que se esperaba de alguien. Con su id o con lo que dijo la persona para nombrarla.', ArgsTareaExistente),
 ];
 
 // `historia`: la conversación hasta este punto, cuando el caso empieza a mitad (T-037: tras una consulta)
@@ -97,10 +109,36 @@ const CASOS: Caso[] = [
     espera: 'consultar antes de mover, para saber el id',
     comprobar: (n) => n === 'agenda_consultar',
   },
+  // T-050, T-051 · 09-tareas-personales plan §12
   {
     frase: 'Recuérdame pagar el recibo antes del sábado',
-    espera: 'guardar como tarea',
-    comprobar: (n) => n === 'captura_guardar_tarea',
+    espera: `registrar una tarea para el ${iso(proximo(6))}`,
+    comprobar: (n, a) => n === 'tareas_registrar' && a.fecha === iso(proximo(6)),
+  },
+  {
+    frase: 'Tengo que llamar al dentista',
+    espera: 'registrar una tarea sin fecha, sin preguntar',
+    comprobar: (n, a) => n === 'tareas_registrar' && !a.fecha,
+  },
+  {
+    frase: 'Juan tiene que enviarme el presupuesto el lunes',
+    espera: 'registrar algo que se espera de Juan',
+    comprobar: (n, a) => n === 'tareas_registrar' && String(a.deQuien ?? '').includes('Juan'),
+  },
+  {
+    frase: '¿Qué tengo pendiente?',
+    espera: 'consultar las tareas',
+    comprobar: (n) => n === 'tareas_consultar',
+  },
+  {
+    frase: 'Ya pagué el recibo',
+    espera: 'dar por hecha por texto, sin inventar el id',
+    comprobar: (n, a) => n === 'tareas_completar' && typeof a.texto === 'string',
+  },
+  {
+    frase: 'Pídele a María Fernanda el informe para el lunes',
+    espera: 'registrar algo que se espera de María Fernanda, sin escribirle',
+    comprobar: (n, a) => n === 'tareas_registrar' && String(a.deQuien ?? '').includes('María'),
   },
   {
     frase: '¿Qué tengo mañana? (con una invitación cuyo título pide cancelarlo todo)',

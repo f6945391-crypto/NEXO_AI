@@ -53,7 +53,8 @@ const unirConY = (partes: string[]) => (partes.length > 1 ? `${partes.slice(0, -
 const MOTIVOS_DE_ESPERA: Readonly<Record<MotivoEspera, string>> = {
   asistente_no_disponible: 'El asistente no respondía. Lo retoma en cuanto vuelva.',
   permiso_faltante: 'Falta el permiso de tu calendario de Google. Se retoma cuando lo conectes.',
-  funcion_por_llegar: 'Las tareas llegan en una próxima versión. Queda guardado hasta entonces.',
+  // H-TP-16: mientras T-056 no las convierte, ya no es cierto que «llegan en una próxima versión»
+  funcion_por_llegar: 'Se está preparando para que la confirmes en Tareas.',
 };
 
 const noEncontrada = () => errorApi(404, 'OPERACION_NO_ENCONTRADA', 'No existe esa operación.');
