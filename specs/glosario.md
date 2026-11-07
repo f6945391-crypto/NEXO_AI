@@ -15,6 +15,11 @@
 | **Colaborador** | Persona de un equipo que recibe encargos. **Tiene cuenta**, con el rol `colaborador`: usa el agente como el Plan Empresarial sobre lo suyo, desde la web o el móvil, ve las tareas que tiene asignadas y responde en la aplicación. **No asigna tareas a otros**: eso solo lo hace el responsable del equipo | E1 Act. 2; D-17; REQ-ACC-13 | *Participante externo*, que no tiene cuenta |
 | **Participante externo** | Persona **sin cuenta** cuya disponibilidad se necesita para coordinar. Solo se lee de ella libre u ocupado, y solo con su consentimiento por invitación. Si es entidad o atributo está por decidir (D-8) | `REPLANTEO.md` §4.8; R-13, R-14; D-17 | *Colaborador*, que sí tiene cuenta |
 | **Organización** | Cliente que crea las cuentas, asigna roles y decide el plan. No es actor del negocio | E1 Act. 2; R-45 | — |
+| **Organización personal** | Organización de una sola cuenta, que existe desde que esa cuenta se crea. No tiene administrador ni equipos. Es donde vive lo de esa persona, y no cambia al afiliarse. *Propuesto el 6 de noviembre de 2026* | REQ-ADM-01 | *Organización de empresa* |
+| **Organización de empresa** | Organización con administradores, cuentas propias, cuentas afiliadas y equipos. *Propuesto el 6 de noviembre de 2026* | REQ-ADM-01 | *Organización personal* |
+| **Administrador** | Cuenta con autoridad sobre una organización de empresa: sus cuentas, sus afiliaciones y sus equipos. **No es un tipo de gerente**: no le da acceso al trabajo de ningún equipo ni al contenido de ninguna cuenta. Puede haber varios y nunca ninguno. *Propuesto el 6 de noviembre de 2026* | REQ-ADM-02, 03 | *Gerente*, que es responsable de un equipo |
+| **Cuenta propia** | Cuenta que dio de alta la organización de empresa. Sobre ella la organización decide plan, suspensión, baja y contraseña (REQ-ACC-12). *Propuesto el 6 de noviembre de 2026* | REQ-ADM-09, 15 | *Cuenta afiliada* |
+| **Afiliación** | Pertenencia de una cuenta personal a una organización de empresa, que propone un administrador y **acepta la persona**. La cuenta sigue siendo de su titular, lo suyo sigue donde estaba y la empresa no lo ve; mientras dura, tiene el Plan Empresarial. Se la llama **cuenta afiliada**. *Propuesto el 6 de noviembre de 2026* | REQ-ADM-17 a 27 | *Cuenta propia*; *Participante externo*, que no tiene cuenta |
 
 ## 2. Agentes
 
@@ -72,6 +77,7 @@
 | **Lienzo** | Columna web de 840 px con el objeto en curso y el registro de lo cerrado | `design/ARQUITECTURA-VISUAL-WEB.md` §2 | — |
 | **Tarjeta de confirmación** | Presentación de la acción exacta, sus datos y lo que es irreversible, antes de ejecutarla | RN-ER-03; P-03 | Un «¿estás seguro?» genérico, que no la cumple |
 | **Ajustes** | Configuración que se fija una vez. No es sección: se abre por encima, sin barra de pestañas | R-33, R-34, R-43 | — |
+| **Área de administración** | Página de la web, solo para administradores, con las cuentas, las invitaciones y los equipos de la organización. **No es una sección** (R-32): se entra desde el pie de la navegación, junto a Ajustes, y no tiene conversación. En pantalla se llama «Administración». *Propuesto el 6 de noviembre de 2026* | REQ-ADM-05; `specs/08-administracion/spec.md` §5 | *Sección*; *Ajustes* |
 
 **Regla de redacción (R-40):** ninguno de los términos de esta sección aparece en textos dirigidos al usuario. Son vocabulario del equipo.
 
