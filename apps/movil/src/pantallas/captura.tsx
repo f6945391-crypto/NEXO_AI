@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { ConversacionAsistente, RespuestaAsistente, type DecisionAsistente, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
+import { ConversacionAsistente, Perfil, RespuestaAsistente, type DecisionAsistente, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
 import { Aviso, Boton } from '../componentes';
 import { conSesion, mensajeDeError, SIN_CONEXION } from '../sesion';
+import { elementosDe, textoDelSeparador, type Elemento } from '../separador';
 import { color, espaciado, tipografia } from '../tokens';
 
 // T-021 · R-36, P-11. La capa de captura sube sobre la sección en la que estás y no navega. No hay camino
@@ -10,6 +11,8 @@ import { color, espaciado, tipografia } from '../tokens';
 // T-035 · specs/07-agente/plan.md §9 · REQ-CAP-01, 23. Habla con el asistente por las mismas rutas que la
 // web y muestra la misma tarjeta: lo que se ve lo arma la API, y la confirmación es la de Operaciones.
 // Cada tipo de turno se ve distinto: la tarjeta que espera tu confirmación, lo que quedó en espera y un fallo.
+// T-039 · REQ-AGT-03: la capa ya no se vacía. Abre con lo que se está pidiendo y lo anterior, separados por
+// una línea con la hora y lo que se hizo, y «Ver anteriores» trae lo más viejo.
 
 const hora = (iso: string, zona?: string) =>
   new Intl.DateTimeFormat('es', { timeZone: zona, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso));
@@ -110,28 +113,53 @@ export function CapaCaptura({
   alSalir: () => void;
 }) {
   const [borrador, setBorrador] = useState('');
-  const [turnos, setTurnos] = useState<TurnoAsistente[]>([]);
+  const [elementos, setElementos] = useState<Elemento[]>([]);
   const [pendiente, setPendiente] = useState<string | null>(null);
-  // REQ-AGT-01: tras cerrarse una acción, lo siguiente que se pide empieza en limpio
-  const [cerrada, setCerrada] = useState(false);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [zona, setZona] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
+  const [trayendo, setTrayendo] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Al poner arriba lo anterior no se baja hasta el final: se queda donde se estaba leyendo
+  const anclado = useRef(false);
 
-  // Al abrir la capa, la conversación abierta: lo que espera confirmación o quedó en espera sigue ahí
+  // Al abrir la capa: lo que se está pidiendo y lo anterior (dos tramos), y lo que espera confirmación
   const cargar = useCallback(async () => {
     try {
-      const r = await conSesion('/asistente/conversacion');
+      const r = await conSesion('/asistente/conversacion?limite=2');
       if (!r) return alSalir();
       const conversacion = ConversacionAsistente.safeParse(r.cuerpo);
       if (r.estado === 200 && conversacion.success) {
-        // T-038: por ahora solo el episodio abierto, como antes; el historial con separadores es de T-039
-        setTurnos(conversacion.data.episodios.find((e) => e.id === conversacion.data.episodioAbierto)?.turnos ?? []);
+        setElementos(elementosDe(conversacion.data.episodios));
         setPendiente(conversacion.data.pendiente);
+        setCursor(conversacion.data.hayAnteriores ? conversacion.data.cursor : null);
       }
+      // P-05: la hora de las líneas, en la zona del perfil
+      const perfil = await conSesion('/perfil');
+      const leido = perfil ? Perfil.safeParse(perfil.cuerpo) : null;
+      if (leido?.success && leido.data.zonaHoraria) setZona(leido.data.zonaHoraria);
     } catch {
       setError(SIN_CONEXION);
     }
   }, [alSalir]);
+
+  async function traerAnteriores() {
+    if (!cursor || trayendo) return;
+    setTrayendo(true);
+    try {
+      const r = await conSesion(`/asistente/conversacion?limite=3&antes=${encodeURIComponent(cursor)}`);
+      if (!r) return alSalir();
+      const conversacion = ConversacionAsistente.safeParse(r.cuerpo);
+      if (r.estado !== 200 || !conversacion.success) return setError(mensajeDeError(r.cuerpo, 'No se pudo traer lo anterior.'));
+      anclado.current = true;
+      setElementos((previos) => [...elementosDe(conversacion.data.episodios), ...previos]);
+      setCursor(conversacion.data.hayAnteriores ? conversacion.data.cursor : null);
+    } catch {
+      setError(SIN_CONEXION);
+    } finally {
+      setTrayendo(false);
+    }
+  }
 
   useEffect(() => {
     if (visible) void cargar();
@@ -149,9 +177,13 @@ export function CapaCaptura({
       if (!r) return alSalir();
       const respuesta = RespuestaAsistente.safeParse(r.cuerpo);
       if (r.estado !== 200 || !respuesta.success) return setError(mensajeDeError(r.cuerpo, 'El asistente no pudo responder. Inténtalo de nuevo.'));
-      setTurnos((previos) => [...previos.filter((t) => t.id !== provisional), ...respuesta.data.turnos]);
+      const { turnos, cierre, episodioId } = respuesta.data;
+      setElementos((previos) => [
+        ...previos.filter((e) => e.clase !== 'turno' || e.turno.id !== provisional),
+        ...turnos.map((turno): Elemento => ({ clase: 'turno', turno })),
+        ...(cierre ? [{ clase: 'separador' as const, id: `separador-${episodioId}`, cierre }] : []),
+      ]);
       setPendiente(respuesta.data.pendiente);
-      setCerrada(respuesta.data.episodioCerrado);
       if (respuesta.data.turnos.some((t) => t.tipo === 'resultado')) alCambiarAgenda();
     } catch {
       setError(SIN_CONEXION);
@@ -166,8 +198,7 @@ export function CapaCaptura({
     setBorrador('');
     // Lo escrito se ve al instante, sin esperar al asistente (corrección del 29 de octubre de 2026)
     const provisional: TurnoAsistente = { id: crypto.randomUUID(), en: new Date().toISOString(), tipo: 'persona', texto };
-    setTurnos((previos) => (cerrada ? [provisional] : [...previos, provisional]));
-    setCerrada(false);
+    setElementos((previos) => [...previos, { clase: 'turno', turno: provisional }]);
     void hablar('/asistente/mensajes', { texto }, provisional.id);
   }
 
@@ -184,11 +215,39 @@ export function CapaCaptura({
             </Pressable>
           </View>
 
-          {turnos.length > 0 && (
-            <ScrollView ref={lista} onContentSizeChange={() => lista.current?.scrollToEnd({ animated: true })} style={estilos.turnos} contentContainerStyle={estilos.turnosContenido}>
-              {turnos.map((turno) => (
-                <Turno key={turno.id} turno={turno} pendiente={pendiente} ocupado={ocupado} alDecidir={(d) => void hablar('/asistente/decisiones', d)} />
-              ))}
+          {elementos.length > 0 && (
+            <ScrollView
+              ref={lista}
+              maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+              onContentSizeChange={() => {
+                if (anclado.current) {
+                  anclado.current = false;
+                  return;
+                }
+                lista.current?.scrollToEnd({ animated: true });
+              }}
+              style={estilos.turnos}
+              contentContainerStyle={estilos.turnosContenido}
+            >
+              {cursor && (
+                <Pressable accessibilityRole="button" onPress={() => void traerAnteriores()} disabled={trayendo} style={estilos.anteriores}>
+                  <Text style={estilos.anterioresTexto}>{trayendo ? 'Trayendo…' : 'Ver anteriores'}</Text>
+                </Pressable>
+              )}
+              {elementos.map((elemento) => {
+                if (elemento.clase === 'turno') {
+                  const { turno } = elemento;
+                  return <Turno key={turno.id} turno={turno} pendiente={pendiente} ocupado={ocupado} alDecidir={(d) => void hablar('/asistente/decisiones', d)} />;
+                }
+                const texto = textoDelSeparador(elemento.cierre, zona ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
+                return (
+                  <View key={elemento.id} role="separator" aria-label={texto} style={estilos.separador}>
+                    <View style={estilos.separadorLinea} />
+                    <Text style={estilos.separadorTexto}>{texto}</Text>
+                    <View style={estilos.separadorLinea} />
+                  </View>
+                );
+              })}
             </ScrollView>
           )}
           {ocupado && <Text style={estilos.suave}>Pensando…</Text>}
@@ -234,5 +293,10 @@ const estilos = StyleSheet.create({
   cuerpo: { fontSize: tipografia.cuerpo, color: color.texto.fuerte },
   suave: { fontSize: tipografia.etiqueta, lineHeight: 20, color: color.texto.suave },
   tachado: { textDecorationLine: 'line-through', color: color.texto.suave },
+  separador: { flexDirection: 'row', alignItems: 'center', gap: espaciado[8], paddingVertical: espaciado[4] },
+  separadorLinea: { flex: 1, height: 1, backgroundColor: color.borde.base },
+  separadorTexto: { fontSize: 12, color: color.texto.suave },
+  anteriores: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: espaciado[16], borderWidth: 1, borderColor: color.borde.fuerte, borderRadius: 12 },
+  anterioresTexto: { fontSize: tipografia.etiqueta, fontWeight: '600', color: color.marca.base },
   entrada: { minHeight: 72, padding: espaciado[12], borderWidth: 1, borderColor: color.borde.fuerte, borderRadius: 12, fontSize: tipografia.cuerpo, color: color.texto.fuerte, textAlignVertical: 'top' },
 });

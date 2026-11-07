@@ -39,6 +39,15 @@ export const DecisionAsistente = z.discriminatedUnion('decision', [
 ]);
 export type DecisionAsistente = z.infer<typeof DecisionAsistente>;
 
+// T-038 · plan §14.6 · REQ-AGT-03: cómo terminó un episodio, para el separador. Lo arma el servidor con su
+// Operación; el cliente solo lo pinta. Sin acción: se cerró sin confirmar ni descartar nada
+// `guardado` (decisión 27): una tarea quedó en espera; a propósito no es `registrado`, porque la tarea aún no existe
+export const DesenlaceEpisodio = z.enum(['registrado', 'movido', 'cancelado', 'descartado', 'guardado', 'sin_accion']);
+export type DesenlaceEpisodio = z.infer<typeof DesenlaceEpisodio>;
+
+export const CierreEpisodio = z.strictObject({ en: Instante, desenlace: DesenlaceEpisodio, titulo: z.string().nullable() });
+export type CierreEpisodio = z.infer<typeof CierreEpisodio>;
+
 // Respuesta de las dos rutas anteriores: solo los turnos nuevos
 export const RespuestaAsistente = z.strictObject({
   // T-038: el episodio, una intención con su acción (glosario). Es el id de lo que antes se llamaba conversación
@@ -48,16 +57,10 @@ export const RespuestaAsistente = z.strictObject({
   pendiente: z.uuid().nullable(),
   // REQ-AGT-01: la acción se cerró y la próxima solicitud empieza otro episodio. La transcripción sigue (REQ-AGT-03)
   episodioCerrado: z.boolean(),
+  // T-039: cómo se cerró, para el separador; nulo mientras sigue abierto
+  cierre: CierreEpisodio.nullable(),
 });
 export type RespuestaAsistente = z.infer<typeof RespuestaAsistente>;
-
-// T-038 · plan §14.6 · REQ-AGT-03: cómo terminó un episodio, para el separador. Lo arma el servidor con su
-// Operación; el cliente solo lo pinta. Sin acción: se cerró sin confirmar ni descartar nada
-export const DesenlaceEpisodio = z.enum(['registrado', 'movido', 'cancelado', 'descartado', 'sin_accion']);
-export type DesenlaceEpisodio = z.infer<typeof DesenlaceEpisodio>;
-
-export const CierreEpisodio = z.strictObject({ en: Instante, desenlace: DesenlaceEpisodio, titulo: z.string().nullable() });
-export type CierreEpisodio = z.infer<typeof CierreEpisodio>;
 
 export const EpisodioAsistente = z.strictObject({
   id: z.uuid(),

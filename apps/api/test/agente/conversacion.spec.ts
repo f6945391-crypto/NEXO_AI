@@ -30,6 +30,7 @@ const GUION: ReglaGuion[] = [
   { si: '^mejor a las 5$', pasos: registrar('17:00') },
   { si: '^agéndame algo con vasco$', pasos: [{ llamadas: [{ nombre: 'agenda_registrar_evento', argumentos: { titulo: 'Algo con Vasco' } }] }] },
   { si: '^hola$', pasos: [{ texto: 'Hola, ¿qué hacemos?' }] },
+  { si: '^recuérdame (.+)$', pasos: [{ llamadas: [{ nombre: 'captura_guardar_tarea', argumentos: { texto: '$1', clase: 'tarea' } }] }] },
 ];
 const simulado = new ModeloSimulado(GUION);
 
@@ -112,6 +113,8 @@ describe('T-032 · conversación con el asistente', () => {
       expect(resultado.operacion.estado).toBe('ejecutada');
       expect(resultado.texto).toMatch(/^Listo: «Dentista» quedó en tu calendario el .+, de 16:00 – 17:00 \(hora de Lima \(GMT-5\)\)\.$/);
       expect(hecha).toMatchObject({ pendiente: null, episodioCerrado: true });
+      // T-039: la respuesta trae cómo se cerró, para el separador
+      expect(hecha.cierre).toMatchObject({ desenlace: 'registrado', titulo: 'Dentista' });
       // Tras proponer, el grafo espera sin volver al modelo, y comunicar el resultado tampoco lo llama
       expect(simulado.peticiones).toHaveLength(1);
     });
@@ -221,6 +224,16 @@ describe('T-032 · conversación con el asistente', () => {
       expect(cerrado!.turnos[0]!.id).toBe(primera.turnos[0]!.id);
     });
 
+    it('guardar una tarea en espera cierra el episodio como «guardado», no como registrado (decisión 27)', async () => {
+      const r = await enviar('Recuérdame pagar el recibo');
+      expect(tipos(r.turnos)).toEqual(['persona', 'en_espera']);
+      expect(r).toMatchObject({ episodioCerrado: true, cierre: { desenlace: 'guardado', titulo: 'pagar el recibo' } });
+      const [episodio] = (await leer()).episodios;
+      expect(episodio!.cierre?.desenlace).toBe('guardado');
+      // Lo siguiente empieza otro episodio
+      expect((await enviar('Hola')).episodioId).not.toBe(r.episodioId);
+    });
+
     it('descartar deja el episodio cerrado como «descartado»', async () => {
       const r = await enviar('Agéndame dentista el viernes a las 4');
       await decidir({ operacionId: r.pendiente, decision: 'descartar' });
@@ -230,15 +243,17 @@ describe('T-032 · conversación con el asistente', () => {
     });
 
     it('el punto de control ya no guarda lo que ve la persona (plan §14.2)', async () => {
-      await enviar('Agéndame dentista el viernes a las 4');
+      const r = await enviar('Agéndame dentista el viernes a las 4');
+      // B2: se mide tras confirmar, con el episodio entero
+      await decidir({ operacionId: r.pendiente, decision: 'confirmar' });
       const guardado = (await prisma.puntoControlAgente.findFirstOrThrow()).datos as { puntos: Record<string, Record<string, [string, string, string | null]>> };
       const textos = Object.values(guardado.puntos[''] ?? {}).map(([punto]) => Buffer.from(punto, 'base64').toString('utf8'));
       expect(textos.length).toBeGreaterThan(0);
       for (const texto of textos) expect(texto).not.toContain('"turnos"');
-      expect(await prisma.turnoTranscripcion.count()).toBe(2);
-      // B2 del plan de pruebas: con una propuesta y sus 2 puntos se midieron 5 546 bytes el 5 de noviembre
-      // de 2026 (unos 8 KB antes de T-038). La meta de menos de 2 KB no se alcanza: ver tasks.md, T-038
-      expect(Buffer.byteLength(JSON.stringify(guardado), 'utf8')).toBeLessThan(6_000);
+      expect(await prisma.turnoTranscripcion.count()).toBe(3);
+      // B2 del plan de pruebas, medido tras confirmar (T-039): 7 777 bytes el 6 de noviembre de 2026 (5 546 con
+      // la propuesta abierta). La meta de menos de 2 KB no se alcanza: ver tasks.md, T-038 y T-039
+      expect(Buffer.byteLength(JSON.stringify(guardado), 'utf8')).toBeLessThan(8_000);
     });
 
     it('«ver anteriores»: la página siguiente llega con el cursor, sin repetir episodios', async () => {

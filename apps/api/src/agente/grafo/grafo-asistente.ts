@@ -208,8 +208,8 @@ export function construirGrafo(
       const aviso = estado.enEspera ? turnoTexto(SIN_CALENDARIO) : await enEspera(estado, 'permiso_faltante', SIN_CALENDARIO);
       return con([...turnos, aviso], { mensajes: [...mensajes, deAsistente(SIN_CALENDARIO)], siguiente: 'fin' });
     }
-    // REQ-AGT-02: una tarea guardada en espera no necesita otra vuelta del modelo
-    if (guardada && !pendiente) return con(turnos, { mensajes, siguiente: 'fin' });
+    // REQ-AGT-02: una tarea guardada en espera no necesita otra vuelta del modelo, y cierra el episodio (decisión 27)
+    if (guardada && !pendiente) return con(turnos, { mensajes, cerrada: true, siguiente: 'fin' });
     const siguiente: Siguiente = pendiente ? 'esperar' : faltante ? 'preguntar' : 'interpretar';
     return con(turnos, { mensajes, pendiente, faltante, siguiente });
   }

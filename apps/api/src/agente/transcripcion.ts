@@ -23,17 +23,22 @@ const DESENLACE_POR_TIPO: Readonly<Record<string, DesenlaceEpisodio>> = {
   'agenda.cancelar': 'cancelado',
 };
 
-type OperacionDelEpisodio = { tipo: string; estado: string; carga: unknown; resultado: unknown };
+type OperacionDelEpisodio = { tipo: string; estado: string; motivoEspera?: string | null; carga: unknown; resultado: unknown };
 
-// El separador lo arma el código con la Operación que cerró el episodio: la ejecutada si la hay, si no la
-// última descartada. Lo demás (un fallo, una pregunta sin respuesta) es «sin acción»
+// El separador lo arma el código con la Operación que cerró el episodio: la ejecutada si la hay; si no, una
+// tarea guardada en espera (decisión 27); si no, la última descartada. Lo demás (un fallo, una pregunta sin
+// respuesta) es «sin acción»
 export function cierreDe(cerradaEn: Date | null, operaciones: OperacionDelEpisodio[]): CierreEpisodio | null {
   if (!cerradaEn) return null;
-  const op = operaciones.find((o) => o.estado === 'ejecutada') ?? operaciones.find((o) => o.estado === 'descartada');
+  const op =
+    operaciones.find((o) => o.estado === 'ejecutada') ??
+    operaciones.find((o) => o.estado === 'en_espera' && o.motivoEspera === 'funcion_por_llegar') ??
+    operaciones.find((o) => o.estado === 'descartada');
   if (!op) return { en: cerradaEn.toISOString(), desenlace: 'sin_accion', titulo: null };
-  const desenlace = op.estado === 'descartada' ? 'descartado' : (DESENLACE_POR_TIPO[op.tipo] ?? 'sin_accion');
+  const desenlace = op.estado === 'descartada' ? 'descartado' : op.estado === 'en_espera' ? 'guardado' : (DESENLACE_POR_TIPO[op.tipo] ?? 'sin_accion');
   const evento = EventoAgenda.safeParse(op.resultado);
-  const deCarga = (op.carga as { titulo?: unknown } | null)?.titulo;
+  const carga = op.carga as { titulo?: unknown; texto?: unknown } | null;
+  const deCarga = carga?.titulo ?? carga?.texto;
   const titulo = evento.success ? evento.data.titulo : typeof deCarga === 'string' ? deCarga : null;
   return { en: cerradaEn.toISOString(), desenlace, titulo };
 }
@@ -82,7 +87,7 @@ export class TranscripcionService {
     const [turnos, operaciones] = await Promise.all([
       db.turnoTranscripcion.findMany({ where: { perfilId: contexto.perfilId, conversacionId: { in: ids } }, orderBy: { secuencia: 'asc' } }),
       db.operacion.findMany({
-        where: { perfilId: contexto.perfilId, conversacionId: { in: ids }, estado: { in: ['ejecutada', 'descartada'] } },
+        where: { perfilId: contexto.perfilId, conversacionId: { in: ids }, estado: { in: ['ejecutada', 'descartada', 'en_espera'] } },
         orderBy: { creadaEn: 'desc' },
       }),
     ]);
@@ -96,6 +101,18 @@ export class TranscripcionService {
       }))
       .reverse();
     return { episodios, hayAnteriores, cursor: hayAnteriores ? pagina.at(-1)!.id : null };
+  }
+
+  // T-039: el cierre de un episodio recién cerrado, para que la respuesta lo traiga y el cliente pinte el separador
+  async cierre(contexto: ContextoSolicitud, episodioId: string): Promise<CierreEpisodio | null> {
+    const db = this.datos(contexto);
+    const episodio = await db.conversacionAgente.findFirst({ where: { id: episodioId, perfilId: contexto.perfilId } });
+    if (!episodio || episodio.estado !== 'cerrada') return null;
+    const operaciones = await db.operacion.findMany({
+      where: { perfilId: contexto.perfilId, conversacionId: episodioId, estado: { in: ['ejecutada', 'descartada', 'en_espera'] } },
+      orderBy: { creadaEn: 'desc' },
+    });
+    return cierreDe(episodio.cerradaEn ?? episodio.ultimaActividadEn, operaciones);
   }
 
   private datos(contexto: ContextoSolicitud) {

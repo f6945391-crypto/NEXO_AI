@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
   ClaveAlcanceGoogle,
+  ConversacionAsistente,
   DecisionAsistente,
   EnlaceGoogleRespuesta,
   IngresoRespuesta,
@@ -173,6 +174,19 @@ export async function decidirEnAsistente(decision: DecisionAsistente): Promise<R
   const valida = DecisionAsistente.safeParse(decision);
   if (!valida.success) return { error: 'No se pudo enviar tu decisión.' };
   return hablarConAsistente('/asistente/decisiones', valida.data);
+}
+
+// T-039 · REQ-AGT-03: «Ver anteriores» trae la página anterior de la conversación
+export async function verAnteriores(cursor: string): Promise<{ conversacion?: ConversacionAsistente; error?: string }> {
+  const token = await tokenDeAcceso();
+  try {
+    const respuesta = await llamarApi(`/asistente/conversacion?antes=${encodeURIComponent(cursor)}&limite=3`, { token });
+    const leida = ConversacionAsistente.safeParse(respuesta.cuerpo);
+    if (respuesta.estado !== 200 || !leida.success) return { error: mensajeDeError(respuesta.cuerpo, 'No se pudo traer lo anterior.') };
+    return { conversacion: leida.data };
+  } catch {
+    return { error: SIN_CONEXION };
+  }
 }
 
 // REQ-ACC-12: lo único que el usuario hace con su cuenta.

@@ -47,6 +47,11 @@ test.describe('web.asistente-agenda-y-confirma', () => {
     await expect(lista).toContainText('Hora de Lima (GMT-5)');
     await expect(lista.getByRole('listitem')).toHaveCount(1);
     await expect(lista).toContainText('23:00 – 00:00 Revisión');
+
+    // T-039 · REQ-AGT-03: lo de antes sigue a la vista, separado por una línea que dice qué se hizo
+    await expect(page.getByText(/^Listo: «Revisión» quedó en tu calendario/)).toBeVisible();
+    await expect(page.getByRole('separator', { name: /Se registró «Revisión»$/ })).toBeVisible();
+    await expect(page.getByText('¿Qué hacemos?')).toHaveCount(0);
   });
 
   test('descartar no registra nada', async ({ page }) => {
@@ -80,3 +85,37 @@ test.describe('web.asistente-en-espera', () => {
     await expect(page.getByText('No sé hacer eso todavía.')).toBeVisible();
   });
 });
+
+test.describe('web.asistente-historial', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('tras recargar se ve lo anterior con sus líneas; «Ver anteriores» trae lo más viejo y desaparece al no quedar más (REQ-AGT-03)', async ({ page }) => {
+    await entrar(page, cuentas.historial.correo);
+    // Persona sin historial: el blanco inicial con ejemplos
+    await expect(page.getByRole('heading', { name: '¿Qué hacemos?' })).toBeVisible();
+
+    for (let i = 0; i < 4; i++) {
+      await pedir(page, 'Agéndame una llamada mañana a las 9');
+      const tarjeta = page.getByRole('article', { name: 'Para confirmar' }).last();
+      await tarjeta.getByRole('button', { name: 'Descartar' }).click();
+      await expect(page.getByRole('separator')).toHaveCount(i + 1);
+    }
+    await expect(page.getByRole('separator').first()).toHaveAccessibleName(/^[A-ZÁÉÍÓÚ][a-záéíóú]+ \d+, \d{2}:\d{2} · Se descartó «Llamada»$/);
+
+    await page.reload();
+    await expect(page.getByRole('heading', { name: '¿Qué hacemos?' })).toHaveCount(0);
+    await expect(page.getByRole('separator')).toHaveCount(3);
+    await page.getByRole('button', { name: 'Ver anteriores' }).click();
+    await expect(page.getByRole('separator')).toHaveCount(4);
+    await expect(page.getByRole('button', { name: 'Ver anteriores' })).toHaveCount(0);
+    // R-40: la interfaz no se nombra a sí misma
+    await expect(page.getByText(/episodio|transcripci[oó]n|turno/i)).toHaveCount(0);
+  });
+
+  test('guardar una tarea deja la línea «Tarea guardada», no «registrado» (decisión 27)', async ({ page }) => {
+    await entrar(page, cuentas.asistenteEspera.correo);
+    await pedir(page, 'Recuérdame comprar pan');
+    await expect(page.getByRole('separator', { name: /· Tarea guardada$/ })).toBeVisible();
+  });
+});
+

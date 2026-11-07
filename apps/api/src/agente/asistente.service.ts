@@ -202,6 +202,7 @@ export class AsistenteService {
       turnos,
       pendiente: estado.__interrupt__?.length ? estado.pendiente : null,
       episodioCerrado,
+      cierre: episodioCerrado ? await this.transcripcion.cierre(contexto, episodioId) : null,
     };
   }
 

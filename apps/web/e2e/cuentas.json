@@ -56,5 +56,10 @@
     "correo": "asistente-espera-e2e@nexoai.test",
     "rol": "gerente",
     "plan": "empresarial"
+  },
+  "historial": {
+    "correo": "historial-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
   }
 }

@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect, useRef, useState, useTransition, type FormEvent, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useTransition, type FormEvent, type RefObject } from 'react';
 import type { ConversacionAsistente, DecisionAsistente, OperacionRespuesta, TurnoAsistente } from '@nexoai/contratos';
-import { decidirEnAsistente, enviarAlAsistente } from '../acciones';
+import { decidirEnAsistente, enviarAlAsistente, verAnteriores } from '../acciones';
+import { elementosDe, textoDelSeparador, type Elemento } from '../../lib/separador';
 import { IconoEnviar } from './iconos';
 
 // T-034 · specs/07-agente/plan.md §9 · REQ-CAP-23. La conversación con el asistente. Cada turno se muestra
 // según su tipo, para que no se parezca lo que significa cosas distintas: una tarjeta que espera tu
 // confirmación, algo que quedó en espera y un fallo. Las tarjetas y los avisos los escribe la API; aquí
 // solo se pintan. Ningún texto nombra la interfaz (R-40).
+// T-039 · REQ-AGT-03: la conversación ya no se vacía al cerrarse una acción. Se ve lo de antes, con una línea
+// que dice cuándo terminó y qué se hizo, y «Ver anteriores» trae lo más viejo sin perder lo que se leía.
 
 type Alternativa = { inicio: string; fin: string };
 
@@ -152,6 +155,14 @@ function Turno({ turno, pendiente, ocupado, zona, alDecidir }: { turno: TurnoAsi
   }
 }
 
+function Separador({ texto }: { texto: string }) {
+  return (
+    <li className="separador" role="separator" aria-label={texto}>
+      <span>{texto}</span>
+    </li>
+  );
+}
+
 export function Conversacion({
   inicial,
   ejemplos,
@@ -163,33 +174,46 @@ export function Conversacion({
   zona?: string;
   entrada: RefObject<HTMLTextAreaElement | null>;
 }) {
-  // T-038: por ahora solo el episodio abierto, como antes; el historial con separadores es de T-039
-  const [turnos, setTurnos] = useState<TurnoAsistente[]>(inicial?.episodios.find((e) => e.id === inicial.episodioAbierto)?.turnos ?? []);
+  const [elementos, setElementos] = useState<Elemento[]>(() => elementosDe(inicial?.episodios ?? []));
   const [pendiente, setPendiente] = useState<string | null>(inicial?.pendiente ?? null);
-  // REQ-AGT-01: tras cerrarse una acción, lo siguiente que se pide empieza en limpio
-  const [cerrada, setCerrada] = useState(false);
+  const [cursor, setCursor] = useState<string | null>(inicial?.hayAnteriores ? inicial.cursor : null);
   const [borrador, setBorrador] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [ocupado, enTransicion] = useTransition();
+  const [trayendo, enTransicionAnteriores] = useTransition();
 
   const final = useRef<HTMLDivElement>(null);
+  const contenido = useRef<HTMLDivElement>(null);
+  // Al poner arriba lo anterior se conserva lo que se estaba leyendo: se guarda la altura antes y se compensa después
+  const altoAntes = useRef<number | null>(null);
+
+  useLayoutEffect(() => {
+    if (altoAntes.current === null || !contenido.current) return;
+    contenido.current.scrollTop += contenido.current.scrollHeight - altoAntes.current;
+    altoAntes.current = null;
+  }, [elementos]);
 
   // Lo último que se dijo queda siempre a la vista
+  const ultimo = elementos.at(-1);
   useEffect(() => {
     final.current?.scrollIntoView?.({ block: 'end' });
-  }, [turnos.length, ocupado]);
+  }, [ultimo, ocupado]);
 
   // `provisional`: el mensaje de la persona que ya se muestra, mientras el asistente responde. La respuesta
-  // trae el definitivo, que lo reemplaza.
+  // trae el definitivo, que lo reemplaza; si cerró la acción, trae también cómo terminó.
   function aplicar(r: Awaited<ReturnType<typeof enviarAlAsistente>>, provisional?: string) {
     if (!r.respuesta) {
+      setElementos((previos) => previos.filter((e) => e.clase !== 'turno' || e.turno.id !== provisional));
       setError(r.error ?? 'El asistente no pudo responder.');
       return;
     }
     const { respuesta } = r;
-    setTurnos((previos) => [...previos.filter((t) => t.id !== provisional), ...respuesta.turnos]);
+    setElementos((previos) => [
+      ...previos.filter((e) => e.clase !== 'turno' || e.turno.id !== provisional),
+      ...respuesta.turnos.map((turno): Elemento => ({ clase: 'turno', turno })),
+      ...(respuesta.cierre ? [{ clase: 'separador' as const, id: `separador-${respuesta.episodioId}`, cierre: respuesta.cierre }] : []),
+    ]);
     setPendiente(respuesta.pendiente);
-    setCerrada(respuesta.episodioCerrado);
   }
 
   function enviar(evento?: FormEvent) {
@@ -200,8 +224,7 @@ export function Conversacion({
     setBorrador('');
     // Lo escrito se ve al instante, sin esperar al asistente (corrección del 29 de octubre de 2026)
     const provisional: TurnoAsistente = { id: crypto.randomUUID(), en: new Date().toISOString(), tipo: 'persona', texto };
-    setTurnos((previos) => (cerrada ? [provisional] : [...previos, provisional]));
-    setCerrada(false);
+    setElementos((previos) => [...previos, { clase: 'turno', turno: provisional }]);
     enTransicion(async () => aplicar(await enviarAlAsistente(texto), provisional.id));
   }
 
@@ -210,15 +233,34 @@ export function Conversacion({
     enTransicion(async () => aplicar(await decidirEnAsistente(decision)));
   }
 
+  function traerAnteriores() {
+    if (!cursor) return;
+    enTransicionAnteriores(async () => {
+      const r = await verAnteriores(cursor);
+      if (!r.conversacion) return setError(r.error ?? 'No se pudo traer lo anterior.');
+      const { conversacion } = r;
+      altoAntes.current = contenido.current?.scrollHeight ?? null;
+      setElementos((previos) => [...elementosDe(conversacion.episodios), ...previos]);
+      setCursor(conversacion.hayAnteriores ? conversacion.cursor : null);
+    });
+  }
+
   function usarEjemplo(ejemplo: string) {
     setBorrador(ejemplo);
     entrada.current?.focus();
   }
 
+  const zonaVista = zona ?? 'UTC';
+
   return (
     <section className="conversacion" aria-label="Asistente">
-      <div className="conversacion__contenido">
-        {turnos.length === 0 ? (
+      <div className="conversacion__contenido" ref={contenido}>
+        {cursor && (
+          <button type="button" className="ver-anteriores" onClick={traerAnteriores} disabled={trayendo}>
+            {trayendo ? 'Trayendo…' : 'Ver anteriores'}
+          </button>
+        )}
+        {elementos.length === 0 ? (
           <div className="blanco-inicial">
             <h2>¿Qué hacemos?</h2>
             <p>Pídelo con tus palabras. Antes de hacer nada que no se pueda deshacer, te lo enseño para que lo confirmes.</p>
@@ -234,9 +276,13 @@ export function Conversacion({
           </div>
         ) : (
           <ol className="mensajes">
-            {turnos.map((turno) => (
-              <Turno key={turno.id} turno={turno} pendiente={pendiente} ocupado={ocupado} zona={zona} alDecidir={decidir} />
-            ))}
+            {elementos.map((elemento) =>
+              elemento.clase === 'separador' ? (
+                <Separador key={elemento.id} texto={textoDelSeparador(elemento.cierre, zonaVista)} />
+              ) : (
+                <Turno key={elemento.turno.id} turno={elemento.turno} pendiente={pendiente} ocupado={ocupado} zona={zona} alDecidir={decidir} />
+              ),
+            )}
           </ol>
         )}
         {ocupado && (

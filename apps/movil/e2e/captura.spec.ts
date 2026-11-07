@@ -29,9 +29,16 @@ test.describe('movil.captura-propone-y-confirma', () => {
     await expect(tarjeta).toContainText('1 hora, porque no indicaste la hora de fin');
     await page.getByRole('button', { name: 'Confirmar' }).click();
     await expect(page.getByText(/^Listo: «Revisión» quedó en tu calendario/)).toBeVisible();
+    // T-039 · REQ-AGT-03: la línea que dice qué se hizo
+    await expect(page.getByRole('separator', { name: /Se registró «Revisión»$/ })).toBeVisible();
 
     await page.getByRole('button', { name: 'Cerrar' }).click();
     await expect(page.getByRole('button', { name: /^Revisión, 23:00 – 00:00$/ })).toBeVisible();
+
+    // Al volver a abrir la capa, lo anterior sigue ahí
+    await page.getByRole('button', { name: 'Pedir algo al asistente' }).click();
+    await expect(page.getByText(/^Listo: «Revisión» quedó en tu calendario/)).toBeVisible();
+    await expect(page.getByRole('separator', { name: /Se registró «Revisión»$/ })).toBeVisible();
   });
 });
 

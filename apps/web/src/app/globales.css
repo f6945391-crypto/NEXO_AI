@@ -311,6 +311,40 @@ body {
   margin-bottom: var(--espaciado-24);
 }
 
+/* T-039 · REQ-AGT-03: línea entre lo que se pidió antes y lo nuevo; texto pequeño, centrado y secundario */
+.separador {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-12);
+  color: var(--texto-suave);
+  font-size: 12px;
+}
+
+.separador::before,
+.separador::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--borde-base);
+}
+
+.ver-anteriores {
+  display: block;
+  margin: 0 auto var(--espaciado-16);
+  padding: var(--espaciado-8) var(--espaciado-16);
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-md);
+  background: var(--superficie-base);
+  color: var(--marca-base);
+  cursor: pointer;
+}
+
+.ver-anteriores:disabled {
+  color: var(--texto-suave);
+  cursor: default;
+}
+
 .mensajes {
   list-style: none;
   margin: 0;

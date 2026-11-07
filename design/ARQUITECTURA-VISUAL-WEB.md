@@ -103,7 +103,7 @@ Lo cerrado no se pierde al vaciar: queda en el registro.
 |---|---|
 | Lo que ve la persona | La **transcripción**: todo lo que pidió y lo que pasó, también tras recargar (REQ-AGT-03) |
 | Lo que lee el modelo | Solo el **episodio** abierto y la **nota de continuidad** (REQ-AGT-01 v2). Por eso la columna puede crecer sin que el modelo cargue más |
-| Separador entre episodios | Línea fina, texto pequeño centrado y color secundario: «Jueves 29, 16:12 · Dentista registrado». Lo arma el código con el tipo de Operación y el título: registrado, movido, cancelado, descartado. Si el episodio se cerró sin acción, solo la hora. No es un turno: se deduce del cambio de episodio |
+| Separador entre episodios | Línea fina, texto pequeño centrado y color secundario: «Jueves 29, 16:12 · Se registró «Dentista»». El verbo va primero para que concuerde con cualquier título (*cambiado en T-039, el 6 de noviembre de 2026; antes decía «Dentista registrado»*). Lo arma el código con el desenlace que manda el servidor: se registró, se movió, se canceló, se descartó, «Tarea guardada». Si el episodio se cerró sin acción, solo la fecha y la hora. No es un turno: se deduce del cambio de episodio |
 | «Ver anteriores» | Botón secundario al inicio de la lista. Trae la página anterior, la pone arriba y **conserva la posición de lectura**. Desaparece cuando no hay más |
 | Al abrir | Los últimos episodios con sus separadores. El blanco inicial con ejemplos solo aparece si la transcripción está vacía de verdad |
 | Vaciado | No hay vaciado manual en esta fase (decisión 23 de `specs/07-agente/spec.md` §5) |

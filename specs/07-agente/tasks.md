@@ -209,8 +209,25 @@ El pulido visual que no cambia comportamiento (tarjeta en conflicto, lienzo en m
 - **Decisión 27, tomada:** guardar una tarea en espera cierra el episodio con el desenlace `guardado` y el separador «Tarea guardada». Entra aquí: el nodo `herramientas` marca el cierre, y `DesenlaceEpisodio` suma `guardado`
 - **Hecho cuando:** tras confirmar y escribir otra cosa, la petición, la tarjeta y el «Listo» siguen visibles, con un separador y el mensaje nuevo debajo; al recargar la web o reabrir la capa se ve lo mismo; «Ver anteriores» trae un episodio más y desaparece cuando no hay más; en pantalla no aparecen «episodio», «turno» ni «transcripción» (R-40)
 - **Pruebas:** `web.asistente-agenda-y-confirma` (ampliada), `web.asistente-historial` (nueva), `movil.captura-propone-y-confirma` (ampliada)
+- **Estado:** hecha · 6 de noviembre de 2026
+- **«Hecho cuando», punto por punto:**
+  - ✔ Tras confirmar y escribir otra cosa, la petición, la tarjeta y el «Listo» siguen, con un separador y el mensaje nuevo debajo (`web.asistente-agenda-y-confirma`, `movil.captura-propone-y-confirma`)
+  - ✔ Al recargar la web o reabrir la capa se ve lo mismo (`web.asistente-historial`, `movil.captura-propone-y-confirma`)
+  - ✔ «Ver anteriores» trae un episodio más y desaparece cuando no hay más (`web.asistente-historial`)
+  - ✔ En pantalla no aparecen «episodio», «turno» ni «transcripción» (`web.asistente-historial`)
+  - ✔ Guardar una tarea cierra el episodio como `guardado`, con la línea «Tarea guardada» (`agente.transcripcion-persiste`, `web.asistente-historial`)
+  - ✔ B2 medido tras confirmar (`agente.transcripcion-persiste`)
+- **Notas de implementación:**
+  - **La respuesta trae `cierre`** (`RespuestaAsistente.cierre`), para pintar el separador sin recargar. Lo arma el servidor (`TranscripcionService.cierre`), como pide el plan §14.6.
+  - **Texto del separador: el verbo va primero** («Viernes 6, 20:42 · Se registró «Reunión»»), no «Reunión registrado». Así concuerda con cualquier título, sea masculino o femenino. Se cambió el ejemplo en `design/ARQUITECTURA-VISUAL-WEB.md` §5. Para descartado: «Se descartó «…»»; tarea en espera: «Tarea guardada»; sin acción: solo la fecha y la hora.
+  - El separador es un `li` con `role="separator"` y un `aria-label` con su texto; «Ver anteriores» es un botón con ese nombre. La web trae 3 tramos por página; el móvil abre con 2 (el que está en curso y el anterior) y trae 3 más con cada «Ver anteriores».
+  - Al poner arriba lo anterior, la web compensa la altura añadida para no mover lo que se leía; el móvil usa `maintainVisibleContentPosition` y no baja al final.
+  - El móvil pide `/perfil` al abrir la capa, para escribir la hora de los separadores en la zona del perfil (P-05).
+  - El texto del separador vive en `apps/web/src/lib/separador.ts` y, copiado tal cual, en `apps/movil/src/separador.ts`: mismos textos en las dos plataformas.
+  - Cuenta nueva de pruebas `historial` en `apps/web/e2e/cuentas.json`. Ninguna otra cambia de nombre.
+  - Las capturas antes y después (A1 a A6) las hace el equipo con `design/capturas/2026-11-04/herramientas/`; esta tarea no las genera.
+  - **B2:** tras confirmar, el punto de control ocupa **7 777 bytes**; con la propuesta abierta eran 5 546. La meta de menos de 2 KB sigue sin alcanzarse; la prueba fija el límite en 8 000 bytes
 - **Para las pruebas del equipo (A1 a A6):** las cuentas de `e2e/cuentas.json` no cambian de nombre; los nombres accesibles se conservan (`Para confirmar`, `Pídele algo al asistente`, `Enviar`, `Confirmar`, `Descartar`, `Asistente`, `Pedir algo al asistente`, `Cerrar`); el botón nuevo se llama `Ver anteriores` y el separador tiene `role="separator"` y un `aria-label` que dice qué es
-- **Estado:** pendiente
 
 ### T-040 · Nota de continuidad y evaluación por trayectoria
 

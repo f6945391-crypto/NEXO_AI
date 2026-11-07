@@ -433,5 +433,6 @@ Los tres usan `sinAislar` por ser trabajos de mantenimiento sobre todas las orga
 
 | Tarea | Ajuste |
 |---|---|
+| T-039 | `RespuestaAsistente` lleva `cierre` (el servidor lo arma) para que el separador se pinte sin recargar. El texto del separador empieza por el verbo («Se registró «…»») para concordar con cualquier título |
 | T-038 | Sin canal `turnosNuevos`: los nodos entregan sus turnos a un recolector de la invocación (`anotar`) y el servicio los guarda tras `invoke`. Cada episodio trae sus turnos en `episodios[].turnos`; la página es de episodios y el cursor es el id del más antiguo. Modelo Prisma `TurnoTranscripcion` sobre la tabla `turno_asistente`, con `secuencia` para el orden |
 

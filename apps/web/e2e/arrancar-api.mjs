@@ -56,7 +56,7 @@ for (const [clave, cuenta] of Object.entries(cuentas)) {
 process.env.CALENDARIO_SIMULADO = '1';
 const { calendarioDeDemostracion: calendario } = desdeApi('./dist/integraciones/calendario/calendario-simulado.js');
 // T-034: dos cuentas más para conversar con el asistente, que es el simulado con su guion
-for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera'].filter((c) => perfiles[c])) {
+for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial'].filter((c) => perfiles[c])) {
   const perfilId = perfiles[clave];
   await prisma.perfilUsuario.update({ where: { id: perfilId }, data: { debeCambiarContrasena: false, zonaHoraria: 'America/Lima' } });
   await prisma.consentimientoIntegracion.create({
