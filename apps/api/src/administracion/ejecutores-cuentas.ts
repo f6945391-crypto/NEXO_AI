@@ -68,7 +68,28 @@ abstract class EjecutorDeAdministracion<C> implements EjecutorOperacion<C>, OnMo
     return (await this.evaluar(contexto, carga)).vista;
   }
 
+  // Los tipos que pueden dejar a una cuenta sin la administración (REQ-ADM-03)
+  protected puedeQuitarAdministrador(): boolean {
+    return false;
+  }
+
   async ejecutar(contexto: ContextoSolicitud, carga: C): Promise<ResultadoEjecucion> {
+    if (!this.puedeQuitarAdministrador()) return this.evaluarYAplicar(contexto, carga);
+    // RT-02 · REQ-ADM-03: comprobar que queda otro administrador y aplicar el cambio no se cruza con otra
+    // confirmación de la misma empresa. La transacción toma el bloqueo de la fila de la organización con una
+    // escritura que no cambia nada (sin SQL a mano) y lo mantiene hasta que la acción termina; la siguiente espera
+    // y evalúa con lo ya escrito. Las escrituras de la acción no van dentro de esta transacción (RT-08, aparte).
+    const empresaId = this.empresa(contexto);
+    return this.prisma.deOrganizacion(empresaId).$transaction(
+      async (tx) => {
+        await tx.organizacion.update({ where: { id: empresaId }, data: { tipo: 'empresa' } });
+        return this.evaluarYAplicar(contexto, carga);
+      },
+      { maxWait: 10_000, timeout: 30_000 },
+    );
+  }
+
+  private async evaluarYAplicar(contexto: ContextoSolicitud, carga: C): Promise<ResultadoEjecucion> {
     const evaluacion = await this.evaluar(contexto, carga);
     if (!evaluacion.vista.confirmable) return { tipo: 'reproponer', vistaConfirmacion: evaluacion.vista };
     return this.aplicar(contexto, carga, evaluacion);
@@ -193,6 +214,10 @@ abstract class CambioDeEstado extends EjecutorDeAdministracion<CuentaCarga> {
   protected abstract readonly textoDesde: string;
   protected readonly irreversible: string | null = null;
   protected readonly consecuencia: string | null = null;
+  // Suspender y dar de baja quitan a la cuenta de los administradores activos; reactivar no
+  protected override puedeQuitarAdministrador(): boolean {
+    return this.hacia !== 'activa';
+  }
 
   protected async evaluar(contexto: ContextoSolicitud, carga: CuentaCarga): Promise<Evaluacion> {
     const { cuenta, motivo } = await this.cuentaPropia(contexto, carga.perfilId);
@@ -342,6 +367,9 @@ export class NombrarAdministrador extends EjecutorDeAdministracion<CuentaCarga> 
 export class QuitarAdministrador extends EjecutorDeAdministracion<CuentaCarga> {
   readonly tipo = 'administracion.quitar_administrador';
   readonly esquema = CuentaCarga;
+  protected override puedeQuitarAdministrador(): boolean {
+    return true;
+  }
 
   protected async evaluar(contexto: ContextoSolicitud, carga: CuentaCarga): Promise<Evaluacion> {
     const cuenta = await this.lecturas.cuentaDeLaEmpresa(this.empresa(contexto), carga.perfilId);

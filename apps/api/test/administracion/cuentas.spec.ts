@@ -148,6 +148,23 @@ describe('T-068 · cuentas de la organización', () => {
       const p = await proponer('administracion.quitar_administrador', { perfilId: ana });
       expect(p.vistaConfirmacion.motivoNoConfirmable).toBe(ULTIMO);
     });
+
+    // RT-02: dos administradoras se quitan la una a la otra a la vez; la comprobación y el cambio no se cruzan
+    it('dos confirmaciones a la vez no dejan a la organización sin administrador', async () => {
+      const beto = await propia({ administrador: true });
+      const suya = token((await http().post('/administracion/entrar').send({ correo: beto.correo, contrasena: CONTRASENA }).expect(200)).body);
+      for (let vuelta = 0; vuelta < 3; vuelta++) {
+        await prisma.miembroOrganizacion.updateMany({ where: { organizacionId: acme, perfilId: { in: [ana, beto.perfilId] } }, data: { administrador: true } });
+        const quitarABeto = await proponer('administracion.quitar_administrador', { perfilId: beto.perfilId });
+        const quitarAAna = await proponer('administracion.quitar_administrador', { perfilId: ana }, suya);
+        expect([quitarABeto.vistaConfirmacion.confirmable, quitarAAna.vistaConfirmacion.confirmable]).toEqual([true, true]);
+
+        const resultados = (await Promise.all([confirmar(quitarABeto.id), confirmar(quitarAAna.id, 200, suya)])).map((r) => OperacionRespuesta.parse(r));
+        expect(resultados.map((r) => r.estado).sort()).toEqual(['ejecutada', 'propuesta']);
+        expect(resultados.find((r) => r.estado === 'propuesta')!.vistaConfirmacion.motivoNoConfirmable).toBe(ULTIMO);
+        expect(await prisma.miembroOrganizacion.count({ where: { organizacionId: acme, estado: 'vigente', administrador: true } })).toBe(1);
+      }
+    });
   });
 
   describe('administracion.alta-con-contrasena-una-vez', () => {
