@@ -13,6 +13,8 @@
   --borde-fuerte: #b8c9d4;
   --estado-error: #b3261e;
   --estado-error-suave: #fbeae9;
+  /* Lo que se está recargando se atenúa; no es un color de design/tokens.json, es una opacidad */
+  --estado-cargando-opacidad: 0.6;
 
   --espaciado-8: 8px;
   --espaciado-12: 12px;
@@ -962,7 +964,7 @@ body {
 
 /* T-044 · REQ-CUN01-14, REQ-CUN01-15: Semana y Mes en el lienzo */
 .lienzo__cuerpo[aria-busy='true'] {
-  opacity: 0.6;
+  opacity: var(--estado-cargando-opacidad);
 }
 
 .periodo {
