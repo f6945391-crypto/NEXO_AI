@@ -3,6 +3,7 @@ import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { ListaAgenda, OperacionRespuesta, PropuestaEvento } from '@nexoai/contratos';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { ConsultaAgendaService } from '../../src/agenda/consulta-agenda.service';
 import { EjecutorHerramientas } from '../../src/agente/herramientas/ejecutor-herramientas';
 import type { EntornoHerramienta } from '../../src/agente/herramientas/herramienta';
 import { AppModule } from '../../src/app.module';
@@ -87,6 +88,31 @@ describe('T-031 · herramientas de agenda', () => {
     });
   });
 
+  // T-043 · REQ-CUN01-01, decisión 19 de 02-agenda
+  describe('agente.agenda.fin-al-dia-siguiente', () => {
+    it('«de 11 pm a 12» termina a las 00:00 del día siguiente, y «de 11 pm a 1 am», a la 01:00, sin decir que faltó el fin', async () => {
+      await persona();
+      for (const fin of ['00:00', '01:00']) {
+        const r = await usar('agenda_registrar_evento', { titulo: 'Cine', fecha: VIERNES, horaInicio: '23:00', horaFin: fin });
+        const op = OperacionRespuesta.parse((r.turno as { operacion: unknown }).operacion);
+        const carga = PropuestaEvento.parse((await prisma.operacion.findUniqueOrThrow({ where: { id: op.id } })).carga);
+        expect(carga).toMatchObject({ inicio: `${VIERNES}T23:00:00-05:00`, fin: `${diaSiguiente()}T${fin}:00-05:00` });
+        expect(op.vistaConfirmacion.datos.map((d) => d.etiqueta)).not.toContain('Duración');
+        // La tarjeta dice que el fin es otro día
+        expect(op.vistaConfirmacion.datos.find((d) => d.etiqueta === 'Hora')!.valor).toMatch(new RegExp(`^23:00 – ${fin} \\(.+\\)$`));
+      }
+    });
+
+    it('al mover solo la hora de fin a una anterior al inicio, el fin pasa al día siguiente', async () => {
+      const perfilId = await persona();
+      calendario.sembrar(perfilId, { titulo: 'Guardia', inicio: instante('22:00'), fin: instante('23:00'), zonaHoraria: 'America/Lima' });
+      const lista = ListaAgenda.parse(((await usar('agenda_consultar', { desde: VIERNES, hasta: VIERNES })).turno as { lista: unknown }).lista);
+      const r = await usar('agenda_modificar_evento', { eventoId: lista.compromisos[0]!.id, horaFin: '02:00' });
+      const carga = (await prisma.operacion.findUniqueOrThrow({ where: { id: r.operacionId! } })).carga as { fin: string };
+      expect(carga.fin).toBe(`${diaSiguiente()}T02:00:00-05:00`);
+    });
+  });
+
   describe('agente.herramientas-solo-proponen', () => {
     it('registrar, modificar y cancelar solo proponen: el calendario no recibe ninguna escritura (REQ-CUN01-03)', async () => {
       const perfilId = await persona();
@@ -146,12 +172,45 @@ describe('T-031 · herramientas de agenda', () => {
       expect(paraModelo.compromisos[0]).toMatchObject({ inicio: `${manana} 13:00`, fin: `${manana} 14:00` });
     });
 
+    it('un compromiso que aparece en Google entre dos consultas seguidas sale en la segunda (REQ-CUN01-13, decisión 18)', async () => {
+      const perfilId = await persona();
+      calendario.sembrar(perfilId, { titulo: 'Primero', inicio: instante('10:00'), fin: instante('11:00'), zonaHoraria: 'America/Lima' });
+      await usar('agenda_consultar', { desde: VIERNES, hasta: VIERNES });
+      calendario.sembrar(perfilId, { titulo: 'Recién creado', inicio: instante('12:00'), fin: instante('13:00'), zonaHoraria: 'America/Lima' });
+      const lecturas = calendario.llamadas.lecturas;
+      const lista = ListaAgenda.parse(((await usar('agenda_consultar', { desde: VIERNES, hasta: VIERNES })).turno as { lista: unknown }).lista);
+      expect(lista.compromisos.map((c) => c.titulo)).toEqual(['Primero', 'Recién creado']);
+      expect(calendario.llamadas.lecturas).toBeGreaterThan(lecturas);
+    });
+
     it('un rango de más de 31 días no se consulta', async () => {
       await persona();
       const hasta = new Date(Date.parse(`${VIERNES}T12:00:00Z`) + 40 * DIA).toISOString().slice(0, 10);
       const r = await usar('agenda_consultar', { desde: VIERNES, hasta });
       expect(r.paraModelo).toMatchObject({ error: { codigo: 'RANGO_DEMASIADO_LARGO' } });
       expect(calendario.llamadas.lecturas).toBe(0);
+    });
+  });
+
+  // T-043 · REQ-CUN01-13 · REQ-ACC-06: las pantallas conservan el margen, salvo al volver de conectar Google
+  describe('acceso.google-conectar-sincroniza', () => {
+    it('la pantalla no vuelve a leer Google antes de 2 minutos, pero sí en seguida tras conectar el calendario', async () => {
+      const perfilId = await persona();
+      const consulta = app.get(ConsultaAgendaService);
+      const desde = instante('00:00');
+      const hasta = instante('00:00', diaSiguiente());
+      await consulta.enRango(contexto, desde, hasta);
+      const lecturas = calendario.llamadas.lecturas;
+      await consulta.enRango(contexto, desde, hasta);
+      expect(calendario.llamadas.lecturas).toBe(lecturas);
+
+      // Como lo deja el retorno de Google (T-007): permiso concedido ahora, después de la última copia
+      await prisma.consentimientoIntegracion.updateMany({ where: { perfilId, alcance: 'calendario' }, data: { concedidoEn: new Date() } });
+      await consulta.enRango(contexto, desde, hasta);
+      expect(calendario.llamadas.lecturas).toBe(lecturas + 1);
+      const sincronizacion = await prisma.sincronizacionCalendario.findUniqueOrThrow({ where: { perfilId } });
+      const consentimiento = await prisma.consentimientoIntegracion.findFirstOrThrow({ where: { perfilId, alcance: 'calendario' } });
+      expect(sincronizacion.ultimaSincronizacion!.getTime()).toBeGreaterThanOrEqual(consentimiento.concedidoEn!.getTime());
     });
   });
 

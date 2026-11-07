@@ -9,7 +9,10 @@ export function fechaLarga(instante: Date, zona: string): string {
 
 export function horario(inicio: Date, fin: Date, zona: string): string {
   const hora = new Intl.DateTimeFormat('es', { timeZone: zona, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
-  return `${hora.format(inicio)} – ${hora.format(fin)}`;
+  const dia = new Intl.DateTimeFormat('es', { timeZone: zona, weekday: 'long', day: 'numeric', month: 'long' });
+  // T-043 · REQ-CUN01-01: si el fin cae en otro día, la tarjeta lo dice («23:00 – 00:00 (sábado, 8 de noviembre)»)
+  const otroDia = dia.format(inicio) !== dia.format(fin) ? ` (${dia.format(fin)})` : '';
+  return `${hora.format(inicio)} – ${hora.format(fin)}${otroDia}`;
 }
 
 export function nombreDeZona(zona: string, instante: Date): string {

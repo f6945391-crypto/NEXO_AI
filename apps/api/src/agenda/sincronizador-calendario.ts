@@ -49,6 +49,15 @@ export class SincronizadorCalendario {
   }
 
   // Cuándo se sincronizó por última vez; nulo si nunca.
+  // T-043: ¿se concedió el permiso de calendario después de ese instante? (volver de conectar Google)
+  async conectadoDespuesDe(quien: Quien, instante: Date): Promise<boolean> {
+    const fila = await this.datos(quien).consentimientoIntegracion.findFirst({
+      where: { perfilId: quien.perfilId, proveedor: 'google', alcance: 'calendario', estado: 'concedido', concedidoEn: { gt: instante } },
+      select: { id: true },
+    });
+    return fila !== null;
+  }
+
   async ultimaSincronizacion(quien: Quien): Promise<Date | null> {
     const fila = await this.datos(quien).sincronizacionCalendario.findUnique({ where: { perfilId: quien.perfilId } });
     return fila?.ultimaSincronizacion ?? null;

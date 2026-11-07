@@ -32,6 +32,10 @@ const fecha = (texto: string): FechaLocal => {
 };
 const minutos = (hora: string) => Number(hora.slice(0, 2)) * 60 + Number(hora.slice(3, 5));
 const hhmm = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+// T-043 · REQ-CUN01-01 (decisión 19 de 02-agenda): un fin igual o anterior al inicio es del día siguiente
+// («de 11 pm a 12», «de 11 pm a 1 am»).
+const instanteDeFin = (dia: FechaLocal, inicioMin: number, finMin: number, zona: string): Date =>
+  instanteLocal(finMin <= inicioMin ? sumarDias(dia, 1) : dia, finMin, zona);
 const aTexto = (f: FechaLocal) => `${f.anio}-${String(f.mes).padStart(2, '0')}-${String(f.dia).padStart(2, '0')}`;
 
 const conError = (codigo: string, mensaje: string, campos?: string[]): ResultadoHerramienta => ({
@@ -106,7 +110,8 @@ export class HerramientasAgenda implements OnModuleInit {
     if (dias < 1) return conError('ARGUMENTOS_INVALIDOS', 'El primer día del rango tiene que ser anterior o igual al último.', ['hasta']);
     if (dias > DIAS_MAXIMOS_CONSULTA) return conError('RANGO_DEMASIADO_LARGO', `Consulta como mucho ${DIAS_MAXIMOS_CONSULTA} días.`, ['hasta']);
 
-    const eventos = await this.consulta.enRango(contexto, instanteLocal(desde, 0, zona), instanteLocal(sumarDias(hasta, 1), 0, zona));
+    // REQ-CUN01-13: la consulta del asistente refleja Google en ese momento, sin el margen de las pantallas (T-043)
+    const eventos = await this.consulta.enRango(contexto, instanteLocal(desde, 0, zona), instanteLocal(sumarDias(hasta, 1), 0, zona), { alDia: true });
     // Con horas, cada día tiene su ventana: «esta semana por la tarde»
     const desdeMin = args.horaDesde ? minutos(args.horaDesde) : 0;
     const hastaMin = args.horaHasta ? minutos(args.horaHasta) : 24 * 60;
@@ -150,12 +155,13 @@ export class HerramientasAgenda implements OnModuleInit {
 
     const zona = entorno.referencia.zonaHoraria;
     const dia = fecha(args.fecha!);
-    const inicio = instanteLocal(dia, minutos(args.horaInicio!), zona);
+    const inicioMin = minutos(args.horaInicio!);
+    const inicio = instanteLocal(dia, inicioMin, zona);
     const carga = {
       titulo: args.titulo!,
       inicio: isoConDesfase(inicio, zona),
       // REQ-CUN01-01: sin fin dicho no se manda; lo pone la Operación con una hora (H-AG-01)
-      ...(args.horaFin ? { fin: isoConDesfase(instanteLocal(dia, minutos(args.horaFin), zona), zona) } : {}),
+      ...(args.horaFin ? { fin: isoConDesfase(instanteDeFin(dia, inicioMin, minutos(args.horaFin), zona), zona) } : {}),
       zonaHoraria: zona,
     };
     return comoPropuesta(await this.proponer(contexto, entorno, 'agenda.registrar', carga));
@@ -168,16 +174,17 @@ export class HerramientasAgenda implements OnModuleInit {
     }
     const zona = entorno.referencia.zonaHoraria;
     // Lo que no se dice se conserva: el mismo día o la misma hora del compromiso, vistos en la zona de la persona
-    const evento = await this.consulta.porId(contexto, args.eventoId);
+    const evento = await this.consulta.porId(contexto, args.eventoId, { alDia: true });
     const actual = enZona(new Date(evento.inicio), zona);
     const dia = args.fecha ? fecha(args.fecha) : actual;
+    const inicioMin = args.horaInicio ? minutos(args.horaInicio) : actual.minutos;
     const carga = {
       eventoId: args.eventoId,
       ...(args.titulo ? { titulo: args.titulo } : {}),
       ...(args.fecha || args.horaInicio
-        ? { inicio: isoConDesfase(instanteLocal(dia, args.horaInicio ? minutos(args.horaInicio) : actual.minutos, zona), zona) }
+        ? { inicio: isoConDesfase(instanteLocal(dia, inicioMin, zona), zona) }
         : {}),
-      ...(args.horaFin ? { fin: isoConDesfase(instanteLocal(dia, minutos(args.horaFin), zona), zona) } : {}),
+      ...(args.horaFin ? { fin: isoConDesfase(instanteDeFin(dia, inicioMin, minutos(args.horaFin), zona), zona) } : {}),
     };
     return comoPropuesta(await this.proponer(contexto, entorno, 'agenda.modificar', carga));
   }
