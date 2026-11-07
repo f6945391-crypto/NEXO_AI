@@ -136,6 +136,17 @@ Para una cuenta propia, `empresa.organizacionId === organizacionId`. Para una af
 
 Una prueba, `administracion.no-escribe-en-lo-personal`, ejecuta todas las Operaciones del área contra una cuenta afiliada y comprueba que su organización personal tiene exactamente las mismas filas antes y después.
 
+**Dónde está cada uso (T-066 a T-068, 7 de noviembre de 2026).**
+
+| Uso | Archivo y función | Lee |
+|---|---|---|
+| Ingreso y renovación | `identidad/pertenencias.ts`, `vigenteDe` | La fila `vigente` del perfil, en una organización de empresa |
+| El administrador ve sus cuentas afiliadas | `administracion/lecturas.ts`, `cuentasDe` | `correo` y `estado` de perfiles con una pertenencia en esa empresa; el plan de una afiliada se muestra como el efectivo |
+| Alta e invitación: ¿el correo tiene cuenta? | `administracion/lecturas.ts`, `correoTieneCuenta` | Un recuento por `correo` |
+| Cerrar sesiones al suspender, cerrar o restablecer | `identidad/autenticacion.service.ts`, `revocarSesionesDelPerfil` | `sesion_renovacion` no lleva organización; es el mismo uso que ya tenían el ingreso y la salida |
+
+Todo lo demás del área usa `deOrganizacion(empresa)`.
+
 ## 5. Operaciones de administración (AD-09)
 
 ### 5.1 Tipos
@@ -164,6 +175,7 @@ Cada propuesta comprueba lo que dice la especificación antes de poder confirmar
 ### 5.2 Dos ampliaciones de Operaciones
 
 - **Ámbito de empresa.** Un ejecutor declara `ambito: 'empresa'`, y la Operación se guarda con `organizacionId = contexto.empresa.organizacionId`. Así las acciones de un administrador afiliado quedan en la empresa, no en su organización personal, y el registro de la empresa está completo. Las `afiliacion.*` también son de ámbito empresa: su fila de pertenencia está allí.
+- **Dónde se guardan (T-067).** Columna `operacion.ambito` (`propio` · `empresa`, migración `20261107T0302_operacion_ambito`). La sesión de la zona propone y confirma en `POST /administracion/operaciones` y `/:id/confirmar`; un tipo de ámbito empresa pedido con la sesión de la aplicación, o al revés, responde `AMBITO_INCORRECTO`. `GET /operaciones` y la transcripción solo leen `ambito = propio`. Las `afiliacion.*` (T-070) las propone la persona desde la aplicación: cuando lleguen, el ejecutor tendrá que guardar en la empresa con la sesión `propio`, y la regla «ámbito del tipo igual al de la sesión» se ajusta para ellas.
 - **Resultado efímero.** `ResultadoEjecucion` gana `efimero?`, que viaja en la respuesta de `POST /operaciones/:id/confirmar` y **nunca se guarda** en `operacion.resultado`. La contraseña temporal del alta y del restablecimiento va ahí. Confirmar dos veces devuelve el resultado guardado, sin la contraseña: «se muestra una sola vez» (REQ-ADM-09, 14) lo garantiza la idempotencia que ya existe.
 
 ### 5.3 Caducidad de las invitaciones

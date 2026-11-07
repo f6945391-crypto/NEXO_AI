@@ -586,3 +586,19 @@ Detectadas al escribir esta especificación el 6 de noviembre de 2026. **Pendien
 | H-ADM-13 | Restablecer la contraseña **no vuelve a pedir la zona horaria**: REQ-ACC-04 la pide en el primer ingreso, y aquí ya está elegida | REQ-ADM-14 |
 | H-ADM-14 | El área **sí le dice al administrador si un correo tiene cuenta**, al dar de alta o al invitar. Es inevitable en el alta, porque el correo es único, y ocultarlo en la invitación no protegería nada. Se limita a eso: nunca de qué organización es ni qué plan tiene. Alternativa descartada: responder lo mismo en los dos casos, como REQ-ACC-03 | REQ-ADM-10, 19, 24 |
 | H-ADM-15 | **Dar de baja no borra datos** en esta versión: la cuenta se cierra y lo suyo se conserva hasta que se decida cuánto tiempo | REQ-ADM-13 |
+
+### Decisiones tomadas durante la construcción (7 de noviembre de 2026, T-065 a T-069)
+
+Continúan la numeración de `plan.md` §11 y §12 (H-ADM-16 a 22). **Pendientes de revisión del equipo.** Lo construido sigue lo que dice cada una; si el equipo decide otra cosa, se cambia.
+
+| # | Decisión | Afecta |
+|---|---|---|
+| H-ADM-23 | **Qué organizaciones existentes pasan a ser de empresa.** Las que tienen más de una cuenta o alguna con el Plan Empresarial; las demás, personales. Solo las cuentas de una organización de empresa reciben su pertenencia: una cuenta personal sin afiliar no pertenece a ninguna empresa (REQ-ADM-17), y si la tuviera en su organización personal no podría aceptar una invitación (H-ADM-04). Es la regla del encargo del 7 de noviembre de 2026; el plan proponía mirar el rol | REQ-ADM-01, 03 |
+| H-ADM-24 | Una cuenta dada de alta desde el área nace **sin autoridad sobre nadie**: hasta que la autoridad se lea por equipo, la cuenta con el Plan Empresarial es colaboradora y la de otro plan, personal. Ser responsable de un equipo se dará al componer los equipos | REQ-ADM-09 |
+| H-ADM-25 | **Entrar en la zona de empresa con el primer ingreso pendiente.** Después de comprobar la contraseña y que la cuenta puede entrar, se le dice que antes entre en NexoAI para cambiar la contraseña y elegir la zona horaria. A quien no puede entrar en la zona se le sigue respondiendo como a unas credenciales inválidas. Una cuenta suspendida o dada de baja ve su estado, igual que en la aplicación | REQ-ADM-06, 12, 13 |
+| H-ADM-26 | **Las dos sesiones no se cruzan en ningún sentido.** La de la zona no sirve para nada de la aplicación (ni para «quién soy»: la zona tiene su propia consulta) y la de la aplicación no sirve en la zona. Las acciones de la zona se piden y se confirman en la zona, y no aparecen en lo pendiente ni en la conversación de la persona | REQ-ADM-05, 07, 16 |
+| H-ADM-27 | **Dar de baja** deja la cuenta en la lista como «Dada de baja», sin administración y fuera de sus equipos; su fila de pertenencia no se borra, para que el registro y la lista digan qué pasó | REQ-ADM-13 |
+| H-ADM-28 | **Nombrar administradora a una cuenta afiliada sí se puede**: administrar es una condición de la pertenencia, no una acción sobre la cuenta de la persona (H-ADM-01, H-ADM-05) | REQ-ADM-03, 15 |
+| H-ADM-29 | En la lectura de Equipos, «miembros» no repite al responsable; el responsable que no administra ve solo sus equipos y no ve Personas ni Registro | REQ-ADM-02, 28 a 32 |
+| H-ADM-30 | **Contraseña restablecida y zona horaria.** El servicio conserva la zona (H-ADM-13), pero el primer ingreso de la web la vuelve a pedir, empezando vacía. Hay que decidir si ese formulario la trae elegida cuando ya existe; no se tocó en este carril | REQ-ADM-14 |
+| H-ADM-31 | **Textos de estado en Personas:** «Activa», «Aún no entró» (primer ingreso pendiente), «Suspendida», «Dada de baja», «Invitación pendiente»; clase: «De la organización», «Se sumó con su cuenta», «Invitación». En una fila de alguien que se sumó con su cuenta no hay acciones hasta que exista «Quitar de la organización» (T-070, T-071) | REQ-ADM-08, 15 |

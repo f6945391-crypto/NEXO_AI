@@ -17,7 +17,7 @@
 | 05-equipos | 17 | 17 | 0 | 0 | 0 | 0 |
 | 06-acceso | 17 | 2 | 0 | 15 | 0 | 0 |
 | 07-agente | 5 | 2 | 1 | 2 | 0 | 0 |
-| 08-administracion | 32 | 32 | 0 | 0 | 0 | 0 |
+| 08-administracion | 32 | 15 | 5 | 12 | 0 | 0 |
 | 09-tareas-personales | 20 | 20 | 0 | 0 | 0 | 0 |
 
 ## Requisitos
@@ -192,23 +192,23 @@
 | REQ-AGT-03 | 07-agente | H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6.1 y §8.1; `design/ARQUITECTURA-VISUAL-WEB.md` §5 y §6 («lo cerrado no se pierde») | 2 | T-038, T-039, T-041 | agente.transcripcion-persiste, web.asistente-historial | implementado |
 | REQ-AGT-04 | 07-agente | H-AGT-17; `INFORME-MEMORIA-AGENTE.md` §6.4.5; decisión 17 de `02-agenda` (las alternativas no pasan por el modelo); P-02, P-03 | 2 | T-042 | — | pendiente |
 | REQ-AGT-05 | 07-agente | H-AGT-17; `INFORME-MEMORIA-AGENTE.md` §6.4.3 y §6.4.4; glosario, «Hilo» | 2 | — | — | pendiente |
-| REQ-ADM-01 | 08-administracion | decisión del equipo del 6 de noviembre de 2026; REQ-ACC-01; glosario, «Organización» | 4 | T-065 | — | pendiente |
-| REQ-ADM-02 | 08-administracion | decisión del equipo del 6 de noviembre de 2026; REQ-ACC-16, REQ-ACC-17; P-10; glosario, «Gerente» (se es responsable de un equipo, no de la organización) | 4 | T-068 | — | pendiente |
-| REQ-ADM-03 | 08-administracion | decisión de diseño (H-ADM-01) | 4 | T-068 | — | pendiente |
-| REQ-ADM-04 | 08-administracion | REQ-ACC-01; H-ACC-01; decisión de diseño (H-ADM-02) | 4 | T-065 | — | pendiente |
-| REQ-ADM-05 | 08-administracion | decisión de diseño (H-ADM-10); `SPEC.md` §1, «la web, para la coordinación y el seguimiento» | 4 | T-069 | — | pendiente |
-| REQ-ADM-06 | 08-administracion | P-04; REQ-ACC-12 | 4 | T-066 | — | pendiente |
-| REQ-ADM-07 | 08-administracion | decisión de diseño (H-ADM-11); P-04; P-11 | 4 | T-067 | — | pendiente |
-| REQ-ADM-08 | 08-administracion | decisión del equipo del 6 de noviembre de 2026; REQ-ACC-17 | 4 | T-068, T-069 | — | pendiente |
-| REQ-ADM-09 | 08-administracion | REQ-ACC-01; decisión del equipo del 6 de noviembre de 2026 (el área sustituye al alta de arranque en el uso diario) | 4 | T-068, T-069 | — | pendiente |
-| REQ-ADM-10 | 08-administracion | REQ-ACC-01; decisión de diseño (H-ADM-14) | 4 | T-068, T-069 | — | pendiente |
-| REQ-ADM-11 | 08-administracion | REQ-ACC-12; R-45 | 4 | T-068, T-069 | — | pendiente |
-| REQ-ADM-12 | 08-administracion | REQ-ACC-12 («darse de baja lo decide la organización»); decisión del equipo del 6 de noviembre de 2026 | 4 | T-066, T-068, T-069 | — | pendiente |
-| REQ-ADM-13 | 08-administracion | REQ-ACC-12; decisión de diseño (H-ADM-15) | 4 | T-068, T-069 | — | pendiente |
-| REQ-ADM-14 | 08-administracion | REQ-ACC-04; `specs/06-acceso/spec.md` §4 (contraseña olvidada, pendiente); decisión de diseño (H-ADM-13) | 4 | T-068, T-069 | — | pendiente |
-| REQ-ADM-15 | 08-administracion | REQ-ACC-12 («lo decide la organización que creó la cuenta»); P-10 | 4 | T-068, T-069 | — | pendiente |
-| REQ-ADM-16 | 08-administracion | P-03; P-07; RN-ER-03 | 4 | T-067, T-068 | — | pendiente |
-| REQ-ADM-17 | 08-administracion | decisión del equipo del 6 de noviembre de 2026; `REPLANTEO.md` §4.3 (planes acumulativos) | 4 | T-066, T-070 | — | pendiente |
+| REQ-ADM-01 | 08-administracion | decisión del equipo del 6 de noviembre de 2026; REQ-ACC-01; glosario, «Organización» | 4 | T-065 | administracion.clases-de-organizacion | implementado |
+| REQ-ADM-02 | 08-administracion | decisión del equipo del 6 de noviembre de 2026; REQ-ACC-16, REQ-ACC-17; P-10; glosario, «Gerente» (se es responsable de un equipo, no de la organización) | 4 | T-068 | administracion.administrar-no-es-ver | implementado |
+| REQ-ADM-03 | 08-administracion | decisión de diseño (H-ADM-01) | 4 | T-068 | administracion.nunca-sin-administrador | implementado |
+| REQ-ADM-04 | 08-administracion | REQ-ACC-01; H-ACC-01; decisión de diseño (H-ADM-02) | 4 | T-065 | administracion.primer-administrador-en-el-arranque | implementado |
+| REQ-ADM-05 | 08-administracion | decisión de diseño (H-ADM-10); `SPEC.md` §1, «la web, para la coordinación y el seguimiento» | 4 | T-066, T-069 | web.administracion-solo-para-administradores | en curso |
+| REQ-ADM-06 | 08-administracion | P-04; REQ-ACC-12 | 4 | T-066 | administracion.solo-el-administrador | implementado |
+| REQ-ADM-07 | 08-administracion | decisión de diseño (H-ADM-11); P-04; P-11 | 4 | T-067 | administracion.el-asistente-no-administra | en curso |
+| REQ-ADM-08 | 08-administracion | decisión del equipo del 6 de noviembre de 2026; REQ-ACC-17 | 4 | T-068, T-069 | administracion.lista-de-personas | implementado |
+| REQ-ADM-09 | 08-administracion | REQ-ACC-01; decisión del equipo del 6 de noviembre de 2026 (el área sustituye al alta de arranque en el uso diario) | 4 | T-068, T-069 | administracion.alta-con-contrasena-una-vez | implementado |
+| REQ-ADM-10 | 08-administracion | REQ-ACC-01; decisión de diseño (H-ADM-14) | 4 | T-068, T-069 | administracion.alta-con-contrasena-una-vez | implementado |
+| REQ-ADM-11 | 08-administracion | REQ-ACC-12; R-45 | 4 | T-068, T-069 | administracion.cambio-de-plan | implementado |
+| REQ-ADM-12 | 08-administracion | REQ-ACC-12 («darse de baja lo decide la organización»); decisión del equipo del 6 de noviembre de 2026 | 4 | T-066, T-068, T-069 | administracion.suspension-cierra-sesiones | implementado |
+| REQ-ADM-13 | 08-administracion | REQ-ACC-12; decisión de diseño (H-ADM-15) | 4 | T-068, T-069 | administracion.baja-definitiva | en curso |
+| REQ-ADM-14 | 08-administracion | REQ-ACC-04; `specs/06-acceso/spec.md` §4 (contraseña olvidada, pendiente); decisión de diseño (H-ADM-13) | 4 | T-068, T-069 | administracion.restablecer-contrasena | en curso |
+| REQ-ADM-15 | 08-administracion | REQ-ACC-12 («lo decide la organización que creó la cuenta»); P-10 | 4 | T-068, T-069 | administracion.cuenta-afiliada-no-se-administra | implementado |
+| REQ-ADM-16 | 08-administracion | P-03; P-07; RN-ER-03 | 4 | T-067, T-068 | administracion.toda-accion-confirmada-y-registrada | implementado |
+| REQ-ADM-17 | 08-administracion | decisión del equipo del 6 de noviembre de 2026; `REPLANTEO.md` §4.3 (planes acumulativos) | 4 | T-066, T-070 | afiliacion.sin-afiliar-es-plan-personal | en curso |
 | REQ-ADM-18 | 08-administracion | decisión del equipo del 6 de noviembre de 2026; DP-03; REQ-CUN07-16 (el correo solo avisa) | 4 | T-070, T-071 | — | pendiente |
 | REQ-ADM-19 | 08-administracion | REQ-ACC-01 (sin registro abierto); decisión de diseño (H-ADM-14) | 4 | T-070, T-071 | — | pendiente |
 | REQ-ADM-20 | 08-administracion | P-10; REQ-ACC-17; R-14; decisión de diseño (H-ADM-03) | 4 | T-071, T-072 | — | pendiente |

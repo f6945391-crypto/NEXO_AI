@@ -22,7 +22,8 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** migración nueva con `organizacion.tipo`, `perfil_usuario.estado` y `estado_cambiado_en`, y las tablas `miembro_organizacion`, `equipo` y `miembro_equipo`, con sus índices únicos parciales escritos a mano en el SQL; migración de los datos existentes según el plan §3.3; las tres tablas en `MODELOS_CON_ORGANIZACION`; `crear-cuenta` con `--tipo` y `--administrador`; semilla y `e2e/cuentas.json` con una administradora, una personal sin afiliar y una con invitación pendiente; línea de `AGENTS.md`
 - **Hecho cuando:** la migración se aplica sobre una base vacía y sobre una con los datos de la semilla anterior, y deja cada empresa con al menos un administrador; la CLI crea una empresa con su administradora y una cuenta personal en su organización personal; no puede haber dos pertenencias vigentes para un mismo perfil
 - **Pruebas:** `administracion.clases-de-organizacion`, `administracion.primer-administrador-en-el-arranque` · también `plataforma.aislamiento-entre-organizaciones` (con las tablas nuevas) y `plataforma.migracion-y-semilla`
-- **Estado:** pendiente
+- **Estado:** hecha
+- **Nota (7 de noviembre de 2026):** migraciones `20261107T0300_administracion` (modelo y datos, escrita a mano y verificada con psql) y regla de datos del encargo (H-ADM-23). La cuenta personal sin afiliar y la de invitación pendiente de `e2e/cuentas.json` llegan con T-069 y T-070; la semilla de desarrollo solo marca a `gerente@nexoai.test` como administradora
 
 ---
 
@@ -35,7 +36,8 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** `ContextoSolicitud.empresa` y plan efectivo en el ingreso y la renovación; `CUENTA_SUSPENDIDA` y `CUENTA_CERRADA` tras verificar la contraseña; `AutenticacionGuard` comprueba `perfil_usuario.estado` en cada petición; `RolGuard` pasa a `AlcanceGuard` con los alcances `empresa` y `administrador`; `@SoloAdministrador()` y `@EnEmpresa()` leen la pertenencia de la base y registran `administracion.rechazada`; `PertenenciasRepositorio` con los usos de `sinAislar` del plan §4.3; `GET /auth/sesion` con `administrador` y `organizacion`
 - **Hecho cuando:** una cuenta suspendida no entra y su sesión abierta deja de valer en la petición siguiente; una ruta `@SoloAdministrador()` rechaza a quien no administra y deja registro, también si le quitaron la condición hace un segundo; una cuenta personal sin afiliar recibe `SIN_ORGANIZACION` en una ruta `@EnEmpresa()`; `acceso.toda-ruta-declara-su-alcance` sigue pasando con los alcances nuevos; las pruebas de T-026 no cambian
 - **Pruebas:** `administracion.solo-el-administrador`, `afiliacion.sin-afiliar-es-plan-personal` · también `administracion.suspension-cierra-sesiones` (la parte de ingreso)
-- **Estado:** pendiente
+- **Estado:** hecha
+- **Nota (7 de noviembre de 2026):** con la sesión de ámbito de la zona (plan §7.1): `POST /administracion/entrar`, `sesion_renovacion.ambito` (`20261107T0301_sesion_ambito`) y `AMBITO_INCORRECTO`. `RolGuard` pasa a `AlcanceGuard`
 
 ---
 
@@ -48,7 +50,8 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** `EjecutorOperacion` con `ambito: 'empresa'`, `soloAdministrador` y `efimero` en `ResultadoEjecucion`; `OperacionRespuesta.efimero` en `packages/contratos`; los tipos `administracion.*` admiten solo `control_directo`; comprobación de `soloAdministrador` al proponer y al confirmar; un tipo de prueba para ejercitarlo
 - **Hecho cuando:** una Operación de ámbito empresa propuesta por una administradora afiliada queda en la organización de la empresa; el resultado efímero llega en la primera confirmación y no en la segunda, ni en `operacion.resultado`; proponer un tipo `administracion.*` con origen `agente` se rechaza; quitar la condición de administradora entre proponer y confirmar hace fallar la confirmación sin efecto
 - **Pruebas:** `administracion.el-asistente-no-administra`, `administracion.toda-accion-confirmada-y-registrada` (núcleo)
-- **Estado:** pendiente
+- **Estado:** hecha
+- **Nota (7 de noviembre de 2026):** `operacion.ambito` (`20261107T0302_operacion_ambito`) y rutas `/administracion/operaciones` (H-ADM-26)
 
 ### T-068 · Cuentas de la organización: lista, alta, plan, suspensión, baja, contraseña y administradores
 
@@ -57,7 +60,8 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** `AdministracionModule`; `GET /administracion/personas`; ejecutores `alta_cuenta` (llama a `alta-cuentas.ts`), `cambiar_plan`, `suspender_cuenta`, `reactivar_cuenta`, `cerrar_cuenta`, `restablecer_contrasena`, `nombrar_administrador` y `quitar_administrador`, con las validaciones de clase de cuenta y de «nunca sin administrador»; revocación de sesiones al suspender, cerrar y restablecer; eventos de auditoría del plan §9; esquemas en `packages/contratos/src/administracion.ts`
 - **Hecho cuando:** cada requisito de la lista tiene su caso en la prueba; la contraseña temporal se ve una vez; ninguna acción sobre una cuenta afiliada salvo desafiliar se puede confirmar; la última administradora no puede dejar de serlo; la lista no trae nada de la cuenta más allá de lo que dice REQ-ADM-08
 - **Pruebas:** `administracion.lista-de-personas`, `administracion.administrar-no-es-ver`, `administracion.nunca-sin-administrador`, `administracion.alta-con-contrasena-una-vez`, `administracion.cambio-de-plan`, `administracion.suspension-cierra-sesiones`, `administracion.baja-definitiva`, `administracion.restablecer-contrasena`, `administracion.cuenta-afiliada-no-se-administra`, `administracion.toda-accion-confirmada-y-registrada`
-- **Estado:** pendiente
+- **Estado:** hecha
+- **Nota (7 de noviembre de 2026):** también `GET /administracion/equipos` en lectura (adelanto de T-073) y `GET /administracion/sesion`. REQ-ADM-13 queda en curso hasta los oyentes de la salida de equipo
 
 ---
 
@@ -70,7 +74,8 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** entrada «Administración» al pie de la navegación, encima de Ajustes, solo con `administrador`; ruta `/administracion` con navegación y lienzo de 1368 px, sin conversación; corte «Personas» con la tabla, «Dar de alta» y las acciones de cada fila según su clase; tarjeta de confirmación con la `vistaConfirmacion` de la API; contraseña temporal una vez, con «Copiar». Textos sin vocabulario interno (R-40)
 - **Hecho cuando:** una administradora da de alta una cuenta y ve su contraseña una vez; suspende y reactiva otra; una cuenta que no administra no ve la entrada y, si abre `/administracion`, vuelve a `/`; en una fila afiliada solo aparece «Quitar de la organización»
 - **Prueba:** `web.administracion-solo-para-administradores` · también `web.administracion-cuentas` (extremo a extremo)
-- **Estado:** pendiente
+- **Estado:** hecha
+- **Nota (7 de noviembre de 2026):** en la zona aparte del plan §7 (`app/(empresa)/administracion/`), no como entrada dentro de la aplicación: el enlace desde la aplicación queda para T-071 o la integración. Quien no puede entrar en la zona vuelve a su entrada, no a `/`. En una fila afiliada todavía no hay «Quitar de la organización» (T-070, T-071). Pruebas: `web.administracion-solo-para-administradores`, `web.administracion-cuentas`
 
 ---
 
@@ -116,6 +121,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Hecho cuando:** se crea un equipo, se le suman una cuenta propia y una afiliada y se nombra responsable a una; el nombre repetido se rechaza; una invitación pendiente no se puede sumar; nombrar a otro responsable le quita la autoridad al anterior; quitar al responsable deja el equipo sin responsable y emite `SalidaDeEquipo`; una cuenta responsable de un equipo y miembro de otro solo pasa `@SoloResponsable` en el suyo; sin responsable, nadie pasa
 - **Pruebas:** `equipos.crear-y-componer`, `equipos.un-responsable`, `equipos.autoridad-por-equipo` · también `acceso.solo-el-responsable-asigna-tareas` y `acceso.colaborador-solo-ve-lo-suyo` (reescritas)
 - **Estado:** pendiente
+- **Nota (7 de noviembre de 2026):** la lectura `GET /administracion/equipos` ya existe (T-068) y la web la muestra en solo lectura (T-069)
 
 ### T-074 · Equipos en la web
 
