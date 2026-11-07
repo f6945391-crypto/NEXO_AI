@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextStyle } from 'react-native';
 import { ConversacionAsistente, Perfil, RespuestaAsistente, type DecisionAsistente, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
 import { Aviso, Boton } from '../componentes';
 import { conSesion, mensajeDeError, SIN_CONEXION } from '../sesion';
@@ -15,6 +15,12 @@ import { color, espaciado, tipografia } from '../tokens';
 // una línea con la hora y lo que se hizo, y «Ver anteriores» trae lo más viejo.
 // Pulido · «Ver anteriores» visible: el botón se queda pegado arriba de la lista aunque se haga scroll,
 // mientras quede algo anterior (`stickyHeaderIndices`, que en Expo web es `position: sticky`).
+
+// H-CAP-02: el campo empieza en una línea y crece hasta cuatro
+const LINEA = 24;
+const LINEAS_MAXIMAS = 4;
+// En el navegador, el foco lo marca el contorno de la barra y no el anillo propio del campo
+const SIN_ANILLO_WEB = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as unknown as TextStyle) : null;
 
 const hora = (iso: string, zona?: string) =>
   new Intl.DateTimeFormat('es', { timeZone: zona, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso));
@@ -160,6 +166,9 @@ export function CapaCaptura({
   alSalir: () => void;
 }) {
   const [borrador, setBorrador] = useState('');
+  // Alto del texto escrito, entre una línea y cuatro
+  const [altoTexto, setAltoTexto] = useState(LINEA);
+  const [enfocado, setEnfocado] = useState(false);
   const [elementos, setElementos] = useState<Elemento[]>([]);
   const [pendiente, setPendiente] = useState<string | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -243,16 +252,21 @@ export function CapaCaptura({
     const texto = borrador.trim();
     if (!texto || ocupado) return;
     setBorrador('');
+    setAltoTexto(LINEA);
     // Lo escrito se ve al instante, sin esperar al asistente (corrección del 29 de octubre de 2026)
     const provisional: TurnoAsistente = { id: crypto.randomUUID(), en: new Date().toISOString(), tipo: 'persona', texto };
     setElementos((previos) => [...previos, { clase: 'turno', turno: provisional }]);
+    // Al enviar, la lista baja hasta el final aunque se estuviera leyendo algo anterior
+    anclado.current = false;
     void hablar('/asistente/mensajes', { texto }, provisional.id);
   }
+
+  const puedeEnviar = !!borrador.trim() && !ocupado;
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={alCerrar}>
       <View style={estilos.velo}>
-        <View style={estilos.hoja}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={estilos.hoja}>
           <View style={estilos.cabecera}>
             <Text accessibilityRole="header" style={estilos.titulo}>
               ¿Qué hacemos?
@@ -262,8 +276,7 @@ export function CapaCaptura({
             </Pressable>
           </View>
 
-          {elementos.length > 0 && (
-            <ScrollView
+          <ScrollView
               ref={lista}
               maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
               onContentSizeChange={() => {
@@ -300,23 +313,41 @@ export function CapaCaptura({
                 );
               })}
             </ScrollView>
-          )}
           {ocupado && <Text style={estilos.suave}>Pensando…</Text>}
           {error && <Aviso texto={error} />}
 
-          <TextInput
-            accessibilityLabel="Pídele algo al asistente"
-            placeholder="Pídele algo al asistente"
-            placeholderTextColor={color.texto.suave}
-            value={borrador}
-            onChangeText={setBorrador}
-            onSubmitEditing={enviar}
-            autoFocus
-            multiline
-            style={estilos.entrada}
-          />
-          <Boton texto="Enviar" alPulsar={enviar} deshabilitado={!borrador.trim() || ocupado} />
-        </View>
+          {/* H-CAP-02: una sola fila, con el botón de enviar dentro del mismo contorno */}
+          <View style={[estilos.barra, enfocado && estilos.barraEnfocada]}>
+            <TextInput
+              accessibilityLabel="Pídele algo al asistente"
+              placeholder="Pídele algo al asistente"
+              placeholderTextColor={color.texto.suave}
+              value={borrador}
+              onChangeText={(texto) => {
+                setBorrador(texto);
+                if (!texto) setAltoTexto(LINEA);
+              }}
+              onContentSizeChange={(e) => setAltoTexto(Math.min(Math.max(e.nativeEvent.contentSize.height, LINEA), LINEA * LINEAS_MAXIMAS))}
+              onSubmitEditing={enviar}
+              autoFocus
+              multiline
+              onFocus={() => setEnfocado(true)}
+              onBlur={() => setEnfocado(false)}
+              style={[estilos.entrada, SIN_ANILLO_WEB, { height: altoTexto }]}
+            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Enviar"
+              accessibilityState={{ disabled: !puedeEnviar }}
+              disabled={!puedeEnviar}
+              onPress={enviar}
+              hitSlop={espaciado[4]}
+              style={[estilos.enviar, !puedeEnviar && estilos.enviarApagado]}
+            >
+              <Text style={estilos.enviarTexto}>↑</Text>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -329,7 +360,7 @@ const estilos = StyleSheet.create({
   titulo: { fontSize: tipografia.subtitulo, fontWeight: '700', color: color.texto.fuerte },
   cerrar: { minHeight: 44, minWidth: 44, justifyContent: 'center', alignItems: 'center' },
   cerrarTexto: { fontSize: tipografia.etiqueta, fontWeight: '600', color: color.marca.base },
-  turnos: { flexGrow: 0 },
+  turnos: { flexGrow: 0, flexShrink: 1 },
   turnosContenido: { gap: espaciado[8] },
   pedido: { alignSelf: 'flex-end', maxWidth: '85%', padding: espaciado[12], borderRadius: 12, backgroundColor: color.marca.base },
   pedidoTexto: { fontSize: tipografia.cuerpo, color: color.texto.inverso },
@@ -353,5 +384,12 @@ const estilos = StyleSheet.create({
   anterioresFranja: { alignItems: 'center', paddingBottom: espaciado[4], backgroundColor: color.superficie.base },
   anteriores: { alignSelf: 'center', backgroundColor: color.superficie.base, minHeight: 44, justifyContent: 'center', paddingHorizontal: espaciado[16], borderWidth: 1, borderColor: color.borde.fuerte, borderRadius: 12 },
   anterioresTexto: { fontSize: tipografia.etiqueta, fontWeight: '600', color: color.marca.base },
-  entrada: { minHeight: 72, padding: espaciado[12], borderWidth: 1, borderColor: color.borde.fuerte, borderRadius: 12, fontSize: tipografia.cuerpo, color: color.texto.fuerte, textAlignVertical: 'top' },
+  barra: { flexDirection: 'row', alignItems: 'flex-end', gap: espaciado[8], padding: espaciado[4], paddingLeft: espaciado[16], borderWidth: 1, borderColor: color.borde.fuerte, borderRadius: 24, backgroundColor: color.superficie.base },
+  barraEnfocada: { borderColor: color.marca.base },
+  // Sin relleno propio: así el alto del contenido es el del texto y el campo no crece solo
+  entrada: { flex: 1, marginVertical: espaciado[8], paddingVertical: 0, fontSize: tipografia.cuerpo, lineHeight: LINEA, color: color.texto.fuerte, textAlignVertical: 'top' },
+  // Tan alto como una línea del campo: la barra no cambia de alto por el botón
+  enviar: { width: LINEA + espaciado[8] * 2, height: LINEA + espaciado[8] * 2, borderRadius: (LINEA + espaciado[8] * 2) / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: color.marca.base },
+  enviarApagado: { backgroundColor: color.borde.fuerte },
+  enviarTexto: { fontSize: tipografia.subtitulo, fontWeight: '700', color: color.texto.inverso },
 });
