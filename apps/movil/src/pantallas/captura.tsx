@@ -45,6 +45,9 @@ function lineaEsencial(datos: { etiqueta: string; valor: string }[]): string {
   return valores.join(' · ');
 }
 
+// La primera petición de la persona en lo que se está pidiendo
+const primeraPeticion = (turnos: TurnoAsistente[]) => turnos.find((t) => t.tipo === 'persona')?.texto ?? null;
+
 function Tarjeta({ operacion, activa, ocupado, alDecidir }: { operacion: OperacionRespuesta; activa: boolean; ocupado: boolean; alDecidir: (d: DecisionAsistente) => void }) {
   const [detalles, setDetalles] = useState(false);
   const vista = operacion.vistaConfirmacion;
@@ -171,6 +174,8 @@ export function CapaCaptura({
   const [enfocado, setEnfocado] = useState(false);
   const [elementos, setElementos] = useState<Elemento[]>([]);
   const [pendiente, setPendiente] = useState<string | null>(null);
+  // H-CAP-04: lo que se está pidiendo ahora, para el título de la capa. Nulo si no hay nada dicho
+  const [enCurso, setEnCurso] = useState<{ id: string; peticion: string | null } | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
   const [zona, setZona] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
@@ -188,6 +193,8 @@ export function CapaCaptura({
       if (r.estado === 200 && conversacion.success) {
         setElementos(elementosDe(conversacion.data.episodios));
         setPendiente(conversacion.data.pendiente);
+        const abierto = conversacion.data.episodios.find((e) => e.id === conversacion.data.episodioAbierto);
+        setEnCurso(abierto && abierto.turnos.length > 0 ? { id: abierto.id, peticion: primeraPeticion(abierto.turnos) } : null);
         setCursor(conversacion.data.hayAnteriores ? conversacion.data.cursor : null);
       }
       // P-05: la hora de las líneas, en la zona del perfil
@@ -233,7 +240,8 @@ export function CapaCaptura({
       if (!r) return alSalir();
       const respuesta = RespuestaAsistente.safeParse(r.cuerpo);
       if (r.estado !== 200 || !respuesta.success) return setError(mensajeDeError(r.cuerpo, 'El asistente no pudo responder. Inténtalo de nuevo.'));
-      const { turnos, cierre, episodioId } = respuesta.data;
+      const { turnos, cierre, episodioId, episodioCerrado } = respuesta.data;
+      setEnCurso((previo) => (episodioCerrado ? null : previo?.id === episodioId ? previo : { id: episodioId, peticion: primeraPeticion(turnos) ?? previo?.peticion ?? null }));
       setElementos((previos) => [
         ...previos.filter((e) => e.clase !== 'turno' || e.turno.id !== provisional),
         ...turnos.map((turno): Elemento => ({ clase: 'turno', turno })),
@@ -256,6 +264,8 @@ export function CapaCaptura({
     // Lo escrito se ve al instante, sin esperar al asistente (corrección del 29 de octubre de 2026)
     const provisional: TurnoAsistente = { id: crypto.randomUUID(), en: new Date().toISOString(), tipo: 'persona', texto };
     setElementos((previos) => [...previos, { clase: 'turno', turno: provisional }]);
+    // Si es lo primero que se pide, el título cambia ya; la respuesta trae el episodio de verdad
+    setEnCurso((previo) => previo ?? { id: '', peticion: texto });
     // Al enviar, la lista baja hasta el final aunque se estuviera leyendo algo anterior
     anclado.current = false;
     void hablar('/asistente/mensajes', { texto }, provisional.id);
@@ -267,10 +277,18 @@ export function CapaCaptura({
     <Modal visible={visible} animationType="slide" transparent onRequestClose={alCerrar}>
       <View style={estilos.velo}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={estilos.hoja}>
+          {/* H-CAP-04: una sola fila. «¿Qué hacemos?» solo si no hay nada dicho en lo que se pide ahora */}
           <View style={estilos.cabecera}>
-            <Text accessibilityRole="header" style={estilos.titulo}>
-              ¿Qué hacemos?
-            </Text>
+            <View style={estilos.cabeceraTextos}>
+              <Text accessibilityRole="header" style={estilos.titulo}>
+                {enCurso ? 'Asistente' : '¿Qué hacemos?'}
+              </Text>
+              {enCurso?.peticion && (
+                <Text numberOfLines={1} style={estilos.suave}>
+                  {enCurso.peticion}
+                </Text>
+              )}
+            </View>
             <Pressable accessibilityRole="button" onPress={alCerrar} style={estilos.cerrar}>
               <Text style={estilos.cerrarTexto}>Cerrar</Text>
             </Pressable>
@@ -354,13 +372,15 @@ export function CapaCaptura({
 }
 
 const estilos = StyleSheet.create({
-  velo: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(20, 33, 46, 0.4)' },
-  hoja: { maxHeight: '92%', gap: espaciado[12], padding: espaciado[16], paddingBottom: espaciado[32], borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: color.superficie.base },
-  cabecera: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  // H-CAP-03: la capa arranca donde empieza la cabecera de la sección y la tapa; detrás queda el antecedente
+  velo: { flex: 1, paddingTop: espaciado[24], backgroundColor: color.velo.capa },
+  hoja: { flex: 1, gap: espaciado[12], padding: espaciado[16], borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: color.superficie.base },
+  cabecera: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: espaciado[8] },
+  cabeceraTextos: { flex: 1 },
   titulo: { fontSize: tipografia.subtitulo, fontWeight: '700', color: color.texto.fuerte },
   cerrar: { minHeight: 44, minWidth: 44, justifyContent: 'center', alignItems: 'center' },
   cerrarTexto: { fontSize: tipografia.etiqueta, fontWeight: '600', color: color.marca.base },
-  turnos: { flexGrow: 0, flexShrink: 1 },
+  turnos: { flex: 1 },
   turnosContenido: { gap: espaciado[8] },
   pedido: { alignSelf: 'flex-end', maxWidth: '85%', padding: espaciado[12], borderRadius: 12, backgroundColor: color.marca.base },
   pedidoTexto: { fontSize: tipografia.cuerpo, color: color.texto.inverso },
