@@ -1,5 +1,6 @@
 'use client';
 
+import { useLayoutEffect, useRef } from 'react';
 import type { AgendaLista, CompromisoDelDia, VistaAgenda } from '../../lib/agenda';
 import { IconoAnterior, IconoSiguiente } from './iconos';
 
@@ -79,7 +80,29 @@ function Periodo({
   );
 }
 
+// El primer antepasado que se desplaza: en la aplicación, el cuerpo del lienzo
+function desplazableDe(elemento: HTMLElement): HTMLElement | null {
+  for (let padre = elemento.parentElement; padre; padre = padre.parentElement) {
+    const { overflowY } = getComputedStyle(padre);
+    if (overflowY === 'auto' || overflowY === 'scroll') return padre;
+  }
+  return null;
+}
+
 export function AgendaSemana({ agenda, irA }: { agenda: Extract<AgendaLista, { nivel: 'semana' }>; irA: (vista: VistaAgenda) => void }) {
+  // Pulido · REQ-CUN01-14: al abrir la semana, el día de hoy queda a la vista aunque haya mucho antes. Solo si
+  // no se ve entero, sin animar y una vez por semana mostrada; después manda la persona.
+  const hoy = useRef<HTMLLIElement>(null);
+  useLayoutEffect(() => {
+    const dia = hoy.current;
+    const marco = dia && desplazableDe(dia);
+    if (!dia || !marco) return;
+    const caja = dia.getBoundingClientRect();
+    const visible = marco.getBoundingClientRect();
+    if (caja.top >= visible.top && caja.bottom <= visible.bottom) return;
+    dia.scrollIntoView({ block: 'start', behavior: 'instant' });
+  }, [agenda.titulo]);
+
   return (
     <section className="semana" aria-labelledby="titulo-periodo">
       <Periodo
@@ -93,7 +116,12 @@ export function AgendaSemana({ agenda, irA }: { agenda: Extract<AgendaLista, { n
       />
       <ol className="semana__dias">
         {agenda.dias.map((dia) => (
-          <li key={dia.fecha} className={`semana__dia${dia.esHoy ? ' semana__dia--hoy' : ''}`} aria-current={dia.esHoy ? 'date' : undefined}>
+          <li
+            key={dia.fecha}
+            ref={dia.esHoy ? hoy : undefined}
+            className={`semana__dia${dia.esHoy ? ' semana__dia--hoy' : ''}`}
+            aria-current={dia.esHoy ? 'date' : undefined}
+          >
             <h3 className="semana__nombre">
               {mayuscula(dia.nombre)}
               {dia.esHoy && <span className="etiqueta">Hoy</span>}

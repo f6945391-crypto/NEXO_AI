@@ -109,6 +109,19 @@ test.describe('web.agenda-semana-y-mes', () => {
     await expect(page.getByRole('button', { name: 'Esta semana' })).toHaveCount(0);
   });
 
+  // Pulido · la cuenta semanaLlena tiene seis compromisos cada día de esta semana (e2e/arrancar-api.mjs). Sin
+  // desplazar nada, el día de hoy tiene que estar a la vista. Si hoy es lunes, ya lo está de entrada.
+  test('al entrar en Semana, el día de hoy se ve sin desplazarse aunque haya muchos compromisos antes (REQ-CUN01-14)', async ({ page }) => {
+    await entrar(page, cuentas.semanaLlena.correo);
+    await page.getByRole('tab', { name: 'Semana' }).click();
+    const semana = page.getByRole('region', { name: /^Semana del / });
+    await expect(semana.locator('.semana__dia')).toHaveCount(7);
+    const hoy = semana.locator('[aria-current="date"]');
+    await expect(hoy.locator('.compromiso')).toHaveCount(6);
+    await expect(hoy.getByRole('heading')).toBeInViewport();
+    await expect(hoy.locator('.compromiso').first()).toBeInViewport();
+  });
+
   test('Mes muestra la rejilla con un punto por cada dos compromisos, pasa de mes y un día abre ese día en Hoy (REQ-CUN01-15)', async ({ page }) => {
     await entrar(page, cuentas.agendaSemana.correo);
     await page.getByRole('tab', { name: 'Mes' }).click();

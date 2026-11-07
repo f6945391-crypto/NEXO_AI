@@ -76,5 +76,10 @@
     "correo": "historial-largo-e2e@nexoai.test",
     "rol": "usuario_personal",
     "plan": "personal"
+  },
+  "semanaLlena": {
+    "correo": "semana-llena-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
   }
 }

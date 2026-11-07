@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Perfil } from '@nexoai/contratos';
 import { Boton } from '../componentes';
@@ -15,11 +15,13 @@ import { etiquetarZona } from '../zonas';
 // capa, que es donde algo puede quedar en espera.
 // Pulido · REQ-CAP-25, decisión 26 de 02-agenda: la franja va solo sobre el nivel Hoy, como en la web. La agenda
 // avisa de su nivel con `alCambiarNivel`.
+// Pulido · REQ-CUN01-14: `mostrar` desplaza la lista, sin animar, hasta dejar a la vista una parte que no se ve
+// (la usa Semana para abrir con el día de hoy visible).
 
 export type Seccion = 'agenda' | 'tareas' | 'actividad';
 
 // Lo que Inicio ofrece a la sección que pinta
-export type Lienzo = { alCambiarNivel: (nivel: Nivel) => void };
+export type Lienzo = { alCambiarNivel: (nivel: Nivel) => void; mostrar: (vista: View) => void };
 
 const SECCIONES: Record<Seccion, { nombre: string; pregunta: string }> = {
   agenda: { nombre: 'Agenda', pregunta: 'Lo que va a pasar' },
@@ -39,6 +41,22 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [nivel, setNivel] = useState<Nivel>('Hoy');
   const alCambiarNivel = useCallback((nuevo: Nivel) => setNivel(nuevo), []);
+
+  // Qué parte de la lista se ve: desde dónde y cuánto alto
+  const desplazable = useRef<ScrollView>(null);
+  const contenidoDesplazable = useRef<View>(null);
+  const desplazamiento = useRef(0);
+  const altoVisible = useRef(0);
+  // Si la vista no se ve entera, la lista se mueve hasta su borde de arriba, con un margen
+  const mostrar = useCallback((vista: View) => {
+    const contenedor = contenidoDesplazable.current;
+    if (!contenedor) return;
+    vista.measureLayout(contenedor, (_x, y, _ancho, alto) => {
+      const arriba = desplazamiento.current;
+      if (y >= arriba && y + alto <= arriba + altoVisible.current) return;
+      desplazable.current?.scrollTo({ y: Math.max(0, y - espaciado[8]), animated: false });
+    });
+  }, []);
 
   useEffect(() => {
     if (!ajustes || perfil) return;
@@ -64,9 +82,17 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={estilos.cuerpo}>
-        {seccion === 'agenda' && nivel === 'Hoy' && <FranjaEnEspera version={version + esperas} alSalir={alSalir} />}
-        {contenido(seccion, () => setCaptura(true), version, { alCambiarNivel })}
+      <ScrollView
+        ref={desplazable}
+        contentContainerStyle={estilos.desplazable}
+        scrollEventThrottle={16}
+        onScroll={(e) => (desplazamiento.current = e.nativeEvent.contentOffset.y)}
+        onLayout={(e) => (altoVisible.current = e.nativeEvent.layout.height)}
+      >
+        <View ref={contenidoDesplazable} style={estilos.cuerpo}>
+          {seccion === 'agenda' && nivel === 'Hoy' && <FranjaEnEspera version={version + esperas} alSalir={alSalir} />}
+          {contenido(seccion, () => setCaptura(true), version, { alCambiarNivel, mostrar })}
+        </View>
       </ScrollView>
 
       {/* El asa: abre la capa de captura sin salir de la sección (glosario, «Asa») */}
@@ -141,6 +167,7 @@ const estilos = StyleSheet.create({
   pregunta: { fontSize: tipografia.etiqueta, color: color.texto.suave },
   textoBoton: { minHeight: 44, minWidth: 44, paddingHorizontal: espaciado[8], alignItems: 'center', justifyContent: 'center' },
   textoBotonTexto: { fontSize: tipografia.etiqueta, fontWeight: '600', color: color.marca.base },
+  desplazable: { flexGrow: 1 },
   cuerpo: { flexGrow: 1, paddingHorizontal: espaciado[16], paddingBottom: espaciado[24], gap: espaciado[16] },
   asa: { position: 'absolute', right: espaciado[16], bottom: 72, minHeight: 48, paddingHorizontal: espaciado[20], justifyContent: 'center', borderRadius: 24, backgroundColor: color.agente.base },
   asaTexto: { fontSize: tipografia.etiqueta, fontWeight: '700', color: color.texto.inverso },

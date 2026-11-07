@@ -61,9 +61,9 @@ test.beforeAll(async () => {
   await api.dispose();
 });
 
-async function entrar(page: Page) {
+async function entrar(page: Page, correo = cuentas.asistente.correo) {
   await page.goto('/');
-  await page.getByLabel('Correo').fill(cuentas.asistente.correo);
+  await page.getByLabel('Correo').fill(correo);
   await page.getByLabel('Contraseña', { exact: true }).fill(cuentas.contrasenaTemporal);
   await page.getByRole('button', { name: 'Entrar' }).click();
   await expect(page.getByRole('heading', { name: 'Agenda' })).toBeVisible();
@@ -95,6 +95,17 @@ test.describe('movil.agenda-semana-y-mes', () => {
 
     await page.getByRole('button', { name: 'Semana anterior' }).click();
     await expect(page.getByLabel(`Hoy, ${fechaLarga(hoy).toLowerCase()}`)).toBeVisible();
+  });
+
+  // Pulido · la cuenta semanaLlena tiene seis compromisos cada día de esta semana (arrancar-api.mjs). Sin
+  // desplazar nada, el día de hoy tiene que estar a la vista. Si hoy es lunes, ya lo está de entrada.
+  test('al entrar en Semana, el día de hoy queda a la vista aunque haya muchos compromisos antes', async ({ page }) => {
+    await entrar(page, cuentas.semanaLlena.correo);
+    await page.getByRole('tab', { name: 'Semana' }).click();
+    const deHoy = page.getByLabel(`Hoy, ${fechaLarga(hoy).toLowerCase()}`);
+    await expect(deHoy.getByRole('button', { name: 'Revisión de correo, 08:00 – 09:00' })).toHaveCount(1);
+    await expect(deHoy.getByRole('heading', { name: fechaLarga(hoy) })).toBeInViewport();
+    await expect(deHoy.getByRole('button', { name: 'Revisión de correo, 08:00 – 09:00' })).toBeInViewport();
   });
 
   test('Mes muestra la rejilla con un punto por cada dos compromisos, se pasa de mes, y tocar un día lo abre en Hoy con «Volver a hoy»', async ({ page }) => {

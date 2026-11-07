@@ -58,11 +58,13 @@ export function AgendaHoy({
   alSalir,
   alAbrirCaptura,
   alCambiarNivel,
+  mostrar,
   version = 0,
 }: {
   alSalir: () => void;
   alAbrirCaptura: () => void;
   alCambiarNivel?: (nivel: Nivel) => void;
+  mostrar?: (vista: View) => void;
   version?: number;
 }) {
   const [nivel, setNivel] = useState<Nivel>('Hoy');
@@ -185,7 +187,7 @@ export function AgendaHoy({
         <NivelHoy foco={foco} zona={zona} eventos={estado.eventos} alAbrir={abrir} alVolverAHoy={() => setFoco(hoyEn(zona))} alAbrirCaptura={alAbrirCaptura} />
       )}
       {estado.tipo === 'lista' && zona && foco && nivel === 'Semana' && (
-        <NivelSemana foco={foco} zona={zona} eventos={estado.eventos} alAbrir={abrir} alMover={(semanas) => setFoco(sumarDias(lunesDe(foco), semanas * 7))} />
+        <NivelSemana foco={foco} zona={zona} eventos={estado.eventos} alAbrir={abrir} alMover={(semanas) => setFoco(sumarDias(lunesDe(foco), semanas * 7))} mostrar={mostrar} />
       )}
       {estado.tipo === 'lista' && zona && foco && nivel === 'Mes' && (
         <NivelMes
@@ -323,12 +325,27 @@ function NivelHoy({ foco, zona, eventos, alAbrir, alVolverAHoy, alAbrirCaptura }
   );
 }
 
-// REQ-CUN01-14: los siete días, de lunes a domingo, también los que no tienen nada
-function NivelSemana({ foco, zona, eventos, alAbrir, alMover }: PropsNivel & { alAbrir: (e: EventoAgenda) => void; alMover: (semanas: number) => void }) {
+// REQ-CUN01-14: los siete días, de lunes a domingo, también los que no tienen nada. Pulido: al abrir, el día de
+// hoy queda a la vista aunque haya mucho antes; una sola vez y sin animar, después manda la persona.
+function NivelSemana({
+  foco,
+  zona,
+  eventos,
+  alAbrir,
+  alMover,
+  mostrar,
+}: PropsNivel & { alAbrir: (e: EventoAgenda) => void; alMover: (semanas: number) => void; mostrar?: (vista: View) => void }) {
   const lunes = lunesDe(foco);
   const fechas = dias(lunes, 7);
   const delDia = porDia(eventos, fechas, zona);
   const hoy = hoyEn(zona);
+  const deHoy = useRef<View>(null);
+  const mostrado = useRef(false);
+  function alColocarHoy() {
+    if (mostrado.current || !deHoy.current) return;
+    mostrado.current = true;
+    mostrar?.(deHoy.current);
+  }
   return (
     <View style={estilos.dia}>
       <Navegacion titulo={nombreDeLaSemana(lunes)} anterior="Semana anterior" siguiente="Semana siguiente" alMover={alMover} />
@@ -339,7 +356,13 @@ function NivelSemana({ foco, zona, eventos, alAbrir, alMover }: PropsNivel & { a
           const esHoy = fecha === hoy;
           return (
             // El día de hoy lleva borde/fuerte (design/ARQUITECTURA-VISUAL-MOVIL.md §3 ter)
-            <View key={fecha} accessibilityLabel={esHoy ? `Hoy, ${fechaLarga(fecha).toLowerCase()}` : fechaLarga(fecha)} style={[estilos.diaSemana, esHoy && estilos.diaHoy]}>
+            <View
+              key={fecha}
+              ref={esHoy ? deHoy : undefined}
+              onLayout={esHoy ? alColocarHoy : undefined}
+              accessibilityLabel={esHoy ? `Hoy, ${fechaLarga(fecha).toLowerCase()}` : fechaLarga(fecha)}
+              style={[estilos.diaSemana, esHoy && estilos.diaHoy]}
+            >
               <View style={estilos.cabeceraDia}>
                 <Text accessibilityRole="header" style={estilos.tituloDia}>
                   {fechaLarga(fecha)}

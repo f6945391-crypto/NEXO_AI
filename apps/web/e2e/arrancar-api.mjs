@@ -56,7 +56,7 @@ for (const [clave, cuenta] of Object.entries(cuentas)) {
 process.env.CALENDARIO_SIMULADO = '1';
 const { calendarioDeDemostracion: calendario } = desdeApi('./dist/integraciones/calendario/calendario-simulado.js');
 // T-034: dos cuentas más para conversar con el asistente, que es el simulado con su guion
-for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial', 'agendaSemana', 'enEspera', 'historialLargo'].filter((c) => perfiles[c])) {
+for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial', 'agendaSemana', 'enEspera', 'historialLargo', 'semanaLlena'].filter((c) => perfiles[c])) {
   const perfilId = perfiles[clave];
   await prisma.perfilUsuario.update({ where: { id: perfilId }, data: { debeCambiarContrasena: false, zonaHoraria: 'America/Lima' } });
   await prisma.consentimientoIntegracion.create({
@@ -111,6 +111,26 @@ if (perfiles.agendaSemana) {
     },
   });
   sembrar(8, '10:00', '11:00', 'Revisión trimestral');
+}
+// Pulido · REQ-CUN01-14: una semana llena, seis compromisos cada día de lunes al lunes siguiente, para ver que
+// Semana abre con hoy a la vista aunque haya mucho antes. El de las 10:00 de mañana sirve también para el choque
+// de horario en una línea (REQ-CUN01-05).
+if (perfiles.semanaLlena) {
+  const enDias = (dia, n) => new Date(Date.parse(`${dia}T12:00:00Z`) + n * 24 * 3600_000).toISOString().slice(0, 10);
+  const lunes = enDias(hoy, -((new Date(`${hoy}T12:00:00Z`).getUTCDay() + 6) % 7));
+  const bloques = [
+    ['08:00', '09:00', 'Revisión de correo'],
+    ['09:00', '10:00', 'Reunión de equipo'],
+    ['10:00', '11:00', 'Llamada con proveedores'],
+    ['11:00', '12:00', 'Bloque de foco'],
+    ['14:00', '15:00', 'Seguimiento de proyecto'],
+    ['16:00', '17:00', 'Cierre del día'],
+  ];
+  for (let n = 0; n <= 7; n++) {
+    for (const [hora, fin, titulo] of bloques) {
+      calendario.sembrar(perfiles.semanaLlena, { titulo, inicio: aLas(enDias(lunes, n), hora), fin: aLas(enDias(lunes, n), fin), zonaHoraria: 'America/Lima' });
+    }
+  }
 }
 await prisma.$disconnect();
 

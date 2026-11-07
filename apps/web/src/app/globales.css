@@ -1022,6 +1022,8 @@ body {
 .semana__dia--hoy {
   border-color: var(--borde-fuerte);
   background: var(--superficie-elevada);
+  /* Al abrir la semana con hoy más abajo, queda este aire por encima */
+  scroll-margin-top: var(--espaciado-16);
 }
 
 .semana__nombre {
