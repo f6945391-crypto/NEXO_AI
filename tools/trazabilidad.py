@@ -23,6 +23,7 @@ ESTADOS_CON_PRUEBA = ("implementado", "verificado")
 FASE_POR_PREFIJO = {
     "ACC": "1",
     "CUN01": "1",
+    "CUN03": "1",
     "CAP": "2",
     "AGT": "2",
     "CUN02": "3",
