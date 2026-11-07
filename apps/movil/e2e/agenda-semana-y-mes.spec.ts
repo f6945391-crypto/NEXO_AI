@@ -5,7 +5,9 @@ import cuentas from './cuentas.json';
 // apps/web/e2e/arrancar-api.mjs le deja hecho el primer ingreso, en Lima, con el calendario simulado
 // conectado y sin compromisos. Los compromisos se registran antes por la API, con su Operación confirmada.
 
-const API = `http://localhost:${process.env.PUERTO_API_E2E ?? '3103'}`;
+// El puerto de la API lo fija la configuración de Playwright, que es la que la arranca
+if (!process.env.PUERTO_API_E2E) throw new Error('Falta PUERTO_API_E2E: lo define playwright.config.ts');
+const API = `http://localhost:${process.env.PUERTO_API_E2E}`;
 const ZONA = 'America/Lima';
 
 const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(new Date());

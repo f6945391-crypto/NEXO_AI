@@ -6,7 +6,9 @@ import cuentas from './cuentas.json';
 // uno en curso, uno por venir y uno cancelado; ayer, un taller y un cambio de zona. La zona se lee del perfil.
 // Con CAPTURAS_ACTIVIDAD=<carpeta>, guarda las capturas de cada nivel (design/capturas/2026-11-07-actividad).
 
-const API = `http://localhost:${process.env.PUERTO_API_E2E ?? '3103'}`;
+// El puerto de la API lo fija la configuración de Playwright, que es la que la arranca
+if (!process.env.PUERTO_API_E2E) throw new Error('Falta PUERTO_API_E2E: lo define playwright.config.ts');
+const API = `http://localhost:${process.env.PUERTO_API_E2E}`;
 const CAPTURAS = process.env.CAPTURAS_ACTIVIDAD;
 
 async function zonaDe(correo: string): Promise<string> {

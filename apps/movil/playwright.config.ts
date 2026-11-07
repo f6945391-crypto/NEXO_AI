@@ -2,6 +2,9 @@ import { defineConfig } from '@playwright/test';
 
 const PUERTO = 3201;
 const PUERTO_API = 3103;
+// Las pruebas que hablan con la API leen su puerto de aquí: la configuración se carga también en cada
+// proceso de pruebas, y así no hace falta exportarlo a mano ni puede apuntar a otra API.
+process.env.PUERTO_API_E2E = String(PUERTO_API);
 
 // Pruebas de extremo a extremo del móvil sobre Expo web (T-020): la misma herramienta que la web, y
 // corre en la integración continua sin emulador. La app nativa se revisa a mano con Expo Go.
