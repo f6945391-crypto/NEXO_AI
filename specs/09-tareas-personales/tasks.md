@@ -18,7 +18,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** `packages/contratos/src/tareas.ts` con `EstadoTarea`, `FranjaTarea`, `TareaPersonal`, `RespuestaTareas`, `ConsultaTareas`, `ConsultaTareasDelDia`, `TareasDelDia`, `CargaRegistrarTarea`, `CargaModificarTarea`, `CargaTareaExistente`, `TareaListada` y `ListaTareas`; los argumentos de las herramientas de plan §7.1; `Fecha`, `Hora` e `Instante` a un `comunes.ts` exportado, sin cambiar su forma; en `agente.ts` y `asistente.ts`, el turno `tareas` y los desenlaces `hecho`, `reabierto`, `cambiado` y `quitado`. `ArgsGuardarTarea` y `ClaseTarea` **no** se quitan todavía (se retiran en T-050)
 - **Hecho cuando:** `horaLimite` sin `fecha` y `esperadaDesde` sin `deQuien` no validan; `CargaModificarTarea` sin ningún campo no valida; `null` en `fecha` sí valida y significa quitarla; los contratos existentes siguen validando lo mismo
 - **Prueba:** `contratos.tareas`
-- **Estado:** pendiente
+- **Estado:** hecha · 7 de noviembre de 2026. `contratos.tareas` 8/8
 
 ---
 
@@ -31,7 +31,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** décima migración: `estado_tarea`, tabla `tarea` (plan §3.1) con sus `CHECK`, `operacion.convertida_en` (plan §3.2); `Tarea` en `MODELOS_CON_ORGANIZACION`; funciones puras `franjaDe`, `instanteLimite`, `vencida` y `ordenar` en `apps/api/src/tareas/dominio/franja.ts`
 - **Hecho cuando:** una tabla de casos cubre cada franja (con `deQuien` y `fecha` va a esperando), cada orden de H-TP-05 y vencida con y sin hora límite, también tras un cambio de zona del perfil; la prueba de aislamiento cubre `tarea`; la migración se aplica sobre la base de pruebas sin tocar las anteriores
 - **Pruebas:** `tareas.franja-y-orden`, `plataforma.aislamiento-entre-organizaciones` (ampliada)
-- **Estado:** pendiente
+- **Estado:** hecha · 7 de noviembre de 2026. Migración escrita a mano y aplicada con psql (el motor de Prisma no se descarga aquí). Tabla `tarea_personal` (H-TP-19)
 
 ---
 
@@ -44,7 +44,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** `TareasModule` con `TareasRepositorio` (filtrado por `perfilId`) y los ejecutores de `tareas.registrar`, `tareas.modificar`, `tareas.completar`, `tareas.reabrir` y `tareas.descartar` (plan §4), con sus orígenes, sus tarjetas y `TAREA_NO_MODIFICABLE`; «Marcar como recibido» cuando hay `deQuien`
 - **Hecho cuando:** sin confirmar no existe la tarea; confirmar dos veces crea una (`operacionOrigenId` único); `tareas.registrar` y `tareas.modificar` rechazan `control_directo` con `ORIGEN_NO_PERMITIDO`; la tarjeta de modificar muestra antes y después; descartar no borra la fila; ningún ejecutor llama a Google
 - **Pruebas:** `tareas.sin-confirmar-no-registra`, `tareas.esperando-y-recibido`, `tareas.descartar-requiere-confirmacion`, `tareas.modificar-muestra-antes-y-ahora`
-- **Estado:** pendiente
+- **Estado:** hecha · 7 de noviembre de 2026. Seis tipos: `tareas.cambiar` en lugar de `tareas.modificar` y `tareas.recibido` aparte (H-TP-20)
 
 ### T-049 · Consulta y rutas de tareas
 
@@ -53,7 +53,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** `ConsultaTareasService` y `tareas.controller.ts` con `GET /tareas`, `GET /tareas/dia`, `GET /tareas/:id`, `POST /tareas/:id/hecha` y `POST /tareas/:id/reabrir` (plan §5), todas `@SobreLoPropio()` y sin `@RequiereGoogle`; `porConfirmar` vacío hasta T-056
 - **Hecho cuando:** las pendientes salen en el orden de H-TP-05 con `franja` y `vencida` calculadas; las hechas de más de 7 días no salen; `/tareas/dia` de hoy suma las vencidas y el de otro día no; `/hecha` dos veces deja una tarea hecha y dos Operaciones auditadas con origen `control_directo`; la tarea de otro perfil da `TAREA_NO_ENCONTRADA`; todo funciona sin calendario conectado y sin proveedor de modelo
 - **Pruebas:** `tareas.hecha-y-reabrir`, `tareas.del-dia-con-vencidas`, `tareas.solo-las-propias`, `tareas.sin-calendario`, `tareas.consulta-sin-proveedor-de-modelo`
-- **Estado:** pendiente
+- **Estado:** hecha · 7 de noviembre de 2026. `GET /tareas` admite también `hasta` (H-TP-18)
 
 ---
 
@@ -66,7 +66,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** `herramientas-tareas.ts` con `tareas.consultar`, `tareas.registrar` y `tareas.modificar` (plan §7.1); `ListaTareas` armada por el código y el turno `tareas` en la web y el móvil; **se retira `captura.guardar_tarea`** con `ArgsGuardarTarea` y `ClaseTarea`; instrucciones; guion de demostración; el episodio cierra como `registrado` y deja de usar `guardado`; nuevo texto de `funcion_por_llegar` (H-TP-16) y ajuste de las pruebas que esperaban el anterior
 - **Hecho cuando:** con el simulado, «recuérdame pagar el recibo antes del sábado» propone una tarea con fecha y, al confirmar, existe; «tengo que llamar al dentista» propone sin fecha sin preguntar; «pídele a María Fernanda el informe» propone esperando de alguien y no envía nada; «¿qué tengo pendiente?» devuelve la lista armada por el código; ninguna tarjeta promete un aviso; ninguna herramienta escribe `funcion_por_llegar`
 - **Pruebas:** `agente.tareas.registra-con-tarjeta`, `agente.tareas.consulta-tal-cual`, `agente.tareas.no-delega`
-- **Estado:** pendiente
+- **Estado:** hecha · 7 de noviembre de 2026. La herramienta de cambiar se llama `tareas.cambiar`. La nota de continuidad (T-040) no se tocó: T-040 no está en esta rama
 - **Se entrega junto con T-056** (plan §9)
 
 ### T-051 · Completar, reabrir y descartar por conversación
@@ -76,7 +76,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** `tareas.completar`, `tareas.reabrir` y `tareas.descartar` como herramientas, con `tareaId` o con `texto`; búsqueda en código entre las pendientes o las hechas recientes; candidatas; separadores nuevos; casos nuevos de `evaluar-asistente` (plan §12)
 - **Hecho cuando:** «ya pagué el recibo» con dos recibos pendientes muestra las dos candidatas y no propone nada; elegir una lleva a su tarjeta; con una sola, la tarjeta dice cuál; «ya me llegó el presupuesto de Juan» propone «Marcar como recibido»; «ponle prioridad 1» y «divídela en tres pasos» no cambian nada
 - **Pruebas:** `agente.tareas.completar-dice-cual`, `agente.tareas.no-delega` (ampliada)
-- **Estado:** pendiente
+- **Estado:** hecha · 7 de noviembre de 2026. T-042 no existía: el nodo de candidatas es el corte en `herramientas` más la decisión `referente`, con el contrato de §14.9
 
 ---
 
@@ -89,7 +89,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** `lib/tareas.ts`; `aplicacion/tareas.tsx` con el selector de franjas existente, la lista, «Hecho» / «Recibido» con «Deshacer», «Hechas en los últimos 7 días» con «Reabrir», «Descartar» con tarjeta y el estado vacío de cada franja; `aplicacion/tarjeta.tsx` extraída de `conversacion.tsx` (plan §8.1)
 - **Hecho cuando:** con tareas sembradas por Operaciones, cada franja muestra las suyas en orden y con su texto; una vencida dice «Vencía el…»; «Hecho» la pasa al pie y «Deshacer» la devuelve; «Reabrir» la devuelve a su franja; descartar pide confirmación; una franja vacía explica qué va ahí y enfoca la barra de entrada; no hay ningún campo de edición
 - **Prueba:** `web.tareas-por-franja` (extremo a extremo)
-- **Estado:** pendiente
+- **Estado:** hecha · 7 de noviembre de 2026. La tarjeta no se extrajo a `tarjeta.tsx`: descartar usa la suya en `tareas.tsx`
 
 ### T-053 · Tareas del día en Hoy, en la web
 
@@ -98,7 +98,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** grupo «Tareas para este día» en el nivel Hoy del lienzo, debajo de `ListaCompromisos` y con la franja «en espera» arriba; «Hecho» en cada tarea; nada en Semana ni en Mes
 - **Hecho cuando:** hoy con un compromiso, una tarea del día con hora límite y una vencida, se ven en el orden del criterio y ninguna tarea está en la línea de horas; otro día elegido muestra solo sus tareas; un día sin compromisos muestra el estado vacío y debajo las tareas; Semana y Mes no muestran tareas
 - **Prueba:** `web.tareas-en-hoy` (extremo a extremo)
-- **Estado:** pendiente
+- **Estado:** hecha · 7 de noviembre de 2026
 
 ---
 
@@ -111,7 +111,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** `pantallas/tareas.tsx` con el selector de franjas, la lista, «Hecho» / «Recibido» con «Deshacer», las hechas recientes con «Reabrir», el detalle de una tarea con «Descartar» y su tarjeta, y el estado vacío por franja que abre la capa; `pantallas/tarjeta.tsx` extraída de `captura.tsx`; `tareas/formato.ts` (plan §8.2)
 - **Hecho cuando:** lo mismo que T-052, en Expo web a 390×844, y las mismas tareas en el mismo orden que la web; el estado vacío abre la capa de captura
 - **Prueba:** `movil.tareas-por-franja` (extremo a extremo)
-- **Estado:** pendiente
+- **Estado:** hecha · 7 de noviembre de 2026. La tarjeta no se extrajo a `pantallas/tarjeta.tsx`; los textos vienen de la API (H-TP-21), sin `tareas/formato.ts`
 
 ### T-055 · Tareas del día en Hoy, en el móvil
 
@@ -120,7 +120,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Contenido:** el grupo «Tareas para este día» en `NivelHoy` de `pantallas/agenda.tsx`, con «Hecho»; nada en `NivelSemana` ni en `NivelMes`
 - **Hecho cuando:** lo mismo que T-053, en Expo web
 - **Prueba:** `movil.tareas-en-hoy` (extremo a extremo)
-- **Estado:** pendiente
+- **Estado:** hecha · 7 de noviembre de 2026. El grupo se monta en `AgendaHoy`, debajo de `NivelHoy`
 
 ---
 
