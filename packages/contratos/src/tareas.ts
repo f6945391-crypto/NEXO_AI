@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Fecha, Hora, Instante } from './comunes';
+import { ZonaHoraria } from './acceso';
 import { OperacionRespuesta } from './operaciones';
 
 // Tareas personales (specs/09-tareas-personales/plan.md §6) · T-046 · CUN-03. La fecha de una tarea es un
@@ -87,7 +88,8 @@ const horaConFecha = (c: { fecha?: string | null; horaLimite?: string | null }) 
 const desdeConQuien = (c: { deQuien?: string | null; esperadaDesde?: string | null }) => !c.esperadaDesde || !!c.deQuien;
 
 // Carga de `tareas.registrar` (REQ-CUN03-01, 02, 04). Solo el texto es obligatorio: sin fecha es una franja,
-// no un dato que falta (H-TP-02). Sin `esperadaDesde` y con `deQuien`, el ejecutor pone hoy.
+// no un dato que falta (H-TP-02). La propuesta completa `esperadaDesde` (hoy, si hay `deQuien`) y la zona del
+// perfil, y guarda la carga completada: lo registrado es lo mostrado (como en agenda, T-017).
 export const CargaRegistrarTarea = z
   .strictObject({
     texto: TextoTarea,
@@ -95,6 +97,7 @@ export const CargaRegistrarTarea = z
     horaLimite: Hora.optional(),
     deQuien: DeQuien.optional(),
     esperadaDesde: Fecha.optional(),
+    zonaHoraria: ZonaHoraria.optional(),
   })
   .refine(horaConFecha, { message: 'la hora límite necesita una fecha', path: ['horaLimite'] })
   .refine(desdeConQuien, { message: 'desde cuándo se espera necesita de quién', path: ['esperadaDesde'] });
@@ -109,8 +112,10 @@ export const CargaCambiarTarea = z
     horaLimite: Hora.nullable().optional(),
     deQuien: DeQuien.nullable().optional(),
     esperadaDesde: Fecha.nullable().optional(),
+    // La completa la propuesta cuando cambia la fecha: la zona en que se dijo la nueva (P-05)
+    zonaHoraria: ZonaHoraria.optional(),
   })
-  .refine(({ tareaId: _, ...cambios }) => Object.values(cambios).some((v) => v !== undefined), 'no dice qué cambiar');
+  .refine(({ tareaId: _, zonaHoraria: __, ...cambios }) => Object.values(cambios).some((v) => v !== undefined), 'no dice qué cambiar');
 export type CargaCambiarTarea = z.infer<typeof CargaCambiarTarea>;
 
 // Carga de `tareas.completar`, `tareas.recibido`, `tareas.reabrir` y `tareas.descartar`

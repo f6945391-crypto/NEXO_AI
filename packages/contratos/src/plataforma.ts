@@ -35,6 +35,9 @@ export const CodigoError = z.enum([
   'CUENTA_SUSPENDIDA',
   'CUENTA_CERRADA',
   'AMBITO_INCORRECTO',
+  // 09-tareas-personales · T-048
+  'TAREA_NO_ENCONTRADA',
+  'TAREA_NO_MODIFICABLE',
 ]);
 export type CodigoError = z.infer<typeof CodigoError>;
 

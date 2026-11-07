@@ -151,7 +151,7 @@ export class OperacionesService {
     let actualizada: Operacion;
     let efimero: OperacionRespuesta['efimero'];
     try {
-      const resultado = await ejecutor.ejecutar(contexto, ejecutor.esquema.parse(op.carga));
+      const resultado = await ejecutor.ejecutar(contexto, ejecutor.esquema.parse(op.carga), { id });
       if (resultado.tipo === 'ejecutada') efimero = resultado.efimero;
       actualizada = await this.datos(contexto).operacion.update({
         where: { id },

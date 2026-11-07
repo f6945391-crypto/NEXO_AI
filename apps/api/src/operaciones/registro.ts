@@ -33,8 +33,9 @@ export interface EjecutorOperacion<C = unknown> {
   // Cómo nombrar a la persona cada campo obligatorio cuando falta (REQ-CUN01-07)
   readonly nombresDeCampos?: Readonly<Record<string, string>>;
   proponer(contexto: ContextoSolicitud, carga: C): Promise<Propuesta<C>>;
-  // Único lugar donde una operación produce su efecto (AD-09).
-  ejecutar(contexto: ContextoSolicitud, carga: C): Promise<ResultadoEjecucion>;
+  // Único lugar donde una operación produce su efecto (AD-09). `operacion.id` sirve de clave de idempotencia
+  // a lo que crea algo nuevo (T-048: la tarea guarda la Operación que la creó)
+  ejecutar(contexto: ContextoSolicitud, carga: C, operacion: { id: string }): Promise<ResultadoEjecucion>;
 }
 
 @Injectable()
