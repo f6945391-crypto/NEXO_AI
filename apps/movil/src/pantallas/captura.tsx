@@ -31,41 +31,86 @@ const dia = (iso: string, zona?: string) => new Intl.DateTimeFormat('es', { time
 const enLista = (titulos: string[]) => (titulos.length < 2 ? titulos.join('') : `${titulos.slice(0, -1).join(', ')} y ${titulos[titulos.length - 1]}`);
 const seCruzaCon = (eventos: { titulo: string }[]) => `Se cruza con ${enLista(eventos.map((e) => `«${e.titulo}»`))}`;
 
-// H-CAP-01: lo esencial de la tarjeta plegada, en una línea, con los datos que trae la propia tarjeta y en este
-// orden. No se inventa nada: de la duración solo se quita su explicación («1 hora, porque…» → «1 hora»).
-const ESENCIALES = ['Título', 'Compromiso', 'Título nuevo', 'Fecha', 'Hora', 'Cuándo', 'Ahora', 'Nueva', 'Duración'];
-function lineaEsencial(datos: { etiqueta: string; valor: string }[]): string {
-  const valores = ESENCIALES.flatMap((etiqueta) => {
-    const dato = datos.find((d) => d.etiqueta === etiqueta);
-    if (!dato) return [];
-    return [etiqueta === 'Duración' ? dato.valor.split(',')[0] : dato.valor];
-  });
+// H-CAP-01 (revisada el 7 de noviembre de 2026, auditoría MC-17 y MC-18): lo que la tarjeta plegada deja a la
+// vista, armado con los datos que trae la propia tarjeta y sin inventar nada.
+type Dato = { etiqueta: string; valor: string };
+// El compromiso del que se habla, si la acción no lo nombra
+const NOMBRE = ['Título', 'Compromiso', 'Título nuevo'];
+// Cuándo, siempre con su zona (P-05)
+const CUANDO = ['Fecha', 'Hora', 'Cuándo', 'Ahora', 'Nueva', 'Zona horaria'];
+// Lo que puso el sistema por su cuenta lleva su explicación, y nunca se pliega (decisión 19 de 02-agenda)
+const explica = (d: Dato) => d.valor.includes('porque');
+
+function plegada(accion: string, datos: Dato[]) {
+  const valores = (etiquetas: string[]) => etiquetas.flatMap((e) => datos.filter((d) => d.etiqueta === e && !explica(d)).map((d) => d.valor));
+  const nombre = valores(NOMBRE).filter((v) => !accion.includes(v));
+  let cuando = valores(CUANDO);
   // Una tarjeta con otros datos: los dos primeros, tal cual
-  if (valores.length === 0) return datos.filter((d) => d.etiqueta !== 'Alternativas').slice(0, 2).map((d) => d.valor).join(' · ');
-  return valores.join(' · ');
+  if (nombre.length === 0 && cuando.length === 0) cuando = datos.filter((d) => d.etiqueta !== 'Alternativas' && !explica(d)).slice(0, 2).map((d) => d.valor);
+  return { nombre: nombre.join(' · '), cuando: cuando.join(' · '), explicaciones: datos.filter(explica) };
+}
+
+// Qué se decidió sobre una tarjeta que ya no espera: se lee en lo que vino después
+function desenlace(elementos: Elemento[], desde: number, operacionId: string): string | null {
+  for (const e of elementos.slice(desde + 1)) {
+    if (e.clase === 'separador') {
+      if (e.cierre.desenlace === 'descartado') return 'Descartado';
+      return ['registrado', 'movido', 'cancelado'].includes(e.cierre.desenlace) ? 'Confirmado' : null;
+    }
+    const t = e.turno;
+    if (t.tipo === 'resultado' && t.operacion.id === operacionId) return 'Confirmado';
+    if (t.tipo === 'propuesta') return 'Cambiado por otro horario';
+    if (t.tipo === 'persona') return 'Descartado';
+    if (t.tipo === 'fallo') return 'No se pudo hacer';
+  }
+  return null;
 }
 
 // La primera petición de la persona en lo que se está pidiendo
 const primeraPeticion = (turnos: TurnoAsistente[]) => turnos.find((t) => t.tipo === 'persona')?.texto ?? null;
 
-function Tarjeta({ operacion, activa, ocupado, alDecidir }: { operacion: OperacionRespuesta; activa: boolean; ocupado: boolean; alDecidir: (d: DecisionAsistente) => void }) {
-  const [detalles, setDetalles] = useState(false);
+function Tarjeta({
+  operacion,
+  activa,
+  decidido,
+  ocupado,
+  alDecidir,
+  alUbicar,
+}: {
+  operacion: OperacionRespuesta;
+  activa: boolean;
+  // Lo que se decidió, cuando ya no espera
+  decidido: string | null;
+  ocupado: boolean;
+  alDecidir: (d: DecisionAsistente) => void;
+  alUbicar: (y: number, alto: number) => void;
+}) {
+  const [abierta, setAbierta] = useState(false);
+  // Una tarjeta ya decidida queda plegada
+  const detalles = activa && abierta;
   const vista = operacion.vistaConfirmacion;
   const alternativas = vista.conflicto?.alternativas ?? [];
   const choque = vista.conflicto?.eventos ?? [];
   // Con los botones a la vista, las alternativas no se repiten en texto
   const datos = activa && alternativas.length > 0 ? vista.datos.filter((d) => d.etiqueta !== 'Alternativas') : vista.datos;
-  const esencial = lineaEsencial(vista.datos);
+  const { nombre, cuando, explicaciones } = plegada(vista.accion, vista.datos);
   return (
     // P-03: la acción exacta, sus datos y qué es irreversible, antes de ejecutarla. H-CAP-01: plegada por
     // defecto; «Ver detalles» muestra todos los datos en la misma tarjeta (REQ-CAP-01)
-    <View accessibilityLabel="Para confirmar" style={estilos.tarjeta}>
+    <View
+      accessibilityLabel="Para confirmar"
+      onLayout={(e) => alUbicar(e.nativeEvent.layout.y, e.nativeEvent.layout.height)}
+      style={[estilos.tarjeta, !activa && estilos.tarjetaDecidida]}
+    >
       <Text style={estilos.accion}>{vista.accion}</Text>
-      {esencial !== '' && (
-        <Text numberOfLines={2} style={estilos.esencial}>
-          {esencial}
-        </Text>
-      )}
+      {nombre !== '' && <Text style={estilos.cuerpo}>{nombre}</Text>}
+      {cuando !== '' && <Text style={estilos.esencial}>{cuando}</Text>}
+      {!detalles &&
+        explicaciones.map((d) => (
+          <Text key={d.etiqueta} style={estilos.suave}>
+            {d.valor}
+          </Text>
+        ))}
       {detalles &&
         datos.map((d) => (
           <View key={d.etiqueta}>
@@ -74,12 +119,12 @@ function Tarjeta({ operacion, activa, ocupado, alDecidir }: { operacion: Operaci
           </View>
         ))}
       {vista.irreversible && <Text style={estilos.advertencia}>{vista.irreversible}</Text>}
-      {!vista.confirmable && choque.length > 0 && (
+      {activa && !vista.confirmable && choque.length > 0 && (
         <Text numberOfLines={1} style={estilos.advertencia}>
           {seCruzaCon(choque)}
         </Text>
       )}
-      {!vista.confirmable && choque.length === 0 && vista.motivoNoConfirmable && <Text style={estilos.advertencia}>{vista.motivoNoConfirmable}</Text>}
+      {activa && !vista.confirmable && choque.length === 0 && vista.motivoNoConfirmable && <Text style={estilos.advertencia}>{vista.motivoNoConfirmable}</Text>}
       {activa &&
         alternativas.map((a) => (
           <Boton
@@ -91,16 +136,17 @@ function Tarjeta({ operacion, activa, ocupado, alDecidir }: { operacion: Operaci
           />
         ))}
       {activa && vista.confirmable && <Boton texto="Confirmar" deshabilitado={ocupado} alPulsar={() => alDecidir({ operacionId: operacion.id, decision: 'confirmar' })} />}
-      <View style={estilos.fila}>
-        {activa && (
+      {activa && (
+        <View style={estilos.fila}>
           <View style={estilos.enFila}>
             <Boton texto="Descartar" secundario deshabilitado={ocupado} alPulsar={() => alDecidir({ operacionId: operacion.id, decision: 'descartar' })} />
           </View>
-        )}
-        <View style={estilos.enFila}>
-          <Boton texto={detalles ? 'Ocultar detalles' : 'Ver detalles'} secundario expandido={detalles} alPulsar={() => setDetalles((d) => !d)} />
+          <View style={estilos.enFila}>
+            <Boton texto={abierta ? 'Ocultar detalles' : 'Ver detalles'} secundario expandido={abierta} alPulsar={() => setAbierta((d) => !d)} />
+          </View>
         </View>
-      </View>
+      )}
+      {!activa && decidido && <Text style={estilos.decidido}>{decidido}</Text>}
     </View>
   );
 }
@@ -141,7 +187,8 @@ function Turno({ turno, pendiente, ocupado, alDecidir }: { turno: TurnoAsistente
         </View>
       );
     case 'propuesta':
-      return <Tarjeta operacion={turno.operacion} activa={pendiente === turno.operacion.id} ocupado={ocupado} alDecidir={alDecidir} />;
+      // La tarjeta se pinta desde la lista, que sabe qué vino después
+      return null;
     case 'resultado':
       return <Text style={estilos.resultado}>{turno.texto}</Text>;
     case 'en_espera':
@@ -196,6 +243,8 @@ export function CapaCaptura({
       if (r.estado === 200 && conversacion.success) {
         setElementos(elementosDe(conversacion.data.episodios));
         setPendiente(conversacion.data.pendiente);
+        porUbicar.current = conversacion.data.pendiente;
+        objetivo.current = null;
         const abierto = conversacion.data.episodios.find((e) => e.id === conversacion.data.episodioAbierto);
         setEnCurso(abierto && abierto.turnos.length > 0 ? { id: abierto.id, peticion: primeraPeticion(abierto.turnos) } : null);
         setCursor(conversacion.data.hayAnteriores ? conversacion.data.cursor : null);
@@ -234,6 +283,17 @@ export function CapaCaptura({
   useEffect(() => alCambiarPendiente(pendiente !== null), [pendiente, alCambiarPendiente]);
 
   const lista = useRef<ScrollView>(null);
+  // H-CAP-01: al llegar una propuesta, la tarjeta entera queda a la vista, botones incluidos; si no cabe, se
+  // alinea su parte de arriba. `porUbicar` es la tarjeta que falta ubicar y `objetivo`, adónde se desplazó
+  const porUbicar = useRef<string | null>(null);
+  const objetivo = useRef<number | null>(null);
+  const altoLista = useRef(0);
+  function ubicar(id: string, y: number, alto: number) {
+    if (porUbicar.current !== id || altoLista.current === 0) return;
+    porUbicar.current = null;
+    objetivo.current = Math.max(0, alto <= altoLista.current ? y + alto - altoLista.current : y);
+    lista.current?.scrollTo({ y: objetivo.current, animated: true });
+  }
 
   // `provisional`: el mensaje de la persona que ya se muestra, mientras el asistente responde. La respuesta
   // trae el definitivo, que lo reemplaza.
@@ -253,6 +313,7 @@ export function CapaCaptura({
         ...(cierre ? [{ clase: 'separador' as const, id: `separador-${episodioId}`, cierre }] : []),
       ]);
       setPendiente(respuesta.data.pendiente);
+      if (turnos.some((t) => t.tipo === 'propuesta')) porUbicar.current = respuesta.data.pendiente;
       if (respuesta.data.turnos.some((t) => t.tipo === 'resultado')) alCambiarAgenda();
     } catch {
       setError(SIN_CONEXION);
@@ -273,6 +334,7 @@ export function CapaCaptura({
     setEnCurso((previo) => previo ?? { id: '', peticion: texto });
     // Al enviar, la lista baja hasta el final aunque se estuviera leyendo algo anterior
     anclado.current = false;
+    objetivo.current = null;
     void hablar('/asistente/mensajes', { texto }, provisional.id);
   }
 
@@ -307,8 +369,10 @@ export function CapaCaptura({
                   anclado.current = false;
                   return;
                 }
-                lista.current?.scrollToEnd({ animated: true });
+                if (objetivo.current !== null) lista.current?.scrollTo({ y: objetivo.current, animated: true });
+                else lista.current?.scrollToEnd({ animated: true });
               }}
+              onLayout={(e) => (altoLista.current = e.nativeEvent.layout.height)}
               stickyHeaderIndices={cursor ? [0] : undefined}
               style={estilos.turnos}
               contentContainerStyle={estilos.turnosContenido}
@@ -321,7 +385,22 @@ export function CapaCaptura({
                   </Pressable>
                 </View>
               )}
-              {elementos.map((elemento) => {
+              {elementos.map((elemento, indice) => {
+                if (elemento.clase === 'turno' && elemento.turno.tipo === 'propuesta') {
+                  const { turno } = elemento;
+                  const id = turno.operacion.id;
+                  return (
+                    <Tarjeta
+                      key={turno.id}
+                      operacion={turno.operacion}
+                      activa={pendiente === id}
+                      decidido={pendiente === id ? null : desenlace(elementos, indice, id)}
+                      ocupado={ocupado}
+                      alDecidir={(d) => void hablar('/asistente/decisiones', d)}
+                      alUbicar={(y, alto) => ubicar(id, y, alto)}
+                    />
+                  );
+                }
                 if (elemento.clase === 'turno') {
                   const { turno } = elemento;
                   return <Turno key={turno.id} turno={turno} pendiente={pendiente} ocupado={ocupado} alDecidir={(d) => void hablar('/asistente/decisiones', d)} />;
@@ -392,14 +471,17 @@ const estilos = StyleSheet.create({
   respuesta: { alignSelf: 'flex-start', maxWidth: '92%', padding: espaciado[12], borderRadius: 12, backgroundColor: color.agente.suave },
   agenda: { gap: espaciado[4], padding: espaciado[12], borderRadius: 12, borderWidth: 1, borderColor: color.borde.base, backgroundColor: color.superficie.elevada },
   tarjeta: { gap: espaciado[8], padding: espaciado[16], borderRadius: 12, borderWidth: 1, borderColor: color.borde.fuerte, backgroundColor: color.superficie.base },
+  // Ya decidida: deja de pedir atención (ARQUITECTURA-VISUAL-MOVIL §3, el borde graduado)
+  tarjetaDecidida: { borderColor: color.borde.base },
+  decidido: { fontSize: tipografia.etiqueta, fontWeight: '600', color: color.texto.suave },
   accion: { fontSize: tipografia.cuerpo, fontWeight: '700', color: color.texto.fuerte },
   esencial: { fontSize: tipografia.etiqueta, lineHeight: 20, color: color.texto.fuerte },
   fila: { flexDirection: 'row', gap: espaciado[8] },
   enFila: { flex: 1 },
   advertencia: { fontSize: tipografia.etiqueta, lineHeight: 20, color: color.estado.advertencia },
-  resultado: { padding: espaciado[12], borderRadius: 12, backgroundColor: '#E6F4EC', color: color.estado.exito, fontSize: tipografia.cuerpo },
-  espera: { padding: espaciado[12], borderRadius: 12, backgroundColor: '#FDF3E0' },
-  esperaTexto: { color: '#7A4F00', fontSize: tipografia.etiqueta, lineHeight: 20 },
+  resultado: { padding: espaciado[12], borderRadius: 12, backgroundColor: color.tinte.exito, color: color.estado.exito, fontSize: tipografia.cuerpo },
+  espera: { padding: espaciado[12], borderRadius: 12, backgroundColor: color.tinte.espera },
+  esperaTexto: { color: color.tinte.esperaTexto, fontSize: tipografia.etiqueta, lineHeight: 20 },
   cuerpo: { fontSize: tipografia.cuerpo, color: color.texto.fuerte },
   suave: { fontSize: tipografia.etiqueta, lineHeight: 20, color: color.texto.suave },
   tachado: { textDecorationLine: 'line-through', color: color.texto.suave },
