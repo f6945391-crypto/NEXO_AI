@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TareaPersonal } from '@nexoai/contratos';
 import { isoConDesfase } from '../agenda/dominio/tiempo';
-import type { Prisma, Tarea } from '../generado/prisma/client';
+import type { Prisma, TareaPersonal as FilaTareaPersonal } from '../generado/prisma/client';
 import type { ContextoSolicitud } from '../identidad/contexto';
 import { errorApi } from '../plataforma/errores';
 import { PrismaService } from '../plataforma/prisma.service';
@@ -12,7 +12,7 @@ import { franjaDe, vencida, type DatosFranja } from './dominio/franja';
 // por perfil** además de por organización: una tarea personal solo la ve su dueño, tampoco el responsable
 // de su equipo (P-10). Solo lo usan los ejecutores de Operaciones y la consulta.
 
-export type FilaTarea = Tarea;
+export type FilaTarea = FilaTareaPersonal;
 
 // `date` de Postgres llega como medianoche en UTC
 const comoFecha = (valor: Date | null) => (valor ? valor.toISOString().slice(0, 10) : null);
@@ -61,7 +61,7 @@ export class TareasRepositorio {
   constructor(private readonly prisma: PrismaService) {}
 
   porId(contexto: ContextoSolicitud, id: string): Promise<FilaTarea | null> {
-    return this.datos(contexto).tarea.findFirst({ where: { id, perfilId: contexto.perfilId } });
+    return this.datos(contexto).tareaPersonal.findFirst({ where: { id, perfilId: contexto.perfilId } });
   }
 
   async existente(contexto: ContextoSolicitud, id: string): Promise<FilaTarea> {
@@ -71,27 +71,27 @@ export class TareasRepositorio {
   }
 
   porOrigen(contexto: ContextoSolicitud, operacionId: string): Promise<FilaTarea | null> {
-    return this.datos(contexto).tarea.findFirst({ where: { operacionOrigenId: operacionId, perfilId: contexto.perfilId } });
+    return this.datos(contexto).tareaPersonal.findFirst({ where: { operacionOrigenId: operacionId, perfilId: contexto.perfilId } });
   }
 
   pendientes(contexto: ContextoSolicitud): Promise<FilaTarea[]> {
-    return this.datos(contexto).tarea.findMany({ where: { perfilId: contexto.perfilId, estado: 'pendiente' } });
+    return this.datos(contexto).tareaPersonal.findMany({ where: { perfilId: contexto.perfilId, estado: 'pendiente' } });
   }
 
   hechasDesde(contexto: ContextoSolicitud, desde: Date): Promise<FilaTarea[]> {
-    return this.datos(contexto).tarea.findMany({
+    return this.datos(contexto).tareaPersonal.findMany({
       where: { perfilId: contexto.perfilId, estado: 'hecha', hechaEn: { gte: desde } },
       orderBy: { hechaEn: 'desc' },
     });
   }
 
-  crear(contexto: ContextoSolicitud, datos: Omit<Prisma.TareaUncheckedCreateInput, 'organizacionId' | 'perfilId'>): Promise<FilaTarea> {
-    return this.datos(contexto).tarea.create({ data: { ...datos, organizacionId: contexto.organizacionId, perfilId: contexto.perfilId } });
+  crear(contexto: ContextoSolicitud, datos: Omit<Prisma.TareaPersonalUncheckedCreateInput, 'organizacionId' | 'perfilId'>): Promise<FilaTarea> {
+    return this.datos(contexto).tareaPersonal.create({ data: { ...datos, organizacionId: contexto.organizacionId, perfilId: contexto.perfilId } });
   }
 
   // Solo si sigue en uno de los estados de partida: dos controles a la vez no se pisan
-  async cambiar(contexto: ContextoSolicitud, id: string, desde: FilaTarea['estado'][], datos: Prisma.TareaUncheckedUpdateManyInput): Promise<FilaTarea | null> {
-    const r = await this.datos(contexto).tarea.updateMany({ where: { id, perfilId: contexto.perfilId, estado: { in: desde } }, data: datos });
+  async cambiar(contexto: ContextoSolicitud, id: string, desde: FilaTarea['estado'][], datos: Prisma.TareaPersonalUncheckedUpdateManyInput): Promise<FilaTarea | null> {
+    const r = await this.datos(contexto).tareaPersonal.updateMany({ where: { id, perfilId: contexto.perfilId, estado: { in: desde } }, data: datos });
     return r.count === 1 ? this.porId(contexto, id) : null;
   }
 

@@ -115,7 +115,7 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
       const equipo = await base.equipo.create({ data: { organizacionId, nombre: 'Ventas' } });
       await base.miembroEquipo.create({ data: { organizacionId, equipoId: equipo.id, perfilId, responsable: true } });
       // Y una tarea personal, creada por esa Operación (T-047)
-      await base.tarea.create({ data: { organizacionId, perfilId, texto: 'Pagar el recibo', zonaHoraria: 'America/Lima', operacionOrigenId: operacion.id } });
+      await base.tareaPersonal.create({ data: { organizacionId, perfilId, texto: 'Pagar el recibo', zonaHoraria: 'America/Lima', operacionOrigenId: operacion.id } });
       // Y su transcripción (T-038)
       await base.turnoTranscripcion.create({
         data: { id: randomUUID(), organizacionId, perfilId, conversacionId: conversacion.id, en: new Date(), tipo: 'texto', datos: {} },

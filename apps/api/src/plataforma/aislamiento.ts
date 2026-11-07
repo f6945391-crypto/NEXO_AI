@@ -28,7 +28,7 @@ export const MODELOS_CON_ORGANIZACION: ReadonlySet<string> = new Set([
   'Equipo',
   'MiembroEquipo',
   // T-047: las tareas personales (09-tareas-personales)
-  'Tarea',
+  'TareaPersonal',
 ]);
 
 export class ErrorDeAislamiento extends Error {

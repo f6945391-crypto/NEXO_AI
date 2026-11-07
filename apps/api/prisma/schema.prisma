@@ -53,7 +53,7 @@ model Organizacion {
   equipos          Equipo[]
   miembrosEquipo   MiembroEquipo[]
   // 09-tareas-personales
-  tareas           Tarea[]
+  tareas           TareaPersonal[]
 
   @@map("organizacion")
 }
@@ -88,7 +88,7 @@ model PerfilUsuario {
   pertenencias       MiembroOrganizacion[]
   equipos            MiembroEquipo[]
   // 09-tareas-personales
-  tareas             Tarea[]
+  tareas             TareaPersonal[]
 
   @@index([organizacionId])
   @@map("perfil_usuario")
@@ -168,7 +168,7 @@ model Operacion {
   perfil       PerfilUsuario       @relation(fields: [perfilId], references: [id])
   conversacion ConversacionAgente? @relation(fields: [conversacionId], references: [id])
   // 09-tareas-personales: la tarea que creó esta Operación `tareas.registrar`
-  tareaCreada  Tarea?
+  tareaCreada  TareaPersonal?
 
   @@index([organizacionId, perfilId, estado])
   @@index([organizacionId, ambito, creadaEn])
@@ -555,7 +555,8 @@ model MiembroEquipo {
   @@map("miembro_equipo")
 // ---- 09-tareas-personales ----
 
-// EN-04 Tarea, solo lo personal (specs/09-tareas-personales/plan.md §3.1) · T-047. Tres estados (H-TP-01); la
+// EN-04 Tarea, solo lo personal (specs/09-tareas-personales/plan.md §3.1) · T-047. H-TP-19: se llama
+// `TareaPersonal` / `tarea_personal` porque las tareas del equipo (CUN-07) irán en otro modelo. Tres estados (H-TP-01); la
 // franja no se guarda: la calcula el código (tareas/dominio/franja.ts).
 enum EstadoTarea {
   pendiente
@@ -565,7 +566,7 @@ enum EstadoTarea {
   @@map("estado_tarea")
 }
 
-model Tarea {
+model TareaPersonal {
   id                String      @id @default(uuid()) @db.Uuid
   organizacionId    String      @map("organizacion_id") @db.Uuid
   // RN-EST-01: la tarea personal es de un perfil, y solo ese perfil la ve (REQ-CUN03-19)
@@ -594,5 +595,5 @@ model Tarea {
 
   @@index([perfilId, estado, fecha])
   @@index([organizacionId])
-  @@map("tarea")
+  @@map("tarea_personal")
 }

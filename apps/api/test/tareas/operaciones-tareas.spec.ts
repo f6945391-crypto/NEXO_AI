@@ -78,14 +78,14 @@ describe('T-048 · Operaciones de tareas', () => {
       ]);
       // H-TP-10: ninguna tarjeta promete un aviso
       expect(JSON.stringify(op.vistaConfirmacion)).not.toMatch(/recordar|aviso|avisar/i);
-      expect(await prisma.tarea.count()).toBe(0);
+      expect(await prisma.tareaPersonal.count()).toBe(0);
 
       // Dos confirmaciones a la vez: una ejecuta; la otra devuelve lo mismo o dice que ya está en curso
       const respuestas = await Promise.all([confirmar(autorizacion, op.id), confirmar(autorizacion, op.id)]);
       expect(respuestas.some((r) => r.status === 200)).toBe(true);
       expect(respuestas.every((r) => r.status === 200 || r.status === 409)).toBe(true);
       await confirmar(autorizacion, op.id).expect(200);
-      expect(await prisma.tarea.count()).toBe(1);
+      expect(await prisma.tareaPersonal.count()).toBe(1);
       // Ni compromiso ni Google (REQ-CUN03-01)
       expect(calendario.llamadas.escrituras).toBe(0);
       expect(await prisma.eventoAgenda.count()).toBe(0);
@@ -122,7 +122,7 @@ describe('T-048 · Operaciones de tareas', () => {
       const hoy = diaEn(new Date(), 'America/Lima');
       expect(tarea).toMatchObject({ franja: 'esperando', deQuien: 'Juan', esperadaDesde: hoy, fecha: VIERNES, espera: 'De Juan · Desde hoy' });
       expect(tarea.cuando).toMatch(/^Para el viernes/);
-      const columnas = Object.keys((await prisma.tarea.findFirstOrThrow()) as object);
+      const columnas = Object.keys((await prisma.tareaPersonal.findFirstOrThrow()) as object);
       expect(columnas.some((c) => /correo|telefono|contacto|nota/i.test(c))).toBe(false);
 
       // Dar por hecha no corresponde a lo que se espera; recibido sí
@@ -133,7 +133,7 @@ describe('T-048 · Operaciones de tareas', () => {
       expect(recibido.vistaConfirmacion.datos[0]).toEqual({ etiqueta: 'Tarea', valor: 'Presupuesto' });
       const hecha = TareaPersonal.parse(OperacionRespuesta.parse((await confirmar(autorizacion, recibido.id).expect(200)).body).resultado);
       expect(hecha).toMatchObject({ estado: 'hecha', cierre: expect.stringMatching(/^Recibido el /) });
-      expect(await prisma.tarea.count()).toBe(1);
+      expect(await prisma.tareaPersonal.count()).toBe(1);
     });
   });
 
@@ -147,12 +147,12 @@ describe('T-048 · Operaciones de tareas', () => {
       expect(op.vistaConfirmacion.irreversible).toContain('Ya no aparecerá en tus tareas');
 
       await descartarOp(autorizacion, op.id).expect(200);
-      expect((await prisma.tarea.findFirstOrThrow()).estado).toBe('pendiente');
+      expect((await prisma.tareaPersonal.findFirstOrThrow()).estado).toBe('pendiente');
 
       const otra = OperacionRespuesta.parse((await proponer(autorizacion, 'tareas.descartar', { tareaId: tarea.id }, 'control_directo').expect(201)).body);
       const hecha = OperacionRespuesta.parse((await confirmar(autorizacion, otra.id).expect(200)).body);
       expect(TareaPersonal.parse(hecha.resultado).estado).toBe('descartada');
-      const fila = await prisma.tarea.findFirstOrThrow();
+      const fila = await prisma.tareaPersonal.findFirstOrThrow();
       expect(fila).toMatchObject({ estado: 'descartada', texto: 'Llamar al dentista' });
       expect(fila.descartadaEn).toBeInstanceOf(Date);
       // Lo descartado ya no se cambia ni se reabre
@@ -174,7 +174,7 @@ describe('T-048 · Operaciones de tareas', () => {
         { etiqueta: 'Antes', valor: expect.stringMatching(/^Para el viernes \d+ de \w+, antes de las 18:00$/) },
         { etiqueta: 'Ahora', valor: expect.stringMatching(/^Para el lunes \d+ de \w+, antes de las 18:00$/) },
       ]);
-      expect((await prisma.tarea.findFirstOrThrow()).fecha?.toISOString().slice(0, 10)).toBe(VIERNES);
+      expect((await prisma.tareaPersonal.findFirstOrThrow()).fecha?.toISOString().slice(0, 10)).toBe(VIERNES);
       const cambiada = TareaPersonal.parse(OperacionRespuesta.parse((await confirmar(autorizacion, op.id).expect(200)).body).resultado);
       expect(cambiada).toMatchObject({ fecha: lunes, horaLimite: '18:00', texto: 'Pagar el recibo', franja: 'con_fecha' });
 

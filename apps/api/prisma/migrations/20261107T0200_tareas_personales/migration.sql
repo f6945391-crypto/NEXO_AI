@@ -9,7 +9,7 @@ CREATE TYPE "estado_tarea" AS ENUM ('pendiente', 'hecha', 'descartada');
 ALTER TABLE "operacion" ADD COLUMN     "convertida_en" TIMESTAMPTZ(3);
 
 -- CreateTable
-CREATE TABLE "tarea" (
+CREATE TABLE "tarea_personal" (
     "id" UUID NOT NULL,
     "organizacion_id" UUID NOT NULL,
     "perfil_id" UUID NOT NULL,
@@ -26,26 +26,26 @@ CREATE TABLE "tarea" (
     "creada_en" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "actualizada_en" TIMESTAMPTZ(3) NOT NULL,
 
-    CONSTRAINT "tarea_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "tarea_personal_pkey" PRIMARY KEY ("id"),
     -- Plan §3.1: la hora límite exige fecha; desde cuándo se espera exige de quién
-    CONSTRAINT "tarea_hora_limite_con_fecha" CHECK ("hora_limite" IS NULL OR "fecha" IS NOT NULL),
-    CONSTRAINT "tarea_esperada_desde_con_de_quien" CHECK ("esperada_desde" IS NULL OR "de_quien" IS NOT NULL)
+    CONSTRAINT "tarea_personal_hora_limite_con_fecha" CHECK ("hora_limite" IS NULL OR "fecha" IS NOT NULL),
+    CONSTRAINT "tarea_personal_esperada_desde_con_de_quien" CHECK ("esperada_desde" IS NULL OR "de_quien" IS NOT NULL)
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "tarea_operacion_origen_id_key" ON "tarea"("operacion_origen_id");
+CREATE UNIQUE INDEX "tarea_personal_operacion_origen_id_key" ON "tarea_personal"("operacion_origen_id");
 
 -- CreateIndex
-CREATE INDEX "tarea_perfil_id_estado_fecha_idx" ON "tarea"("perfil_id", "estado", "fecha");
+CREATE INDEX "tarea_personal_perfil_id_estado_fecha_idx" ON "tarea_personal"("perfil_id", "estado", "fecha");
 
 -- CreateIndex
-CREATE INDEX "tarea_organizacion_id_idx" ON "tarea"("organizacion_id");
+CREATE INDEX "tarea_personal_organizacion_id_idx" ON "tarea_personal"("organizacion_id");
 
 -- AddForeignKey
-ALTER TABLE "tarea" ADD CONSTRAINT "tarea_organizacion_id_fkey" FOREIGN KEY ("organizacion_id") REFERENCES "organizacion"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "tarea_personal" ADD CONSTRAINT "tarea_personal_organizacion_id_fkey" FOREIGN KEY ("organizacion_id") REFERENCES "organizacion"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "tarea" ADD CONSTRAINT "tarea_perfil_id_fkey" FOREIGN KEY ("perfil_id") REFERENCES "perfil_usuario"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "tarea_personal" ADD CONSTRAINT "tarea_personal_perfil_id_fkey" FOREIGN KEY ("perfil_id") REFERENCES "perfil_usuario"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "tarea" ADD CONSTRAINT "tarea_operacion_origen_id_fkey" FOREIGN KEY ("operacion_origen_id") REFERENCES "operacion"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "tarea_personal" ADD CONSTRAINT "tarea_personal_operacion_origen_id_fkey" FOREIGN KEY ("operacion_origen_id") REFERENCES "operacion"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
