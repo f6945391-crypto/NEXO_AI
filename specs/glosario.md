@@ -44,9 +44,11 @@
 |---|---|---|---|
 | **Compromiso** | Algo con fecha y hora en la agenda del usuario. Es un **Evento de Agenda** (EN-02) | E1 EN-02 | *Compromiso de reunión*: ver §6, conflicto C-1 |
 | **Tarea** | Algo que hay que hacer y que tiene un responsable (EN-04). Puede ser personal o delegada | E1 EN-04; RN-EST-02 | *Apunte*, que no pide nada |
+| **Tarea personal** | Tarea que una persona tiene para sí: ella es su responsable y la única que la ve, también frente al responsable de su equipo (REQ-ACC-17). Está pendiente, hecha o descartada, y mientras está pendiente cae en una sola franja: con fecha, sin fecha o esperando de alguien. No se asigna ni se delega. *Propuesto el 6 de noviembre de 2026* | CUN-03; REQ-CUN03-03, REQ-CUN03-19 | *Tarea asignada* y *Encargo* (CUN-07, CUN-09); *Compromiso*, que tiene hora en la agenda |
 | **Pendiente sin fecha** | Tarea sin fecha, ya sea porque no se le dio o porque no cabía en el día pedido (R-1) | REQ-CAP-02, REQ-CAP-07 | — |
 | **Petición** | Algo que un miembro le pide a un compañero de su equipo sin ser su responsable. El compañero la acepta o la rechaza; mientras no la acepta, no es una tarea suya (REQ-CUN07-18) | Decisión del equipo, 23 de octubre de 2026 | *Encargo*, que solo hace el responsable |
-| **Esperando de alguien** | Tarea cuyo avance depende de un tercero. Solo se guarda qué se espera y de quién (R-12) | REQ-CAP-02; R-12 | — |
+| **Esperando de alguien** | Tarea cuyo avance depende de un tercero. Solo se guarda qué se espera y de quién (R-12). *Precisado el 6 de noviembre de 2026:* «de quién» es el nombre tal como lo dijo la persona, sin contacto; se guarda también desde cuándo y, si se dijo, para cuándo | REQ-CAP-02; R-12; REQ-CUN03-04 | *Encargo*, donde a esa persona sí se le asigna algo |
+| **Recibido** | Forma de dar por hecha una tarea que esperaba de alguien: lo esperado llegó. Guarda el día en que se marcó y no crea nada más. *Propuesto el 6 de noviembre de 2026* | REQ-CUN03-05 | — |
 | **Encargo** | Tarea delegada a un colaborador, vista desde quien la delegó. Declara sus preguntas, y una de ellas es el criterio de terminado. El colaborador la ve en su aplicación como **tarea asignada** | `REPLANTEO.md` §4.11; REQ-ENC-01, 02; D-17 | — |
 | **Correo de aviso** | Correo que solo informa al colaborador de una tarea nueva y remite a la aplicación. No tiene botones y no se puede responder | REQ-CUN07-16; DP-03 | *Correo asistido* (CUN-04), que redacta el asistente y sale desde el Gmail del usuario |
 | **Apunte** | Algo que la persona pensó o que ocurrió y que no pide nada. Se ancla al día en que se capturó, no aparece en Tareas y no requiere confirmación | `design/ARQUITECTURA-VISUAL-MOVIL.md` «La regla que separa tarea de apunte» | *Tarea* |
@@ -71,6 +73,7 @@
 | **Sección** | Uno de los tres destinos de trabajo, iguales en web y móvil: **Agenda** (lo que va a pasar), **Tareas** (lo que hay que hacer) y **Actividad** (lo que pasó) | R-23, R-32 | *Actividad* como sinónimo de tarea: ver §6, conflicto C-2 |
 | **Nivel** | Escala dentro de una sección: Hoy · Semana · Mes | `design/ARQUITECTURA-VISUAL-MOVIL.md` §2 | *Franja* |
 | **Franja** | Corte de Tareas que no es temporal: con fecha, sin fecha, esperando de alguien, encargadas | R-38 | *Nivel* |
+| **Por confirmar** | Grupo de Tareas, encima de las franjas, con las tareas que el asistente propuso al convertir lo que estaba en espera y que la persona todavía no confirmó ni descartó. No es una franja. *Propuesto el 6 de noviembre de 2026* | REQ-CUN03-17; H-TP-11 | *Franja*; la franja «en espera» de la agenda (REQ-CAP-25) |
 | **Capa de captura** | Hoja que sube sobre la sección actual para pedir algo al asistente. No es una sección ni lleva a otra pantalla | R-36 | — |
 | **Asa** | Control flotante del móvil que abre la capa de captura | `design/ARQUITECTURA-VISUAL-MOVIL.md` §2 | — |
 | **Conversación** | Columna web de 528 px, y capa de captura en el móvil, donde se crean y confirman operaciones. Muestra la transcripción con un separador entre episodios; **no se vacía al cerrar una operación** (REQ-AGT-03). *Definición del 5 de noviembre de 2026, avalada. La anterior decía «desechable: se vacía al cerrar la operación»* | `design/ARQUITECTURA-VISUAL-WEB.md` §2 y §5; REQ-AGT-03 | *Hilo*; *Episodio* |
@@ -92,6 +95,7 @@
 | **Banda horaria** | 08:00–20:00 normal, 20:00–22:00 solo si se pide. Es un parámetro de la plataforma, no un dato del perfil | `05-equipos` §1; R-44 |
 | **Criterio de terminado** | Condición, en una línea, que declara quien delega y que hace aplicable RN-INF-02 | R-19, R-29; REQ-ENC-02 |
 | **Procedencia** | Si una actualización es un dato («Juan pulsó Hecho») o una interpretación del asistente. Siempre se ve | R-18 |
+| **Vencida** | Marca de una tarea pendiente cuya fecha, o la fecha en que debía llegar lo esperado, ya pasó en la zona de la persona. La calcula el código; no es un estado y no cambia nada de la tarea. *Propuesto el 6 de noviembre de 2026* | REQ-CUN03-07; P-02 |
 
 ## 6. Conflictos de vocabulario abiertos
 
