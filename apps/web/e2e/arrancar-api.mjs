@@ -45,10 +45,33 @@ const { crearCuenta, crearOrganizacion } = desdeApi('./dist/identidad/alta-cuent
 const prisma = crearClientePrisma(urlE2e);
 const organizacionId = await crearOrganizacion(prisma, 'Organización de pruebas de extremo a extremo');
 const perfiles = {};
-for (const [clave, cuenta] of Object.entries(cuentas)) {
-  if (typeof cuenta !== 'object') continue;
-  perfiles[clave] = (await crearCuenta(prisma, { organizacionId, ...cuenta }, cuentas.contrasenaTemporal)).perfilId;
+// T-069: `organizacion` lleva la cuenta a otra organización: «personal», una propia para ella sola; cualquier
+// otro valor, una empresa con ese nombre. `lista`, con el primer ingreso hecho, en Lima.
+const empresas = {};
+for (const [clave, { organizacion, lista, ...cuenta }] of Object.entries(cuentas).filter(([, c]) => typeof c === 'object')) {
+  const destino =
+    organizacion === 'personal'
+      ? await crearOrganizacion(prisma, `Personal de ${cuenta.correo}`, 'personal')
+      : organizacion
+        ? (empresas[organizacion] ??= await crearOrganizacion(prisma, organizacion, 'empresa'))
+        : organizacionId;
+  perfiles[clave] = (await crearCuenta(prisma, { organizacionId: destino, ...cuenta }, cuentas.contrasenaTemporal)).perfilId;
+  if (lista) await prisma.perfilUsuario.update({ where: { id: perfiles[clave] }, data: { debeCambiarContrasena: false, zonaHoraria: 'America/Lima' } });
   console.log(`[e2e] cuenta ${clave}: ${cuenta.correo}`);
+}
+// T-069: dos equipos en Acme para la zona de empresa, uno sin responsable (REQ-ADM-32)
+if (empresas.Acme && perfiles.acmeResponsable) {
+  const acme = empresas.Acme;
+  const ventas = await prisma.equipo.create({ data: { organizacionId: acme, nombre: 'Ventas' } });
+  const soporte = await prisma.equipo.create({ data: { organizacionId: acme, nombre: 'Soporte' } });
+  await prisma.miembroEquipo.createMany({
+    data: [
+      { organizacionId: acme, equipoId: ventas.id, perfilId: perfiles.acmeResponsable, responsable: true },
+      { organizacionId: acme, equipoId: ventas.id, perfilId: perfiles.acmeSuspender },
+      { organizacionId: acme, equipoId: ventas.id, perfilId: perfiles.acmeRestablecer },
+      { organizacionId: acme, equipoId: soporte.id, perfilId: perfiles.acmeRestablecer },
+    ],
+  });
 }
 
 // T-025: dos cuentas con el primer ingreso hecho, en Lima, y el calendario conectado al calendario

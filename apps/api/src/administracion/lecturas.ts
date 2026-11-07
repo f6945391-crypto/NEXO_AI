@@ -193,11 +193,11 @@ export class LecturasAdministracion {
   async sesion(contexto: ContextoSolicitud): Promise<SesionEmpresa> {
     const empresaId = this.empresaDe(contexto);
     const [perfil, organizacion, administrador, responsable] = await Promise.all([
-      this.prisma.deOrganizacion(contexto.organizacionId).perfilUsuario.findUniqueOrThrow({ where: { id: contexto.perfilId }, select: { correo: true } }),
+      this.prisma.deOrganizacion(contexto.organizacionId).perfilUsuario.findUniqueOrThrow({ where: { id: contexto.perfilId }, select: { correo: true, zonaHoraria: true } }),
       this.prisma.deOrganizacion(empresaId).organizacion.findUniqueOrThrow({ where: { id: empresaId }, select: { nombre: true } }),
       this.pertenencias.esAdministrador(contexto),
       this.pertenencias.esResponsable(contexto),
     ]);
-    return SesionEmpresa.parse({ correo: perfil.correo, organizacion, administrador, responsable });
+    return SesionEmpresa.parse({ correo: perfil.correo, zonaHoraria: perfil.zonaHoraria, organizacion, administrador, responsable });
   }
 }

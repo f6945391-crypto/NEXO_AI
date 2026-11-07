@@ -61,6 +61,8 @@ export type EquipoOrganizacion = z.infer<typeof EquipoOrganizacion>;
 // GET /administracion/sesion — quién está en la zona y qué apartados ve (plan §7.2). Solo para pintar.
 export const SesionEmpresa = z.strictObject({
   correo: z.string(),
+  // La de la propia persona, para mostrar las fechas del registro con su zona (P-05)
+  zonaHoraria: z.string().nullable(),
   organizacion: z.strictObject({ nombre: z.string() }),
   administrador: z.boolean(),
   responsable: z.boolean(),
