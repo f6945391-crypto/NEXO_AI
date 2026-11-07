@@ -200,7 +200,7 @@ Y el cambio queda registrado como hecho por el usuario, no por el asistente (R-1
 
 **Requisito:** EL SISTEMA mostrará al pie de cada franja las tareas que el usuario dio por hechas en los últimos siete días, con el día en que se hicieron; y CUANDO el usuario pulse «Reabrir» sobre una de ellas, la devolverá a pendiente, en su franja y con todos sus datos.
 
-**Origen:** CUN-03, alcance «modificar»; encargo del carril CUN-03 («cómo se reabre»)
+**Origen:** CUN-03, alcance «modificar»; R-25 (nada desaparece en silencio); decisión H-TP-06
 **Tipo:** complejo
 
 **Criterio de aceptación**
