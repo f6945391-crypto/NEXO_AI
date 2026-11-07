@@ -16,10 +16,6 @@ import { color, espaciado, tipografia } from './tokens';
 
 type Estado = 'cargando' | 'entrar' | 'primer-ingreso' | 'aplicacion';
 
-const VACIOS: Record<Exclude<Seccion, 'agenda' | 'tareas'>, { titulo: string; texto: string }> = {
-  actividad: { titulo: 'Todavía no hay actividad', texto: 'Aquí verás cuánto tiempo dedicaste a cada cosa y todo lo que el asistente hizo por ti.' },
-};
-
 export function Aplicacion() {
   const [estado, setEstado] = useState<Estado>('cargando');
 
@@ -56,14 +52,9 @@ export function Aplicacion() {
             ) : seccion === 'actividad' ? (
               // T-083 · REQ-CUN02-25
               <ActividadPantalla alSalir={cerrarSesion} version={version} />
-            ) : seccion === 'tareas' ? (
-              // T-054: la sección Tareas, que hasta ahora estaba vacía
-              <SeccionTareas alAbrirCaptura={abrirCaptura} alSalir={cerrarSesion} version={version} />
             ) : (
-              <View style={estilos.vacio}>
-                <Text style={estilos.vacioTitulo}>{VACIOS[seccion].titulo}</Text>
-                <Text style={estilos.vacioTexto}>{VACIOS[seccion].texto}</Text>
-              </View>
+              // T-054: la sección Tareas
+              <SeccionTareas alAbrirCaptura={abrirCaptura} alSalir={cerrarSesion} version={version} />
             )
           }
         />
@@ -76,7 +67,4 @@ export function Aplicacion() {
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: color.superficie.base },
   centro: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  vacio: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: espaciado[8], padding: espaciado[24], borderRadius: 16, backgroundColor: color.superficie.elevada },
-  vacioTitulo: { fontSize: tipografia.cuerpo, fontWeight: '700', color: color.texto.fuerte, textAlign: 'center' },
-  vacioTexto: { fontSize: tipografia.etiqueta, lineHeight: 20, color: color.texto.suave, textAlign: 'center' },
 });
