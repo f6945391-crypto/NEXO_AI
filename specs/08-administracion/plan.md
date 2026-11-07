@@ -190,18 +190,37 @@ Esquemas nuevos en `packages/contratos/src/administracion.ts` (AD-08).
 
 **Errores nuevos** (`ErrorApi`): `ADMINISTRACION_NO_PERMITIDA`, `SIN_ORGANIZACION`, `CUENTA_SUSPENDIDA`, `CUENTA_CERRADA`.
 
-## 7. Pantallas web
+## 7. Zona de empresa: `/administracion`, aparte de la aplicación del usuario
 
-**Entrada.** En `aplicacion.tsx`, un botón más al pie de la navegación de 72 px, encima de Ajustes y con su misma forma, con `aria-label="Administración"`. Solo aparece si la sesión dice `administrador`. No entra en `SECCIONES` de `secciones.ts`: las secciones son tres (R-32, H-ADM-10).
+**Decisión del equipo, 6 de noviembre de 2026 (reemplaza la primera redacción de esta sección).** La administración no es una pantalla más de la aplicación del usuario: es una **zona aparte**, con su propia entrada, para gestionar las cuentas de una empresa, ver quién es responsable de cada equipo y quién lo integra, y, más adelante, lo que el Plan Empresarial da al responsable sobre su equipo (seguimiento y reportes, CUN-08). Nada de la conversación, la agenda ni la captura entra en esa zona, y nada de esa zona entra en la aplicación del usuario, salvo el aviso de invitación y la fila «Organización» de Ajustes (§7.4).
 
-**Ruta `/administracion`.** Página de servidor, como `/`: lee la sesión y `GET /administracion/personas`; si la API responde 403, vuelve a `/`. Disposición: la navegación de 72 px y un único lienzo de 1368 px, como el lienzo expandido (`design/ARQUITECTURA-VISUAL-WEB.md` §3), **sin columna de conversación**. Cabecera con dos cortes, «Personas» y «Equipos».
+### 7.1 Entrada propia, mismas credenciales
 
-| Corte | Contenido | Acciones |
-|---|---|---|
-| Personas | Tabla con correo, «De la organización» o «Se sumó con su cuenta», estado, plan, equipos y «Administra». Las invitaciones pendientes, al principio | «Dar de alta» e «Invitar» en la cabecera. En cada fila, solo lo que vale para su clase (REQ-ADM-15): para las propias, cambiar plan, suspender o reactivar, dar de baja, restablecer contraseña, administrar; para las afiliadas, «Quitar de la organización»; para las invitaciones, «Retirar invitación» |
-| Equipos | Una tarjeta por equipo con su responsable y sus miembros; «Sin responsable» destacado (REQ-ADM-32) | «Crear equipo»; en cada tarjeta, añadir miembro, quitar, nombrar responsable |
+- Ruta `/administracion/entrar`, con el mismo formulario y las mismas reglas que `/entrar` (REQ-ACC-02, 03), pero **solo deja pasar** a una cuenta con pertenencia vigente en una organización de empresa que sea administradora o responsable de al menos un equipo. Cualquier otra cuenta recibe el mismo texto que unas credenciales inválidas: no se revela si existe ni qué le falta (REQ-ACC-03, REQ-ADM-06).
+- **No hay una segunda cuenta ni una segunda contraseña.** La persona es una; lo que cambia es la zona. Entrar en la zona crea una sesión con `ambito: 'empresa'`, distinta de la sesión de la aplicación (`ambito: 'propio'`), con cookie propia y renovación propia (`sesion_renovacion.ambito`). Así cerrar una no cierra la otra, y una petición de la zona nunca lleva el token de la aplicación ni al revés. El primer ingreso (REQ-ACC-04) se hace siempre en la aplicación, nunca en la zona.
+- Desde la aplicación, el botón al pie de la navegación (encima de Ajustes, `aria-label="Administración"`) solo **enlaza** a `/administracion` en una pestaña nueva; no comparte sesión. Aparece si la sesión dice que la cuenta puede entrar en la zona.
 
-**Confirmación.** Cada acción propone su Operación con una acción de servidor y pinta la tarjeta con la `vistaConfirmacion` que devuelve la API, sin calcular nada, igual que `cambio-zona.tsx` (T-027). La contraseña temporal se pinta una vez, con «Copiar», y desaparece al cerrar la tarjeta.
+### 7.2 Qué hay dentro, y para quién
+
+Un solo armazón: navegación propia a la izquierda (no la de 72 px de la aplicación) y un lienzo. Cada apartado se muestra según lo que la cuenta tiene en esa empresa, leído de la base en cada petición (§4.1):
+
+| Apartado | Quién lo ve | Contenido | Estado |
+|---|---|---|---|
+| **Personas** | Administrador | Tabla con correo, «De la organización» o «Se sumó con su cuenta», estado, plan, equipos, «Administra». Invitaciones pendientes al principio. «Dar de alta», «Invitar»; por fila, solo lo que vale para su clase (REQ-ADM-15) | Esta entrega (T-069) |
+| **Equipos** | Administrador: todos. Responsable: solo los suyos, sin acciones | Una tarjeta por equipo: **responsable** y **miembros**, con «Sin responsable» destacado (REQ-ADM-32). Para el administrador: crear, añadir, quitar, nombrar responsable | Esta entrega (T-074) |
+| **Mi equipo** | Responsable, por cada equipo del que lo es | Lo que REQ-ACC-17 le da: disponibilidad libre/ocupado de cada miembro y las tareas del equipo (CUN-07, CUN-08). Aquí viven el **resumen** y el **reporte del equipo** de `03-tareas` §8 cuando se construyan: el reporte completo se abre en esta zona, y en la conversación de la aplicación solo se ve su síntesis (REQ-CUN08-02) | Fase 4, después de CUN-07 y CUN-08 |
+| **Registro** | Administrador | Las acciones administrativas de la empresa (§9), de más reciente a más antigua, sin contenido de nadie | Esta entrega, solo lectura |
+
+Un administrador que no es responsable de ningún equipo **no ve «Mi equipo»** de ninguno (REQ-ADM-02, REQ-ACC-17). Un responsable que no administra no ve «Personas» ni «Registro» y ve «Equipos» solo de lectura.
+
+### 7.3 Dónde vive el código
+
+- **Web:** mismo proyecto Next.js, grupo de rutas propio `apps/web/src/app/(empresa)/administracion/…` con su `layout.tsx`, sin importar nada de `app/aplicacion/` (ni `aplicacion.tsx`, ni `conversacion.tsx`, ni `secciones.ts`). Comparte solo `globales.css`, los tokens y los componentes neutros (tarjeta de confirmación, botón, tabla). No se crea una tercera aplicación: duplicaría despliegue, sesión, CI y Docker para cuatro apartados.
+- **API:** `AdministracionModule` importa solo `IdentidadModule` y `OperacionesModule`. No importa ni es importado por `AsistenteModule`, `AgendaModule` ni `CapturaModule`. Si algún día la zona se separa en un servicio aparte, sus tablas (`organizacion`, `perfil_usuario`, `miembro_organizacion`, `equipo`, `miembro_equipo`) y sus rutas (`/administracion/*`, `/afiliacion/*`) ya están delimitadas.
+- **Operaciones de empresa fuera de lo personal:** las Operaciones `administracion.*`, `afiliacion.*` y `equipo.*` llevan `ambito: 'empresa'` (§5.2) y **no aparecen** en `GET /operaciones` de la aplicación del usuario, ni en la franja «en espera» (REQ-CAP-25), ni en la transcripción (T-038). Las lista solo `GET /administracion/operaciones`, dentro de la zona.
+- **Guardas:** toda ruta bajo `/administracion` y `/afiliacion/*` (salvo las de la persona invitada, §7.4) exige `ambito: 'empresa'` además de su alcance (`@SoloAdministrador()` o `@SoloResponsable(equipo)`). Una sesión de la aplicación que llame a la zona recibe `AMBITO_INCORRECTO` (403).
+
+### 7.4 Lo único que entra en la aplicación del usuario
 
 **Aviso de afiliación (REQ-ADM-20).** En `/`, para toda cuenta con invitación pendiente: el componente `aviso` del lienzo, sin cierre mientras siga pendiente, «Acme quiere sumarte a su organización · Ver invitación». «Ver invitación» abre una capa con qué cambia y qué no, y «Aceptar» o «Rechazar», cada uno con su tarjeta. Tras desafiliar o salir, un aviso que sí se cierra: «Ya no perteneces a Acme». En Ajustes, para una afiliada, la fila «Organización» con «Salir de Acme» (REQ-ADM-26); para una propia, la fila sin acción (REQ-ADM-27). **Móvil:** el mismo aviso y la misma capa en `inicio.tsx`, sobre la sección actual.
 
@@ -265,3 +284,11 @@ Decisiones que este plan tuvo que tomar. Continúan la numeración de `spec.md` 
 | H-ADM-19 | Si las cuentas propias también tendrían que tener su organización personal | No en esta versión: viven en la empresa, como hoy (§3.1) |
 | H-ADM-20 | Qué hacer con `rol` | Queda en desuso; la guarda deja de leerlo en T-073; se retira cuando se acepten las enmiendas (§3.4) |
 | H-ADM-21 | Quién es administrador al migrar los datos existentes | El gerente más antiguo de cada empresa, o la cuenta más antigua (§3.3) |
+
+## 12. Enmiendas que esta sección pide a la especificación (6 de noviembre de 2026, noche)
+
+- **H-ADM-22 (nueva):** la administración es una zona aparte con entrada propia y sesión propia (`ambito`), mismas credenciales. Lo que un responsable tiene sobre su equipo (disponibilidad, tareas, resumen y reporte de CUN-08) se consulta en esa zona, en «Mi equipo»; la conversación de la aplicación solo muestra la síntesis. Pide una línea en REQ-ADM-05 («solo web» pasa a «solo web, en la zona de empresa») y una nota en `03-tareas` §8 sobre dónde se abre el reporte completo.
+- **Alcance de REQ-ADM-02 sin cambio:** administrar sigue sin dar acceso al trabajo de nadie; «Mi equipo» lo ve el responsable, no el administrador.
+- **`sesion_renovacion.ambito`** y la cookie de la zona van en T-066 (guarda), no en una tarea nueva.
+- **Pendiente de decidir con el equipo:** si la zona se publica en la misma dirección que la aplicación (`/administracion`) o en un subdominio (`empresa.…`) cuando haya despliegue. No cambia el código, solo la configuración.
+
