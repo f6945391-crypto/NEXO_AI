@@ -23,6 +23,7 @@ import {
 import { Aviso, Boton } from '../componentes';
 import { conSesion, mensajeDeError, SIN_CONEXION } from '../sesion';
 import { color, espaciado, tipografia } from '../tokens';
+import { TareasParaEsteDia } from './tareas';
 
 // T-021 · REQ-CUN01-06, 10, 11, 12 · specs/02-agenda/plan.md §5. El nivel Hoy de Agenda en el móvil:
 // los compromisos del día en la zona del perfil, con el huso a la vista. Tocar uno abre su detalle y, si es
@@ -186,6 +187,8 @@ export function AgendaHoy({
       {estado.tipo === 'lista' && zona && foco && nivel === 'Hoy' && (
         <NivelHoy foco={foco} zona={zona} eventos={estado.eventos} alAbrir={abrir} alVolverAHoy={() => setFoco(hoyEn(zona))} alAbrirCaptura={alAbrirCaptura} />
       )}
+      {/* T-055 · REQ-CUN03-13: debajo de los compromisos de Hoy, también sin calendario (REQ-CUN03-20); nunca en Semana ni en Mes */}
+      {(estado.tipo === 'lista' || estado.tipo === 'sin-calendario') && foco && nivel === 'Hoy' && <TareasParaEsteDia fecha={foco} version={version} alSalir={alSalir} />}
       {estado.tipo === 'lista' && zona && foco && nivel === 'Semana' && (
         <NivelSemana foco={foco} zona={zona} eventos={estado.eventos} alAbrir={abrir} alMover={(semanas) => setFoco(sumarDias(lunesDe(foco), semanas * 7))} mostrar={mostrar} />
       )}

@@ -61,5 +61,15 @@
     "correo": "actividad-sin-calendario-movil@nexoai.test",
     "rol": "colaborador",
     "plan": "empresarial"
+  },
+  "tareas": {
+    "correo": "movil-tareas-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "tareasVacio": {
+    "correo": "movil-tareas-vacio-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
   }
 }

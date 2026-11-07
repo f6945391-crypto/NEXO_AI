@@ -7,6 +7,7 @@ import { ActividadPantalla } from './pantallas/actividad';
 import { AgendaHoy } from './pantallas/agenda';
 import { Inicio, type Seccion } from './pantallas/inicio';
 import { PrimerIngreso } from './pantallas/primer-ingreso';
+import { SeccionTareas } from './pantallas/tareas';
 import { conSesion, salir } from './sesion';
 import { color, espaciado, tipografia } from './tokens';
 
@@ -15,8 +16,7 @@ import { color, espaciado, tipografia } from './tokens';
 
 type Estado = 'cargando' | 'entrar' | 'primer-ingreso' | 'aplicacion';
 
-const VACIOS: Record<Exclude<Seccion, 'agenda'>, { titulo: string; texto: string }> = {
-  tareas: { titulo: 'Nada en tus tareas', texto: 'Cuando le pidas algo al asistente, tus tareas aparecerán aquí, ordenadas por franja.' },
+const VACIOS: Record<Exclude<Seccion, 'agenda' | 'tareas'>, { titulo: string; texto: string }> = {
   actividad: { titulo: 'Todavía no hay actividad', texto: 'Aquí verás cuánto tiempo dedicaste a cada cosa y todo lo que el asistente hizo por ti.' },
 };
 
@@ -56,6 +56,9 @@ export function Aplicacion() {
             ) : seccion === 'actividad' ? (
               // T-083 · REQ-CUN02-25
               <ActividadPantalla alSalir={cerrarSesion} version={version} />
+            ) : seccion === 'tareas' ? (
+              // T-054: la sección Tareas, que hasta ahora estaba vacía
+              <SeccionTareas alAbrirCaptura={abrirCaptura} alSalir={cerrarSesion} version={version} />
             ) : (
               <View style={estilos.vacio}>
                 <Text style={estilos.vacioTitulo}>{VACIOS[seccion].titulo}</Text>

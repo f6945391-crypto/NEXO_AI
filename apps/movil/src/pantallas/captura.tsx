@@ -186,6 +186,45 @@ function Turno({ turno, pendiente, ocupado, alDecidir }: { turno: TurnoAsistente
           )}
         </View>
       );
+    // T-054 · REQ-CUN03-14: las tareas pendientes armadas por la API, por franja
+    case 'tareas':
+      return (
+        <View accessibilityLabel={turno.lista.alcance} style={estilos.agenda}>
+          <Text style={estilos.suave}>{turno.lista.alcance}</Text>
+          {turno.lista.grupos.length === 0 ? (
+            <Text style={estilos.cuerpo}>No tienes tareas pendientes.</Text>
+          ) : (
+            turno.lista.grupos.map((g) => (
+              <View key={g.franja} accessibilityLabel={g.nombre}>
+                <Text style={[estilos.suave, estilos.grupoTareas]}>{g.nombre}</Text>
+                {g.tareas.map((t) => (
+                  <Text key={t.id} style={estilos.cuerpo}>
+                    {t.texto}
+                    {t.espera ? ` · ${t.espera}` : ''}
+                    {t.cuando ? ` · ${t.cuando}` : ''}
+                  </Text>
+                ))}
+              </View>
+            ))
+          )}
+        </View>
+      );
+    // T-054 · REQ-CUN03-15: varias tareas encajan; elegir una la propone el código
+    case 'alternativas_de_referente':
+      return (
+        <View style={estilos.respuesta}>
+          <Text style={estilos.cuerpo}>{turno.lista.texto}</Text>
+          {turno.lista.candidatas.map((c) => (
+            <Boton
+              key={c.id}
+              texto={c.detalle ? `${c.titulo} · ${c.detalle}` : c.titulo}
+              secundario
+              deshabilitado={ocupado || pendiente !== null}
+              alPulsar={() => alDecidir({ decision: 'referente', referenteId: c.id })}
+            />
+          ))}
+        </View>
+      );
     case 'propuesta':
       // La tarjeta se pinta desde la lista, que sabe qué vino después
       return null;
@@ -469,6 +508,7 @@ const estilos = StyleSheet.create({
   pedido: { alignSelf: 'flex-end', maxWidth: '85%', padding: espaciado[12], borderRadius: 12, backgroundColor: color.marca.base },
   pedidoTexto: { fontSize: tipografia.cuerpo, color: color.texto.inverso },
   respuesta: { alignSelf: 'flex-start', maxWidth: '92%', padding: espaciado[12], borderRadius: 12, backgroundColor: color.agente.suave },
+  grupoTareas: { fontWeight: '600', marginTop: espaciado[4] },
   agenda: { gap: espaciado[4], padding: espaciado[12], borderRadius: 12, borderWidth: 1, borderColor: color.borde.base, backgroundColor: color.superficie.elevada },
   tarjeta: { gap: espaciado[8], padding: espaciado[16], borderRadius: 12, borderWidth: 1, borderColor: color.borde.fuerte, backgroundColor: color.superficie.base },
   // Ya decidida: deja de pedir atención (ARQUITECTURA-VISUAL-MOVIL §3, el borde graduado)
