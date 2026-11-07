@@ -155,7 +155,7 @@ Contratos en `packages/contratos/src/agente.ts` (AD-08), con zod; de ahí sale e
 | `agenda.registrar_evento` | `titulo`, `fecha`, `horaInicio` (`HH:mm`), `horaFin` opcional | Convierte hora local a instante con la zona del perfil (`instanteLocal`, P-05) y propone `agenda.registrar`. **Sin `horaFin`, no se manda fin**: lo pone el ejecutor con una hora (H-AG-01) | Sí |
 | `agenda.modificar_evento` | `eventoId`, y solo lo que cambia: `titulo`, `fecha`, `horaInicio`, `horaFin` | Propone `agenda.modificar`. El id tiene que venir de una consulta anterior; si no existe o no es suyo, el ejecutor lo rechaza (H-AG-05) | Sí |
 | `agenda.cancelar_evento` | `eventoId` | Propone `agenda.cancelar` | Sí |
-| `captura.guardar_tarea` | `texto`, `clase`: tarea, pendiente sin fecha, esperando de alguien | Deja lo pedido **en espera** con el motivo «función por llegar» (REQ-AGT-02, H-AGT-09). No crea ninguna tarea | No: no tiene efecto |
+| `captura.guardar_tarea` **(retirada el 7 de noviembre de 2026, T-050; véase §14.13)** | `texto`, `clase`: tarea, pendiente sin fecha, esperando de alguien | Dejaba lo pedido **en espera** con el motivo «función por llegar» (REQ-AGT-02 v1, H-AGT-09). No creaba ninguna tarea. La sustituyen las herramientas `tareas.*` de `09-tareas-personales` (plan §7.1) | No: no tenía efecto |
 
 Reglas comunes:
 
@@ -347,7 +347,7 @@ Registrados en `spec.md` §5 y en `SPEC.md` §8. **Aceptados por el equipo el 25
 - `conversacion_agente` **es el episodio**. La tabla **no se renombra** (decisión del traspaso §7, n.º 6): cambian los documentos y los nombres en el código. El `thread_id` sigue siendo su id.
 - Campo nuevo `ultima_actividad_en`, que T-038 actualiza con cada mensaje. **Desde T-041**, al recibir un mensaje y en el trabajador, un episodio abierto con **30 minutos** sin actividad (decisión 18) se cierra sin efecto y el mensaje abre otro.
 - **Un episodio con una propuesta pendiente no se cierra por inactividad.** La propuesta tiene su plazo propio, **24 horas** (H-AG-08, decidido el 6 de noviembre de 2026): la caduca el trabajador (§14.8) y entonces el episodio se cierra como `descartado`.
-- **Guardar una tarea en espera cierra el episodio** (decisión 27): el nodo `herramientas` marca `cerrada` cuando `captura.guardar_tarea` guardó y no hay propuesta.
+- **Guardar una tarea en espera cierra el episodio** (decisión 27): el nodo `herramientas` marca `cerrada` cuando `captura.guardar_tarea` guardó y no hay propuesta. *Desde el 7 de noviembre de 2026 ese tramo no se alcanza: la herramienta se retiró y registrar una tarea cierra como `registrado` (§14.13, decisión 27 precisada).*
 - La sesión no tiene tabla: el cliente la deduce del hueco entre episodios.
 
 ### 14.4 La transcripción
@@ -435,4 +435,5 @@ Los tres usan `sinAislar` por ser trabajos de mantenimiento sobre todas las orga
 |---|---|
 | T-039 | `RespuestaAsistente` lleva `cierre` (el servidor lo arma) para que el separador se pinte sin recargar. El texto del separador empieza por el verbo («Se registró «…»») para concordar con cualquier título |
 | T-038 | Sin canal `turnosNuevos`: los nodos entregan sus turnos a un recolector de la invocación (`anotar`) y el servicio los guarda tras `invoke`. Cada episodio trae sus turnos en `episodios[].turnos`; la página es de episodios y el cursor es el id del más antiguo. Modelo Prisma `TurnoTranscripcion` sobre la tabla `turno_asistente`, con `secuencia` para el orden |
+| T-050, T-051 (`09-tareas-personales`) | El 7 de noviembre de 2026 entraron por el área 09 (su plan §7.1) las herramientas `tareas.consultar`, `tareas.registrar`, `tareas.cambiar`, `tareas.completar`, `tareas.reabrir` y `tareas.descartar`, en `herramientas/herramientas-tareas.ts`; sustituyen a `captura.guardar_tarea` (§5): una tarea ya no queda en espera, se propone una Operación `tareas.*` (REQ-AGT-02 v2). `tareas.completar` propone `tareas.recibido` cuando la tarea se esperaba de alguien (H-TP-15). `MotivoEspera.funcion_por_llegar` sigue en el contrato para las filas anteriores, pero ninguna herramienta lo escribe, y el repaso de §7 sigue sin tocarlas hasta T-056. `cierreDe` da `registrado` a `tareas.registrar`, y `guardado` solo a esas filas (decisión 27, precisada). Las instrucciones de §6.1 suman las reglas de tareas: «recuérdame» es `tareas_registrar` sin preguntar la fecha ni prometer avisos, y lo que no hacen las tareas personales se dice sin intentarlo. T-051 construyó las candidatas de tareas (turno `alternativas_de_referente`, estado `candidatas`, H-TP-23) sin esperar a T-042, que sigue pendiente para los compromisos. El tramo `guardada` del nodo `herramientas` (§14.7) queda sin alcanzar |
 

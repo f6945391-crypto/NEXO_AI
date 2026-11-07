@@ -45,7 +45,7 @@ const { crearCuenta, crearOrganizacion } = desdeApi('./dist/identidad/alta-cuent
 const prisma = crearClientePrisma(urlE2e);
 const organizacionId = await crearOrganizacion(prisma, 'Organización de pruebas de extremo a extremo');
 const perfiles = {};
-// T-069: `organizacion` lleva la cuenta a otra organización: «personal», una propia para ella sola; cualquier
+// T-062: `organizacion` lleva la cuenta a otra organización: «personal», una propia para ella sola; cualquier
 // otro valor, una empresa con ese nombre. `lista`, con el primer ingreso hecho, en Lima.
 const empresas = {};
 for (const [clave, { organizacion, lista, ...cuenta }] of Object.entries(cuentas).filter(([, c]) => typeof c === 'object')) {
@@ -59,7 +59,7 @@ for (const [clave, { organizacion, lista, ...cuenta }] of Object.entries(cuentas
   if (lista) await prisma.perfilUsuario.update({ where: { id: perfiles[clave] }, data: { debeCambiarContrasena: false, zonaHoraria: 'America/Lima' } });
   console.log(`[e2e] cuenta ${clave}: ${cuenta.correo}`);
 }
-// T-069: dos equipos en Acme para la zona de empresa, uno sin responsable (REQ-ADM-32)
+// T-062: dos equipos en Acme para la zona de empresa, uno sin responsable (REQ-ADM-32)
 if (empresas.Acme && perfiles.acmeResponsable) {
   const acme = empresas.Acme;
   const ventas = await prisma.equipo.create({ data: { organizacionId: acme, nombre: 'Ventas' } });
@@ -159,7 +159,7 @@ if (perfiles.semanaLlena) {
     }
   }
 }
-// T-082, T-083 · REQ-CUN02-25 a 30, 33 (sección Actividad). La zona es una en la que ahora es de día (entre las
+// T-070, T-071 · REQ-CUN02-25 a 30, 33 (sección Actividad). La zona es una en la que ahora es de día (entre las
 // 05:00 y las 19:59), para que «hace dos horas» caiga hoy y «hace 25 horas», ayer, a cualquier hora de la prueba.
 // Las pruebas leen la zona del perfil. `actividad`: compromisos terminados hoy y ayer, uno en curso, uno por venir
 // y uno cancelado; acciones ejecutadas en la conversación y desde la pantalla, y una descartada que no se ve.

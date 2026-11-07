@@ -5,7 +5,7 @@ import { AutenticacionService } from './autenticacion.service';
 import { Publico, ZonaEmpresa } from './decoradores';
 import { LimiteIngresoGuard } from './guardas';
 
-// T-066 · specs/08-administracion/plan.md §7.1. Entrada propia de la zona de empresa, con las mismas
+// T-059 · specs/08-administracion/plan.md §7.1. Entrada propia de la zona de empresa, con las mismas
 // credenciales. Renovar y salir son los de siempre (`/auth/renovar`, `/auth/salida`): la sesión guarda su ámbito.
 @ZonaEmpresa()
 @Controller('administracion')

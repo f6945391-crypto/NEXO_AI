@@ -12,7 +12,7 @@ export const Publico = () => SetMetadata(CLAVE_PUBLICO, true);
 // T-026 · REQ-ACC-13, REQ-ACC-15 · specs/06-acceso/plan.md §5.5. Toda ruta autenticada declara su
 // alcance, en la ruta o en su controlador. El colaborador usa las de lo propio, nunca las del
 // responsable, y tampoco una que no declare nada. Una prueba exige que todas lo declaren.
-// T-066 · specs/08-administracion/plan.md §4.2: `empresa` y `administrador`, leídos de la base en cada petición.
+// T-059 · specs/08-administracion/plan.md §4.2: `empresa` y `administrador`, leídos de la base en cada petición.
 export type AlcanceRuta = 'propio' | 'responsable' | 'empresa' | 'administrador';
 // Trabaja sobre lo de la propia persona: su agenda, sus tareas, sus Operaciones, su perfil
 export const SobreLoPropio = () => SetMetadata(CLAVE_ALCANCE, 'propio' satisfies AlcanceRuta);
@@ -23,7 +23,7 @@ export const EnEmpresa = () => SetMetadata(CLAVE_ALCANCE, 'empresa' satisfies Al
 // Solo quien administra la organización; si no, ADMINISTRACION_NO_PERMITIDA y registro (REQ-ADM-06, 16)
 export const SoloAdministrador = () => SetMetadata(CLAVE_ALCANCE, 'administrador' satisfies AlcanceRuta);
 
-// T-066 · plan §7.3: las rutas de la zona de empresa solo admiten la sesión de la zona, y las demás solo la de
+// T-059 · plan §7.3: las rutas de la zona de empresa solo admiten la sesión de la zona, y las demás solo la de
 // la aplicación. Sin declarar, la ruta es de la aplicación.
 export const ZonaEmpresa = () => SetMetadata(CLAVE_AMBITO, 'empresa' satisfies AmbitoSesion);
 

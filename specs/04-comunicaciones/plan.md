@@ -17,7 +17,7 @@ Este plan dice **dónde y cómo** se cumple cada requisito. No añade comportami
 | Correo | Sale desde | Lo pide | Dónde se especifica | Dónde se construye |
 |---|---|---|---|---|
 | **Correo asistido** (CUN-04): lo redacta el asistente y la persona lo confirma | El Gmail de la persona, con `gmail.send` (P-08, R-31) | La persona, en la conversación | Esta área, §2 a §5 | Esta área, fase 5 |
-| **Invitación a sumarse a una empresa** | La dirección de la plataforma (DP-03) | El administrador, en la zona de empresa | REQ-ADM-18 | `08-administracion`, T-070 |
+| **Invitación a sumarse a una empresa** | La dirección de la plataforma (DP-03) | El administrador, en la zona de empresa | REQ-ADM-18 | `08-administracion`, T-063 |
 | **Aviso de tarea nueva** | La dirección de la plataforma (DP-03) | El sistema, al confirmarse una delegación | REQ-CUN07-16 | `03-tareas`, T-092 |
 
 Las **preguntas declaradas del encargo** (§9, REQ-ENC-01 a 03, 09, 10) son datos de la tarea del equipo y se contestan en la aplicación: se construyen en `03-tareas` (T-090, T-093), no aquí. Lo que queda de §9 en esta área es REQ-ENC-05 (nunca lectura del buzón), que ya cumple `06-acceso` (REQ-ACC-07).
@@ -26,8 +26,8 @@ Las **preguntas declaradas del encargo** (§9, REQ-ENC-01 a 03, 09, 10) son dato
 
 | Necesita | Qué es en `08-administracion` | Para | Estado en su plan |
 |---|---|---|---|
-| Un solo puerto para los correos que solo avisan | `CorreoPlataforma.avisar({ para, asunto, cuerpo })` en `AvisosModule`; sin botones, sin enlaces con token, `Reply-To` a una dirección que no se lee | Invitación y aviso de tarea nueva | Previsto, T-070 (§8) |
-| Implementación simulada que deja registro | `correo.aviso` en `evento_auditoria` con destinatario y asunto | Probar el ciclo sin enviar nada | Previsto, T-070 |
-| El correo de una cuenta afiliada | `PertenenciasRepositorio` (correo y estado, §4.3) | El destinatario del aviso de tarea nueva | Previsto, T-066 |
+| Un solo puerto para los correos que solo avisan | `CorreoPlataforma.avisar({ para, asunto, cuerpo })` en `AvisosModule`; sin botones, sin enlaces con token, `Reply-To` a una dirección que no se lee | Invitación y aviso de tarea nueva | Previsto, T-063 (§8) |
+| Implementación simulada que deja registro | `correo.aviso` en `evento_auditoria` con destinatario y asunto | Probar el ciclo sin enviar nada | Previsto, T-063 |
+| El correo de una cuenta afiliada | `PertenenciasRepositorio` (correo y estado, §4.3) | El destinatario del aviso de tarea nueva | Previsto, T-059 |
 
 **La implementación real** del puerto depende de PT-3 y es **una sola**, en `AvisosModule`, para los dos avisos. No se crea otro puerto en esta área. El correo asistido de CUN-04 **no** usa `CorreoPlataforma`: va por el cliente de Google de `IntegracionesModule`, desde la organización de la persona, y nunca por la empresa.

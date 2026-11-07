@@ -8,7 +8,7 @@ import { llamarApi, mensajeDeError } from '../../../lib/sesion';
 import { COOKIE_EMPRESA_ACCESO, COOKIE_EMPRESA_RENOVACION, borrarTokensEmpresa, guardarTokensEmpresa } from './_comun/sesion';
 import { SIN_CONEXION } from './_comun/textos';
 
-// T-069 · specs/08-administracion/plan.md §7. Las acciones de la zona de empresa. La web no decide nada: envía
+// T-062 · specs/08-administracion/plan.md §7. Las acciones de la zona de empresa. La web no decide nada: envía
 // lo pedido, pinta la tarjeta tal como llega de la API y confirma o descarta (AD-09, P-03).
 
 export type EstadoFormulario = { error?: string };

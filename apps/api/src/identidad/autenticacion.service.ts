@@ -27,7 +27,7 @@ const TEXTO_ESTADO = {
   cerrada: { codigo: 'CUENTA_CERRADA', mensaje: 'Tu cuenta está cerrada. Habla con quien administra tu organización.' },
 } as const;
 
-// T-066 · specs/08-administracion/plan.md §4.2: suspender, cerrar o restablecer la contraseña cierran todas las
+// T-059 · specs/08-administracion/plan.md §4.2: suspender, cerrar o restablecer la contraseña cierran todas las
 // sesiones de la cuenta, de la aplicación y de la zona de empresa. `sesion_renovacion` no lleva organización.
 export async function revocarSesionesDelPerfil(prisma: PrismaService, perfilId: string): Promise<void> {
   await prisma.sinAislar.sesionRenovacion.updateMany({ where: { perfilId, revocadaEn: null }, data: { revocadaEn: new Date() } });
@@ -72,7 +72,7 @@ export class AutenticacionService {
     return respuesta;
   }
 
-  // T-066 · specs/08-administracion/plan.md §7.1. Mismas credenciales, otra sesión: solo para quien pertenece a
+  // T-059 · specs/08-administracion/plan.md §7.1. Mismas credenciales, otra sesión: solo para quien pertenece a
   // una empresa y la administra o es responsable de un equipo. A cualquier otra cuenta, el mismo texto que unas
   // credenciales inválidas: no se revela si existe ni qué le falta (REQ-ACC-03, REQ-ADM-06). El primer
   // ingreso se hace en la aplicación, nunca en la zona.
@@ -174,7 +174,7 @@ export class AutenticacionService {
     await this.auditar(sesion.perfil, 'salida');
   }
 
-  // T-066 · plan §4.2: en cada ingreso y cada renovación se lee la pertenencia vigente y se calcula el plan
+  // T-059 · plan §4.2: en cada ingreso y cada renovación se lee la pertenencia vigente y se calcula el plan
   // efectivo. La sesión de la zona de empresa solo se renueva mientras la cuenta siga pudiendo entrar en ella.
   private async emitir(perfil: PerfilUsuario, familia: string, ambito: AmbitoSesion): Promise<IngresoRespuesta> {
     const pertenencia = await this.pertenencias.vigenteDe(perfil.id);

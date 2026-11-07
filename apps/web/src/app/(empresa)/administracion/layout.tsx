@@ -6,7 +6,7 @@ import './empresa.css';
 
 export const metadata: Metadata = { title: 'Administración · NexoAI' };
 
-// T-069 · specs/08-administracion/plan.md §7.2 y §7.3. La zona de empresa, aparte de la aplicación: su propia
+// T-062 · specs/08-administracion/plan.md §7.2 y §7.3. La zona de empresa, aparte de la aplicación: su propia
 // navegación a la izquierda y un lienzo. No importa nada de app/aplicacion. Sin sesión de la zona (la entrada),
 // solo el contenido.
 export default async function DisposicionEmpresa({ children }: { children: ReactNode }) {

@@ -1,7 +1,7 @@
 import type { NivelActividad } from '@nexoai/contratos';
 import { diaDeLaSemana, enZona, instanteLocal, sumarDias, type FechaLocal } from '../agenda/dominio/tiempo';
 
-// T-081 · REQ-CUN02-25, 28 · H-JOR-02, H-JOR-08. Función pura: el período de un nivel alrededor de una fecha,
+// T-069 · REQ-CUN02-25, 28 · H-JOR-02, H-JOR-08. Función pura: el período de un nivel alrededor de una fecha,
 // contado en la zona del perfil. Día de medianoche a medianoche, Semana de lunes a domingo, Mes del 1 al
 // último. No se pasa del período actual: `siguiente` es nulo en él (lo que va a pasar está en Agenda).
 

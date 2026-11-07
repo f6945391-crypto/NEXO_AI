@@ -5,6 +5,7 @@
 **Plataforma:** web y móvil.
 **Estado:** fase 2. REQ-AGT-01 y REQ-AGT-02 **aprobados** por el equipo el 25 de octubre de 2026, junto con `plan.md`.
 **Revisión del 5 de noviembre de 2026** (rama `modificacion/vision-nexoai`, `TRASPASO-CLAUDE-CODE.md`): **REQ-AGT-01 v2** y **REQ-AGT-03 a 05**, con los hallazgos H-AGT-16 y H-AGT-17 y los valores por defecto de §5. **Avalados por el equipo el 5 de noviembre de 2026**, con la enmienda del mismo día. La versión anterior de REQ-AGT-01 se conserva debajo del texto nuevo.
+**Revisión del 7 de noviembre de 2026** (carril de tareas personales, `specs/09-tareas-personales` §10, T-050 y T-051): **REQ-AGT-02 v2**, con la versión 1 conservada debajo; nota de implementación en REQ-AGT-04; precisiones a las decisiones 9, 27 y 28. El área 09 sigue **pendiente de aval del equipo**; estas líneas describen lo que el código ya hace.
 
 ---
 
@@ -20,8 +21,8 @@ Decidido por el equipo el 24 de octubre de 2026.
 |---|---|
 | Entrada | **Solo texto.** La voz queda para una versión posterior (PT-2). REQ-CAP-09 a 13 siguen especificados, sin plan |
 | Proveedor del modelo | **Simulado por ahora.** El proveedor real se elige más adelante, detrás de la interfaz propia (P-06). **Para probar, desde el 29 de octubre de 2026: Groq, en su nivel gratuito** |
-| Qué hace | **Solo agenda:** consultar, registrar, modificar y cancelar compromisos por conversación, en la web y en la capa de captura del móvil |
-| Una tarea | El asistente la reconoce, lo dice y la deja **en espera**, sin registrarla, hasta que existan las tareas personales (CUN-03) |
+| Qué hace | **Solo agenda:** consultar, registrar, modificar y cancelar compromisos por conversación, en la web y en la capa de captura del móvil. **Desde el 7 de noviembre de 2026, también las tareas personales** (CUN-03, `09-tareas-personales` §6): consultar, registrar, cambiar, dar por hecha, marcar como recibida, reabrir y descartar |
+| Una tarea | ~~El asistente la reconoce, lo dice y la deja **en espera**, sin registrarla, hasta que existan las tareas personales (CUN-03)~~ **Desde el 7 de noviembre de 2026:** la propone como tarea personal, con su tarjeta (REQ-CUN03-01, `09-tareas-personales`). Las que quedaron en espera antes de esa fecha se convierten en propuestas según REQ-CUN03-17 (T-056, pendiente) |
 
 ---
 
@@ -51,19 +52,23 @@ ENTONCES el asistente responde con las acciones confirmadas de la nota, sin inve
 
 ### REQ-AGT-02
 
-**Requisito:** SI la persona pide algo que el asistente todavía no hace en esta versión, ENTONCES EL SISTEMA lo dirá sin intentarlo y sin crear ni enviar nada; y SI lo pedido es una tarea, ENTONCES EL SISTEMA la conservará en espera hasta que pueda registrarse.
+**Requisito:** SI la persona pide algo que el asistente todavía no hace en esta versión, ENTONCES EL SISTEMA lo dirá sin intentarlo y sin crear ni enviar nada.
 
-**Origen:** decisión del equipo, 24 de octubre de 2026; REQ-CAP-02, REQ-CAP-23
+**Origen:** decisión del equipo, 24 de octubre de 2026; REQ-CAP-02, REQ-CAP-23; `09-tareas-personales` §10 (la tarea deja de esperar: REQ-CUN03-01); REQ-CUN03-16 (lo que las tareas personales no hacen)
 **Tipo:** comportamiento no deseado
+**Versión:** 2, del 7 de noviembre de 2026. Escrita al integrar el carril de tareas personales (T-050): se quita la segunda oración de la versión 1 y su criterio sobre la tarea. Sigue la suerte del área 09, **pendiente de aval del equipo**
 
 **Criterio de aceptación**
 DADO un usuario con el asistente disponible
 CUANDO escriba «manda un correo a Juan»
 ENTONCES el asistente dice que el correo todavía no está disponible, y no se crea ni se envía nada
+Y CUANDO escriba «ponle prioridad 1 a pagar el recibo»
+ENTONCES dice que las tareas personales no tienen prioridades, sin intentarlo y sin cambiar nada (REQ-CUN03-16)
 Y CUANDO escriba «recuérdame pagar el recibo antes del sábado»
-ENTONCES el asistente dice que lo reconoce como tarea, que lo guarda y que las tareas llegan en una próxima versión
-Y no existe ninguna tarea ni ningún compromiso nuevo
-Y lo guardado se ve como en espera, distinto de un error y de una función que su plan no incluye
+ENTONCES nada queda en espera: el asistente propone la tarea «Pagar el recibo» para el sábado en una tarjeta, y no existe hasta que la confirme (REQ-CUN03-01)
+Y lo que todavía no hace se ve distinto de un error y de una función que su plan no incluye
+
+> **Versión 1, del 24 de octubre de 2026 (anterior, aprobada el 25 de octubre de 2026).** SI la persona pide algo que el asistente todavía no hace en esta versión, ENTONCES EL SISTEMA lo dirá sin intentarlo y sin crear ni enviar nada; y SI lo pedido es una tarea, ENTONCES EL SISTEMA la conservará en espera hasta que pueda registrarse. *Su criterio decía que, ante «recuérdame pagar el recibo antes del sábado», el asistente lo reconocía como tarea, lo guardaba y decía que las tareas llegaban en una próxima versión, sin crear ninguna, y que lo guardado se veía como en espera. Queda sustituida por la versión 2 desde el 7 de noviembre de 2026: la tarea se propone (CUN-03). Lo que quedó en espera con ese motivo antes de esa fecha se muestra como «se está preparando para que la confirmes en Tareas» (H-TP-16) hasta que REQ-CUN03-17 lo convierta en propuesta (T-056, pendiente).*
 
 ---
 
@@ -93,7 +98,7 @@ Y lo que lee el modelo no crece con la transcripción: solo el episodio abierto 
 
 **Origen:** H-AGT-17; `INFORME-MEMORIA-AGENTE.md` §6.4.5; decisión 17 de `02-agenda` (las alternativas no pasan por el modelo); P-02, P-03
 **Tipo:** complejo
-**Versión:** 1, del 5 de noviembre de 2026. Avalada por el equipo el 5 de noviembre de 2026. En esta fase, la única actividad es el compromiso
+**Versión:** 1, del 5 de noviembre de 2026. Avalada por el equipo el 5 de noviembre de 2026. En esta fase, las actividades son el compromiso y, desde el 7 de noviembre de 2026, la tarea personal (REQ-CUN03-15)
 
 **Criterio de aceptación**
 DADO que la persona tiene «Dentista» el jueves 29 y «Dentista» el 12 de noviembre
@@ -107,6 +112,8 @@ ENTONCES el asistente propone moverlo directamente y la tarjeta dice cuál es
 Y DADO que hay alternativas a la vista
 CUANDO la persona escriba otra cosa en vez de elegir
 ENTONCES las alternativas se descartan y se interpreta el mensaje nuevo
+
+**Nota de implementación, 7 de noviembre de 2026.** T-051 (`09-tareas-personales`) construyó las candidatas para las tareas sin esperar a T-042: cuando más de una tarea encaja con lo dicho, por comparación de palabras en código (H-TP-23), el asistente muestra las candidatas con la acción que se haría («Dar por hecha», «Reabrir», «Descartar») y no propone nada hasta que la persona elija; escribir otra cosa las descarta. El modelo no elige entre ellas (decisión 26). Para los compromisos, T-042 sigue pendiente.
 
 ---
 
@@ -137,6 +144,7 @@ ENTONCES el asistente propone mover ese compromiso, sin preguntar cuál
 | REQ-CUN01-13 | Responder a una consulta con la agenda tal como está |
 | REQ-CAP-01 a 04, 06 | La puerta de texto, la clasificación, nada sin confirmar, de uno en uno, sin sintaxis de comando |
 | REQ-CAP-23, 24 | En espera visible y distinto de un error; «mañana» respecto del momento de la captura |
+| REQ-CUN03-01, 02, 12, 14, 15, 16 | Desde el 7 de noviembre de 2026 (T-050, T-051, `09-tareas-personales` §6): proponer, consultar y cambiar tareas personales; dar por hecha, recibida, reabrir y descartar, con las candidatas armadas por el código; decir lo que las tareas personales no hacen |
 
 ---
 
@@ -154,7 +162,7 @@ Detectadas al escribir `plan.md` el 24 de octubre de 2026. Lo que asume el plan 
 | 6 | Un solo modelo para todo en esta versión (H-AGT-06) | Costo |
 | 7 | Sin respuesta en flujo: la respuesta llega entera (H-AGT-07) | Latencia |
 | 8 | Sin presupuesto por usuario; se registra el costo para poder fijarlo (H-AGT-08) | P-07, D-7 |
-| 9 | La cola en espera tiene tres motivos: asistente caído, permiso que falta y función por llegar (H-AGT-09) | REQ-AGT-02, REQ-ACC-08, REQ-CAP-23 |
+| 9 | La cola en espera tiene tres motivos: asistente caído, permiso que falta y función por llegar (H-AGT-09). *Desde el 7 de noviembre de 2026 (T-050), ninguna herramienta escribe el tercero: la tarea se propone (REQ-AGT-02 v2). El motivo queda solo en las filas encoladas antes de esa fecha, hasta su conversión (REQ-CUN03-17)* | REQ-AGT-02, REQ-ACC-08, REQ-CAP-23 |
 | 10 | Como mucho cuatro llamadas al modelo por mensaje (H-AGT-10) | Costo, fallos |
 | 11 | Las fechas relativas las resuelve el modelo con la fecha de referencia; la tarjeta muestra el día de la semana para que la persona lo compruebe (H-AGT-11) | REQ-CUN01-01, REQ-CAP-24 |
 | 12 | El modelo solo ve título y horas del rango que pide (H-AGT-12) | P-10, minimización |
@@ -178,8 +186,8 @@ Del traspaso del equipo (`TRASPASO-CLAUDE-CODE.md` §7) y de `INFORME-MEMORIA-AG
 | 23 | **No hay vaciado manual** de la conversación en esta fase | REQ-AGT-03 |
 | 24 | **Varias intenciones en una frase** («agenda el dentista y recuérdame pagar el recibo») se atienden **en secuencia**, una tarjeta cada una, y la segunda espera a que se decida la primera. Se resuelve una vez para texto y voz (REQ-CAP-10) | REQ-AGT-01, REQ-CAP-10 |
 | 25 | **Voz:** fuera de esta revisión. Solo queda escrito el principio: voz → texto que la persona aprueba → el mismo flujo | PT-2, REQ-CAP-09 a 13 |
-| 27 | **Decidida por el equipo el 6 de noviembre de 2026.** Guardar una tarea en espera **cierra el episodio**, con el desenlace `guardado` y el separador «Tarea guardada». Es distinto de `registrado` a propósito: la tarea todavía no existe, solo espera a las tareas personales | REQ-AGT-03, REQ-AGT-02 |
-| 28 | **Decidida por el equipo el 6 de noviembre de 2026 (H-AG-08, también en `02-agenda`, decisión 12).** Una propuesta sin respuesta **caduca a las 24 horas**: el trabajador la pasa a `descartada` (no espera al siguiente mensaje, para que no quede una propuesta zombi en la agenda ni en la cola) y deja en la transcripción un turno visible: «Esta propuesta caducó; no se hizo nada». Nunca desaparece en silencio. Al caducar, su episodio se cierra con el desenlace `descartado` | REQ-AGT-01, REQ-AGT-03, REQ-CUN01-03 |
+| 27 | **Decidida por el equipo el 6 de noviembre de 2026.** Guardar una tarea en espera **cierra el episodio**, con el desenlace `guardado` y el separador «Tarea guardada». Es distinto de `registrado` a propósito: la tarea todavía no existe, solo espera a las tareas personales. **Precisión del 7 de noviembre de 2026** (carril de tareas, T-050, `09-tareas-personales` §10): registrar una tarea por conversación ya no la deja en espera, así que cierra el episodio como `registrado`, con el separador «Se registró «…»», igual que un compromiso; cambiarla, darla por hecha o recibida, reabrirla y descartarla cierran como `cambiado`, `hecho`, `reabierto` y `quitado`. `guardado` y «Tarea guardada» quedan solo para las filas que ya estaban en espera con el motivo «función por llegar» antes de esa fecha, que ninguna herramienta vuelve a escribir, hasta que REQ-CUN03-17 las convierta (T-056, pendiente) | REQ-AGT-03, REQ-AGT-02 |
+| 28 | **Decidida por el equipo el 6 de noviembre de 2026 (H-AG-08, también en `02-agenda`, decisión 12).** Una propuesta sin respuesta **caduca a las 24 horas**: el trabajador la pasa a `descartada` (no espera al siguiente mensaje, para que no quede una propuesta zombi en la agenda ni en la cola) y deja en la transcripción un turno visible: «Esta propuesta caducó; no se hizo nada». Nunca desaparece en silencio. Al caducar, su episodio se cierra con el desenlace `descartado`. **Nota del 7 de noviembre de 2026.** H-TP-11 de `09-tareas-personales` propone una excepción: la propuesta que sale de convertir una tarea que estaba en espera (REQ-CUN03-17) no caducaría a las 24 horas, porque quien se retrasó fue el sistema y no la persona. **Pendiente de aval del equipo**; esta decisión no cambia hasta entonces. Si se acepta, se anota también en `02-agenda` (decisión 12) y en el plan §3.2 de 09 (`convertida_en`) | REQ-AGT-01, REQ-AGT-03, REQ-CUN01-03 |
 | 26 | Las alternativas de referente (REQ-AGT-04) **las arma el código** con el resultado de la consulta; el modelo nunca elige entre candidatas parecidas. Entran en esta rama solo si hay tiempo (T-042) | REQ-AGT-04, P-02 |
 
 ---

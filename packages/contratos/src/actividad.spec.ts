@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ConsultaActividad, FechaCalendario } from './actividad';
 
-// T-080 · REQ-CUN02-25
+// T-068 · REQ-CUN02-25
 describe('actividad.consulta-valida-nivel-y-fecha', () => {
   it('sin nada, es el nivel Día de hoy', () => {
     expect(ConsultaActividad.parse({})).toEqual({ nivel: 'dia' });

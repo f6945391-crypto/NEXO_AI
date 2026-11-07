@@ -35,7 +35,7 @@ describe('plataforma.migracion-y-semilla', () => {
       CUENTAS_DESARROLLO.map((c) => [c.correo, c.rol]).sort(),
     );
     expect(perfiles.every((p) => p.organizacionId === organizaciones[0]!.id)).toBe(true);
-    // T-065 · REQ-ADM-03: es una empresa y gerente@nexoai.test la administra
+    // T-058 · REQ-ADM-03: es una empresa y gerente@nexoai.test la administra
     expect(organizaciones[0]!.tipo).toBe('empresa');
     const administradores = await prisma.miembroOrganizacion.findMany({ where: { administrador: true }, include: { perfil: true } });
     expect(administradores.map((m) => m.perfil.correo)).toEqual(['gerente@nexoai.test']);

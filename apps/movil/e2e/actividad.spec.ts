@@ -1,7 +1,7 @@
 import { expect, request as nuevaPeticion, test, type Page } from '@playwright/test';
 import cuentas from './cuentas.json';
 
-// T-083 · REQ-CUN02-25 a 31, 33 en el móvil. Las cuentas `actividad`, `actividadVacia` y `actividadSinCalendario`
+// T-071 · REQ-CUN02-25 a 31, 33 en el móvil. Las cuentas `actividad`, `actividadVacia` y `actividadSinCalendario`
 // las siembra apps/web/e2e/arrancar-api.mjs en una zona en la que ahora es de día: hoy, dos compromisos terminados,
 // uno en curso, uno por venir y uno cancelado; ayer, un taller y un cambio de zona. La zona se lee del perfil.
 // Con CAPTURAS_ACTIVIDAD=<carpeta>, guarda las capturas de cada nivel (design/capturas/2026-11-07-actividad).

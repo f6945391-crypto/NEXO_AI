@@ -16,7 +16,7 @@ import { PrismaService } from '../plataforma/prisma.service';
 import { describirAccion } from './descripcion';
 import { fechaEnZona, periodoDe, type Periodo } from './periodo';
 
-// T-081 · specs/02-jornada/plan.md §4 · REQ-CUN02-25 a 29, 31, 34, 35. Solo lectura: no registra ningún tipo
+// T-069 · specs/02-jornada/plan.md §4 · REQ-CUN02-25 a 29, 31, 34, 35. Solo lectura: no registra ningún tipo
 // de Operación ni escribe nada. Los compromisos salen de la réplica a través de la consulta de la agenda
 // (que la actualiza si hace falta y muestra la última copia si Google no responde); las acciones, de las
 // Operaciones ejecutadas de la persona, con `deOrganizacion` y su `perfilId`. No pasa por el asistente.

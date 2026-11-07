@@ -5,7 +5,7 @@ import { fechaLarga, horario, nombreDeLaSemana, nombreDelMes, nombreDeZona } fro
 import { conSesion, mensajeDeError, SIN_CONEXION } from '../sesion';
 import { color, espaciado, tipografia } from '../tokens';
 
-// T-083 · REQ-CUN02-25 a 31, 33 · specs/02-jornada/plan.md §5 · design/ARQUITECTURA-VISUAL-MOVIL.md §2 y §3 ter.
+// T-071 · REQ-CUN02-25 a 31, 33 · specs/02-jornada/plan.md §5 · design/ARQUITECTURA-VISUAL-MOVIL.md §2 y §3 ter.
 // Actividad en el móvil: lo que pasó. El mismo selector y la misma disposición que Agenda (pantallas/agenda.tsx),
 // con dos bloques, «Compromisos» y «Lo que hizo el asistente». Abre en Día y hoy; al cambiar de nivel vuelve
 // al período de hoy. Solo muestra: no hay ningún control que cambie algo (REQ-CUN02-31).

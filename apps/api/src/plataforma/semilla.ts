@@ -17,7 +17,7 @@ export const CUENTAS_DESARROLLO = [
     rol: 'gerente',
     plan: 'empresarial',
     contrasenaTemporal: 'desarrollo-gerente-temporal',
-    // T-065 · REQ-ADM-03: la organización de desarrollo es de empresa y tiene su administradora
+    // T-058 · REQ-ADM-03: la organización de desarrollo es de empresa y tiene su administradora
     administrador: true,
   },
   {

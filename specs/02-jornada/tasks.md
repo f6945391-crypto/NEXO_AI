@@ -1,16 +1,16 @@
 # Tareas — Jornada (CUN-02), sección Actividad
 
 **Plan:** `specs/02-jornada/plan.md` (propuesta del 7 de noviembre de 2026)
-**Numeración:** empieza en **T-080 a propósito**, con un hueco tras las de `09-tareas-personales` (T-046 a T-055) y `08-administracion`, porque las cuatro áreas se escriben a la vez. Se renumeran al integrar si hace falta.
+**Numeración:** empieza en **T-068 a propósito**, con un hueco tras las de `09-tareas-personales` (T-046 a T-055) y `08-administracion`, porque las cuatro áreas se escriben a la vez. Se renumeran al integrar si hace falta.
 **Regla:** una tarea cabe en una sesión de trabajo. Termina cuando se cumple su «Hecho cuando», su prueba pasa y `python tools/trazabilidad.py --check` sigue limpio.
 
 Estados: `pendiente` · `en curso` · `hecha`.
 
-Orden: contrato → consulta → web → móvil. T-084 espera a las tareas personales.
+Orden: contrato → consulta → web → móvil. T-072 espera a las tareas personales.
 
 ---
 
-### T-080 · Contrato de Actividad
+### T-068 · Contrato de Actividad
 
 - **Satisface:** REQ-CUN02-25, 26, 27, 28, 29, 33 · habilita AD-08
 - **Depende de:** —
@@ -18,12 +18,12 @@ Orden: contrato → consulta → web → móvil. T-084 espera a las tareas perso
 - **Hecho cuando:** la API, la web y el móvil usan este esquema y no otro; una fecha imposible o un nivel desconocido no pasan
 - **Prueba:** `actividad.consulta-valida-nivel-y-fecha` (unitaria, en `packages/contratos`)
 - **Estado:** hecha · 7 de noviembre de 2026. 12 pruebas; 30 en `packages/contratos`
-- **Notas de implementación:** `FechaCalendario` es nuevo y propio de este contrato (Agenda pasa instantes, no fechas). Sin campo para las tareas completadas hasta T-084
+- **Notas de implementación:** `FechaCalendario` es nuevo y propio de este contrato (Agenda pasa instantes, no fechas). Sin campo para las tareas completadas hasta T-072
 
-### T-081 · Consulta `GET /actividad`
+### T-069 · Consulta `GET /actividad`
 
 - **Satisface:** REQ-CUN02-25, 26, 27, 28, 29, 31, 34, 35 · H-JOR-02 a 08, 10, 11
-- **Depende de:** T-080
+- **Depende de:** T-068
 - **Contenido:** `apps/api/src/actividad/`: `periodo.ts` (función pura), `descripcion.ts`, `ConsultaActividadService`, `ActividadController` con `@SobreLoPropio()`, `ActividadModule` (importa `AgendaModule` e `IntegracionesModule`); el módulo al final de `imports` en `app.module.ts`
 - **Hecho cuando:** con el calendario simulado, devuelve solo los compromisos terminados y no cancelados del período, y solo las Operaciones ejecutadas, con hora de ejecución, frase, datos y origen; sin calendario devuelve el registro y `sin_conectar`; nada de otra persona; funciona sin proveedor de modelo
 - **Pruebas:** `actividad.periodos` (unitaria), `actividad.compromisos-ocurridos`, `actividad.registro-del-asistente`, `actividad.sin-calendario`, `actividad.solo-lo-propio`, `actividad.sin-proveedor-de-modelo` (integración)
@@ -33,10 +33,10 @@ Orden: contrato → consulta → web → móvil. T-084 espera a las tareas perso
   - Un compromiso sembrado después de la primera lectura no aparece hasta pasados los 2 minutos de margen de la copia, igual que en Agenda (decisión 22 de `02-agenda`). No es un fallo de Actividad.
   - Las Operaciones se ordenan por `ejecutada_en` y, a igualdad, por `creada_en`.
 
-### T-082 · Web: sección Actividad
+### T-070 · Web: sección Actividad
 
 - **Satisface:** REQ-CUN02-25, 26, 27, 28, 29, 30, 31, 33, 34
-- **Depende de:** T-081
+- **Depende de:** T-069
 - **Contenido:** `app/aplicacion/actividad.tsx` (cliente) y `actividad-servidor.ts` (acción de servidor que lee y formatea); en `aplicacion.tsx`, solo el montaje en lugar del vacío. Período con anterior, siguiente hasta el actual y vuelta al actual; bloques «Compromisos» y «Lo que hizo el asistente» con su cantidad; agrupación por día en Semana y Mes; vacío por nivel y por bloque; sin calendario
 - **Hecho cuando:** el recorrido de la prueba pasa con la cuenta `actividad` y la `actividadVacia`; capturas 1440 × 900 de Día, Semana, Mes y vacío
 - **Prueba:** `web.actividad` (extremo a extremo)
@@ -47,10 +47,10 @@ Orden: contrato → consulta → web → móvil. T-084 espera a las tareas perso
   - `aplicacion.tsx`: el montaje y que el cuerpo del lienzo sea de lista también en Actividad.
   - La cuenta `actividad` de las pruebas vive en una zona en la que es de día al arrancar (las pruebas leen la zona del perfil).
 
-### T-083 · Móvil: sección Actividad
+### T-071 · Móvil: sección Actividad
 
 - **Satisface:** REQ-CUN02-25, 26, 27, 28, 29, 30, 31, 33, 34
-- **Depende de:** T-081
+- **Depende de:** T-069
 - **Contenido:** `pantallas/actividad.tsx` con el selector y la disposición de `pantallas/agenda.tsx` y los formatos de `agenda/dia.ts`; en `aplicacion.tsx`, solo el montaje en lugar del vacío
 - **Hecho cuando:** el mismo recorrido que la web pasa sobre Expo web a 390 × 844; capturas de Día, Semana, Mes y vacío
 - **Prueba:** `movil.actividad` (extremo a extremo)
@@ -62,10 +62,10 @@ Orden: contrato → consulta → web → móvil. T-084 espera a las tareas perso
   - En `aplicacion.tsx`, solo una rama del montaje. La entrada `actividad` de `VACIOS` queda sin uso; se retira al integrar para no chocar con el carril de tareas, que toca la misma constante.
   - En Expo web, el selector no expone `aria-selected`: la prueba comprueba el nivel por su contenido.
 
-### T-084 · Tareas completadas en Actividad
+### T-072 · Tareas completadas en Actividad
 
 - **Satisface:** REQ-CUN02-32 · H-JOR-12
-- **Depende de:** T-081, T-082, T-083 y la integración de `09-tareas-personales` (T-046 en adelante)
+- **Depende de:** T-069, T-070, T-071 y la integración de `09-tareas-personales` (T-046 en adelante)
 - **Contenido:** lo que dice `plan.md` §7: campo `tareasCompletadas` en el contrato, lectura de `tarea` hecha en el período, tercer bloque en web y móvil
 - **Hecho cuando:** una tarea completada el martes aparece el martes en Semana con su hora; una descartada o pendiente no
 - **Prueba:** `actividad.tareas-completadas` (integración), y los casos nuevos de `web.actividad` y `movil.actividad`

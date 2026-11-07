@@ -67,6 +67,6 @@ Las capturas las guardan esas mismas pruebas con `CAPTURAS_ACTIVIDAD=<carpeta>`.
 
 ## Lo que no se ve aquí
 
-- Tareas completadas (REQ-CUN02-32): hueco reservado, T-084.
+- Tareas completadas (REQ-CUN02-32): hueco reservado, T-072.
 - El indicador de desarrollo de Next.js abajo a la derecha de la web no es parte de la pantalla.
 - El rótulo de la zona dice «Hora de Tokyo»: sale del nombre de la zona, igual que en Agenda.

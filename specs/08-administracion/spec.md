@@ -587,7 +587,7 @@ Detectadas al escribir esta especificación el 6 de noviembre de 2026. **Pendien
 | H-ADM-14 | El área **sí le dice al administrador si un correo tiene cuenta**, al dar de alta o al invitar. Es inevitable en el alta, porque el correo es único, y ocultarlo en la invitación no protegería nada. Se limita a eso: nunca de qué organización es ni qué plan tiene. Alternativa descartada: responder lo mismo en los dos casos, como REQ-ACC-03 | REQ-ADM-10, 19, 24 |
 | H-ADM-15 | **Dar de baja no borra datos** en esta versión: la cuenta se cierra y lo suyo se conserva hasta que se decida cuánto tiempo | REQ-ADM-13 |
 
-### Decisiones tomadas durante la construcción (7 de noviembre de 2026, T-065 a T-069)
+### Decisiones tomadas durante la construcción (7 de noviembre de 2026, T-058 a T-062)
 
 Continúan la numeración de `plan.md` §11 y §12 (H-ADM-16 a 22). **Pendientes de revisión del equipo.** Lo construido sigue lo que dice cada una; si el equipo decide otra cosa, se cambia.
 
@@ -601,5 +601,5 @@ Continúan la numeración de `plan.md` §11 y §12 (H-ADM-16 a 22). **Pendientes
 | H-ADM-28 | **Nombrar administradora a una cuenta afiliada sí se puede**: administrar es una condición de la pertenencia, no una acción sobre la cuenta de la persona (H-ADM-01, H-ADM-05) | REQ-ADM-03, 15 |
 | H-ADM-29 | En la lectura de Equipos, «miembros» no repite al responsable; el responsable que no administra ve solo sus equipos y no ve Personas ni Registro | REQ-ADM-02, 28 a 32 |
 | H-ADM-30 | **Contraseña restablecida y zona horaria.** El servicio conserva la zona (H-ADM-13), pero el primer ingreso de la web la vuelve a pedir, empezando vacía. Hay que decidir si ese formulario la trae elegida cuando ya existe; no se tocó en este carril | REQ-ADM-14 |
-| H-ADM-31 | **Textos de estado en Personas:** «Activa», «Aún no entró» (primer ingreso pendiente), «Suspendida», «Dada de baja», «Invitación pendiente»; clase: «De la organización», «Se sumó con su cuenta», «Invitación». En una fila de alguien que se sumó con su cuenta no hay acciones hasta que exista «Quitar de la organización» (T-070, T-071) | REQ-ADM-08, 15 |
+| H-ADM-31 | **Textos de estado en Personas:** «Activa», «Aún no entró» (primer ingreso pendiente), «Suspendida», «Dada de baja», «Invitación pendiente»; clase: «De la organización», «Se sumó con su cuenta», «Invitación». En una fila de alguien que se sumó con su cuenta no hay acciones hasta que exista «Quitar de la organización» (T-063, T-064) | REQ-ADM-08, 15 |
 | H-ADM-32 | **La entrada «Administración» de la aplicación solo la ve quien administra.** El plan pide mostrarla a quien puede entrar en la zona, que incluye a quien es responsable de un equipo; pero lo que la aplicación sabe de la sesión solo dice si la cuenta administra. El responsable que no administra entra por la dirección de la zona. Si el equipo quiere que también lo vea, la sesión tiene que decir si es responsable de algún equipo. *Tomada al cerrar los pendientes de la tanda 4, 7 de noviembre de 2026* | REQ-ADM-05 |

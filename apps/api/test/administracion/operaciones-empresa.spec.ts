@@ -12,7 +12,7 @@ import { RegistroOperaciones, type EjecutorOperacion, type ResultadoEjecucion } 
 import type { PrismaClient } from '../../src/plataforma/prisma';
 import { clientePrueba, crearCuentaLista, vaciarTablas } from '../utilidades/base-prueba';
 
-// T-067 · REQ-ADM-07, REQ-ADM-16 · specs/08-administracion/plan.md §5.2 y §7.3
+// T-060 · REQ-ADM-07, REQ-ADM-16 · specs/08-administracion/plan.md §5.2 y §7.3
 
 const vista: VistaConfirmacion = { accion: 'Probar la administración', datos: [{ etiqueta: 'Qué', valor: 'una prueba' }], irreversible: null, confirmable: true, motivoNoConfirmable: null };
 
@@ -45,7 +45,7 @@ class AdministrarDePrueba implements EjecutorOperacion<Record<string, never>>, O
 
 const CONTRASENA = 'una-contrasena-de-prueba';
 
-describe('T-067 · Operaciones de ámbito de empresa y resultado efímero', () => {
+describe('T-060 · Operaciones de ámbito de empresa y resultado efímero', () => {
   let app: INestApplication;
   let prisma: PrismaClient;
   let tipo: AdministrarDePrueba;

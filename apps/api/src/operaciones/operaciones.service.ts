@@ -22,7 +22,7 @@ import { RegistroOperaciones, type EjecutorOperacion } from './registro';
 //   actualización condicional atómica (`confirmadaEn` de nulo a ahora). Ajuste del plan: en lugar de
 //   `SELECT … FOR UPDATE`, que exigiría SQL escrito a mano, prohibido por AGENTS.md.
 // - Una operación solo la ve y la confirma quien la creó, dentro de su organización (P-04).
-// - T-067 · specs/08-administracion/plan.md §5.2: las de ámbito `empresa` se proponen y se confirman solo con la
+// - T-060 · specs/08-administracion/plan.md §5.2: las de ámbito `empresa` se proponen y se confirman solo con la
 //   sesión de la zona de empresa, se guardan en la organización de la empresa y nunca se listan con las del
 //   usuario. Su resultado efímero llega en la primera confirmación y no se guarda.
 
@@ -236,7 +236,7 @@ export class OperacionesService {
   }
 
   // REQ-ACC-15: solo el responsable del equipo asigna trabajo a otros, aunque el colaborador tenga el plan.
-  // T-067 · REQ-ADM-06, REQ-ADM-16: solo el administrador administra, y el rechazo queda registrado.
+  // T-060 · REQ-ADM-06, REQ-ADM-16: solo el administrador administra, y el rechazo queda registrado.
   private async comprobarAutoridad(contexto: ContextoSolicitud, ejecutor: Pick<EjecutorOperacion, 'tipo' | 'soloResponsable' | 'soloAdministrador'>): Promise<void> {
     if (ejecutor.soloResponsable && contexto.rol === 'colaborador') throw errorApi(403, 'ROL_NO_PERMITIDO', SOLO_EL_RESPONSABLE);
     if (ejecutor.soloAdministrador && !(await this.pertenencias.esAdministrador(contexto))) {

@@ -6,7 +6,7 @@ import { leerActividad, type ElementoAccion, type ElementoCompromiso, type Grupo
 import estilos from './actividad.module.css';
 import { IconoAnterior, IconoSiguiente } from './iconos';
 
-// T-082 · REQ-CUN02-25 a 31, 33 · specs/02-jornada/plan.md §5. La sección Actividad en el lienzo: lo que pasó.
+// T-070 · REQ-CUN02-25 a 31, 33 · specs/02-jornada/plan.md §5. La sección Actividad en el lienzo: lo que pasó.
 // El selector Día · Semana · Mes lo pinta aplicacion.tsx, como en Agenda; aquí llega su índice. Abre en hoy y,
 // al cambiar de nivel, vuelve a hoy (REQ-CUN02-25). Solo muestra: ningún botón cambia nada (REQ-CUN02-31).
 

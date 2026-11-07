@@ -106,7 +106,7 @@ model SesionRenovacion {
   revocadaEn DateTime?    @map("revocada_en") @db.Timestamptz(3)
   // T-024: solo se rellena cuando se revoca por rotación; habilita el margen de gracia (DP-04)
   rotadaEn   DateTime?    @map("rotada_en") @db.Timestamptz(3)
-  // T-066 · specs/08-administracion/plan.md §7.1: la zona de empresa tiene su propia sesión y su propia renovación
+  // T-059 · specs/08-administracion/plan.md §7.1: la zona de empresa tiene su propia sesión y su propia renovación
   ambito     AmbitoSesion @default(propio)
   creadaEn   DateTime     @default(now()) @map("creada_en") @db.Timestamptz(3)
 
@@ -157,7 +157,7 @@ model Operacion {
   motivoEspera      MotivoEspera?   @map("motivo_espera")
   // Conversación de la que salió; nula para los controles directos
   conversacionId    String?         @map("conversacion_id") @db.Uuid
-  // T-067 · specs/08-administracion/plan.md §5.2 y §7.3: las de la zona de empresa viven en la organización de
+  // T-060 · specs/08-administracion/plan.md §5.2 y §7.3: las de la zona de empresa viven en la organización de
   // la empresa y no aparecen en lo del usuario
   ambito            AmbitoOperacion @default(propio)
   // 09-tareas-personales plan §3.2 · T-047: cuándo una tarea en espera pasó a propuesta «Por confirmar» (T-056).
@@ -433,7 +433,7 @@ model TurnoTranscripcion {
 }
 
 // ---- 08-administracion ----
-// specs/08-administracion/plan.md §3 (opción B) · T-065. La cuenta y lo suyo se quedan en su organización;
+// specs/08-administracion/plan.md §3 (opción B) · T-058. La cuenta y lo suyo se quedan en su organización;
 // la pertenencia a una empresa es una fila en la organización de la empresa (H-ADM-16).
 
 enum TipoOrganizacion {
@@ -470,7 +470,7 @@ enum EstadoPertenencia {
   @@map("estado_pertenencia")
 }
 
-// T-067 · plan §5.2
+// T-060 · plan §5.2
 enum AmbitoOperacion {
   propio
   empresa
@@ -478,7 +478,7 @@ enum AmbitoOperacion {
   @@map("ambito_operacion")
 }
 
-// T-066 · plan §7.1: la sesión de la aplicación y la de la zona de empresa no se mezclan
+// T-059 · plan §7.1: la sesión de la aplicación y la de la zona de empresa no se mezclan
 enum AmbitoSesion {
   propio
   empresa

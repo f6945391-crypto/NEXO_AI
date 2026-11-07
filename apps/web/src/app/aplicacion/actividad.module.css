@@ -1,4 +1,4 @@
-/* T-082 · REQ-CUN02-33 · design/ARQUITECTURA-VISUAL-MOVIL.md §3 ter. Lo propio de Actividad; el período, la
+/* T-070 · REQ-CUN02-33 · design/ARQUITECTURA-VISUAL-MOVIL.md §3 ter. Lo propio de Actividad; el período, la
    lista y el vacío reutilizan las clases de Agenda en globales.css. Solo tokens. */
 
 .actividad {

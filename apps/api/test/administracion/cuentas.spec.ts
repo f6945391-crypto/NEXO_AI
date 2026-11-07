@@ -10,13 +10,13 @@ import { MODELOS_CON_ORGANIZACION } from '../../src/plataforma/aislamiento';
 import type { PrismaClient } from '../../src/plataforma/prisma';
 import { clientePrueba, crearCuentaLista, vaciarTablas } from '../utilidades/base-prueba';
 
-// T-068 · REQ-ADM-02, 03, 08 a 16 · specs/08-administracion/plan.md §4.3, §5.1, §6 y §9
+// T-061 · REQ-ADM-02, 03, 08 a 16 · specs/08-administracion/plan.md §4.3, §5.1, §6 y §9
 
 const CONTRASENA = 'una-contrasena-de-prueba';
 const AFILIADA = 'Esa cuenta es de la persona: se sumó con su cuenta. Lo que sí puedes hacer es quitarla de la organización.';
 const ULTIMO = 'La organización se quedaría sin nadie que la administre. Antes, nombra a otra persona administradora.';
 
-describe('T-068 · cuentas de la organización', () => {
+describe('T-061 · cuentas de la organización', () => {
   let app: INestApplication;
   let prisma: PrismaClient;
   let acme: string;

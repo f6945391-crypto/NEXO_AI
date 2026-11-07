@@ -144,38 +144,38 @@ Cada celda dice quién lo hace allí (A administrador, R responsable, C colabora
 
 **Criterio:** el de `PLAN-VALOR-USUARIO.md`. Cada bloque termina en algo que una persona concreta puede ver y hacer. Una tarea es una sesión de trabajo.
 
-**Numeración.** T-065 a T-074 son las de `specs/08-administracion/tasks.md`. Las nuevas se proponen **desde T-090** para no chocar con las de `09-tareas-personales` (T-046 a T-057), las de `08-administracion` ni las del carril de actividad, que numera a la vez. Son una propuesta: entran en el `tasks.md` de su área cuando la especificación de esa área esté avalada, y se renumeran al integrar si hace falta.
+**Numeración.** T-058 a T-067 son las de `specs/08-administracion/tasks.md`. Las nuevas se proponen **desde T-090** para no chocar con las de `09-tareas-personales` (T-046 a T-057), las de `08-administracion` ni las del carril de actividad, que numera a la vez. Son una propuesta: entran en el `tasks.md` de su área cuando la especificación de esa área esté avalada, y se renumeran al integrar si hace falta.
 
 **Orden propuesto (H-EMP-16):** empresa → sumarse → equipos → **delegar y responder** → **seguimiento** → disponibilidad → peticiones. Delegar va antes que la disponibilidad porque es el ciclo que da a los dos perfiles algo que ver (el responsable encarga, el colaborador responde), y el seguimiento solo lee esas tareas. La disponibilidad pide el consentimiento de cada persona y leer su calendario, y su paso siguiente (convocar, CUN-06) no está especificado.
 
-### Bloque 1 · La empresa existe (T-065 a T-069)
+### Bloque 1 · La empresa existe (T-058 a T-062)
 
 | Tarea | Qué | Área |
 |---|---|---|
-| T-065 | Clases de organización, pertenencia y equipos en el modelo | 08 |
-| T-066 | Pertenencia en la sesión, estado de la cuenta y alcance de administrador; sesión aparte de la zona | 08 |
-| T-067 | Operaciones de ámbito de empresa y resultado efímero | 08 |
-| T-068 | Cuentas de la organización: lista, alta, plan, suspensión, baja, contraseña, administradores | 08 |
-| T-069 | La zona en la web: entrada propia y «Personas» | 08 |
+| T-058 | Clases de organización, pertenencia y equipos en el modelo | 08 |
+| T-059 | Pertenencia en la sesión, estado de la cuenta y alcance de administrador; sesión aparte de la zona | 08 |
+| T-060 | Operaciones de ámbito de empresa y resultado efímero | 08 |
+| T-061 | Cuentas de la organización: lista, alta, plan, suspensión, baja, contraseña, administradores | 08 |
+| T-062 | La zona en la web: entrada propia y «Personas» | 08 |
 
 **Qué puede ver la persona al cerrarlo:** la administradora entra en la zona con su correo y su contraseña, ve las cuentas de su empresa, da de alta a Lucía y ve su contraseña temporal una vez, y suspende y reactiva otra cuenta. Una cuenta personal no nota nada.
 
-### Bloque 2 · Sumarse a una empresa (T-070 a T-072)
+### Bloque 2 · Sumarse a una empresa (T-063 a T-065)
 
 | Tarea | Qué | Área |
 |---|---|---|
-| T-070 | Afiliación: invitar, aceptar, rechazar, caducar, desafiliar y salir | 08 |
-| T-071 | Invitar desde la zona; aviso y fila «Organización» en la web | 08 |
-| T-072 | Aviso de invitación y fila «Organización» en el móvil | 08 |
+| T-063 | Afiliación: invitar, aceptar, rechazar, caducar, desafiliar y salir | 08 |
+| T-064 | Invitar desde la zona; aviso y fila «Organización» en la web | 08 |
+| T-065 | Aviso de invitación y fila «Organización» en el móvil | 08 |
 
 **Qué puede ver la persona:** Vasco, con su cuenta Personal, abre la aplicación (web o móvil) y ve que Acme quiere sumarlo a «Ventas», con qué cambia y qué no; acepta, y en Ajustes aparece «Organización · Acme». Puede salir cuando quiera. **Antes de este bloque:** los cuadros del aviso (§6.6).
 
-### Bloque 3 · Equipos y responsable (T-073, T-074)
+### Bloque 3 · Equipos y responsable (T-066, T-067)
 
 | Tarea | Qué | Área |
 |---|---|---|
-| T-073 | Equipos y autoridad por equipo | 08 |
-| T-074 | «Equipos» en la zona | 08 |
+| T-066 | Equipos y autoridad por equipo | 08 |
+| T-067 | «Equipos» en la zona | 08 |
 
 **Qué puede ver la persona:** la administradora crea «Ventas», suma a Lucía y a Vasco y nombra responsable a Lucía. Lucía ve la entrada a la zona y, dentro, «Equipos» de lectura. «Mi equipo» aparece vacío, con un texto que dice qué llegará. **Prerrequisito:** las enmiendas a REQ-ACC-13 y 15 (`entregas/INFORME-CARRIL-ADMIN.md` §5).
 
@@ -193,7 +193,7 @@ Cada celda dice quién lo hace allí (A administrador, R responsable, C colabora
 | T-097 | Móvil: las dos franjas y la tarea con su hilo; la tarjeta de delegación a 390 px | REQ-CUN07-11, 15, 17 |
 | T-098 | Al salir alguien de un equipo, sus tareas abiertas quedan sin persona asignada, a la vista del responsable | REQ-ADM-13, 25, 31 (cierra lo que quedó en curso) |
 
-**Qué puede ver la persona:** Lucía escribe «encárgale a Vasco el informe de cierre para el viernes; está hecho cuando lo revise finanzas» → tarjeta → confirma. Vasco ve el aviso y la tarea en «Asignadas», en la web o en el móvil; responde «lo tengo el jueves». Lucía ve en «Encargadas» la propuesta, con lo que Vasco escribió y lo que el asistente entendió; acepta. Vasco ve qué cambió. **Prerrequisitos:** el hito 3 del Plan Personal (la sección Tareas con franjas, T-052 y T-054); decidir INC-21 (§6.1), el hilo (§6.2) y la notificación (§6.7); los cuadros del móvil del colaborador (§6.6).
+**Qué puede ver la persona:** Lucía escribe «encárgale a Vasco el informe de cierre para el viernes; está hecho cuando lo revise finanzas» → tarjeta → confirma. Vasco ve el aviso y la tarea en «Asignadas», en la web o en el móvil; responde «lo tengo el jueves». Lucía ve en «Encargadas» la propuesta, con lo que Vasco escribió y lo que el asistente entendió; acepta. Vasco ve qué cambió. **Prerrequisitos:** el hito 3 del Plan Personal (la sección Tareas con franjas, T-052 y T-054); decidir INC-24 (§6.1), el hilo (§6.2) y la notificación (§6.7); los cuadros del móvil del colaborador (§6.6).
 
 ### Bloque 5 · Seguimiento del equipo (CUN-08) · T-099 a T-102
 
@@ -231,9 +231,9 @@ Cada celda dice quién lo hace allí (A administrador, R responsable, C colabora
 
 | Bloque | Lo que gana la persona | Tareas | Sesiones | Acumulado |
 |---|---|---|---|---|
-| 1 | La administradora gestiona las cuentas de su empresa | T-065 a T-069 | 5 | 5 |
-| 2 | Una cuenta Personal se suma a una empresa y puede salir | T-070 a T-072 | 3 | 8 |
-| 3 | Equipos con su responsable | T-073, T-074 | 2 | 10 |
+| 1 | La administradora gestiona las cuentas de su empresa | T-058 a T-062 | 5 | 5 |
+| 2 | Una cuenta Personal se suma a una empresa y puede salir | T-063 a T-065 | 3 | 8 |
+| 3 | Equipos con su responsable | T-066, T-067 | 2 | 10 |
 | 4 | El responsable delega; el colaborador responde; vuelve | T-090 a T-098 | 9 | 19 |
 | 5 | El responsable sabe cómo va su equipo | T-099 a T-102 | 4 | 23 |
 | 6 | Quién está libre, sin ver la agenda de nadie | T-103 a T-106 (T-107 reservada) | 4 | 27 |
@@ -247,9 +247,9 @@ Cada celda dice quién lo hace allí (A administrador, R responsable, C colabora
 
 Cada punto dice en qué área iría. Ninguno se resuelve aquí.
 
-### 6.1 La tarea delegada: ¿la misma entidad que la personal? (INC-21 del carril de CUN-03) · `03-tareas`
+### 6.1 La tarea delegada: ¿la misma entidad que la personal? (INC-24, antes «INC-21 del carril de CUN-03») · `03-tareas`
 
-`PROPUESTA-TECNICA.md` §8 describe una sola entidad Tarea con responsable y quien delegó; `09-tareas-personales` construye una solo para lo personal (H-TP-13). **Propuesta (H-EMP-10): separadas.** La tarea del equipo vive en la empresa, tiene estados distintos («en curso», cumplimiento válido, RN-INF-02), criterio de terminado, preguntas declaradas e hilo; la personal vive con la persona y no la ve nadie (P-10). Juntarlas obligaría a que cada consulta de lo personal se acuerde de no mostrar lo del equipo, y al revés. Hace falta una decisión del equipo y una línea en EN-04: la tarea del equipo y la personal son dos clases de la misma entidad del negocio, no dos entidades. **Ojo:** el carril de administración usó también INC-19 a 21 para otras cosas; se renumeran al integrar.
+`PROPUESTA-TECNICA.md` §8 describe una sola entidad Tarea con responsable y quien delegó; `09-tareas-personales` construye una solo para lo personal (H-TP-13). **Propuesta (H-EMP-10): separadas.** La tarea del equipo vive en la empresa, tiene estados distintos («en curso», cumplimiento válido, RN-INF-02), criterio de terminado, preguntas declaradas e hilo; la personal vive con la persona y no la ve nadie (P-10). Juntarlas obligaría a que cada consulta de lo personal se acuerde de no mostrar lo del equipo, y al revés. Hace falta una decisión del equipo y una línea en EN-04: la tarea del equipo y la personal son dos clases de la misma entidad del negocio, no dos entidades. **Renumerada el 7 de noviembre de 2026 (RT-27):** las inconsistencias del carril de administración conservan INC-19 a 21; las del carril de CUN-03 son INC-22 a 24, y las de este documento, INC-25 a 27. La equivalencia está en `SPEC.md` §9.
 
 ### 6.2 El hilo de una tarea · `03-tareas` §7
 

@@ -22,3 +22,7 @@ Claude outputs/
 *.tgz
 apps/*/playwright.local.config.ts
 dump.rdb
+
+# Copia de prueba de las tandas y respaldos de la base (7 de noviembre de 2026)
+entregas/nexoai-prueba-tanda4/
+respaldo-*.sql

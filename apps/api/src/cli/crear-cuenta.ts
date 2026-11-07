@@ -9,7 +9,7 @@ import { crearClientePrisma } from '../plataforma/prisma';
 //   pnpm --filter @nexoai/api crear-cuenta --organizacion <uuid> --correo <correo> --rol <rol> --plan <plan> [--administrador]
 //   pnpm --filter @nexoai/api crear-cuenta --nueva-organizacion "<nombre>" [--tipo personal|empresa] --correo ... --rol ... --plan ...
 // Sin --tipo, la organización nueva es de empresa con el Plan Empresarial y personal con los demás. La primera
-// cuenta de una empresa nueva es su administradora (T-065, specs/08-administracion/plan.md §3.3).
+// cuenta de una empresa nueva es su administradora (T-058, specs/08-administracion/plan.md §3.3).
 
 async function principal(): Promise<void> {
   cargarEntorno();

@@ -1,4 +1,4 @@
-// T-081 · REQ-CUN02-27 · H-JOR-06. Qué hizo el asistente, en pasado y en palabras llanas (R-40). Un tipo sin
+// T-069 · REQ-CUN02-27 · H-JOR-06. Qué hizo el asistente, en pasado y en palabras llanas (R-40). Un tipo sin
 // frase propia, como los de las tareas cuando lleguen, usa el título de la tarjeta que se confirmó.
 
 const FRASES: Readonly<Record<string, string>> = {

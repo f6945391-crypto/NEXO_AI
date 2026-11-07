@@ -21,7 +21,7 @@ function esPublica(reflector: Reflector, ctx: ExecutionContext): boolean {
   return reflector.getAllAndOverride<boolean>(CLAVE_PUBLICO, [ctx.getHandler(), ctx.getClass()]) === true;
 }
 
-// Lo que lleva el token de acceso (autenticacion.service.ts, `emitir`). `emp` y `amb` desde T-066; un token de
+// Lo que lleva el token de acceso (autenticacion.service.ts, `emitir`). `emp` y `amb` desde T-059; un token de
 // antes no los trae y vale como sesión de la aplicación sin empresa.
 const CargaAcceso = z.object({
   sub: z.uuid(),
@@ -39,7 +39,7 @@ export const TEXTO_AMBITO: Readonly<Record<AmbitoSesion, string>> = {
 };
 
 // Global. Sin token de acceso válido no se entra a ninguna ruta que no sea @Publico().
-// T-066 · REQ-ADM-12 · H-ADM-17: además, la cuenta tiene que seguir activa (una lectura por clave primaria), y
+// T-059 · REQ-ADM-12 · H-ADM-17: además, la cuenta tiene que seguir activa (una lectura por clave primaria), y
 // la sesión tiene que ser del ámbito de la ruta (specs/08-administracion/plan.md §7.3).
 @Injectable()
 export class AutenticacionGuard implements CanActivate {
@@ -109,7 +109,7 @@ export const SIN_ORGANIZACION = 'Tu cuenta no pertenece a ninguna organización.
 // Global, después de PrimerIngresoGuard. Antes `RolGuard` (T-026, REQ-ACC-13, REQ-ACC-15): el colaborador usa
 // todo lo suyo, como el Plan Empresarial, pero no lo que da autoridad sobre otros. Una ruta sin alcance
 // declarado se le cierra también: un olvido no deja nada abierto.
-// T-066 · specs/08-administracion/plan.md §4.2: `administrador` y `empresa` se comprueban contra la base en
+// T-059 · specs/08-administracion/plan.md §4.2: `administrador` y `empresa` se comprueban contra la base en
 // cada petición, para que quitar la condición surta efecto en la siguiente (H-ADM-17).
 @Injectable()
 export class AlcanceGuard implements CanActivate {
@@ -145,7 +145,7 @@ export class AlcanceGuard implements CanActivate {
 }
 
 // 5 intentos por minuto por correo e IP (specs/06-acceso/plan.md §5.1). En POST /auth/ingreso y en
-// POST /administracion/entrar (T-066).
+// POST /administracion/entrar (T-059).
 @Injectable()
 export class LimiteIngresoGuard extends ThrottlerGuard {
   protected override async getTracker(solicitud: Record<string, unknown>): Promise<string> {

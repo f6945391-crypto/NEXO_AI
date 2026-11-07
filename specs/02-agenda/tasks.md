@@ -221,7 +221,7 @@ Plan §10. **Numeración:** sigue a `specs/07-agente/tasks.md`, que termina en T
 - **Contenido:** web: lectura por semana y por mes en `lib/agenda.ts`; cortes Semana y Mes del lienzo con navegación anterior/siguiente y «Volver a hoy»; elegir un día de la rejilla abre Hoy en esa fecha. Móvil: lo mismo en `pantallas/agenda.tsx`, con la forma de `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1 (siete días con sus bloques; rejilla con un punto por cada dos compromisos, hasta tres)
 - **Hecho cuando:** con el calendario simulado y compromisos en dos días distintos, Semana muestra los siete días en orden con los compromisos en su día y «Sin compromisos» en los demás, hoy destacado; Mes muestra la rejilla con las marcas correctas y los días de otros meses atenuados; elegir un día abre Hoy en esa fecha y «Volver a hoy» vuelve; pasar a la semana o al mes siguiente y volver funciona; en pantalla no aparece ninguna cifra de carga
 - **Pruebas:** `web.agenda-semana-y-mes`, `movil.agenda-semana-y-mes` (extremo a extremo)
-- **Estado:** pendiente
+- **Estado:** hecha · 6 de noviembre de 2026, en el commit `4a2b3f7` (carril B); registrada en `SPEC.md` el 7 de noviembre de 2026. La tanda 2 añadió que Semana abre con hoy visible
 
 ### T-045 · Lo que está en espera se ve fuera de la conversación (web y móvil)
 
@@ -230,7 +230,7 @@ Plan §10. **Numeración:** sigue a `specs/07-agente/tasks.md`, que termina en T
 - **Contenido:** franja sobre la lista de hoy en el lienzo (web) y en Inicio (móvil) con «N cosas en espera» (singular con 1), que al abrirse lista cada captura con su frase y su motivo en palabras llanas; sin control de retirar; la franja no aparece sin nada en espera. Lee `GET /operaciones?estado=en_espera`
 - **Hecho cuando:** con una tarea guardada y una solicitud encolada, la franja dice «2 cosas en espera» y al abrirla se ven las dos con su motivo; sin nada en espera, no hay franja; la franja no usa vocabulario interno
 - **Pruebas:** `web.en-espera-visible`, `movil.en-espera-visible` (extremo a extremo)
-- **Estado:** pendiente
+- **Estado:** hecha · 6 de noviembre de 2026, en el commit `4a2b3f7` (carril B); registrada en `SPEC.md` el 7 de noviembre de 2026. La tanda 2 dejó la franja del móvil solo en Hoy. Los motivos cortos (`motivoEspera` en el contrato) siguen pendientes
 
 ### Pulido sin tarea · «Ver anteriores» visible
 

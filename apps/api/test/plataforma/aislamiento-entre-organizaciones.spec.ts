@@ -111,7 +111,7 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
       });
       // Y el estado de su grafo (T-032)
       await base.puntoControlAgente.create({ data: { organizacionId, conversacionId: conversacion.id, datos: {} } });
-      // Y un equipo con su responsable (T-065). La pertenencia a la organización la crea el alta de la cuenta.
+      // Y un equipo con su responsable (T-058). La pertenencia a la organización la crea el alta de la cuenta.
       const equipo = await base.equipo.create({ data: { organizacionId, nombre: 'Ventas' } });
       await base.miembroEquipo.create({ data: { organizacionId, equipoId: equipo.id, perfilId, responsable: true } });
       // Y una tarea personal, creada por esa Operación (T-047)

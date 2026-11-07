@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { OrigenOperacion } from './operaciones';
 
-// Actividad: lo que pasó (specs/02-jornada/spec.md §8 bis, plan.md §3) · T-080. Solo lectura. Las horas de
+// Actividad: lo que pasó (specs/02-jornada/spec.md §8 bis, plan.md §3) · T-068. Solo lectura. Las horas de
 // un compromiso van con el desfase de su zona, como EventoAgenda; la de una acción, con el de la zona del
 // perfil (P-05). `dia` es la fecha del perfil en la que se agrupa cada elemento: la calcula la API (H-JOR-03).
 

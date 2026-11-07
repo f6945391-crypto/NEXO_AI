@@ -5,6 +5,8 @@
 **Quién:** Claude, como revisor que no participó en la construcción. **Fecha:** 7 de noviembre de 2026.
 **Para quién:** el equipo (Franco, Aixa, Vasco), que presenta esto en el Entregable 2 de Diseño de Software, y Claude Code, que aplicará las correcciones.
 
+
+> **Nota del 7 de noviembre de 2026, al integrar:** las tareas que esta revisión cita con sus números de carril se renumeraron (`AGENTS.md`, numeración correlativa): T-065 a T-074 de administración son ahora **T-058 a T-067**, y T-080 a T-084 de Actividad, **T-068 a T-072**. Las INC-19 a 21 del carril de CUN-03 son **INC-22 a 24**. Este documento no se reescribe: es el registro de la revisión.
 ---
 
 ## Índice

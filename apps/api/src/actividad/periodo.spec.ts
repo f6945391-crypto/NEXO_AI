@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { periodoDe } from './periodo';
 
-// T-081 · REQ-CUN02-25, 28 · H-JOR-02, H-JOR-08
+// T-069 · REQ-CUN02-25, 28 · H-JOR-02, H-JOR-08
 describe('actividad.periodos', () => {
   // Sábado 7 de noviembre de 2026, 12:00 en Lima (GMT-5)
   const ahora = new Date('2026-11-07T17:00:00Z');

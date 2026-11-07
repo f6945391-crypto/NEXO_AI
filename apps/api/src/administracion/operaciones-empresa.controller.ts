@@ -10,7 +10,7 @@ const idValido = new ParseUUIDPipe({
   exceptionFactory: () => errorApi(404, 'OPERACION_NO_ENCONTRADA', 'No existe esa operación.'),
 });
 
-// T-067 · specs/08-administracion/plan.md §5.2 y §7.3. Las Operaciones de la zona de empresa: se proponen y se
+// T-060 · specs/08-administracion/plan.md §5.2 y §7.3. Las Operaciones de la zona de empresa: se proponen y se
 // confirman aquí, con la sesión de la zona, y se guardan en la organización de la empresa. Cada tipo decide si
 // es solo del administrador (`soloAdministrador`); la ruta solo exige pertenecer a la empresa.
 @ZonaEmpresa()

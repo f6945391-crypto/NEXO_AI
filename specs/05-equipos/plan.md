@@ -25,12 +25,12 @@ Este plan dice **dónde y cómo** se cumple cada requisito. No añade comportami
 | Necesita | Qué es en `08-administracion` | Para | Estado en su plan |
 |---|---|---|---|
 | Miembros de un equipo | La misma lectura exportada que pide `03-tareas` (`EquiposLectura`: `miembros(equipoId)`, `esMiembro(perfilId, equipoId)`), fuera de `AdministracionModule` | Resolver participantes por nombre (REQ-CUN05-01); filas del panorama | **Pedido nuevo** (H-EMP-20; `specs/03-tareas/plan.md` §1.1) |
-| Autoridad del responsable en su equipo | `@SoloResponsable(resolverEquipo)` | El panorama de la zona (REQ-CUN05-11) | Previsto, T-073 |
+| Autoridad del responsable en su equipo | `@SoloResponsable(resolverEquipo)` | El panorama de la zona (REQ-CUN05-11) | Previsto, T-066 |
 | Ser miembro del equipo | `@MiembroDelEquipo(resolverEquipo)` | La consulta para convocar de un colaborador (REQ-CUN05-17) | **Pedido nuevo** (H-EMP-21) |
 | Lectura entre organizaciones, justificada | `PertenenciasRepositorio`, el único sitio con `sinAislar` del área (§4.3) | Libre/ocupado de una cuenta afiliada: su `evento_agenda` está en su organización personal (H-ADM-16) | **Fila nueva en `08-administracion/plan.md` §4.3**: «Libre/ocupado de un miembro que lo compartió: solo `inicio`, `fin` y si ocupa, de `evento_agenda`, por `perfil_id` y rango; nunca título, lugar ni asistentes (REQ-CUN05-13)». La pide esta área |
-| Al salir alguien de un equipo | Oyente de `SalidaDeEquipo` | Retirar su consentimiento y dejar de leer su libre/ocupado de inmediato (REQ-ADM-25, REQ-CUN05-14) | Evento previsto, T-070 (§5.4). El oyente es T-103 |
+| Al salir alguien de un equipo | Oyente de `SalidaDeEquipo` | Retirar su consentimiento y dejar de leer su libre/ocupado de inmediato (REQ-ADM-25, REQ-CUN05-14) | Evento previsto, T-063 (§5.4). El oyente es T-103 |
 | Rutas de la zona | Prefijo `/administracion/*` con `ambito: 'empresa'` | `GET /administracion/mi-equipo/:equipoId/disponibilidad?desde&hasta`, con `@SoloResponsable`; página bajo `app/(empresa)/administracion/mi-equipo/` | Prefijo previsto (§7.3). La ruta es propuesta de esta área |
-| Pertenencia en el contexto | `ContextoSolicitud.empresa` y `@EnEmpresa()` | La consulta para convocar desde la aplicación (`ambito: 'propio'`): `GET /disponibilidad?equipoId&participantes&desde&hasta&duracion` y la herramienta del asistente `disponibilidad.consultar` | Previsto, T-066 |
+| Pertenencia en el contexto | `ContextoSolicitud.empresa` y `@EnEmpresa()` | La consulta para convocar desde la aplicación (`ambito: 'propio'`): `GET /disponibilidad?equipoId&participantes&desde&hasta&duracion` y la herramienta del asistente `disponibilidad.consultar` | Previsto, T-059 |
 
 ### 1.2 Notas para el plan completo
 

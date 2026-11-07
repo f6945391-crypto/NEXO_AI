@@ -2,7 +2,7 @@ import { EntradaRegistroEmpresa } from '@nexoai/contratos';
 import { exigirSesionEmpresa } from '../_comun/exigir';
 import { leerDeLaZona } from '../_comun/sesion';
 
-// T-069 · plan §7.2, «Registro», y §9. Lo que hicieron los administradores, de más reciente a más antiguo, sin
+// T-062 · plan §7.2, «Registro», y §9. Lo que hicieron los administradores, de más reciente a más antiguo, sin
 // contenido de nadie. Las fechas, con la zona horaria de quien mira (P-05).
 export default async function PaginaRegistro() {
   const sesion = await exigirSesionEmpresa('/administracion/registro', { administrador: true });

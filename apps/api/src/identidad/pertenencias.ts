@@ -3,7 +3,7 @@ import type { PerfilUsuario } from '../generado/prisma/client';
 import type { PrismaService } from '../plataforma/prisma.service';
 import type { ContextoSolicitud, PertenenciaEmpresa } from './contexto';
 
-// specs/08-administracion/plan.md §4.3 · T-066. Lecturas de la pertenencia de una cuenta a una empresa. Las que
+// specs/08-administracion/plan.md §4.3 · T-059. Lecturas de la pertenencia de una cuenta a una empresa. Las que
 // cruzan organizaciones usan `sinAislar` y cada una está justificada en el plan; ninguna escribe nada.
 // Lo demás se lee aislado por la organización de la empresa.
 

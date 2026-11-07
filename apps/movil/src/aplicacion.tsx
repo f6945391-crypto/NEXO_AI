@@ -50,7 +50,7 @@ export function Aplicacion() {
             seccion === 'agenda' ? (
               <AgendaHoy alSalir={cerrarSesion} alAbrirCaptura={abrirCaptura} alCambiarNivel={lienzo.alCambiarNivel} mostrar={lienzo.mostrar} version={version} />
             ) : seccion === 'actividad' ? (
-              // T-083 · REQ-CUN02-25
+              // T-071 · REQ-CUN02-25
               <ActividadPantalla alSalir={cerrarSesion} version={version} />
             ) : (
               // T-054: la sección Tareas

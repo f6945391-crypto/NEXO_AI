@@ -4,7 +4,7 @@ import type { PrismaClient } from '../plataforma/prisma';
 import { calcularHash, generarContrasenaTemporal } from './contrasenas';
 
 // REQ-ACC-01 · H-ACC-01: las cuentas las crea la organización con este servicio. Lo llaman el alta de
-// arranque (CLI) y, desde T-068, la Operación `administracion.alta_cuenta` del área de administración.
+// arranque (CLI) y, desde T-061, la Operación `administracion.alta_cuenta` del área de administración.
 // Es el único sitio que crea cuentas (specs/08-administracion/plan.md §2).
 
 export interface CuentaCreada {
@@ -17,7 +17,7 @@ export interface CuentaCreada {
 // empresa en el área de administración. Las dos tienen las mismas tablas y la misma transacción.
 type Cliente = PrismaClient | PrismaDeOrganizacion;
 
-// T-065: `tipo` por defecto `empresa`, como todas las organizaciones creadas hasta ahora (plan §3.3).
+// T-058: `tipo` por defecto `empresa`, como todas las organizaciones creadas hasta ahora (plan §3.3).
 export async function crearOrganizacion(prisma: PrismaClient, nombre: string, tipo: TipoOrganizacion = 'empresa'): Promise<string> {
   const organizacion = await prisma.organizacion.create({ data: { nombre, tipo: TipoOrganizacion.parse(tipo) } });
   await prisma.eventoAuditoria.create({
@@ -27,7 +27,7 @@ export async function crearOrganizacion(prisma: PrismaClient, nombre: string, ti
 }
 
 // `contrasenaTemporal` solo se pasa desde la semilla de desarrollo; en un alta real se genera.
-// T-065 · REQ-ADM-01: en una organización de empresa la cuenta nace con su pertenencia propia y vigente; una
+// T-058 · REQ-ADM-01: en una organización de empresa la cuenta nace con su pertenencia propia y vigente; una
 // organización personal tiene una sola cuenta y no tiene administradores.
 export async function crearCuenta(
   prisma: Cliente,

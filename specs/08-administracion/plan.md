@@ -92,7 +92,7 @@ La semilla (`plataforma/semilla.ts`) y `e2e/cuentas.json` se ajustan a lo mismo,
 
 ### 3.4 Qué pasa con `rol`
 
-Con `MiembroEquipo.responsable`, el rol de la cuenta sobra: `usuario_personal` es «sin pertenencia vigente», `gerente` es «responsable de algún equipo» y `colaborador` es «miembro de un equipo del que no es responsable». La columna **se conserva en desuso** mientras T-026 y sus pruebas dependan de ella; la guarda deja de leerla en T-073 (§4.2). Retirar la columna y el enum es una tarea aparte, cuando las enmiendas a REQ-ACC-01, 02, 13 y 15 estén aceptadas (`entregas/INFORME-CARRIL-ADMIN.md`).
+Con `MiembroEquipo.responsable`, el rol de la cuenta sobra: `usuario_personal` es «sin pertenencia vigente», `gerente` es «responsable de algún equipo» y `colaborador` es «miembro de un equipo del que no es responsable». La columna **se conserva en desuso** mientras T-026 y sus pruebas dependan de ella; la guarda deja de leerla en T-066 (§4.2). Retirar la columna y el enum es una tarea aparte, cuando las enmiendas a REQ-ACC-01, 02, 13 y 15 estén aceptadas (`entregas/INFORME-CARRIL-ADMIN.md`).
 
 ## 4. Contexto, guardas y lecturas entre organizaciones
 
@@ -103,7 +103,7 @@ interface ContextoSolicitud {
   perfilId: string;
   organizacionId: string;           // la organización de la cuenta: lo suyo vive aquí
   plan: Plan;                       // plan efectivo (§4.2)
-  rol: Rol;                         // en desuso desde T-073
+  rol: Rol;                         // en desuso desde T-066
   primerIngresoPendiente: boolean;
   empresa: { organizacionId: string; miembroId: string; origen: 'alta' | 'afiliacion' } | null;
 }
@@ -120,7 +120,7 @@ Para una cuenta propia, `empresa.organizacionId === organizacionId`. Para una af
 - **Alcances de ruta.** `AlcanceRuta` pasa a `'propio' | 'empresa' | 'responsable' | 'administrador'`. La prueba `acceso.toda-ruta-declara-su-alcance` sigue exigiendo que toda ruta declare uno.
   - `@SoloAdministrador()`: `AlcanceGuard` (nuevo nombre de `RolGuard`) lee `miembro_organizacion` vigente con `administrador = true` en `contexto.empresa`. Si no, `ADMINISTRACION_NO_PERMITIDA` (403) y un evento `administracion.rechazada` (REQ-ADM-06, 16).
   - `@EnEmpresa()`: exige pertenencia vigente; si no, `SIN_ORGANIZACION` con el texto de REQ-ADM-17.
-  - `@SoloResponsable(resolverEquipo)`: **desde T-073**, recibe una función que saca el equipo afectado de la petición y comprueba `miembro_equipo.responsable` en ese equipo. Sin equipo resoluble, se rechaza. Así se cierra «Rol por equipo» (`SPEC.md` §8) y `specs/06-acceso/plan.md` §5.5.
+  - `@SoloResponsable(resolverEquipo)`: **desde T-066**, recibe una función que saca el equipo afectado de la petición y comprueba `miembro_equipo.responsable` en ese equipo. Sin equipo resoluble, se rechaza. Así se cierra «Rol por equipo» (`SPEC.md` §8) y `specs/06-acceso/plan.md` §5.5.
 - **Operaciones.** `EjecutorOperacion` gana `soloAdministrador` y `soloResponsable` con su `resolverEquipo`; `POST /operaciones` los comprueba al proponer y otra vez al confirmar, como ya hace con `soloResponsable` (T-026).
 
 ### 4.3 Lecturas que cruzan organizaciones (`sinAislar`, justificado)
@@ -136,7 +136,7 @@ Para una cuenta propia, `empresa.organizacionId === organizacionId`. Para una af
 
 Una prueba, `administracion.no-escribe-en-lo-personal`, ejecuta todas las Operaciones del área contra una cuenta afiliada y comprueba que su organización personal tiene exactamente las mismas filas antes y después.
 
-**Dónde está cada uso (T-066 a T-068, 7 de noviembre de 2026).**
+**Dónde está cada uso (T-059 a T-061, 7 de noviembre de 2026).**
 
 | Uso | Archivo y función | Lee |
 |---|---|---|
@@ -175,7 +175,7 @@ Cada propuesta comprueba lo que dice la especificación antes de poder confirmar
 ### 5.2 Dos ampliaciones de Operaciones
 
 - **Ámbito de empresa.** Un ejecutor declara `ambito: 'empresa'`, y la Operación se guarda con `organizacionId = contexto.empresa.organizacionId`. Así las acciones de un administrador afiliado quedan en la empresa, no en su organización personal, y el registro de la empresa está completo. Las `afiliacion.*` también son de ámbito empresa: su fila de pertenencia está allí.
-- **Dónde se guardan (T-067).** Columna `operacion.ambito` (`propio` · `empresa`, migración `20261107T0302_operacion_ambito`). La sesión de la zona propone y confirma en `POST /administracion/operaciones` y `/:id/confirmar`; un tipo de ámbito empresa pedido con la sesión de la aplicación, o al revés, responde `AMBITO_INCORRECTO`. `GET /operaciones` y la transcripción solo leen `ambito = propio`. Las `afiliacion.*` (T-070) las propone la persona desde la aplicación: cuando lleguen, el ejecutor tendrá que guardar en la empresa con la sesión `propio`, y la regla «ámbito del tipo igual al de la sesión» se ajusta para ellas.
+- **Dónde se guardan (T-060).** Columna `operacion.ambito` (`propio` · `empresa`, migración `20261107T0302_operacion_ambito`). La sesión de la zona propone y confirma en `POST /administracion/operaciones` y `/:id/confirmar`; un tipo de ámbito empresa pedido con la sesión de la aplicación, o al revés, responde `AMBITO_INCORRECTO`. `GET /operaciones` y la transcripción solo leen `ambito = propio`. Las `afiliacion.*` (T-063) las propone la persona desde la aplicación: cuando lleguen, el ejecutor tendrá que guardar en la empresa con la sesión `propio`, y la regla «ámbito del tipo igual al de la sesión» se ajusta para ellas.
 - **Resultado efímero.** `ResultadoEjecucion` gana `efimero?`, que viaja en la respuesta de `POST /operaciones/:id/confirmar` y **nunca se guarda** en `operacion.resultado`. La contraseña temporal del alta y del restablecimiento va ahí. Confirmar dos veces devuelve el resultado guardado, sin la contraseña: «se muestra una sola vez» (REQ-ADM-09, 14) lo garantiza la idempotencia que ya existe.
 
 ### 5.3 Caducidad de las invitaciones
@@ -218,8 +218,8 @@ Un solo armazón: navegación propia a la izquierda (no la de 72 px de la aplica
 
 | Apartado | Quién lo ve | Contenido | Estado |
 |---|---|---|---|
-| **Personas** | Administrador | Tabla con correo, «De la organización» o «Se sumó con su cuenta», estado, plan, equipos, «Administra». Invitaciones pendientes al principio. «Dar de alta», «Invitar»; por fila, solo lo que vale para su clase (REQ-ADM-15) | Esta entrega (T-069) |
-| **Equipos** | Administrador: todos. Responsable: solo los suyos, sin acciones | Una tarjeta por equipo: **responsable** y **miembros**, con «Sin responsable» destacado (REQ-ADM-32). Para el administrador: crear, añadir, quitar, nombrar responsable | Esta entrega (T-074) |
+| **Personas** | Administrador | Tabla con correo, «De la organización» o «Se sumó con su cuenta», estado, plan, equipos, «Administra». Invitaciones pendientes al principio. «Dar de alta», «Invitar»; por fila, solo lo que vale para su clase (REQ-ADM-15) | Esta entrega (T-062) |
+| **Equipos** | Administrador: todos. Responsable: solo los suyos, sin acciones | Una tarjeta por equipo: **responsable** y **miembros**, con «Sin responsable» destacado (REQ-ADM-32). Para el administrador: crear, añadir, quitar, nombrar responsable | Esta entrega (T-067) |
 | **Mi equipo** | Responsable, por cada equipo del que lo es | Lo que REQ-ACC-17 le da: disponibilidad libre/ocupado de cada miembro y las tareas del equipo (CUN-07, CUN-08). Aquí viven el **resumen** y el **reporte del equipo** de `03-tareas` §8 cuando se construyan: el reporte completo se abre en esta zona, y en la conversación de la aplicación solo se ve su síntesis (REQ-CUN08-02) | Fase 4, después de CUN-07 y CUN-08 |
 | **Registro** | Administrador | Las acciones administrativas de la empresa (§9), de más reciente a más antigua, sin contenido de nadie | Esta entrega, solo lectura |
 
@@ -294,13 +294,13 @@ Decisiones que este plan tuvo que tomar. Continúan la numeración de `spec.md` 
 | H-ADM-17 | Cuánto tarda en surtir efecto quitar una autoridad o suspender | En la petición siguiente: administrador, responsable y estado de la cuenta se leen de la base, no del token (§4.1, §4.2) |
 | H-ADM-18 | Dónde se guardan las Operaciones de un administrador afiliado | En la organización de la empresa (§5.2) |
 | H-ADM-19 | Si las cuentas propias también tendrían que tener su organización personal | No en esta versión: viven en la empresa, como hoy (§3.1) |
-| H-ADM-20 | Qué hacer con `rol` | Queda en desuso; la guarda deja de leerlo en T-073; se retira cuando se acepten las enmiendas (§3.4) |
+| H-ADM-20 | Qué hacer con `rol` | Queda en desuso; la guarda deja de leerlo en T-066; se retira cuando se acepten las enmiendas (§3.4) |
 | H-ADM-21 | Quién es administrador al migrar los datos existentes | El gerente más antiguo de cada empresa, o la cuenta más antigua (§3.3) |
 
 ## 12. Enmiendas que esta sección pide a la especificación (6 de noviembre de 2026, noche)
 
 - **H-ADM-22 (nueva):** la administración es una zona aparte con entrada propia y sesión propia (`ambito`), mismas credenciales. Lo que un responsable tiene sobre su equipo (disponibilidad, tareas, resumen y reporte de CUN-08) se consulta en esa zona, en «Mi equipo»; la conversación de la aplicación solo muestra la síntesis. Pide una línea en REQ-ADM-05 («solo web» pasa a «solo web, en la zona de empresa») y una nota en `03-tareas` §8 sobre dónde se abre el reporte completo.
 - **Alcance de REQ-ADM-02 sin cambio:** administrar sigue sin dar acceso al trabajo de nadie; «Mi equipo» lo ve el responsable, no el administrador.
-- **`sesion_renovacion.ambito`** y la cookie de la zona van en T-066 (guarda), no en una tarea nueva.
+- **`sesion_renovacion.ambito`** y la cookie de la zona van en T-059 (guarda), no en una tarea nueva.
 - **Pendiente de decidir con el equipo:** si la zona se publica en la misma dirección que la aplicación (`/administracion`) o en un subdominio (`empresa.…`) cuando haya despliegue. No cambia el código, solo la configuración.
 

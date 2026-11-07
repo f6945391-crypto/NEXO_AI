@@ -78,7 +78,7 @@ export function Aplicacion({
 }: {
   rol: Rol;
   plan: Plan;
-  // T-069 · REQ-ADM-05: según GET /auth/sesion; solo pinta, la zona decide al entrar (P-04)
+  // T-062 · REQ-ADM-05: según GET /auth/sesion; solo pinta, la zona decide al entrar (P-04)
   administrador: boolean;
   perfil: Perfil | null;
   permisosGoogle: PermisoGoogle[];
@@ -270,7 +270,7 @@ export function Aplicacion({
               <p>Cuando le pidas algo al asistente, tus tareas aparecerán aquí, ordenadas por franja.</p>
             </div>
           )}
-          {/* T-082 · REQ-CUN02-25: el selector de arriba elige el nivel */}
+          {/* T-070 · REQ-CUN02-25: el selector de arriba elige el nivel */}
           {seccion === 'actividad' && <Actividad corte={corteVisible} alConectarCalendario={() => setAjustes(true)} />}
         </div>
       </main>

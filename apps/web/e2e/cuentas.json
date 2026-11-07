@@ -1,5 +1,5 @@
 {
-  "_nota": "Cuentas de prueba de extremo a extremo. Las crea e2e/arrancar-api.mjs en una base que se vacía en cada ejecución. T-069: las que llevan «organizacion» van en otra organización («personal», una propia para cada una, o el nombre de una empresa); las que llevan «lista» tienen el primer ingreso hecho, en Lima.",
+  "_nota": "Cuentas de prueba de extremo a extremo. Las crea e2e/arrancar-api.mjs en una base que se vacía en cada ejecución. T-062: las que llevan «organizacion» van en otra organización («personal», una propia para cada una, o el nombre de una empresa); las que llevan «lista» tienen el primer ingreso hecho, en Lima.",
   "contrasenaTemporal": "temporal-de-prueba-e2e",
   "contrasenaNueva": "contrasena-nueva-e2e",
   "sinElegirZona": {

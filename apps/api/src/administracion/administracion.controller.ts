@@ -4,7 +4,7 @@ import type { ContextoSolicitud } from '../identidad/contexto';
 import { Contexto, EnEmpresa, SoloAdministrador, ZonaEmpresa } from '../identidad/decoradores';
 import { LecturasAdministracion } from './lecturas';
 
-// T-068 · specs/08-administracion/plan.md §6 y §7.2. Lecturas de la zona de empresa. Las acciones son
+// T-061 · specs/08-administracion/plan.md §6 y §7.2. Lecturas de la zona de empresa. Las acciones son
 // Operaciones (operaciones-empresa.controller.ts).
 @ZonaEmpresa()
 @Controller('administracion')

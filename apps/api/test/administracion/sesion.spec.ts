@@ -10,7 +10,7 @@ import { EnEmpresa, SoloAdministrador, ZonaEmpresa } from '../../src/identidad/d
 import type { PrismaClient } from '../../src/plataforma/prisma';
 import { clientePrueba, crearCuentaLista, vaciarTablas } from '../utilidades/base-prueba';
 
-// T-066 · REQ-ADM-06, REQ-ADM-12, REQ-ADM-17 · specs/08-administracion/plan.md §4 y §7.1
+// T-059 · REQ-ADM-06, REQ-ADM-12, REQ-ADM-17 · specs/08-administracion/plan.md §4 y §7.1
 
 // Una ruta de la zona de empresa, como lo serán las de Administración
 @ZonaEmpresa()
@@ -39,7 +39,7 @@ class RutaDeEmpresa {
 const CONTRASENA = 'una-contrasena-de-prueba';
 const CREDENCIALES_INVALIDAS = { codigo: 'CREDENCIALES_INVALIDAS', mensaje: 'El correo o la contraseña no son correctos.' };
 
-describe('T-066 · pertenencia en la sesión, estado de la cuenta y zona de empresa', () => {
+describe('T-059 · pertenencia en la sesión, estado de la cuenta y zona de empresa', () => {
   let app: INestApplication;
   let prisma: PrismaClient;
   let ruta: RutaDeAdministracion;

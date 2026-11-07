@@ -3,7 +3,7 @@ import { TarjetaAcceso } from '../../../tarjeta-acceso';
 import { obtenerSesionEmpresa } from '../_comun/sesion';
 import { FormularioEntradaEmpresa } from './formulario';
 
-// T-069 · specs/08-administracion/plan.md §7.1. Misma cuenta y misma contraseña que en NexoAI; otra sesión.
+// T-062 · specs/08-administracion/plan.md §7.1. Misma cuenta y misma contraseña que en NexoAI; otra sesión.
 export default async function EntrarEnEmpresa() {
   const estado = await obtenerSesionEmpresa();
   if (estado.estado === 'activa') redirect(estado.sesion.administrador ? '/administracion' : '/administracion/equipos');

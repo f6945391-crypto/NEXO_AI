@@ -399,17 +399,19 @@ Y «mañana» se resuelve respecto del momento en que se capturó, no del moment
 **Plataforma:** web (lienzo) y móvil (Inicio)
 
 **Criterio de aceptación**
-DADO un usuario con una tarea guardada en espera y una solicitud encolada porque el asistente no respondía
+DADO un usuario con una tarea que quedó en espera antes del 7 de noviembre de 2026, cuando las tareas todavía no se registraban, y una solicitud encolada porque el asistente no respondía
 CUANDO abra la agenda
 ENTONCES ve «2 cosas en espera» sobre la lista de hoy
 Y CUANDO abra la franja
-ENTONCES ve las dos, cada una con la frase que escribió y su motivo: «las tareas llegan en una próxima versión» y «el asistente no respondía»
+ENTONCES ve las dos, cada una con la frase que escribió y su motivo: «se está preparando para que la confirmes en Tareas» y «el asistente no respondía»
 Y no hay ningún control para retirarlas (sigue abierto en `SPEC.md` §8)
 Y CUANDO el trabajador atienda la solicitud encolada
 ENTONCES la franja dice «1 cosa en espera»
 Y DADO que no queda nada en espera
 CUANDO abra la agenda
 ENTONCES la franja no aparece
+
+**Nota del 7 de noviembre de 2026.** El ejemplo decía «las tareas llegan en una próxima versión». Desde esa fecha una tarea capturada no queda en espera: se propone (REQ-AGT-02 v2, REQ-CUN03-01 de `09-tareas-personales`). El motivo «función por llegar» solo lo conservan las capturas anteriores, y su texto es el de H-TP-16, hasta que REQ-CUN03-17 las convierta en propuestas (T-056, pendiente). Los dos motivos que siguen produciéndose son «el asistente no respondía» y «falta el permiso de tu calendario».
 
 ---
 
@@ -445,7 +447,7 @@ Decididas por el equipo antes de escribir `../07-agente/plan.md`.
 | # | Decisión | Afecta |
 |---|---|---|
 | 1 | **Sin voz en la primera versión (PT-2 resuelta).** Solo la puerta de texto; la de voz y la de cámara quedan para después | REQ-CAP-01, REQ-CAP-09 a 13, REQ-CAP-22 (la parte de voz) |
-| 2 | **Solo agenda.** Una captura que es tarea, pendiente sin fecha o algo que se espera de alguien se reconoce y se dice, pero queda **en espera** sin registrarse, hasta que existan las tareas personales (CUN-03). Es REQ-AGT-02 | REQ-CAP-02, REQ-CAP-07, REQ-CAP-08 |
+| 2 | **Solo agenda.** Una captura que es tarea, pendiente sin fecha o algo que se espera de alguien se reconoce y se dice, pero queda **en espera** sin registrarse, hasta que existan las tareas personales (CUN-03). Es REQ-AGT-02. *Superada el 7 de noviembre de 2026: con `09-tareas-personales` (T-050) la captura se propone como tarea personal (REQ-AGT-02 v2, REQ-CUN03-01)* | REQ-CAP-02, REQ-CAP-07, REQ-CAP-08 |
 | 3 | REQ-CAP-23 suma un caso: lo que espera a una función que llega en una próxima versión. Se ve como en espera, con su motivo, y no como un error ni como algo fuera del plan (H-AGT-09) | REQ-CAP-23 |
 | 4 | La paleta de comandos (REQ-CAP-05) y la captura sin conexión del móvil (REQ-CAP-22) no entran en la primera versión del agente | REQ-CAP-05, REQ-CAP-22 |
 

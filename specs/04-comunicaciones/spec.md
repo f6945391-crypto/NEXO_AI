@@ -223,6 +223,8 @@ DADO un pendiente «Juan tiene que enviarme el presupuesto»
 CUANDO pase el plazo acordado sin resolverse
 ENTONCES el sistema lo señala entre los pendientes, porque no es tarea del usuario pero sí es su problema
 
+**Nota del 7 de noviembre de 2026.** Su efecto en el Plan Personal lo cumplen REQ-CUN03-04 (registrar lo que se espera de alguien, de quién y para cuándo, sin escribirle) y REQ-CUN03-07 (pasada la fecha, «Debía llegar el…», sin cambiar de estado) de `09-tareas-personales`, que lo citan como origen; ya no queda en espera. El requisito se conserva: falta decidir si se marca como cubierto por esa área o se reescribe para lo propio de CUN-04, el aviso o el escrito al tercero (`09-tareas-personales` §10).
+
 ---
 
 ## 5. Modo degradado

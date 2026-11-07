@@ -65,7 +65,7 @@ describe('T-004 · ingreso y sesión', () => {
       expect(cuerpo.primerIngresoPendiente).toBe(false);
 
       const sesion = await http().get('/auth/sesion').set('Authorization', `Bearer ${cuerpo.tokenAcceso}`).expect(200);
-      // T-066: la organización de prueba es una empresa; la cuenta pertenece a ella y no la administra
+      // T-059: la organización de prueba es una empresa; la cuenta pertenece a ella y no la administra
       expect(SesionActual.parse(sesion.body)).toEqual({
         perfilId,
         organizacionId,

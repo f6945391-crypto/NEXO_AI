@@ -1,6 +1,6 @@
 # Capturas — Zona de empresa (Administración), 7 de noviembre de 2026
 
-**Carril:** administración (rama `carril-t4-cun03`, base `base-tanda3`). **Tareas:** T-065 a T-069 de `specs/08-administracion/tasks.md`.
+**Carril:** administración (rama `carril-t4-cun03`, base `base-tanda3`). **Tareas:** T-058 a T-062 de `specs/08-administracion/tasks.md`.
 **Cómo se tomaron:** web 1440×900, Chromium sin interfaz, contra la API real (`next dev` en el puerto 3412, API en el 3411, base `nexoai_e2e_t4admin_prueba`), con las cuentas de `apps/web/e2e/cuentas.json` sembradas por `e2e/arrancar-api.mjs`. El círculo «N» del ángulo inferior es el indicador de `next dev`; no forma parte de la pantalla.
 **Antes:** no hay. La zona no existía y no tiene cuadros en Figma (`spec.md` §5 los pide: `WEB-v2 / Administración / 01` a `05`). Estas capturas sirven de referencia hasta que existan.
 
@@ -32,7 +32,7 @@
 
 ## Lo que no está y por qué
 
-- **Entrada desde la aplicación** (el botón al pie de la navegación, `aria-label="Administración"`): toca `app/aplicacion/`, fuera de este carril (T-071 o integración).
-- **Invitar y «Quitar de la organización»** en Personas: T-070 y T-071. Una fila de alguien que se sumó con su cuenta no muestra acciones.
-- **Crear equipos, añadir, quitar y nombrar responsable:** T-073 y T-074.
+- **Entrada desde la aplicación** (el botón al pie de la navegación, `aria-label="Administración"`): toca `app/aplicacion/`, fuera de este carril (T-064 o integración).
+- **Invitar y «Quitar de la organización»** en Personas: T-063 y T-064. Una fila de alguien que se sumó con su cuenta no muestra acciones.
+- **Crear equipos, añadir, quitar y nombrar responsable:** T-066 y T-067.
 - **Mi equipo:** fase 4, después de CUN-07 y CUN-08.

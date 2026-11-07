@@ -30,7 +30,7 @@ export const IconoAjustes = () => (
   </svg>
 );
 
-// T-069 · REQ-ADM-05: la zona de empresa, al pie de la navegación
+// T-062 · REQ-ADM-05: la zona de empresa, al pie de la navegación
 export const IconoAdministracion = () => (
   <svg {...comunes}>
     <rect x="4" y="3" width="16" height="18" rx="1" />

@@ -15,7 +15,7 @@ import { RegistroOperaciones, type EjecutorOperacion, type ResultadoEjecucion } 
 import { PrismaService } from '../plataforma/prisma.service';
 import { LecturasAdministracion, type CuentaDeLaEmpresa } from './lecturas';
 
-// T-068 · REQ-ADM-03, REQ-ADM-09 a 16 · specs/08-administracion/plan.md §5.1 y §9. Las acciones sobre las cuentas
+// T-061 · REQ-ADM-03, REQ-ADM-09 a 16 · specs/08-administracion/plan.md §5.1 y §9. Las acciones sobre las cuentas
 // de la organización. Todas: zona de empresa, solo el administrador, solo como control directo (REQ-ADM-07).
 // Cada propuesta comprueba lo que dice la especificación; lo que no se cumple sale como no confirmable, con el
 // motivo, y no crea nada. Al confirmar se vuelve a comprobar: si algo cambió, se propone de nuevo (H-AG-07).
@@ -152,7 +152,7 @@ export class AltaCuentaEmpresa extends EjecutorDeAdministracion<AltaCuentaEmpres
   protected async aplicar(contexto: ContextoSolicitud, carga: AltaCuentaEmpresaCarga): Promise<ResultadoEjecucion> {
     const empresaId = this.empresa(contexto);
     // `rol` en desuso (plan §3.4): el de menos autoridad que corresponde al plan, hasta que lo reemplace la
-    // autoridad por equipo (T-073). Hallazgo anotado en spec.md §7.
+    // autoridad por equipo (T-066). Hallazgo anotado en spec.md §7.
     const rol = carga.plan === 'empresarial' ? 'colaborador' : 'usuario_personal';
     const cuenta = await crearCuenta(this.prisma.deOrganizacion(empresaId), {
       organizacionId: empresaId,

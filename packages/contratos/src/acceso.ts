@@ -8,7 +8,7 @@ export type Rol = z.infer<typeof Rol>;
 export const Plan = z.enum(['gratuito', 'personal', 'empresarial']);
 export type Plan = z.infer<typeof Plan>;
 
-// T-065 · REQ-ADM-01 · specs/08-administracion/plan.md §3.2
+// T-058 · REQ-ADM-01 · specs/08-administracion/plan.md §3.2
 export const TipoOrganizacion = z.enum(['personal', 'empresa']);
 export type TipoOrganizacion = z.infer<typeof TipoOrganizacion>;
 
@@ -18,7 +18,7 @@ export const AltaCuenta = z.strictObject({
   correo: z.email().transform((correo) => correo.toLowerCase()),
   rol: Rol,
   plan: Plan,
-  // T-065 · REQ-ADM-04: solo en una organización de empresa (H-ADM-01)
+  // T-058 · REQ-ADM-04: solo en una organización de empresa (H-ADM-01)
   administrador: z.boolean().optional(),
 });
 export type AltaCuenta = z.input<typeof AltaCuenta>;
@@ -49,7 +49,7 @@ export const TokenRenovacionSolicitud = z.strictObject({
 export type TokenRenovacionSolicitud = z.infer<typeof TokenRenovacionSolicitud>;
 
 // GET /auth/sesion — quién soy, según el token de acceso. `plan` es el plan efectivo: el Empresarial
-// mientras dure una afiliación (H-ADM-06). T-066: `administrador` y `organizacion` (la empresa a la que
+// mientras dure una afiliación (H-ADM-06). T-059: `administrador` y `organizacion` (la empresa a la que
 // pertenece, o nulo) se leen de la base en cada petición; solo sirven para pintar, decide la guarda (P-04).
 export const SesionActual = z.strictObject({
   perfilId: z.uuid(),

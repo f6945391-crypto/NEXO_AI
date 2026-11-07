@@ -12,7 +12,7 @@ import { PROVEEDOR_CALENDARIO } from '../../src/integraciones/calendario/proveed
 import type { PrismaClient } from '../../src/plataforma/prisma';
 import { clientePrueba, crearCuentaLista, vaciarTablas } from '../utilidades/base-prueba';
 
-// T-081 · REQ-CUN02-25 a 29, 34, 35 · specs/02-jornada/plan.md §8. Solo lectura: lo que se ejecuta aquí lo
+// T-069 · REQ-CUN02-25 a 29, 34, 35 · specs/02-jornada/plan.md §8. Solo lectura: lo que se ejecuta aquí lo
 // ejecuta la propia API por sus Operaciones, como lo haría la persona.
 
 const CONTRASENA = 'una-contrasena-de-prueba';
@@ -29,7 +29,7 @@ function zonaDeDia(): string {
   return zona;
 }
 
-describe('T-081 · consulta de Actividad', () => {
+describe('T-069 · consulta de Actividad', () => {
   let app: INestApplication;
   let prisma: PrismaClient;
   let organizacionId: string;

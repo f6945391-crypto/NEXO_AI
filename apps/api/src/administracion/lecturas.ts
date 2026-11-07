@@ -32,7 +32,7 @@ export interface CuentaDeLaEmpresa extends CuentaVisible {
   miembro: MiembroOrganizacion;
 }
 
-// specs/08-administracion/plan.md §4.3 y §6 · T-067, T-068. Lecturas del área. Todo se lee aislado por la
+// specs/08-administracion/plan.md §4.3 y §6 · T-060, T-061. Lecturas del área. Todo se lee aislado por la
 // organización de la empresa salvo el correo y el estado de las cuentas afiliadas, que viven en su organización
 // personal (opción B): esa es la única lectura con `sinAislar`, justificada en el plan §4.3.
 @Injectable()

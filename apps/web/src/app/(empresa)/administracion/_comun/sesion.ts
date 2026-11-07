@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { SesionEmpresa, type IngresoRespuesta } from '@nexoai/contratos';
 import { codigoDeError, llamarApi, type RespuestaApi } from '../../../../lib/sesion';
 
-// T-069 · specs/08-administracion/plan.md §7.1. La sesión de la zona de empresa: sus propias cookies, solo
+// T-062 · specs/08-administracion/plan.md §7.1. La sesión de la zona de empresa: sus propias cookies, solo
 // enviadas bajo /administracion, distintas de las de la aplicación. Cerrar una no cierra la otra.
 export const COOKIE_EMPRESA_ACCESO = 'nexoai_empresa_acceso';
 export const COOKIE_EMPRESA_RENOVACION = 'nexoai_empresa_renovacion';

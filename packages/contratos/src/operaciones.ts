@@ -49,7 +49,7 @@ export const OperacionRespuesta = z.strictObject({
   resultado: z.unknown().nullable(),
   error: z.string().nullable(),
   creadaEn: z.iso.datetime(),
-  // T-067 · specs/08-administracion/plan.md §5.2: solo en la respuesta de la primera confirmación, nunca
+  // T-060 · specs/08-administracion/plan.md §5.2: solo en la respuesta de la primera confirmación, nunca
   // guardado. La contraseña temporal del alta y del restablecimiento (REQ-ADM-09, 14).
   efimero: z.strictObject({ contrasenaTemporal: z.string() }).optional(),
 });

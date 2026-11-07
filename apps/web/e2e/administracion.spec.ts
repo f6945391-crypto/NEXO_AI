@@ -1,7 +1,7 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import cuentas from './cuentas.json';
 
-// T-069 · REQ-ADM-05, REQ-ADM-08 a 16 (interfaz) · specs/08-administracion/plan.md §7, contra la API real.
+// T-062 · REQ-ADM-05, REQ-ADM-08 a 16 (interfaz) · specs/08-administracion/plan.md §7, contra la API real.
 
 const aviso = (page: Page) => page.locator('p.error[role="alert"]');
 

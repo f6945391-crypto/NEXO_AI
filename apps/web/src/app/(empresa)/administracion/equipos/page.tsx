@@ -2,8 +2,8 @@ import { EquipoOrganizacion } from '@nexoai/contratos';
 import { exigirSesionEmpresa } from '../_comun/exigir';
 import { leerDeLaZona } from '../_comun/sesion';
 
-// T-069 · REQ-ADM-28 a 32 (lectura) · plan §7.2, «Equipos». Una tarjeta por equipo, con su responsable y sus
-// miembros; «Sin responsable» destacado. Crear y componer equipos llega con T-073 y T-074.
+// T-062 · REQ-ADM-28 a 32 (lectura) · plan §7.2, «Equipos». Una tarjeta por equipo, con su responsable y sus
+// miembros; «Sin responsable» destacado. Crear y componer equipos llega con T-066 y T-067.
 export default async function PaginaEquipos() {
   const sesion = await exigirSesionEmpresa('/administracion/equipos');
   const equipos = await leerDeLaZona('/administracion/equipos', EquipoOrganizacion.array());

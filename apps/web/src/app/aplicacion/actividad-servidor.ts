@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { Actividad, type CompromisoOcurrido, type NivelActividad } from '@nexoai/contratos';
 import { COOKIE_ACCESO, llamarApi, mensajeDeError } from '../../lib/sesion';
 
-// T-082 · REQ-CUN02-25 a 30, 33, 34 · specs/02-jornada/plan.md §5. Lee GET /actividad con la sesión y devuelve
+// T-070 · REQ-CUN02-25 a 30, 33, 34 · specs/02-jornada/plan.md §5. Lee GET /actividad con la sesión y devuelve
 // el texto ya formateado en la zona del perfil, como hace la agenda (lib/agenda.ts): el navegador recibe frases,
 // no instantes. La sección elige el nivel en el cliente, por eso es una función de servidor y no la página.
 

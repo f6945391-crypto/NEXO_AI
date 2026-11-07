@@ -5,13 +5,13 @@ import { altaDeArranque, crearCuenta, crearOrganizacion } from '../../src/identi
 import type { PrismaClient } from '../../src/plataforma/prisma';
 import { clientePrueba, ejecutarSql, vaciarTablas } from '../utilidades/base-prueba';
 
-// T-065 · REQ-ADM-01, REQ-ADM-03, REQ-ADM-04 · specs/08-administracion/plan.md §3
+// T-058 · REQ-ADM-01, REQ-ADM-03, REQ-ADM-04 · specs/08-administracion/plan.md §3
 
 const MIGRACION = resolve(__dirname, '../../prisma/migrations/20261107T0300_administracion/migration.sql');
 // La parte de la migración que reparte los datos existentes (plan §3.3), para ejecutarla sobre datos de antes
 const migracionDeDatos = () => readFileSync(MIGRACION, 'utf8').split('-- Migración de los datos existentes')[1]!.split('\n').slice(1).join('\n');
 
-describe('T-065 · clases de organización, pertenencia y equipos', () => {
+describe('T-058 · clases de organización, pertenencia y equipos', () => {
   let prisma: PrismaClient;
 
   beforeAll(() => {

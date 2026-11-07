@@ -5,10 +5,10 @@ import type { OperacionRespuesta, PersonaOrganizacion, Plan } from '@nexoai/cont
 import { confirmarEnEmpresa, descartarEnEmpresa, proponerEnEmpresa } from './acciones';
 import { NOMBRE_CLASE, NOMBRE_ESTADO, NOMBRE_PLAN } from './_comun/textos';
 
-// T-069 · REQ-ADM-08 a 16 (interfaz). La tabla de personas y las acciones de cada fila. Cada acción pide a la
+// T-062 · REQ-ADM-08 a 16 (interfaz). La tabla de personas y las acciones de cada fila. Cada acción pide a la
 // API su tarjeta de confirmación y la pinta tal como llega (vistaConfirmacion): la web no decide si se puede.
 // En una fila afiliada no hay acciones sobre la cuenta (REQ-ADM-15); quitarla de la organización llega con
-// la afiliación (T-070, T-071).
+// la afiliación (T-063, T-064).
 
 const PLANES: Plan[] = ['empresarial', 'personal', 'gratuito'];
 
