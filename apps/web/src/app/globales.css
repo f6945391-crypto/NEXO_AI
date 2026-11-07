@@ -530,6 +530,18 @@ body {
   gap: var(--espaciado-8);
 }
 
+/* Paridad con H-CAP-01 del móvil: una tarjeta que ya no espera dice cómo terminó */
+.tarjeta--decidida {
+  border-color: var(--borde-base);
+}
+
+.tarjeta__decidido {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
 .turno-agenda {
   padding: var(--espaciado-12) var(--espaciado-16);
   border-radius: var(--radio-md);

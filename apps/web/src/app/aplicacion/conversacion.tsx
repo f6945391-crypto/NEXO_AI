@@ -25,15 +25,36 @@ const hora = (iso: string, zona?: string) =>
 const dia = (iso: string, zona?: string) =>
   new Intl.DateTimeFormat('es', { timeZone: zona, weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso));
 
+// Paridad con H-CAP-01 del móvil (apps/movil/src/pantallas/captura.tsx, mismo criterio): qué se decidió sobre
+// una tarjeta que ya no espera. La Operación de la tarjeta es la de cuando se propuso; el desenlace se lee en
+// lo que vino después.
+function desenlace(elementos: Elemento[], desde: number, operacionId: string): string | null {
+  for (const e of elementos.slice(desde + 1)) {
+    if (e.clase === 'separador') {
+      if (e.cierre.desenlace === 'descartado') return 'Descartado';
+      return ['registrado', 'movido', 'cancelado'].includes(e.cierre.desenlace) ? 'Confirmado' : null;
+    }
+    const t = e.turno;
+    if (t.tipo === 'resultado' && t.operacion.id === operacionId) return 'Confirmado';
+    if (t.tipo === 'propuesta') return 'Cambiado por otro horario';
+    if (t.tipo === 'persona') return 'Descartado';
+    if (t.tipo === 'fallo') return 'No se pudo hacer';
+  }
+  return null;
+}
+
 function Tarjeta({
   operacion,
   activa,
+  decidido,
   ocupado,
   zona,
   alDecidir,
 }: {
   operacion: OperacionRespuesta;
   activa: boolean;
+  // Lo que se decidió, cuando ya no espera
+  decidido: string | null;
   ocupado: boolean;
   zona?: string;
   alDecidir: (decision: DecisionAsistente) => void;
@@ -42,7 +63,7 @@ function Tarjeta({
   const alternativas: Alternativa[] = vista.conflicto?.alternativas ?? [];
   const choque = vista.conflicto?.eventos ?? [];
   return (
-    <article className="tarjeta" aria-label="Para confirmar">
+    <article className={`tarjeta${activa ? '' : ' tarjeta--decidida'}`} aria-label="Para confirmar">
       <h3 className="tarjeta__accion">{vista.accion}</h3>
       <dl className="tarjeta__datos">
         {vista.datos.map((dato) => (
@@ -87,6 +108,7 @@ function Tarjeta({
           </button>
         </div>
       )}
+      {!activa && decidido && <p className="tarjeta__decidido">{decidido}</p>}
     </article>
   );
 }
@@ -94,6 +116,7 @@ function Tarjeta({
 function Turno({
   turno,
   pendiente,
+  decidido,
   ocupado,
   zona,
   esUltimo,
@@ -101,6 +124,7 @@ function Turno({
 }: {
   turno: TurnoAsistente;
   pendiente: string | null;
+  decidido: string | null;
   ocupado: boolean;
   zona?: string;
   esUltimo: boolean;
@@ -198,7 +222,7 @@ function Turno({
     case 'propuesta':
       return (
         <li className="turno">
-          <Tarjeta operacion={turno.operacion} activa={pendiente === turno.operacion.id} ocupado={ocupado} zona={zona} alDecidir={alDecidir} />
+          <Tarjeta operacion={turno.operacion} activa={pendiente === turno.operacion.id} decidido={decidido} ocupado={ocupado} zona={zona} alDecidir={alDecidir} />
         </li>
       );
     case 'resultado':
@@ -351,7 +375,7 @@ export function Conversacion({
           </div>
         ) : (
           <ol className="mensajes">
-            {elementos.map((elemento) =>
+            {elementos.map((elemento, indice) =>
               elemento.clase === 'separador' ? (
                 <Separador key={elemento.id} texto={textoDelSeparador(elemento.cierre, zonaVista)} />
               ) : (
@@ -359,6 +383,11 @@ export function Conversacion({
                   key={elemento.turno.id}
                   turno={elemento.turno}
                   pendiente={pendiente}
+                  decidido={
+                    elemento.turno.tipo === 'propuesta' && pendiente !== elemento.turno.operacion.id
+                      ? desenlace(elementos, indice, elemento.turno.operacion.id)
+                      : null
+                  }
                   ocupado={ocupado}
                   zona={zona}
                   esUltimo={elemento === ultimo}

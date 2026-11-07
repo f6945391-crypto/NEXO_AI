@@ -77,6 +77,34 @@ test.describe('web.asistente-agenda-y-confirma', () => {
     await tarjeta.getByRole('button', { name: 'Descartar' }).click();
     await expect(page.getByText('De acuerdo, no hice nada.')).toBeVisible();
   });
+
+  // Paridad con H-CAP-01 del móvil: una tarjeta ya decidida dice cómo terminó y no ofrece botones, también al recargar.
+  // Con CAPTURAS_PENDIENTES=<carpeta>, guarda la captura (design/capturas/2026-11-07-pendientes).
+  test('una tarjeta ya decidida queda sin botones y con «Confirmado» o «Descartado»', async ({ page }) => {
+    await entrar(page, cuentas.asistente.correo);
+    const tarjetas = page.getByRole('article', { name: 'Para confirmar' });
+
+    await pedir(page, 'Agéndame una llamada mañana a las 16');
+    const confirmada = tarjetas.last();
+    await expect(confirmada).toContainText('16:00 – 17:00');
+    await confirmada.getByRole('button', { name: 'Confirmar' }).click();
+    await expect(page.getByText(/^Listo: «Llamada» quedó en tu calendario/)).toBeVisible();
+
+    await pedir(page, 'Agéndame una llamada mañana a las 18');
+    await expect(tarjetas.last()).toContainText('18:00 – 19:00');
+    await tarjetas.last().getByRole('button', { name: 'Descartar' }).click();
+    await expect(page.getByText('De acuerdo, no hice nada.').last()).toBeVisible();
+    if (process.env.CAPTURAS_PENDIENTES) await page.screenshot({ path: `${process.env.CAPTURAS_PENDIENTES}/web-tarjeta-decidida.png` });
+
+    for (const vuelta of ['en la sesión', 'al recargar']) {
+      if (vuelta === 'al recargar') await page.reload();
+      const alas16 = tarjetas.filter({ hasText: '16:00 – 17:00' });
+      const alas18 = tarjetas.filter({ hasText: '18:00 – 19:00' });
+      await expect(alas16.locator('.tarjeta__decidido'), vuelta).toHaveText('Confirmado');
+      await expect(alas18.locator('.tarjeta__decidido'), vuelta).toHaveText('Descartado');
+      for (const tarjeta of [alas16, alas18]) await expect(tarjeta.getByRole('button'), vuelta).toHaveCount(0);
+    }
+  });
 });
 
 test.describe('web.asistente-en-espera', () => {
