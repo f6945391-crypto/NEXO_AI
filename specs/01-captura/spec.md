@@ -448,3 +448,18 @@ Decididas por el equipo antes de escribir `../07-agente/plan.md`.
 | 2 | **Solo agenda.** Una captura que es tarea, pendiente sin fecha o algo que se espera de alguien se reconoce y se dice, pero queda **en espera** sin registrarse, hasta que existan las tareas personales (CUN-03). Es REQ-AGT-02 | REQ-CAP-02, REQ-CAP-07, REQ-CAP-08 |
 | 3 | REQ-CAP-23 suma un caso: lo que espera a una función que llega en una próxima versión. Se ve como en espera, con su motivo, y no como un error ni como algo fuera del plan (H-AGT-09) | REQ-CAP-23 |
 | 4 | La paleta de comandos (REQ-CAP-05) y la captura sin conexión del móvil (REQ-CAP-22) no entran en la primera versión del agente | REQ-CAP-05, REQ-CAP-22 |
+
+---
+
+## 12. Decisiones tomadas durante el diseño
+
+### Detectadas al rehacer la conversación del móvil · 7 de noviembre de 2026
+
+En el móvil, una sola tarjeta de confirmación llenaba la capa y tapaba la conversación; la cabecera de la sección se leía a través del velo y la barra de escritura gastaba dos filas. Se adopta la estructura común de las aplicaciones de conversación: cabecera fina, mensajes a todo el alto, barra de una fila abajo y tarjetas compactas. **No son definitivas** hasta que el equipo las acepte; van también para `SPEC.md` §8.
+
+| # | Decisión | Afecta |
+|---|---|---|
+| H-CAP-01 | **La tarjeta de confirmación abre plegada.** Se ven la acción, una línea con lo esencial armada con los datos de la propia tarjeta (título, fecha, hora o cuándo, y la duración sin su explicación), lo irreversible, la línea de cruce y las salidas: «Confirmar» a ancho completo y debajo, en una fila, «Descartar» y «Ver detalles». «Ver detalles» despliega todos los datos, apilados, en la misma tarjeta. Cuando hay botones de alternativa, el dato «Alternativas» no se repite en texto. Sigue siendo la misma tarjeta con los mismos datos: lo que cambia es qué se ve primero. Contradice dos reglas de `design/ARQUITECTURA-VISUAL-MOVIL.md` §3: los botones siempre apilados y los datos nunca en una línea corrida con puntos; los pares etiqueta y valor siguen bajo «Ver detalles» | REQ-CAP-01, P-03 |
+| H-CAP-02 | **La barra de escritura es una sola fila**: el campo y el botón de enviar dentro del mismo contorno. El campo empieza en una línea y crece hasta cuatro; con el campo vacío el botón se atenúa sin cambiar el alto. La barra queda fija abajo, sube con el teclado y la lista de mensajes ocupa el resto | REQ-CAP-01 |
+| H-CAP-03 | **El velo tapa la cabecera de la sección.** La capa arranca justo debajo de la zona de estado y el velo es más opaco, para que nunca se lean dos cabeceras a la vez. La sección sigue detrás como antecedente. Contradice la opacidad de 0,16 de `design/ARQUITECTURA-VISUAL-MOVIL.md` §2 | REQ-CAP-01, R-36 |
+| H-CAP-04 | **El título de la capa depende de la conversación en curso.** Sin nada dicho en lo que se está pidiendo ahora, «¿Qué hacemos?». Con algo dicho, «Asistente» y debajo la primera petición, recortada a una línea. Cuando hay una propuesta esperando decisión y la capa ya se abrió una vez, el asa lo señala con un punto | REQ-CAP-01, REQ-AGT-03 |
