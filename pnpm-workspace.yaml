@@ -30,3 +30,4 @@ auditConfig:
 overrides:
   body-parser@>=2.0.0 <2.4.0: 2.4.0
   multer@>=2.0.0 <2.5.0: 2.5.0
+  node-forge@<=1.4.0: 1.4.1
