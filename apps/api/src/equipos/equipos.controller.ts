@@ -1,6 +1,7 @@
 
 import {
   BadRequestException,
+  ForbiddenException,
   Body,
   Controller,
   Get,
@@ -14,6 +15,7 @@ import type { ContextoSolicitud } from '../identidad/contexto';
 import { Contexto, SobreLoPropio } from '../identidad/decoradores';
 import { DisponibilidadEquipoService } from './disponibilidad-equipo.service';
 import { EquiposService } from './equipos.service';
+import { rangoDisponibilidadPorDefecto } from './rango-disponibilidad';
 
 type CambioConsentimiento = {
   estado: 'concedida' | 'rechazada' | 'revocada';
@@ -23,6 +25,7 @@ type ConsultaDisponibilidad = {
   desde?: string;
   hasta?: string;
   duracionMinutos?: string;
+  bandaHoraria?: string;
 };
 
 @SobreLoPropio()
@@ -53,32 +56,49 @@ export class EquiposController {
   // GET /equipos/:equipoId/disponibilidad
   // Consulta los intervalos libres comunes del equipo.
   @Get(':equipoId/disponibilidad')
-  consultarDisponibilidad(
+  async consultarDisponibilidad(
     @Contexto() contexto: ContextoSolicitud,
     @Param('equipoId', ParseUUIDPipe) equipoId: string,
     @Query() consulta: ConsultaDisponibilidad,
   ) {
-    if (!consulta.desde || !consulta.hasta) {
+    const sinFechas = !consulta.desde && !consulta.hasta;
+
+    if (!sinFechas && (!consulta.desde || !consulta.hasta)) {
       throw new BadRequestException(
-        'Debes indicar desde y hasta.',
+        'Debes indicar ambas fechas o ninguna.',
       );
     }
 
-    // Se exige ISO 8601 con zona horaria explícita.
     const formatoFecha =
       /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 
     if (
-      !formatoFecha.test(consulta.desde) ||
-      !formatoFecha.test(consulta.hasta)
+      !sinFechas &&
+      (!formatoFecha.test(consulta.desde!) ||
+        !formatoFecha.test(consulta.hasta!))
     ) {
       throw new BadRequestException(
         'Las fechas deben usar ISO 8601 con zona horaria.',
       );
     }
 
-    const desde = new Date(consulta.desde);
-    const hasta = new Date(consulta.hasta);
+    let desde: Date;
+    let hasta: Date;
+
+    if (sinFechas) {
+      const zonaHoraria =
+        await this.disponibilidad.obtenerZonaHorariaSolicitante(
+          contexto,
+          equipoId,
+        );
+
+      const rango = rangoDisponibilidadPorDefecto(zonaHoraria);
+      desde = rango.desde;
+      hasta = rango.hasta;
+    } else {
+      desde = new Date(consulta.desde!);
+      hasta = new Date(consulta.hasta!);
+    }
 
     if (
       !Number.isFinite(desde.getTime()) ||
@@ -113,12 +133,41 @@ export class EquiposController {
       }
     }
 
+    // RN-CAL-01: validar la banda horaria solicitada.
+    const bandasPermitidas = [
+      'normal',
+      'extendida',
+      'fueraDeBanda',
+    ] as const;
+
+    const bandaHoraria = consulta.bandaHoraria ?? 'normal';
+
+    if (
+      !bandasPermitidas.some(
+        (banda) => banda === bandaHoraria,
+      )
+    ) {
+      throw new BadRequestException(
+        'La banda horaria debe ser normal, extendida o fueraDeBanda.',
+      );
+    }
+
+    // La banda extendida requiere una solicitud explicita del gerente.
+    if (
+      bandaHoraria === 'extendida' &&
+      contexto.rol !== 'gerente'
+    ) {
+      throw new ForbiddenException(
+        'Solo un gerente puede solicitar la banda horaria extendida.',
+      );
+    }
     return this.disponibilidad.consultarEquipo(
       contexto,
       equipoId,
       desde,
       hasta,
       duracionMinutos,
+    bandaHoraria as "normal" | "extendida" | "fueraDeBanda",
     );
   }
 

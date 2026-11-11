@@ -9,6 +9,7 @@ import { SincronizadorCalendario } from '../agenda/sincronizador-calendario';
 import { ClienteGoogle } from '../integraciones/cliente-google';
 import type { ContextoSolicitud } from '../identidad/contexto';
 import { EquiposService } from './equipos.service';
+import { enZona, instanteLocal, sumarDias } from '../agenda/dominio/tiempo';
 
 // Representa un intervalo de tiempo.
 export type IntervaloHorario = {
@@ -270,12 +271,94 @@ export class DisponibilidadEquipoService {
   // 6. CONSULTAR DISPONIBILIDAD DE UN EQUIPO
   // =====================================================
 
+  // RN-CAL-01: aplicar las bandas horarias de la plataforma.
+  aplicarBandaHoraria(
+    intervalos: IntervaloHorario[],
+    zonaHoraria: string,
+    banda: 'normal' | 'extendida' | 'fueraDeBanda',
+  ): IntervaloHorario[] {
+    if (banda === 'fueraDeBanda') {
+      return intervalos;
+    }
+
+    const limiteFin = banda === 'extendida' ? 22 : 20;
+    const resultado: IntervaloHorario[] = [];
+
+    for (const intervalo of intervalos) {
+      if (intervalo.fin <= intervalo.inicio) {
+        continue;
+      }
+
+      const inicioLocal = enZona(intervalo.inicio, zonaHoraria);
+      const finLocal = enZona(intervalo.fin, zonaHoraria);
+
+      let dia = {
+        anio: inicioLocal.anio,
+        mes: inicioLocal.mes,
+        dia: inicioLocal.dia,
+      };
+
+      const ultimoDia = {
+        anio: finLocal.anio,
+        mes: finLocal.mes,
+        dia: finLocal.dia,
+      };
+
+      while (
+        Date.UTC(dia.anio, dia.mes - 1, dia.dia) <=
+        Date.UTC(ultimoDia.anio, ultimoDia.mes - 1, ultimoDia.dia)
+      ) {
+        const inicioBanda = instanteLocal(dia, 8 * 60, zonaHoraria);
+        const finBanda = instanteLocal(dia, limiteFin * 60, zonaHoraria);
+        const inicio = new Date(Math.max(
+          intervalo.inicio.getTime(),
+          inicioBanda.getTime(),
+        ));
+
+        const fin = new Date(Math.min(
+          intervalo.fin.getTime(),
+          finBanda.getTime(),
+        ));
+
+        if (inicio < fin) {
+          resultado.push({ inicio, fin });
+        }
+
+        dia = sumarDias(dia, 1);
+      }
+    }
+
+    return resultado.sort(
+      (a, b) =>
+        a.inicio.getTime() - b.inicio.getTime() ||
+        (b.fin.getTime() - b.inicio.getTime()) -
+        (a.fin.getTime() - a.inicio.getTime()),
+    );
+  }
+
+  async obtenerZonaHorariaSolicitante(
+    contexto: ContextoSolicitud,
+    equipoId: string,
+  ): Promise<string> {
+    // Verificar que el solicitante pertenece al equipo.
+    await this.equipos.verificarMembresia(contexto, equipoId);
+
+    const db = this.prisma.deOrganizacion(contexto.organizacionId);
+
+    const perfil = await db.perfilUsuario.findFirst({
+      where: { id: contexto.perfilId },
+      select: { zonaHoraria: true },
+    });
+
+    return perfil?.zonaHoraria ?? 'UTC';
+  }
   async consultarEquipo(
     contexto: ContextoSolicitud,
     equipoId: string,
     desde: Date,
     hasta: Date,
     duracionMinutos?: number,
+  bandaHoraria: 'normal' | 'extendida' | 'fueraDeBanda' = 'normal',
   ) {
     // Validar fechas y duracion.
     if (
@@ -357,14 +440,37 @@ const disponibilidadCompleta =
   integrantes.length > 0 &&
   consentimientosVigentes;
 
-    const intervalos = disponibilidadCompleta
+    // RN-CAL-01: consultar la zona horaria del solicitante.
+    const db = this.prisma.deOrganizacion(contexto.organizacionId);
+
+    const perfil = await db.perfilUsuario.findFirst({
+      where: { id: contexto.perfilId },
+      select: { zonaHoraria: true },
+    });
+
+    const zonaHoraria = perfil?.zonaHoraria ?? 'UTC';
+
+    // Primero calcular disponibilidad; despues aplicar banda y duracion.
+    const intervalosComunes = disponibilidadCompleta
       ? this.calcularDisponibilidadComun(
           desde,
           hasta,
           ocupadosPorParticipante,
-          duracionMinutos,
         )
       : [];
+
+    const intervalosEnBanda = this.aplicarBandaHoraria(
+      intervalosComunes,
+      zonaHoraria,
+      bandaHoraria,
+    );
+
+    const intervalos = intervalosEnBanda.filter(
+      (intervalo) =>
+        duracionMinutos === undefined ||
+        (intervalo.fin.getTime() - intervalo.inicio.getTime()) /
+          60_000 >= duracionMinutos,
+    );
 
     return {
       equipoId,
@@ -382,9 +488,14 @@ const disponibilidadCompleta =
             intervalo.inicio.getTime()) /
           60_000,
       })),
-      advertencia: disponibilidadCompleta
-        ? null
-        : 'No se puede confirmar la disponibilidad de todos los integrantes.',
+      advertencia: [
+        ...(!disponibilidadCompleta
+          ? ['No se puede confirmar la disponibilidad de todos los integrantes.']
+          : []),
+        ...(bandaHoraria === 'fueraDeBanda'
+          ? ['Atención: estás consultando horarios fuera de la banda habitual de 08:00 a 22:00.']
+          : []),
+      ].join(' ') || null,
     };
   }
 }
