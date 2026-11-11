@@ -5,6 +5,7 @@ import type { ConversacionAsistente, Perfil, PermisoGoogle, Plan, Rol } from '@n
 import type { AgendaDelDia } from '../../lib/agenda';
 import { conectarGoogle, salir } from '../acciones';
 import { CambioZona } from './cambio-zona';
+import { DisponibilidadEquipo } from './disponibilidad-equipo';
 import { Conversacion } from './conversacion';
 import {
   IconoActividad,
@@ -13,6 +14,7 @@ import {
   IconoCerrar,
   IconoContraer,
   IconoExpandir,
+  IconoEquipo,
   IconoTareas,
 } from './iconos';
 import { SECCIONES, type Seccion } from './secciones';
@@ -24,6 +26,7 @@ const ICONOS: Record<Seccion, () => React.JSX.Element> = {
   agenda: IconoAgenda,
   tareas: IconoTareas,
   actividad: IconoActividad,
+  equipo: IconoEquipo,
 };
 
 const NOMBRE_PLAN: Record<Plan, string> = { gratuito: 'Gratuito', personal: 'Personal', empresarial: 'Empresarial' };
@@ -201,6 +204,9 @@ export function Aplicacion({
                 ))}
               </ol>
             </section>
+          )}
+          {seccion === 'equipo' && (
+            <DisponibilidadEquipo zona={perfil?.zonaHoraria ?? 'America/Lima'} />
           )}
           {seccion === 'tareas' && (
             <div className="vacio">

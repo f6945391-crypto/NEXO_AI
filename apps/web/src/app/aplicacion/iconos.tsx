@@ -53,3 +53,12 @@ export const IconoCerrar = () => (
     <path d="M6 6l12 12M18 6L6 18" />
   </svg>
 );
+
+export const IconoEquipo = () => (
+  <svg {...comunes}>
+    <circle cx="9" cy="8" r="3" />
+    <path d="M3 20v-2a6 6 0 0 1 12 0v2" />
+    <circle cx="17" cy="9" r="2" />
+    <path d="M17 15a4 4 0 0 1 4 4v1" />
+  </svg>
+);

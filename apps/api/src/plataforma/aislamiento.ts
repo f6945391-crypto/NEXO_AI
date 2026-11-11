@@ -21,6 +21,9 @@ export const MODELOS_CON_ORGANIZACION: ReadonlySet<string> = new Set([
   'LlamadaModelo',
   'InvocacionHerramienta',
   'PuntoControlAgente',
+  'Equipo',
+  'MiembroDeEquipo',
+
 ]);
 
 export class ErrorDeAislamiento extends Error {
