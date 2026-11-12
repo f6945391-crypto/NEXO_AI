@@ -32,9 +32,26 @@ export const GUION_DEMOSTRACION: ReglaGuion[] = [
     si: `^¿?qu[eé] tengo (?:el |este )?${DIA}\\??$`,
     pasos: [{ llamadas: [{ nombre: 'agenda_consultar', argumentos: { desde: '{$1}', hasta: '{$1}' } }] }, { texto: '' }],
   },
-  // REQ-AGT-02: una tarea queda en espera
+  // T-051 · REQ-CUN03-04: lo pendiente, con la lista armada por el código
   {
-    si: '^recu[eé]rdame (.+)$',
+    si: '^¿?qu[eé] tengo pendiente\\??$',
+    pasos: [{ llamadas: [{ nombre: 'tareas_consultar', argumentos: {} }] }, { texto: '' }],
+  },
+  // T-051 · REQ-CUN03-01: una tarea se propone con tarjeta; la fecha, solo si la persona dijo el día
+  {
+    si: `^recu[eé]rdame (.+?) (?:el |este |para el )?${DIA}$`,
+    pasos: [{ llamadas: [{ nombre: 'captura_guardar_tarea', argumentos: { texto: '$1', clase: 'tarea', fecha: '{$2}' } }] }, { texto: '' }],
+  },
+  {
+    si: '^(?:recu[eé]rdame|tengo que) (.+)$',
     pasos: [{ llamadas: [{ nombre: 'captura_guardar_tarea', argumentos: { texto: '$1', clase: 'tarea' } }] }, { texto: '' }],
+  },
+  // T-051 · REQ-CUN03-07: solo de quién y qué se espera
+  {
+    si: '^estoy esperando que (\\S+) me (?:mande|envíe|envie|pase) (?:el |la |los |las )?(.+)$',
+    pasos: [
+      { llamadas: [{ nombre: 'captura_guardar_tarea', argumentos: { texto: '$2 de $1', clase: 'esperando_de_alguien', esperaDe: '$1', esperaQue: '$2' } }] },
+      { texto: '' },
+    ],
   },
 ];

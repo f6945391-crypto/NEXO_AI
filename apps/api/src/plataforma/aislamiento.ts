@@ -16,6 +16,8 @@ export const MODELOS_CON_ORGANIZACION: ReadonlySet<string> = new Set([
   'ConsentimientoIntegracion',
   'EventoAgenda',
   'SincronizacionCalendario',
+  // T-046: tareas personales
+  'Tarea',
   // T-030: el agente
   'ConversacionAgente',
   'LlamadaModelo',

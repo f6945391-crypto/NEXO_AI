@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { fechaValida, obtenerAgenda, type NivelAgenda } from '../lib/agenda';
 import { obtenerConversacion, obtenerEnEspera } from '../lib/asistente';
 import { obtenerPerfil, obtenerPermisosGoogle, obtenerSesion } from '../lib/sesion';
+import { obtenerTareas } from '../lib/tareas';
 import { Aplicacion } from './aplicacion/aplicacion';
 
 // La aplicación: navegación, conversación y lienzo (T-023). También para el colaborador (T-026, REQ-ACC-13).
@@ -13,11 +14,13 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
 
   // T-034: la conversación abierta, con lo que espera tu confirmación o quedó en espera
   // T-045: lo que está en espera, para la franja del lienzo
-  const [perfil, permisosGoogle, conversacion, enEspera, { google, nivel, fecha }] = await Promise.all([
+  // T-053: las tareas pendientes, en sus franjas
+  const [perfil, permisosGoogle, conversacion, enEspera, tareas, { google, nivel, fecha }] = await Promise.all([
     obtenerPerfil(),
     obtenerPermisosGoogle(),
     obtenerConversacion(),
     obtenerEnEspera(),
+    obtenerTareas(),
     searchParams,
   ]);
   // T-025: la agenda, en la zona de la persona. T-044: el nivel y la fecha van en la dirección, así una
@@ -35,6 +38,7 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
       agenda={agenda}
       vista={vista}
       enEspera={enEspera}
+      tareas={tareas}
       conversacion={conversacion}
       resultadoGoogle={google ?? null}
     />

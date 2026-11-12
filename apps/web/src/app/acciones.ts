@@ -146,6 +146,21 @@ export async function descartarOperacion(id: string): Promise<void> {
   }
 }
 
+// T-053 · REQ-CUN03-05 · decisión 2. Completar y reabrir desde la lista son controles directos de un toque,
+// sin tarjeta: no salen de la aplicación y se pueden deshacer. La API crea la Operación y la ejecuta en el acto.
+export async function cambiarEstadoDeTarea(id: string, accion: 'completar' | 'reabrir'): Promise<{ error?: string }> {
+  const token = await tokenDeAcceso();
+  try {
+    const respuesta = await llamarApi(`/tareas/${encodeURIComponent(id)}/${accion}`, { metodo: 'POST', token });
+    if (respuesta.estado !== 200) return { error: mensajeDeError(respuesta.cuerpo, 'No se pudo cambiar la tarea. Inténtalo de nuevo.') };
+  } catch {
+    return { error: SIN_CONEXION };
+  }
+  // La lista se vuelve a pedir: la tarea sale de su franja, o vuelve a ella
+  refresh();
+  return {};
+}
+
 // T-034 · specs/07-agente/plan.md §9. La conversación con el asistente. La web solo envía lo escrito y la
 // decisión sobre una tarjeta; lo que se muestra lo arma la API, y la confirmación es la de Operaciones (AD-09).
 export type ResultadoAsistente = { respuesta?: RespuestaAsistente; error?: string };

@@ -4,8 +4,8 @@ import { AsistenteService } from './asistente.service';
 
 // P-11 · T-033 · specs/07-agente/plan.md §7. Repasa lo que quedó en espera y lo atiende cuando su motivo
 // ya no aplica: el asistente vuelve a responder o la persona conectó su calendario. Lo hace por orden de
-// captura, y en cuanto el asistente no responde, para: el resto seguiría igual. Las tareas, que esperan una
-// función por llegar (REQ-AGT-02), no se tocan.
+// captura, y en cuanto el asistente no responde, para: el resto seguiría igual. T-052 · REQ-CUN03-09: las tareas que
+// esperaban una función por llegar (REQ-AGT-02) se atienden también: ya existen las tareas personales.
 
 // Por pasada, para no gastar de golpe la cuota del proveedor (H-AGT-13)
 export const POR_PASADA = 20;
@@ -26,7 +26,7 @@ export class ProcesadorEnEspera {
     // a nadie en concreto y necesita ver lo encolado de todas las organizaciones. Solo lee identificadores y
     // la identidad de cada perfil; cada solicitud se atiende después aislada por su organización.
     const encoladas = await this.prisma.sinAislar.operacion.findMany({
-      where: { estado: 'en_espera', motivoEspera: { in: ['asistente_no_disponible', 'permiso_faltante'] } },
+      where: { estado: 'en_espera', motivoEspera: { in: ['asistente_no_disponible', 'permiso_faltante', 'funcion_por_llegar'] } },
       orderBy: { capturadaEn: 'asc' },
       take: POR_PASADA,
       select: {

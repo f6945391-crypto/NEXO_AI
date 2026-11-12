@@ -41,5 +41,10 @@
     "correo": "en-espera-movil@nexoai.test",
     "rol": "usuario_personal",
     "plan": "personal"
+  },
+  "tareas": {
+    "correo": "tareas-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
   }
 }

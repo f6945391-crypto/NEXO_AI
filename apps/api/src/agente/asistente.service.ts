@@ -100,7 +100,8 @@ export class AsistenteService {
   // efecto (H-AGT-04). Devuelve qué pasó, para que el trabajador sepa si seguir.
   async atenderEnEspera(contexto: ContextoSolicitud, operacionId: string): Promise<'propuesta' | 'atendida' | 'no_disponible' | 'ocupada' | 'sin_cambios'> {
     const op = await this.datos(contexto).operacion.findFirst({ where: { id: operacionId, perfilId: contexto.perfilId, estado: 'en_espera' } });
-    if (!op || op.motivoEspera === 'funcion_por_llegar') return 'sin_cambios';
+    // T-052 · REQ-CUN03-09: lo que esperaba a las tareas se atiende como lo demás (ya existen)
+    if (!op) return 'sin_cambios';
     const texto = op.solicitudOriginal ?? '';
     const previa = op.conversacionId ? await this.datos(contexto).conversacionAgente.findFirst({ where: { id: op.conversacionId, estado: 'abierta' } }) : null;
     const conversacion = previa ?? (await this.abierta(contexto)) ?? (await this.abrir(contexto));
@@ -130,7 +131,7 @@ export class AsistenteService {
 
     const despues = await this.datos(contexto).operacion.findFirstOrThrow({ where: { id: op.id } });
     if (despues.estado === 'propuesta') return 'propuesta';
-    if (despues.estado !== 'en_espera' || despues.motivoEspera === 'funcion_por_llegar') return 'atendida';
+    if (despues.estado !== 'en_espera') return 'atendida';
     if (resultado.noDisponible) return 'no_disponible';
     // Sigue sin calendario: queda como estaba
     if (despues.motivoEspera === 'permiso_faltante' && !(await this.tieneCalendario(contexto))) return 'sin_cambios';

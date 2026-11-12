@@ -18,3 +18,5 @@ apps/movil/dist/
 # Salidas locales de Claude y archivos temporales: no van al repositorio
 Claude outputs/
 .nexoai-src.tgz
+# Registros de las ejecuciones locales (levantar-nexoai.cmd y compañía)
+_local/

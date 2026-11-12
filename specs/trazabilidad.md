@@ -17,6 +17,7 @@
 | 05-equipos | 17 | 17 | 0 | 0 | 0 | 0 |
 | 06-acceso | 17 | 2 | 0 | 15 | 0 | 0 |
 | 07-agente | 5 | 2 | 1 | 2 | 0 | 0 |
+| 08-tareas-personales | 10 | 10 | 0 | 0 | 0 | 0 |
 
 ## Requisitos
 
@@ -179,3 +180,13 @@
 | REQ-AGT-03 | 07-agente | H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6.1 y §8.1; `design/ARQUITECTURA-VISUAL-WEB.md` §5 y §6 («lo cerrado no se pierde») | 2 | T-038, T-039, T-041 | agente.transcripcion-persiste, web.asistente-historial | implementado |
 | REQ-AGT-04 | 07-agente | H-AGT-17; `INFORME-MEMORIA-AGENTE.md` §6.4.5; decisión 17 de `02-agenda` (las alternativas no pasan por el modelo); P-02, P-03 | 2 | T-042 | — | pendiente |
 | REQ-AGT-05 | 07-agente | H-AGT-17; `INFORME-MEMORIA-AGENTE.md` §6.4.3 y §6.4.4; glosario, «Hilo» | 2 | — | — | pendiente |
+| REQ-CUN03-01 | 08-tareas-personales | CUN-03 flujo principal; REQ-CAP-02; REQ-CAP-07; R-38; P-03; REQ-CUN01-03 | 1 | — | — | pendiente |
+| REQ-CUN03-02 | 08-tareas-personales | regla «tarea o apunte» de `design/ARQUITECTURA-VISUAL-MOVIL.md`; REQ-CAP-02 | 1 | — | — | pendiente |
+| REQ-CUN03-03 | 08-tareas-personales | R-38; R-23; P-02 | 1 | — | — | pendiente |
+| REQ-CUN03-04 | 08-tareas-personales | hito 3 de `PLAN-VALOR-USUARIO.md`; REQ-CUN01-13 (misma regla para la agenda) | 1 | — | — | pendiente |
+| REQ-CUN03-05 | 08-tareas-personales | CUN-03; DP-01; R-25 | 1 | — | — | pendiente |
+| REQ-CUN03-06 | 08-tareas-personales | CUN-03; R-25; P-03; REQ-CUN01-02 | 1 | — | — | pendiente |
+| REQ-CUN03-07 | 08-tareas-personales | R-12; REQ-CAP-02; P-09 | 1 | — | — | pendiente |
+| REQ-CUN03-08 | 08-tareas-personales | hito 3 de `PLAN-VALOR-USUARIO.md` (tarea con fecha y hora en la agenda); R-23; REQ-CUN01-02 | 1 | — | — | pendiente |
+| REQ-CUN03-09 | 08-tareas-personales | REQ-AGT-02; REQ-CAP-24; P-11; decisión 27 de `07-agente` | 1 | — | — | pendiente |
+| REQ-CUN03-10 | 08-tareas-personales | P-04; P-10; R-22; REQ-ACC-17 | 1 | — | — | pendiente |

@@ -224,12 +224,15 @@ describe('T-032 · conversación con el asistente', () => {
       expect(cerrado!.turnos[0]!.id).toBe(primera.turnos[0]!.id);
     });
 
-    it('guardar una tarea en espera cierra el episodio como «guardado», no como registrado (decisión 27)', async () => {
+    it('anotar una tarea propone una tarjeta y, al confirmar, cierra el episodio como «registrado» (T-051, REQ-CUN03-01)', async () => {
       const r = await enviar('Recuérdame pagar el recibo');
-      expect(tipos(r.turnos)).toEqual(['persona', 'en_espera']);
-      expect(r).toMatchObject({ episodioCerrado: true, cierre: { desenlace: 'guardado', titulo: 'pagar el recibo' } });
-      const [episodio] = (await leer()).episodios;
-      expect(episodio!.cierre?.desenlace).toBe('guardado');
+      expect(tipos(r.turnos)).toEqual(['persona', 'propuesta']);
+      expect(r.episodioCerrado).toBe(false);
+      // Todavía no existe ninguna tarea
+      expect(await prisma.tarea.count()).toBe(0);
+      const c = await decidir({ operacionId: r.pendiente, decision: 'confirmar' });
+      expect(c).toMatchObject({ episodioCerrado: true, cierre: { desenlace: 'registrado', titulo: 'pagar el recibo' } });
+      expect(await prisma.tarea.count()).toBe(1);
       // Lo siguiente empieza otro episodio
       expect((await enviar('Hola')).episodioId).not.toBe(r.episodioId);
     });

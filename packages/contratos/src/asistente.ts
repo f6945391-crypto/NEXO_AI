@@ -42,7 +42,8 @@ export type DecisionAsistente = z.infer<typeof DecisionAsistente>;
 // T-038 · plan §14.6 · REQ-AGT-03: cómo terminó un episodio, para el separador. Lo arma el servidor con su
 // Operación; el cliente solo lo pinta. Sin acción: se cerró sin confirmar ni descartar nada
 // `guardado` (decisión 27): una tarea quedó en espera; a propósito no es `registrado`, porque la tarea aún no existe
-export const DesenlaceEpisodio = z.enum(['registrado', 'movido', 'cancelado', 'descartado', 'guardado', 'sin_accion']);
+// T-051: `completado` es una tarea marcada como hecha
+export const DesenlaceEpisodio = z.enum(['registrado', 'movido', 'cancelado', 'completado', 'descartado', 'guardado', 'sin_accion']);
 export type DesenlaceEpisodio = z.infer<typeof DesenlaceEpisodio>;
 
 export const CierreEpisodio = z.strictObject({ en: Instante, desenlace: DesenlaceEpisodio, titulo: z.string().nullable() });

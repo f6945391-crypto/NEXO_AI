@@ -9,6 +9,7 @@ const QUE_PASO: Record<CierreEpisodio['desenlace'], (titulo: string | null) => s
   registrado: (t) => (t ? `Se registró «${t}»` : 'Compromiso registrado'),
   movido: (t) => (t ? `Se movió «${t}»` : 'Compromiso movido'),
   cancelado: (t) => (t ? `Se canceló «${t}»` : 'Compromiso cancelado'),
+  completado: (t) => (t ? `Se completó «${t}»` : 'Tarea completada'),
   descartado: (t) => (t ? `Se descartó «${t}»` : 'Propuesta descartada'),
   guardado: () => 'Tarea guardada',
   sin_accion: () => null,

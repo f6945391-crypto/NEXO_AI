@@ -48,6 +48,27 @@ export const ArgsCancelarEvento = z.strictObject({
 });
 export type ArgsCancelarEvento = z.infer<typeof ArgsCancelarEvento>;
 
+// T-051 · REQ-CUN03-04, 05, 06: las herramientas de tareas. `tareas.consultar` no escribe; las otras proponen.
+export const ArgsConsultarTareas = z.strictObject({
+  franja: z.enum(['con_fecha', 'sin_fecha', 'esperando']).optional().describe('Solo esa franja; sin ella, todas las pendientes'),
+});
+export type ArgsConsultarTareas = z.infer<typeof ArgsConsultarTareas>;
+
+export const ArgsCompletarTarea = z.strictObject({
+  tareaId: z.uuid().describe('Id de la tarea, tal como lo dio tareas_consultar'),
+  reabrir: z.boolean().optional().describe('Verdadero solo para reabrir una tarea ya completada'),
+});
+export type ArgsCompletarTarea = z.infer<typeof ArgsCompletarTarea>;
+
+export const ArgsActualizarTarea = z.strictObject({
+  tareaId: z.uuid().describe('Id de la tarea, tal como lo dio tareas_consultar'),
+  titulo: z.string().trim().min(1).max(200).optional(),
+  fecha: Fecha.nullable().optional().describe('Fecha nueva AAAA-MM-DD; null para quitarla'),
+  hora: Hora.nullable().optional().describe('Hora nueva; null para quitarla'),
+  cancelar: z.boolean().optional().describe('Verdadero solo para cancelar la tarea; no se combina con otros cambios'),
+});
+export type ArgsActualizarTarea = z.infer<typeof ArgsActualizarTarea>;
+
 // specs/07-agente/plan.md §7 · H-AGT-09: por qué espera algo que se pidió
 export const MotivoEspera = z.enum(['asistente_no_disponible', 'permiso_faltante', 'funcion_por_llegar']);
 export type MotivoEspera = z.infer<typeof MotivoEspera>;
@@ -56,9 +77,15 @@ export type MotivoEspera = z.infer<typeof MotivoEspera>;
 export const ClaseTarea = z.enum(['tarea', 'pendiente_sin_fecha', 'esperando_de_alguien']);
 export type ClaseTarea = z.infer<typeof ClaseTarea>;
 
+// T-051 · REQ-CUN03-01, 07: ahora propone una tarea de verdad (Operación `tareas.registrar`). Todo lo demás es
+// opcional: la fecha solo si la persona la dijo, y de quién y qué se espera solo para «esperando de alguien».
 export const ArgsGuardarTarea = z.strictObject({
-  texto: z.string().trim().min(1).max(500).describe('Lo que hay que hacer, con las palabras de la persona'),
+  texto: z.string().trim().min(1).max(200).describe('Lo que hay que hacer, con las palabras de la persona'),
   clase: ClaseTarea,
+  fecha: Fecha.optional().describe('Solo si la persona dijo para cuándo; si no, omítela. No inventes ninguna'),
+  hora: Hora.optional().describe('Solo si la persona dijo la hora, y solo junto con la fecha'),
+  esperaDe: z.string().trim().min(1).max(200).optional().describe('De quién se espera, solo para «esperando de alguien»'),
+  esperaQue: z.string().trim().min(1).max(200).optional().describe('Qué se espera recibir, solo para «esperando de alguien»'),
 });
 export type ArgsGuardarTarea = z.infer<typeof ArgsGuardarTarea>;
 
@@ -90,6 +117,8 @@ export type ListaAgenda = z.infer<typeof ListaAgenda>;
 export const TurnoDeHerramienta = z.discriminatedUnion('tipo', [
   z.strictObject({ tipo: z.literal('agenda'), lista: ListaAgenda }),
   z.strictObject({ tipo: z.literal('propuesta'), operacion: OperacionRespuesta }),
+  // T-051 · REQ-CUN03-04: la lista de tareas armada por el código, con los datos reales
+  z.strictObject({ tipo: z.literal('texto'), texto: z.string() }),
   // T-033: lo pedido quedó guardado sin crear nada (REQ-AGT-02, REQ-CAP-23)
   z.strictObject({ tipo: z.literal('en_espera'), texto: z.string(), motivo: MotivoEspera, operacionId: z.uuid() }),
 ]);

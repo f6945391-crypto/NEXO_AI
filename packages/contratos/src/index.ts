@@ -8,3 +8,4 @@ export * from './agenda';
 export * from './integraciones';
 export * from './operaciones';
 export * from './plataforma';
+export * from './tareas';

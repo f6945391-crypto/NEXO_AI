@@ -137,7 +137,7 @@ export class OperacionesService {
 
     let actualizada: Operacion;
     try {
-      const resultado = await ejecutor.ejecutar(contexto, ejecutor.esquema.parse(op.carga));
+      const resultado = await ejecutor.ejecutar(contexto, ejecutor.esquema.parse(op.carga), { id });
       actualizada = await this.datos(contexto).operacion.update({
         where: { id },
         data:

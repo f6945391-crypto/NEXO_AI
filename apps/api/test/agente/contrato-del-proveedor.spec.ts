@@ -82,6 +82,17 @@ describe('agente.contrato-del-proveedor', () => {
         argumentos: { desde: '2026-10-24', hasta: '2026-10-24', horaDesde: '12:00', horaHasta: '20:00' },
       });
       expect(await pedir('Recuérdame llamar al dentista')).toMatchObject({ nombre: 'captura_guardar_tarea', argumentos: { texto: 'llamar al dentista' } });
+      // T-051 · REQ-CUN03-01, 04, 07: sin día no hay fecha; con día, la del guion; lo pendiente se consulta
+      expect((await pedir('Recuérdame llamar al dentista'))?.argumentos).not.toHaveProperty('fecha');
+      expect(await pedir('Recuérdame pagar el recibo el viernes')).toMatchObject({
+        nombre: 'captura_guardar_tarea',
+        argumentos: { texto: 'pagar el recibo', fecha: '2026-10-30' },
+      });
+      expect(await pedir('Tengo que renovar mi pasaporte')).toMatchObject({ nombre: 'captura_guardar_tarea', argumentos: { texto: 'renovar mi pasaporte' } });
+      expect(await pedir('Estoy esperando que Marta me mande el contrato')).toMatchObject({
+        argumentos: { clase: 'esperando_de_alguien', esperaDe: 'Marta', esperaQue: 'contrato' },
+      });
+      expect(await pedir('¿Qué tengo pendiente?')).toMatchObject({ nombre: 'tareas_consultar', argumentos: {} });
       expect(await pedir('Agéndame algo con Vasco')).toMatchObject({ argumentos: { titulo: 'Algo con Vasco' } });
     });
   });

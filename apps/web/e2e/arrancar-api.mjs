@@ -56,9 +56,15 @@ for (const [clave, cuenta] of Object.entries(cuentas)) {
 process.env.CALENDARIO_SIMULADO = '1';
 const { calendarioDeDemostracion: calendario } = desdeApi('./dist/integraciones/calendario/calendario-simulado.js');
 // T-034: dos cuentas más para conversar con el asistente, que es el simulado con su guion
-for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial', 'agendaSemana', 'enEspera', 'historialLargo'].filter((c) => perfiles[c])) {
+// T-051: las cuentas de «en espera» ya no conectan el calendario. Antes lo que esperaba era una tarea («las
+// tareas llegan en una próxima versión»); ahora las tareas se crean de verdad, así que lo único que queda en
+// espera es lo que necesita el calendario de Google y no lo tiene (REQ-CUN01-08, REQ-CAP-23).
+const PRIMER_INGRESO_HECHO = ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial', 'agendaSemana', 'enEspera', 'historialLargo', 'tareas'];
+const SIN_CALENDARIO = ['asistenteEspera', 'capturaEspera', 'enEspera'];
+for (const clave of PRIMER_INGRESO_HECHO.filter((c) => perfiles[c])) {
   const perfilId = perfiles[clave];
   await prisma.perfilUsuario.update({ where: { id: perfilId }, data: { debeCambiarContrasena: false, zonaHoraria: 'America/Lima' } });
+  if (SIN_CALENDARIO.includes(clave)) continue;
   await prisma.consentimientoIntegracion.create({
     data: { organizacionId, perfilId, proveedor: 'google', alcance: 'calendario', estado: 'concedido' },
   });

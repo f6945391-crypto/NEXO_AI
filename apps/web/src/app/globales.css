@@ -431,6 +431,8 @@ body {
 
 .turno__texto {
   margin: 0;
+  /* T-051: la lista de tareas que arma el código trae saltos de línea */
+  white-space: pre-line;
   padding: var(--espaciado-12) var(--espaciado-16);
   border-radius: var(--radio-md) var(--radio-md) var(--radio-md) var(--radio-sm);
   background: var(--agente-suave);
@@ -1183,4 +1185,51 @@ body {
 
 .en-espera__motivo {
   color: var(--texto-suave);
+}
+
+/* T-053 · REQ-CUN03-03, 05. La sección Tareas: una lista por franja, con «Hecho» de un toque */
+.tareas__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tarea {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--espaciado-16);
+  padding: var(--espaciado-12) 0;
+  border-top: 1px solid var(--borde-base);
+}
+
+.tarea p {
+  margin: 0;
+}
+
+.tarea__titulo {
+  font-weight: 600;
+}
+
+.tarea__detalle {
+  margin-top: 2px;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.tarea--atrasada .tarea__detalle {
+  color: var(--estado-error);
+}
+
+.etiqueta--atrasada {
+  background: var(--estado-error-suave);
+  color: var(--estado-error);
+}
+
+.tareas__error {
+  margin: var(--espaciado-12) 0 0;
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border-radius: var(--radio-sm);
+  background: var(--estado-error-suave);
+  color: var(--estado-error);
 }

@@ -25,6 +25,7 @@ FASE_POR_PREFIJO = {
     "CUN01": "1",
     "CAP": "2",
     "AGT": "2",
+    "CUN03": "1",
     "CUN02": "3",
     "CUN05": "4",
     "CUN07": "4",

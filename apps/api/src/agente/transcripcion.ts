@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   EventoAgenda,
+  Tarea,
   TurnoAsistente,
   type CierreEpisodio,
   type ConsultaConversacion,
@@ -21,7 +22,18 @@ const DESENLACE_POR_TIPO: Readonly<Record<string, DesenlaceEpisodio>> = {
   'agenda.registrar': 'registrado',
   'agenda.modificar': 'movido',
   'agenda.cancelar': 'cancelado',
+  // T-051: tareas personales. `tareas.actualizar` se distingue por su carga, en `desenlaceDe`
+  'tareas.registrar': 'registrado',
+  'tareas.actualizar': 'movido',
+  'tareas.completar': 'completado',
 };
+
+function desenlaceDe(op: { tipo: string; carga: unknown }): DesenlaceEpisodio {
+  const carga = op.carga as { cancelar?: unknown; reabrir?: unknown } | null;
+  if (op.tipo === 'tareas.actualizar' && carga?.cancelar === true) return 'cancelado';
+  if (op.tipo === 'tareas.completar' && carga?.reabrir === true) return 'movido';
+  return DESENLACE_POR_TIPO[op.tipo] ?? 'sin_accion';
+}
 
 type OperacionDelEpisodio = { tipo: string; estado: string; motivoEspera?: string | null; carga: unknown; resultado: unknown };
 
@@ -35,11 +47,12 @@ export function cierreDe(cerradaEn: Date | null, operaciones: OperacionDelEpisod
     operaciones.find((o) => o.estado === 'en_espera' && o.motivoEspera === 'funcion_por_llegar') ??
     operaciones.find((o) => o.estado === 'descartada');
   if (!op) return { en: cerradaEn.toISOString(), desenlace: 'sin_accion', titulo: null };
-  const desenlace = op.estado === 'descartada' ? 'descartado' : op.estado === 'en_espera' ? 'guardado' : (DESENLACE_POR_TIPO[op.tipo] ?? 'sin_accion');
+  const desenlace = op.estado === 'descartada' ? 'descartado' : op.estado === 'en_espera' ? 'guardado' : desenlaceDe(op);
   const evento = EventoAgenda.safeParse(op.resultado);
+  const tarea = Tarea.safeParse(op.resultado);
   const carga = op.carga as { titulo?: unknown; texto?: unknown } | null;
   const deCarga = carga?.titulo ?? carga?.texto;
-  const titulo = evento.success ? evento.data.titulo : typeof deCarga === 'string' ? deCarga : null;
+  const titulo = evento.success ? evento.data.titulo : tarea.success ? tarea.data.titulo : typeof deCarga === 'string' ? deCarga : null;
   return { en: cerradaEn.toISOString(), desenlace, titulo };
 }
 

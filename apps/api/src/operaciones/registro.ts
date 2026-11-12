@@ -26,7 +26,8 @@ export interface EjecutorOperacion<C = unknown> {
   readonly nombresDeCampos?: Readonly<Record<string, string>>;
   proponer(contexto: ContextoSolicitud, carga: C): Promise<Propuesta<C>>;
   // Único lugar donde una operación produce su efecto (AD-09).
-  ejecutar(contexto: ContextoSolicitud, carga: C): Promise<ResultadoEjecucion>;
+  // `operacion.id` permite al efecto anotar qué Operación lo produjo (p. ej. `tarea.operacion_id`, plan de CUN-03 §3)
+  ejecutar(contexto: ContextoSolicitud, carga: C, operacion?: { id: string }): Promise<ResultadoEjecucion>;
 }
 
 @Injectable()

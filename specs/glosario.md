@@ -38,7 +38,7 @@
 | Término | Definición | Origen | No confundir con |
 |---|---|---|---|
 | **Compromiso** | Algo con fecha y hora en la agenda del usuario. Es un **Evento de Agenda** (EN-02) | E1 EN-02 | *Compromiso de reunión*: ver §6, conflicto C-1 |
-| **Tarea** | Algo que hay que hacer y que tiene un responsable (EN-04). Puede ser personal o delegada | E1 EN-04; RN-EST-02 | *Apunte*, que no pide nada |
+| **Tarea** | Algo que hay que hacer y que tiene un responsable (EN-04). Puede ser personal o delegada. La **personal** es la que una persona se pide a sí misma: solo ella la ve, tiene tres estados (**pendiente, completada y cancelada**; una cancelada no se borra) y se muestra en tres franjas: «con fecha», «sin fecha» y «esperando de alguien». *Borrador del 11 de noviembre de 2026, pendiente de aval* | E1 EN-04; RN-EST-02; REQ-CUN03-03, 06, 10 | *Apunte*, que no pide nada |
 | **Pendiente sin fecha** | Tarea sin fecha, ya sea porque no se le dio o porque no cabía en el día pedido (R-1) | REQ-CAP-02, REQ-CAP-07 | — |
 | **Petición** | Algo que un miembro le pide a un compañero de su equipo sin ser su responsable. El compañero la acepta o la rechaza; mientras no la acepta, no es una tarea suya (REQ-CUN07-18) | Decisión del equipo, 23 de octubre de 2026 | *Encargo*, que solo hace el responsable |
 | **Esperando de alguien** | Tarea cuyo avance depende de un tercero. Solo se guarda qué se espera y de quién (R-12) | REQ-CAP-02; R-12 | — |

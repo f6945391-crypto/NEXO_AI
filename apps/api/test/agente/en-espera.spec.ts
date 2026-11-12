@@ -134,19 +134,36 @@ describe('T-033 · lo pedido en espera', () => {
     });
   });
 
-  describe('agente.tarea-queda-en-espera', () => {
-    it('una tarea se reconoce, se dice y queda en espera; no se crea ninguna tarea ni compromiso, y el trabajador no la toca (REQ-AGT-02)', async () => {
+  describe('agente.en-espera-tarea-a-propuesta', () => {
+    it('una tarea pedida ya no queda en espera: se propone con tarjeta y no existe hasta confirmar (T-051, REQ-CUN03-01)', async () => {
       const r = await enviar('Recuérdame pagar el recibo antes del sábado');
-      expect(tipos(r.turnos)).toEqual(['persona', 'en_espera']);
-      expect(r.turnos[1]).toMatchObject({ motivo: 'funcion_por_llegar' });
-      expect((r.turnos[1] as { texto: string }).texto).toBe(
-        'Lo guardé como tarea: «pagar el recibo antes del sábado». Las tareas llegan en una próxima versión, así que por ahora no se ha creado nada.',
-      );
-      expect(await prisma.operacion.findFirstOrThrow()).toMatchObject({ estado: 'en_espera', motivoEspera: 'funcion_por_llegar', tipo: 'tareas.registrar' });
-      // No hace falta otra vuelta del modelo
-      expect(simulado.peticiones.at(-1)!.mensajes.filter((m) => m.rol === 'herramienta')).toHaveLength(0);
-      expect(await procesador.repasar()).toMatchObject({ atendidas: 0 });
-      expect(await prisma.operacion.findFirstOrThrow()).toMatchObject({ estado: 'en_espera' });
+      expect(tipos(r.turnos)).toEqual(['persona', 'propuesta']);
+      expect(await prisma.operacion.findFirstOrThrow()).toMatchObject({ estado: 'propuesta', tipo: 'tareas.registrar', carga: { titulo: 'pagar el recibo antes del sábado' } });
+      expect(await prisma.tarea.count()).toBe(0);
+    });
+
+    it('lo que quedó en espera por «función por llegar» el trabajador lo convierte en propuesta, sin crear ninguna tarea (T-052, REQ-CUN03-09)', async () => {
+      // Una solicitud guardada antes de que existieran las tareas, un miércoles
+      const miercoles = new Date('2026-11-04T15:00:00Z');
+      const guardada = await prisma.operacion.create({
+        data: {
+          organizacionId,
+          perfilId,
+          tipo: 'tareas.registrar',
+          origen: 'agente',
+          solicitudOriginal: 'Recuérdame pagar el recibo',
+          carga: { texto: 'pagar el recibo', clase: 'tarea' },
+          vistaConfirmacion: { accion: 'Atender lo que pediste', datos: [], irreversible: null, confirmable: false, motivoNoConfirmable: 'Las tareas llegan en una próxima versión.' },
+          estado: 'en_espera',
+          motivoEspera: 'funcion_por_llegar',
+          capturadaEn: miercoles,
+        },
+      });
+      expect(await procesador.repasar()).toMatchObject({ atendidas: 1, propuestas: 1 });
+      // La misma fila pasó a propuesta, con su momento de captura intacto, y todavía no hay tarea
+      expect(await prisma.operacion.findFirstOrThrow({ where: { id: guardada.id } })).toMatchObject({ estado: 'propuesta', motivoEspera: null, carga: { titulo: 'pagar el recibo' } });
+      expect((await prisma.operacion.findFirstOrThrow({ where: { id: guardada.id } })).capturadaEn).toEqual(miercoles);
+      expect(await prisma.tarea.count()).toBe(0);
     });
   });
 

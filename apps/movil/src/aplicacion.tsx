@@ -4,6 +4,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SesionActual } from '@nexoai/contratos';
 import { Entrar } from './pantallas/entrar';
 import { AgendaHoy } from './pantallas/agenda';
+import { Tareas } from './pantallas/tareas';
 import { Inicio, type Seccion } from './pantallas/inicio';
 import { PrimerIngreso } from './pantallas/primer-ingreso';
 import { conSesion, salir } from './sesion';
@@ -14,8 +15,7 @@ import { color, espaciado, tipografia } from './tokens';
 
 type Estado = 'cargando' | 'entrar' | 'primer-ingreso' | 'aplicacion';
 
-const VACIOS: Record<Exclude<Seccion, 'agenda'>, { titulo: string; texto: string }> = {
-  tareas: { titulo: 'Nada en tus tareas', texto: 'Cuando le pidas algo al asistente, tus tareas aparecerán aquí, ordenadas por franja.' },
+const VACIOS: Record<'actividad', { titulo: string; texto: string }> = {
   actividad: { titulo: 'Todavía no hay actividad', texto: 'Aquí verás cuánto tiempo dedicaste a cada cosa y todo lo que el asistente hizo por ti.' },
 };
 
@@ -52,10 +52,12 @@ export function Aplicacion() {
           contenido={(seccion, abrirCaptura, version) =>
             seccion === 'agenda' ? (
               <AgendaHoy alSalir={cerrarSesion} alAbrirCaptura={abrirCaptura} version={version} />
+            ) : seccion === 'tareas' ? (
+              <Tareas alSalir={cerrarSesion} alAbrirCaptura={abrirCaptura} version={version} />
             ) : (
               <View style={estilos.vacio}>
-                <Text style={estilos.vacioTitulo}>{VACIOS[seccion].titulo}</Text>
-                <Text style={estilos.vacioTexto}>{VACIOS[seccion].texto}</Text>
+                <Text style={estilos.vacioTitulo}>{VACIOS.actividad.titulo}</Text>
+                <Text style={estilos.vacioTexto}>{VACIOS.actividad.texto}</Text>
               </View>
             )
           }

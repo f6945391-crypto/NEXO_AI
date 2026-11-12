@@ -115,6 +115,8 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
       await base.turnoTranscripcion.create({
         data: { id: randomUUID(), organizacionId, perfilId, conversacionId: conversacion.id, en: new Date(), tipo: 'texto', datos: {} },
       });
+      // Y una tarea personal (T-046)
+      await base.tarea.create({ data: { organizacionId, perfilId, titulo: 'Pagar el recibo' } });
     }
     deA = aislarPorOrganizacion(base, orgA);
   });

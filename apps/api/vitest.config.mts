@@ -8,9 +8,10 @@ const entorno = fileURLToPath(new URL('../../.env', import.meta.url));
 if (existsSync(entorno)) process.loadEnvFile(entorno);
 // La aplicación bajo prueba usa la base de prueba, nunca la de desarrollo.
 if (process.env.DATABASE_URL_PRUEBA) process.env.DATABASE_URL = process.env.DATABASE_URL_PRUEBA;
-process.env.JWT_SECRETO ??= 'solo-para-pruebas';
+// `||=` y no `??=`: el .env copiado de .env.example trae estas variables vacías, y una cadena vacía no es nula.
+process.env.JWT_SECRETO ||= 'solo-para-pruebas';
 // Clave de prueba de 32 bytes para cifrar tokens de Google (T-007). La real vive en .env.
-process.env.TOKENS_CLAVE_CIFRADO ??= Buffer.alloc(32, 7).toString('base64');
+process.env.TOKENS_CLAVE_CIFRADO ||= Buffer.alloc(32, 7).toString('base64');
 
 // T-030: las pruebas nunca llaman a un proveedor de modelo real, aunque el .env tenga uno (Groq, H-AGT-13).
 // La que necesita un modelo inyecta el simulado.

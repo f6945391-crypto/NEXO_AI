@@ -45,8 +45,8 @@ test.describe('movil.captura-propone-y-confirma', () => {
 test.describe('movil.captura-en-espera', () => {
   test('lo que queda en espera se ve como en espera, no como un fallo, y sigue al volver a abrir la capa (REQ-CAP-23)', async ({ page }) => {
     await entrar(page, cuentas.capturaEspera.correo);
-    await pedir(page, 'Recuérdame pagar el recibo');
-    const aviso = page.getByText(/^En espera\. Lo guardé como tarea: «pagar el recibo»/);
+    await pedir(page, 'Agéndame una llamada mañana a las 9');
+    const aviso = page.getByText(/^En espera\. Para eso necesito permiso para ver y editar tu calendario de Google/);
     await expect(aviso).toBeVisible();
     await expect(page.getByRole('alert')).toHaveCount(0);
 

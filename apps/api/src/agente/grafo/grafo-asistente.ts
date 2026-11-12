@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Annotation, END, interrupt, START, StateGraph } from '@langchain/langgraph';
-import { EventoAgenda, TurnoDeHerramienta, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
+import { cuando as cuandoDeTarea } from '../../tareas/dominio/formato';
+import { EventoAgenda, Tarea, TurnoDeHerramienta, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
 import { fechaLarga, horario, nombreDeZona } from '../../agenda/formato';
 import type { ContextoSolicitud } from '../../identidad/contexto';
 import type { OperacionesService } from '../../operaciones/operaciones.service';
@@ -29,6 +30,9 @@ export const PREGUNTAS: Readonly<Record<string, string>> = {
   horaInicio: '¿A qué hora empieza?',
   titulo: '¿Cómo lo llamo?',
   cambio: '¿Qué quieres cambiar: el día, la hora o el título?',
+  // T-051 · REQ-CUN03-07: una tarea «esperando de alguien» necesita saber de quién y qué
+  esperaDe: '¿De quién esperas que te responda?',
+  esperaQue: '¿Qué esperas recibir?',
 };
 
 // P-11, REQ-CUN01-11, REQ-CAP-24 · T-033: el aviso de lo que queda en espera lo escribe el código
@@ -91,6 +95,15 @@ function recortar(mensajes: MensajeModelo[]): MensajeModelo[] {
 
 // REQ-CUN01-04: el resultado sale de lo que devolvió la Operación, no de lo propuesto
 function textoDelResultado(op: OperacionRespuesta, zona: string): string {
+  // T-051 · REQ-CUN03-01, 05, 06: lo que quedó de una tarea, tal como lo devolvió la Operación
+  const tarea = Tarea.safeParse(op.resultado);
+  if (tarea.success) {
+    const t = tarea.data;
+    if (op.tipo === 'tareas.completar') return t.estado === 'pendiente' ? `Listo: reabrí «${t.titulo}».` : `Listo: marqué «${t.titulo}» como hecha.`;
+    if (t.estado === 'cancelada') return `Listo: cancelé «${t.titulo}».`;
+    const cuando = cuandoDeTarea(t).toLowerCase();
+    return op.tipo === 'tareas.actualizar' ? `Listo: «${t.titulo}» quedó así: ${cuando}.` : `Listo: anoté «${t.titulo}» (${cuando}).`;
+  }
   const evento = EventoAgenda.safeParse(op.resultado);
   if (!evento.success) return 'Listo.';
   const { titulo, inicio, fin, todoElDia } = evento.data;
@@ -192,6 +205,7 @@ export function construirGrafo(
         const base = { id: randomUUID(), en: ahora() };
         if (turno.data.tipo === 'agenda') turnos.push({ ...base, tipo: 'agenda', lista: turno.data.lista });
         else if (turno.data.tipo === 'propuesta') turnos.push({ ...base, tipo: 'propuesta', operacion: turno.data.operacion });
+        else if (turno.data.tipo === 'texto') turnos.push({ ...base, tipo: 'texto', texto: turno.data.texto });
         else {
           turnos.push({ ...base, ...turno.data });
           guardada = true;
