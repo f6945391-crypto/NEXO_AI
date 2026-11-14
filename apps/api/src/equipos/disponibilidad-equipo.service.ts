@@ -426,19 +426,35 @@ export class DisponibilidadEquipoService {
     // Si falta algun participante, no confirmar
     // disponibilidad de todo el equipo.
     // Volver a comprobar los consentimientos antes de responder.
-const integrantesActualizados =
-  await this.equipos.integrantes(contexto, equipoId);
+    const integrantesActualizados =
+      await this.equipos.integrantes(contexto, equipoId);
 
-const consentimientosVigentes =
-  integrantesActualizados.length === integrantes.length &&
-  integrantesActualizados.every((integrante) =>
-    integrante.estadoConsentimiento === 'concedida',
-  );
+    const consentimientosActuales = new Map(
+      integrantesActualizados.map((integrante) => [
+        integrante.perfilId,
+        integrante.estadoConsentimiento,
+      ]),
+    );
 
-const disponibilidadCompleta =
-  sinDatos.length === 0 &&
-  integrantes.length > 0 &&
-  consentimientosVigentes;
+    for (const integrante of integrantes) {
+      if (
+        consentimientosActuales.get(integrante.perfilId) !== 'concedida' &&
+        !sinDatos.includes(integrante.perfilId)
+      ) {
+        sinDatos.push(integrante.perfilId);
+      }
+    }
+
+    const consentimientosVigentes =
+      integrantesActualizados.length === integrantes.length &&
+      integrantesActualizados.every((integrante) =>
+        integrante.estadoConsentimiento === 'concedida',
+      );
+
+    const disponibilidadCompleta =
+      sinDatos.length === 0 &&
+      integrantes.length > 0 &&
+      consentimientosVigentes;
 
     // RN-CAL-01: consultar la zona horaria del solicitante.
     const db = this.prisma.deOrganizacion(contexto.organizacionId);
