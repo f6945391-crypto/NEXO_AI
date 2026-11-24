@@ -65,6 +65,24 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
           estado: 'propuesta',
         },
       });
+      // CUN-05: un equipo y un integrante por organización.
+      // Permite comprobar que sus datos no sean visibles desde otra organización.
+      const equipo = await base.equipo.create({
+        data: {
+          organizacionId,
+          nombre: 'Equipo de prueba',
+        },
+      });
+
+      await base.miembroDeEquipo.create({
+        data: {
+          organizacionId,
+          equipoId: equipo.id,
+          perfilId,
+          rolEnEquipo: 'responsable',
+        },
+      });
+
       // Y un permiso de Google por organización (T-007).
       await base.consentimientoIntegracion.create({
         data: { organizacionId, perfilId, proveedor: 'google', alcance: 'calendario', estado: 'concedido' },

@@ -1,7 +1,4 @@
-// Las tres secciones, iguales en web y móvil (R-32). Cada una con sus niveles o franjas y sus ejemplos
-// de lo que se le puede pedir al asistente, que la conversación ofrece como punto de partida.
-
-export type Seccion = 'agenda' | 'tareas' | 'actividad';
+﻿export type Seccion = 'agenda' | 'tareas' | 'actividad' | 'equipo';
 
 export const SECCIONES: Record<
   Seccion,
@@ -20,7 +17,6 @@ export const SECCIONES: Record<
   tareas: {
     nombre: 'Tareas',
     pregunta: 'Lo que hay que hacer',
-    // R-38: Tareas no tiene niveles de período, tiene franjas.
     cortes: ['Con fecha', 'Sin fecha', 'Esperando de alguien'],
     ejemplos: [
       'Recuérdame llamar al dentista',
@@ -32,6 +28,20 @@ export const SECCIONES: Record<
     nombre: 'Actividad',
     pregunta: 'Lo que pasó',
     cortes: ['Día', 'Semana', 'Mes'],
-    ejemplos: ['¿Cuánto tiempo dediqué hoy a la tesis?', 'Resume mi semana', '¿Qué hizo el asistente por mí ayer?'],
+    ejemplos: [
+      '¿Cuánto tiempo dediqué hoy a la tesis?',
+      'Resume mi semana',
+      '¿Qué hizo el asistente por mí ayer?',
+    ],
+  },
+  equipo: {
+    nombre: 'Equipo',
+    pregunta: 'Encuentra un horario para reunirse',
+    cortes: ['Disponibilidad'],
+    ejemplos: [
+      '¿Cuándo está disponible mi equipo mañana?',
+      'Busca un horario de 30 minutos para reunirnos',
+      '¿Tenemos algún horario libre esta semana?',
+    ],
   },
 };

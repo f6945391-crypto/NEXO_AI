@@ -46,6 +46,8 @@ model Organizacion {
   llamadasModelo   LlamadaModelo[]
   invocaciones     InvocacionHerramienta[]
   puntosControl    PuntoControlAgente[]
+  equipos          Equipo[]
+  miembrosDeEquipo MiembroDeEquipo[]
 
   @@map("organizacion")
 }
@@ -73,7 +75,9 @@ model PerfilUsuario {
   conversaciones     ConversacionAgente[]
   llamadasModelo     LlamadaModelo[]
   invocaciones       InvocacionHerramienta[]
+  membresiasEquipo MiembroDeEquipo[]
 
+  @@unique([id, organizacionId])
   @@index([organizacionId])
   @@map("perfil_usuario")
 }
@@ -370,4 +374,62 @@ model EventoAuditoria {
 
   @@index([organizacionId, ocurridoEn])
   @@map("evento_auditoria")
+}
+
+
+// EN-05 Equipo de Trabajo — CUN-05.
+// Cada equipo pertenece a una organización.
+model Equipo {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizacionId String   @map("organizacion_id") @db.Uuid
+  nombre         String
+  creadoEn       DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
+
+  organizacion Organizacion     @relation(fields: [organizacionId], references: [id])
+  miembros     MiembroDeEquipo[]
+
+  @@unique([id, organizacionId])
+  @@index([organizacionId])
+  @@map("equipo")
+}
+
+// Pertenencia y autoridad por equipo (D-17, REQ-ACC-16).
+enum RolEnEquipo {
+  responsable
+  integrante
+
+  @@map("rol_en_equipo")
+}
+
+// REQ-CUN05-14 y 15: consentimiento individual para compartir disponibilidad.
+enum EstadoConsentimientoEquipo {
+  pendiente
+  concedida
+  rechazada
+  revocada
+
+  @@map("estado_consentimiento_equipo")
+}
+
+model MiembroDeEquipo {
+  id             String      @id @default(uuid()) @db.Uuid
+  organizacionId String      @map("organizacion_id") @db.Uuid
+  equipoId       String      @map("equipo_id") @db.Uuid
+  perfilId       String      @map("perfil_id") @db.Uuid
+  rolEnEquipo    RolEnEquipo @map("rol_en_equipo")
+  incorporadoEn  DateTime    @default(now()) @map("incorporado_en") @db.Timestamptz(3)
+
+// Autorización concedida por el propio integrante, nunca por el responsable.
+estadoConsentimiento EstadoConsentimientoEquipo @default(pendiente) @map("estado_consentimiento")
+consentimientoCambiadoEn DateTime? @map("consentimiento_cambiado_en") @db.Timestamptz(3)
+
+  organizacion Organizacion  @relation(fields: [organizacionId], references: [id])
+  equipo       Equipo        @relation(fields: [equipoId, organizacionId], references: [id, organizacionId])
+  perfil       PerfilUsuario @relation(fields: [perfilId, organizacionId], references: [id, organizacionId])
+
+  // Un usuario no puede aparecer dos veces en el mismo equipo.
+  @@unique([equipoId, perfilId])
+  @@index([organizacionId])
+  @@index([perfilId])
+  @@map("miembro_de_equipo")
 }
