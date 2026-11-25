@@ -79,32 +79,4 @@ export class EquiposService {
       },
     });
   }
-
-  // Solo el propio integrante puede cambiar su consentimiento.
-  async cambiarMiConsentimiento(
-    contexto: ContextoSolicitud,
-    equipoId: string,
-    estado: 'concedida' | 'rechazada' | 'revocada',
-  ) {
-    const membresia = await this.verificarMembresia(
-      contexto,
-      equipoId,
-    );
-
-    const db = this.prisma.deOrganizacion(contexto.organizacionId);
-
-    return db.miembroDeEquipo.update({
-      where: { id: membresia.id },
-      data: {
-        estadoConsentimiento: estado,
-        consentimientoCambiadoEn: new Date(),
-      },
-      select: {
-        equipoId: true,
-        perfilId: true,
-        estadoConsentimiento: true,
-        consentimientoCambiadoEn: true,
-      },
-    });
-  }
 }

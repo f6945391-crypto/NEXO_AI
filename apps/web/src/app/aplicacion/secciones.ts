@@ -1,4 +1,4 @@
-﻿export type Seccion = 'agenda' | 'tareas' | 'actividad' | 'equipo';
+export type Seccion = 'agenda' | 'tareas' | 'actividad';
 
 export const SECCIONES: Record<
   Seccion,
@@ -7,7 +7,7 @@ export const SECCIONES: Record<
   agenda: {
     nombre: 'Agenda',
     pregunta: 'Lo que va a pasar',
-    cortes: ['Hoy', 'Semana', 'Mes'],
+    cortes: ['Hoy', 'Semana', 'Mes', 'Disponibilidad de equipo'],
     ejemplos: [
       'Agéndame una reunión con Vasco el viernes a las 10',
       '¿Qué tengo mañana por la tarde?',
@@ -32,16 +32,6 @@ export const SECCIONES: Record<
       '¿Cuánto tiempo dediqué hoy a la tesis?',
       'Resume mi semana',
       '¿Qué hizo el asistente por mí ayer?',
-    ],
-  },
-  equipo: {
-    nombre: 'Equipo',
-    pregunta: 'Encuentra un horario para reunirse',
-    cortes: ['Disponibilidad'],
-    ejemplos: [
-      '¿Cuándo está disponible mi equipo mañana?',
-      'Busca un horario de 30 minutos para reunirnos',
-      '¿Tenemos algún horario libre esta semana?',
     ],
   },
 };

@@ -1,4 +1,8 @@
-﻿import 'reflect-metadata';
+import {
+  respuestaSinIntervalos,
+} from './respuesta-disponibilidad';
+
+import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { IngresoRespuesta } from '@nexoai/contratos';
@@ -90,13 +94,22 @@ describe('CUN-05 - Autenticacion HTTP real', () => {
     const sesion = IngresoRespuesta.parse(ingreso.body);
 
     consultarEquipo.mockReset();
-    consultarEquipo.mockResolvedValue({
-      disponibilidadCompleta: true,
-      participantesConsultados: 1,
-      participantesSinDatos: [],
-      intervalos: [],
-      advertencia: null,
-    });
+    consultarEquipo.mockImplementation(
+      async (
+      _contexto: unknown,
+      equipoId: string,
+      desde: Date,
+      hasta: Date,
+      _duracion?: number,
+      _banda?: string,
+      seleccion?: string[],
+      ) => respuestaSinIntervalos(
+        equipoId,
+        desde,
+        hasta,
+        ['22222222-2222-4222-8222-222222222222'],
+      ),
+    );
 
     const respuesta = await request(app.getHttpServer())
       .get(`/equipos/${equipoId}/disponibilidad`)

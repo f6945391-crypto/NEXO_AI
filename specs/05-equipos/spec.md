@@ -23,7 +23,7 @@ Eso establece **cómo se encuentra** un intervalo común, pero no **cuál de var
 Las alternativas se determinan y ordenan aplicando, en este orden:
 
 1. **Duración.** Si el gerente indica una duración, solo son alternativa los intervalos libres comunes que la admitan. Si no la indica, se presentan los intervalos libres comunes tal como resultan, sin filtrar por longitud.
-2. **Banda horaria admisible.** Un intervalo fuera de la banda laboral por defecto no es alternativa, aunque las agendas estén libres, salvo petición explícita del gerente.
+2. **Banda horaria admisible.** Un intervalo fuera de la banda laboral por defecto no es alternativa, aunque las agendas estén libres, salvo petición explícita de un miembro autorizado del equipo.
 3. **La más temprana primero.** Entre alternativas válidas, gana la de hora de inicio más temprana.
 4. **Desempate por holgura.** A igual hora de inicio, gana el intervalo más largo, porque deja margen.
 5. **A partir del día siguiente**, salvo que el gerente pida explícitamente el mismo día.
@@ -33,7 +33,7 @@ Las alternativas se determinan y ordenan aplicando, en este orden:
 | Franja | Tratamiento |
 |---|---|
 | 08:00 – 20:00 | Alternativa normal |
-| 20:00 – 22:00 | Solo si el gerente lo pide explícitamente |
+| 20:00 – 22:00 | Solo si un miembro autorizado del equipo lo pide explícitamente |
 | Fuera de 08:00 – 22:00 | Solo con petición explícita, y la interfaz advierte que está fuera de banda |
 
 La banda es un parámetro de la plataforma, no un dato de cada participante. Cambiar los valores es cambiar esta tabla; no afecta ningún requisito.
@@ -120,7 +120,7 @@ ENTONCES los tres se presentan como alternativa, cada uno con su duración visib
 
 ### REQ-CUN05-05
 
-**Requisito:** EL SISTEMA excluirá de las alternativas todo intervalo fuera de la banda horaria admisible, salvo que el gerente lo solicite explícitamente.
+**Requisito:** EL SISTEMA excluirá de las alternativas todo intervalo fuera de la banda horaria admisible, salvo que un miembro autorizado del equipo lo solicite explícitamente.
 
 **Origen:** RN-CAL-01 punto 2
 **Tipo:** ubicuo

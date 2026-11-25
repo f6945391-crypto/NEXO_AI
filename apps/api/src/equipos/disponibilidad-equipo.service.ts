@@ -1,6 +1,12 @@
+import { errorApi } from '../plataforma/errores';
+
+import type {
+  DisponibilidadIndividualEquipo,
+  DisponibilidadEquipoRespuesta,
+  MotivoSinDatosEquipo,
+} from '@nexoai/contratos';
 
 import {
-  BadRequestException,
   Injectable,
 } from '@nestjs/common';
 
@@ -359,7 +365,8 @@ export class DisponibilidadEquipoService {
     hasta: Date,
     duracionMinutos?: number,
   bandaHoraria: 'normal' | 'extendida' | 'fueraDeBanda' = 'normal',
-  ) {
+    participantesSeleccionados?: string[],
+  ): Promise<DisponibilidadEquipoRespuesta> {
     // Validar fechas y duracion.
     if (
       !Number.isFinite(desde.getTime()) ||
@@ -369,7 +376,9 @@ export class DisponibilidadEquipoService {
         (!Number.isFinite(duracionMinutos) ||
           duracionMinutos <= 0))
     ) {
-      throw new BadRequestException(
+      throw errorApi(
+        400,
+        'SOLICITUD_INVALIDA',
         'El rango de fechas o la duracion no son validos.',
       );
     }
@@ -381,13 +390,55 @@ export class DisponibilidadEquipoService {
     );
 
     // Obtener integrantes del equipo.
-    const integrantes = await this.equipos.integrantes(
+    const integrantesEquipo = await this.equipos.integrantes(
       contexto,
       equipoId,
     );
 
-    const ocupadosPorParticipante: IntervaloHorario[][] = [];
+    if (participantesSeleccionados !== undefined) {
+      if (
+        !Array.isArray(participantesSeleccionados) ||
+        participantesSeleccionados.length === 0 ||
+        participantesSeleccionados.some(
+          (perfilId) => typeof perfilId !== 'string' || !perfilId.trim(),
+        ) ||
+        new Set(participantesSeleccionados).size !==
+          participantesSeleccionados.length
+      ) {
+        throw errorApi(
+        400,
+        'SOLICITUD_INVALIDA',
+        'La seleccion de participantes no es valida.',
+        );
+      }
+
+      const idsEquipo = new Set(
+        integrantesEquipo.map((integrante) => integrante.perfilId),
+      );
+
+      if (
+        participantesSeleccionados.some(
+          (perfilId) => !idsEquipo.has(perfilId),
+        )
+      ) {
+        throw errorApi(
+          403,
+          'SOLICITUD_INVALIDA',
+          'Uno o mas participantes no pertenecen al equipo.',
+        );
+      }
+    }
+
+    const integrantes = participantesSeleccionados === undefined
+      ? integrantesEquipo
+      : integrantesEquipo.filter((integrante) =>
+          participantesSeleccionados.includes(integrante.perfilId),
+        );
+    const ocupadosPorParticipante = new Map<string, IntervaloHorario[]>();
     const sinDatos: string[] = [];
+
+    const motivosSinDatos =
+      new Map<string, MotivoSinDatosEquipo>();
 
     for (const integrante of integrantes) {
       // No consultar calendarios sin consentimiento.
@@ -395,6 +446,7 @@ export class DisponibilidadEquipoService {
         integrante.estadoConsentimiento !== 'concedida'
       ) {
         sinDatos.push(integrante.perfilId);
+        motivosSinDatos.set(integrante.perfilId, 'sin_consentimiento');
         continue;
       }
 
@@ -409,6 +461,7 @@ export class DisponibilidadEquipoService {
 
       if (!calendarioDisponible) {
         sinDatos.push(integrante.perfilId);
+        motivosSinDatos.set(integrante.perfilId, 'calendario_no_disponible');
         continue;
       }
 
@@ -420,17 +473,34 @@ export class DisponibilidadEquipoService {
         hasta,
       );
 
-      ocupadosPorParticipante.push(ocupados);
+      ocupadosPorParticipante.set(integrante.perfilId, ocupados);
     }
 
     // Si falta algun participante, no confirmar
     // disponibilidad de todo el equipo.
     // Volver a comprobar los consentimientos antes de responder.
+    // RN-CAL-01: consultar la zona horaria del solicitante.
+    const db = this.prisma.deOrganizacion(contexto.organizacionId);
+
+    const perfil = await db.perfilUsuario.findFirst({
+      where: { id: contexto.perfilId },
+      select: { zonaHoraria: true },
+    });
+
+    const zonaHoraria = perfil?.zonaHoraria ?? 'UTC';
+
     const integrantesActualizados =
       await this.equipos.integrantes(contexto, equipoId);
 
+    const integrantesSeleccionadosActualizados =
+      integrantesActualizados.filter((integrante) =>
+        integrantes.some(
+          (seleccionado) => seleccionado.perfilId === integrante.perfilId,
+        ),
+      );
+
     const consentimientosActuales = new Map(
-      integrantesActualizados.map((integrante) => [
+      integrantesSeleccionadosActualizados.map((integrante) => [
         integrante.perfilId,
         integrante.estadoConsentimiento,
       ]),
@@ -442,13 +512,24 @@ export class DisponibilidadEquipoService {
         !sinDatos.includes(integrante.perfilId)
       ) {
         sinDatos.push(integrante.perfilId);
+        motivosSinDatos.set(integrante.perfilId, 'autorizacion_no_vigente');
+      }
+    }
+
+    for (const perfilId of ocupadosPorParticipante.keys()) {
+      if (consentimientosActuales.get(perfilId) !== 'concedida') {
+        ocupadosPorParticipante.delete(perfilId);
+        motivosSinDatos.set(
+          perfilId,
+          'autorizacion_no_vigente',
+        );
       }
     }
 
     const consentimientosVigentes =
-      integrantesActualizados.length === integrantes.length &&
-      integrantesActualizados.every((integrante) =>
-        integrante.estadoConsentimiento === 'concedida',
+      integrantesSeleccionadosActualizados.length === integrantes.length &&
+      integrantesSeleccionadosActualizados.every(
+        (integrante) => integrante.estadoConsentimiento === 'concedida',
       );
 
     const disponibilidadCompleta =
@@ -456,24 +537,15 @@ export class DisponibilidadEquipoService {
       integrantes.length > 0 &&
       consentimientosVigentes;
 
-    // RN-CAL-01: consultar la zona horaria del solicitante.
-    const db = this.prisma.deOrganizacion(contexto.organizacionId);
-
-    const perfil = await db.perfilUsuario.findFirst({
-      where: { id: contexto.perfilId },
-      select: { zonaHoraria: true },
-    });
-
-    const zonaHoraria = perfil?.zonaHoraria ?? 'UTC';
-
     // Primero calcular disponibilidad; despues aplicar banda y duracion.
-    const intervalosComunes = disponibilidadCompleta
-      ? this.calcularDisponibilidadComun(
-          desde,
-          hasta,
-          ocupadosPorParticipante,
-        )
-      : [];
+    const intervalosComunes =
+      ocupadosPorParticipante.size > 0
+        ? this.calcularDisponibilidadComun(
+            desde,
+            hasta,
+            Array.from(ocupadosPorParticipante.values()),
+          )
+        : [];
 
     const intervalosEnBanda = this.aplicarBandaHoraria(
       intervalosComunes,
@@ -488,25 +560,116 @@ export class DisponibilidadEquipoService {
           60_000 >= duracionMinutos,
     );
 
+    const estadoDisponibilidad =
+      ocupadosPorParticipante.size === 0
+        ? 'sin_datos'
+        : intervalosEnBanda.length === 0
+          ? 'sin_intervalos_comunes'
+          : intervalos.length === 0
+            ? 'duracion_insuficiente'
+            : 'disponible';
+
+    const serializarIntervalo = (intervalo: {
+      inicio: Date;
+      fin: Date;
+    }) => ({
+      inicio: intervalo.inicio.toISOString(),
+      fin: intervalo.fin.toISOString(),
+      duracionMinutos:
+        (intervalo.fin.getTime() -
+          intervalo.inicio.getTime()) /
+        60_000,
+    });
+
+    // CUN-05: disponibilidad individual para la rejilla.
+    // Utilizar exclusivamente datos con autorizacion vigente.
+    const disponibilidadIndividual:
+      DisponibilidadIndividualEquipo[] =
+      integrantes.map(
+        (integrante): DisponibilidadIndividualEquipo => {
+          const perfilId = integrante.perfilId;
+
+          const ocupados =
+            ocupadosPorParticipante.get(perfilId);
+
+          if (ocupados === undefined) {
+            return {
+              perfilId,
+              estado: 'sin_datos',
+              motivo:
+                motivosSinDatos.get(perfilId) ??
+                'autorizacion_no_vigente',
+              intervalosOcupados: [],
+              intervalosLibres: [],
+            };
+          }
+
+          const recortados = ocupados.map(
+            (intervalo) => ({
+              inicio: new Date(
+                Math.max(
+                  intervalo.inicio.getTime(),
+                  desde.getTime(),
+                ),
+              ),
+              fin: new Date(
+                Math.min(
+                  intervalo.fin.getTime(),
+                  hasta.getTime(),
+                ),
+              ),
+            }),
+          ).filter(
+            (intervalo) =>
+              intervalo.inicio < intervalo.fin,
+          );
+
+          const normalizados =
+            this.unirOcupados(recortados);
+
+          const libres = this.calcularLibres(
+            desde,
+            hasta,
+            normalizados,
+          );
+
+          return {
+            perfilId,
+            estado: 'consultado',
+            intervalosOcupados:
+              normalizados.map(serializarIntervalo),
+            intervalosLibres:
+              libres.map(serializarIntervalo),
+          };
+        },
+      );
+
     return {
       equipoId,
       desde: desde.toISOString(),
       hasta: hasta.toISOString(),
       disponibilidadCompleta,
-      participantesConsultados:
-        ocupadosPorParticipante.length,
+      estadoDisponibilidad,
+      participantesConsultados: ocupadosPorParticipante.size,
+      zonaHoraria,
       participantesSinDatos: sinDatos,
-      intervalos: intervalos.map((intervalo) => ({
-        inicio: intervalo.inicio.toISOString(),
-        fin: intervalo.fin.toISOString(),
-        duracionMinutos:
-          (intervalo.fin.getTime() -
-            intervalo.inicio.getTime()) /
-          60_000,
+      detalleParticipantesSinDatos: sinDatos.map((perfilId) => ({
+        perfilId,
+        motivo:
+          motivosSinDatos.get(perfilId) ??
+          'autorizacion_no_vigente',
       })),
+      disponibilidadIndividual,
+      intervalosComunes:
+        intervalosEnBanda.map(serializarIntervalo),
+      intervalos: intervalos.map(serializarIntervalo),
       advertencia: [
         ...(!disponibilidadCompleta
-          ? ['No se puede confirmar la disponibilidad de todos los integrantes.']
+          ? [
+              ocupadosPorParticipante.size > 0
+                ? 'Disponibilidad parcial: los intervalos corresponden solo a los participantes con datos y consentimiento vigente. No se puede confirmar la disponibilidad de todos los integrantes.'
+                : 'No se puede confirmar la disponibilidad de todos los integrantes. Ningun participante tiene datos validos.',
+            ]
           : []),
         ...(bandaHoraria === 'fueraDeBanda'
           ? ['Atención: estás consultando horarios fuera de la banda habitual de 08:00 a 22:00.']

@@ -1,4 +1,10 @@
+import { DisponibilidadEquipoRespuesta } from '@nexoai/contratos';
+import {
+  respuestaSinIntervalos,
+} from './respuesta-disponibilidad';
+
 import 'reflect-metadata';
+import { ErrorApi } from '@nexoai/contratos';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
@@ -20,13 +26,22 @@ describe('CUN-05 - Disponibilidad mediante HTTP', () => {
     primerIngresoPendiente: false,
   };
 
-  const consultarEquipo = vi.fn().mockResolvedValue({
-    disponibilidadCompleta: true,
-    participantesConsultados: 2,
-    participantesSinDatos: [],
-    intervalos: [],
-    advertencia: null,
-  });
+  const consultarEquipo = vi.fn().mockImplementation(
+    async (
+    _contexto: unknown,
+    equipoId: string,
+    desde: Date,
+    hasta: Date,
+    _duracion?: number,
+    _banda?: string,
+    seleccion?: string[],
+    ) => respuestaSinIntervalos(
+      equipoId,
+      desde,
+      hasta,
+      ['22222222-2222-4222-8222-222222222222', '33333333-3333-4333-8333-333333333333'],
+    ),
+  );
 
   const obtenerZonaHorariaSolicitante = vi
     .fn()
@@ -43,7 +58,6 @@ describe('CUN-05 - Disponibilidad mediante HTTP', () => {
           useValue: {
             misEquipos: vi.fn(),
             integrantes: vi.fn(),
-            cambiarMiConsentimiento: vi.fn(),
           },
         },
         {
@@ -84,12 +98,65 @@ describe('CUN-05 - Disponibilidad mediante HTTP', () => {
 
     expect(respuesta.body).toMatchObject({
       disponibilidadCompleta: true,
+      estadoDisponibilidad: 'sin_intervalos_comunes',
       participantesConsultados: 2,
+      intervalosComunes: [],
       intervalos: [],
       advertencia: null,
     });
 
+    expect(respuesta.body.disponibilidadIndividual)
+      .toHaveLength(2);
+
+    for (
+      const participante of
+      respuesta.body.disponibilidadIndividual
+    ) {
+      expect(participante).toMatchObject({
+        estado: 'consultado',
+        intervalosLibres: [],
+      });
+
+      expect(participante.intervalosOcupados)
+        .toHaveLength(1);
+    }
+
+    expect(
+      DisponibilidadEquipoRespuesta.safeParse(
+        respuesta.body,
+      ).success,
+    ).toBe(true);
+
     expect(consultarEquipo).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    { duracion: undefined, esperado: undefined },
+    { duracion: '30', esperado: 30 },
+    { duracion: '60', esperado: 60 },
+    { duracion: '120', esperado: 120 },
+  ])('transmite la duracion opcional al servicio %j', async ({
+    duracion,
+    esperado,
+  }) => {
+    consultarEquipo.mockClear();
+
+    await request(app.getHttpServer())
+      .get(`/equipos/${equipoId}/disponibilidad`)
+      .query({
+        desde: '2026-11-12T08:00:00-05:00',
+        hasta: '2026-11-12T20:00:00-05:00',
+        ...(duracion === undefined
+          ? {}
+          : { duracionMinutos: duracion }),
+      })
+      .expect(200);
+
+    expect(consultarEquipo).toHaveBeenCalledTimes(1);
+
+    const llamada = consultarEquipo.mock.calls[0]!;
+
+    expect(llamada[4]).toBe(esperado);
   });
 
   it('rechaza por HTTP una consulta con una sola fecha', async () => {
@@ -112,7 +179,7 @@ describe('CUN-05 - Disponibilidad mediante HTTP', () => {
       .expect(400);
   });
 
-  it('rechaza por HTTP la banda extendida para un colaborador', async () => {
+  it('permite por HTTP la banda extendida para un colaborador', async () => {
     contexto.rol = 'colaborador';
 
     try {
@@ -123,7 +190,7 @@ describe('CUN-05 - Disponibilidad mediante HTTP', () => {
           hasta: '2026-11-12T22:00:00-05:00',
           bandaHoraria: 'extendida',
         })
-        .expect(403);
+        .expect(200);
     } finally {
       contexto.rol = 'gerente';
     }
@@ -158,4 +225,43 @@ describe('CUN-05 - Disponibilidad mediante HTTP', () => {
 
     expect(llamada[5]).toBe('normal');
   });
+
+
+  it('devuelve ErrorApi para un UUID invalido', async () => {
+    consultarEquipo.mockClear();
+
+    const respuesta = await request(app.getHttpServer())
+      .get('/equipos/identificador-invalido/disponibilidad')
+      .expect(400);
+
+    expect(ErrorApi.safeParse(respuesta.body).success)
+      .toBe(true);
+
+    expect(respuesta.body.codigo)
+      .toBe('SOLICITUD_INVALIDA');
+
+    expect(consultarEquipo).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { desde: '2026-11-12T08:00:00-05:00' },
+    { bandaHoraria: 'desconocida' },
+    { duracionMinutos: '0' },
+  ])('devuelve ErrorApi para consulta invalida %j', async (consulta) => {
+    consultarEquipo.mockClear();
+
+    const respuesta = await request(app.getHttpServer())
+      .get(`/equipos/${equipoId}/disponibilidad`)
+      .query(consulta)
+      .expect(400);
+
+    expect(ErrorApi.safeParse(respuesta.body).success)
+      .toBe(true);
+
+    expect(respuesta.body.codigo)
+      .toBe('SOLICITUD_INVALIDA');
+
+    expect(consultarEquipo).not.toHaveBeenCalled();
+  });
+
 });

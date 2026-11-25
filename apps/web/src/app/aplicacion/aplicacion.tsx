@@ -14,7 +14,6 @@ import {
   IconoCerrar,
   IconoContraer,
   IconoExpandir,
-  IconoEquipo,
   IconoTareas,
 } from './iconos';
 import { SECCIONES, type Seccion } from './secciones';
@@ -26,7 +25,6 @@ const ICONOS: Record<Seccion, () => React.JSX.Element> = {
   agenda: IconoAgenda,
   tareas: IconoTareas,
   actividad: IconoActividad,
-  equipo: IconoEquipo,
 };
 
 const NOMBRE_PLAN: Record<Plan, string> = { gratuito: 'Gratuito', personal: 'Personal', empresarial: 'Empresarial' };
@@ -70,6 +68,17 @@ export function Aplicacion({
   const [aviso, setAviso] = useState(resultadoGoogle ? (AVISO_GOOGLE[resultadoGoogle] ?? null) : null);
   const entrada = useRef<HTMLTextAreaElement>(null);
   const actual = SECCIONES[seccion];
+  const vistaEquipo = seccion === 'agenda'
+    && actual.cortes[corte] === 'Disponibilidad de equipo';
+  const vistaAgendaPersonal = seccion === 'agenda' && !vistaEquipo;
+
+  const ejemplos = vistaEquipo
+    ? [
+        'Consulta la disponibilidad de mi equipo para manana',
+        'Busca un horario de 30 minutos para reunirnos',
+        'Consulta la disponibilidad de mi equipo el viernes',
+      ]
+    : actual.ejemplos;
 
   function cambiarSeccion(nueva: Seccion) {
     setSeccion(nueva);
@@ -83,7 +92,7 @@ export function Aplicacion({
     requestAnimationFrame(() => entrada.current?.focus());
   }
 
-  const conLista = seccion === 'agenda' && corte === 0 && agenda.estado === 'lista' && agenda.compromisos.length > 0;
+  const conLista = vistaAgendaPersonal && corte === 0 && agenda.estado === 'lista' && agenda.compromisos.length > 0;
 
   // «Encargadas» es lo que encargaste a otros: el colaborador no asigna tareas (REQ-ACC-15)
   const encarga = plan === 'empresarial' && rol !== 'colaborador';
@@ -115,7 +124,7 @@ export function Aplicacion({
         </button>
       </nav>
 
-      {!expandido && <Conversacion inicial={conversacion} ejemplos={actual.ejemplos} zona={perfil?.zonaHoraria ?? undefined} entrada={entrada} />}
+      {!expandido && <Conversacion inicial={conversacion} ejemplos={ejemplos} zona={perfil?.zonaHoraria ?? undefined} entrada={entrada} />}
 
       <main className="lienzo">
         {aviso && (
@@ -129,7 +138,7 @@ export function Aplicacion({
         <header className="lienzo__cabecera">
           <div>
             <h1>{actual.nombre}</h1>
-            <p className="lienzo__pregunta">{actual.pregunta}</p>
+            <p className="lienzo__pregunta">{vistaEquipo ? 'Encuentra un horario para reunirse' : actual.pregunta}</p>
           </div>
           <button
             type="button"
@@ -150,8 +159,8 @@ export function Aplicacion({
           ))}
         </div>
 
-        <div className={`lienzo__cuerpo${conLista ? ' lienzo__cuerpo--lista' : ''}`}>
-          {seccion === 'agenda' && agenda.estado === 'sin-calendario' && (
+        <div className={`lienzo__cuerpo${(conLista || vistaEquipo) ? ' lienzo__cuerpo--lista' : ''}`}>
+          {vistaAgendaPersonal && agenda.estado === 'sin-calendario' && (
             <div className="vacio">
               <h2>Tu agenda llega con tu calendario</h2>
               <p>Para mostrarte tus compromisos, NexoAI necesita permiso para ver y editar tu calendario de Google.</p>
@@ -160,19 +169,19 @@ export function Aplicacion({
               </button>
             </div>
           )}
-          {seccion === 'agenda' && agenda.estado === 'error' && (
+          {vistaAgendaPersonal && agenda.estado === 'error' && (
             <div className="vacio" role="alert">
               <h2>No pudimos leer tu agenda</h2>
               <p>{agenda.mensaje}</p>
             </div>
           )}
-          {seccion === 'agenda' && agenda.estado === 'lista' && corte > 0 && (
+          {vistaAgendaPersonal && agenda.estado === 'lista' && corte > 0 && (
             <div className="vacio">
               <h2>Por ahora, solo el día de hoy</h2>
               <p>La vista de {cortes[corte]?.toLowerCase()} llega en una próxima versión.</p>
             </div>
           )}
-          {seccion === 'agenda' && agenda.estado === 'lista' && corte === 0 && agenda.compromisos.length === 0 && (
+          {vistaAgendaPersonal && agenda.estado === 'lista' && corte === 0 && agenda.compromisos.length === 0 && (
             <div className="vacio">
               <h2>Hoy no tienes compromisos</h2>
               <p>Para crear el primero, pídeselo al asistente con tus palabras, por ejemplo «Agéndame una reunión mañana a las 10».</p>
@@ -205,8 +214,19 @@ export function Aplicacion({
               </ol>
             </section>
           )}
-          {seccion === 'equipo' && (
-            <DisponibilidadEquipo zona={perfil?.zonaHoraria ?? 'America/Lima'} />
+          {vistaEquipo && (
+            perfil ? (
+              <DisponibilidadEquipo
+                key={perfil.perfilId}
+                zona={perfil.zonaHoraria ?? 'America/Lima'}
+                perfilId={perfil.perfilId}
+              />
+            ) : (
+              <div className="vacio">
+                <h2>No pudimos identificar tu perfil</h2>
+                <p>Vuelve a iniciar sesion para consultar tu equipo.</p>
+              </div>
+            )
           )}
           {seccion === 'tareas' && (
             <div className="vacio">
