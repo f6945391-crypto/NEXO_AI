@@ -42,7 +42,7 @@ jobs:
       - run: npm install --global pnpm@12.10.1
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit --audit-level high
-      - run: pnpm --filter @nexoai/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @nexoai/web exec playwright install chromium
       - run: pnpm verificar
         env:
           CI: "true"

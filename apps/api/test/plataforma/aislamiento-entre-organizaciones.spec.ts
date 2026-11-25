@@ -66,6 +66,24 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
           estado: 'propuesta',
         },
       });
+      // CUN-05: un equipo y un integrante por organización.
+      // Permite comprobar que sus datos no sean visibles desde otra organización.
+      const equipo = await base.equipo.create({
+        data: {
+          organizacionId,
+          nombre: 'Equipo de prueba',
+        },
+      });
+
+      await base.miembroDeEquipo.create({
+        data: {
+          organizacionId,
+          equipoId: equipo.id,
+          perfilId,
+          rolEnEquipo: 'responsable',
+        },
+      });
+
       // Y un permiso de Google por organización (T-007).
       await base.consentimientoIntegracion.create({
         data: { organizacionId, perfilId, proveedor: 'google', alcance: 'calendario', estado: 'concedido' },
@@ -111,9 +129,8 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
       });
       // Y el estado de su grafo (T-032)
       await base.puntoControlAgente.create({ data: { organizacionId, conversacionId: conversacion.id, datos: {} } });
-      // Y un equipo con su responsable (T-058). La pertenencia a la organización la crea el alta de la cuenta.
-      const equipo = await base.equipo.create({ data: { organizacionId, nombre: 'Ventas' } });
-      await base.miembroEquipo.create({ data: { organizacionId, equipoId: equipo.id, perfilId, responsable: true } });
+      // El equipo con su responsable ya está arriba (CUN-05): desde el 25 de noviembre de 2026 es el mismo
+      // modelo que usa la administración (T-058, D-F1). La pertenencia a la organización la crea el alta de la cuenta.
       // Y una tarea personal, creada por esa Operación (T-047)
       await base.tareaPersonal.create({ data: { organizacionId, perfilId, texto: 'Pagar el recibo', zonaHoraria: 'America/Lima', operacionOrigenId: operacion.id } });
       // Y su transcripción (T-038)

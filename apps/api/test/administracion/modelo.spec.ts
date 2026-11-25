@@ -61,8 +61,8 @@ describe('T-058 · clases de organización, pertenencia y equipos', () => {
 
       const beto = (await crearCuenta(prisma, { organizacionId: acme, correo: 'beto@acme.test', rol: 'gerente', plan: 'empresarial' })).perfilId;
       const ventas = await prisma.equipo.create({ data: { organizacionId: acme, nombre: 'Ventas' } });
-      await prisma.miembroEquipo.create({ data: { organizacionId: acme, equipoId: ventas.id, perfilId, responsable: true } });
-      await expect(prisma.miembroEquipo.create({ data: { organizacionId: acme, equipoId: ventas.id, perfilId: beto, responsable: true } })).rejects.toThrow();
+      await prisma.miembroDeEquipo.create({ data: { organizacionId: acme, equipoId: ventas.id, perfilId, rolEnEquipo: 'responsable' } });
+      await expect(prisma.miembroDeEquipo.create({ data: { organizacionId: acme, equipoId: ventas.id, perfilId: beto, rolEnEquipo: 'responsable' } })).rejects.toThrow();
       await expect(prisma.equipo.create({ data: { organizacionId: acme, nombre: 'Ventas' } })).rejects.toThrow();
     });
 

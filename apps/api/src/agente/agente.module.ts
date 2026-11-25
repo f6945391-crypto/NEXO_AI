@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AgendaModule } from '../agenda/agenda.module';
+import { EquiposModule } from '../equipos/equipos.module';
 import { IntegracionesModule } from '../integraciones/integraciones.module';
 import { TareasModule } from '../tareas/tareas.module';
 import { AsistenteController } from './asistente.controller';
@@ -8,6 +9,7 @@ import { TranscripcionService } from './transcripcion';
 import { ProcesadorEnEspera } from './en-espera';
 import { EjecutorHerramientas } from './herramientas/ejecutor-herramientas';
 import { HerramientasAgenda } from './herramientas/herramientas-agenda';
+import { HerramientasEquipos } from './herramientas/herramientas-equipos';
 import { HerramientasTareas } from './herramientas/herramientas-tareas';
 import { LlamadasAuditadas } from './llamadas-auditadas';
 import { GUION_DEMOSTRACION } from './modelo/guion-demostracion';
@@ -43,7 +45,7 @@ export function crearProveedorModelo(entorno: NodeJS.ProcessEnv = process.env): 
 }
 
 @Module({
-  imports: [AgendaModule, IntegracionesModule, TareasModule],
+  imports: [AgendaModule, IntegracionesModule, TareasModule, EquiposModule],
   controllers: [AsistenteController],
   providers: [
     { provide: PROVEEDOR_MODELO, useFactory: () => crearProveedorModelo() },
@@ -53,6 +55,7 @@ export function crearProveedorModelo(entorno: NodeJS.ProcessEnv = process.env): 
     EjecutorHerramientas,
     HerramientasAgenda,
     HerramientasTareas,
+    HerramientasEquipos,
     AsistenteService,
     TranscripcionService,
     ProcesadorEnEspera,

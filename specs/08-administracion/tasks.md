@@ -24,6 +24,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Pruebas:** `administracion.clases-de-organizacion`, `administracion.primer-administrador-en-el-arranque` · también `plataforma.aislamiento-entre-organizaciones` (con las tablas nuevas) y `plataforma.migracion-y-semilla`
 - **Estado:** hecha
 - **Nota (7 de noviembre de 2026):** migraciones `20261107T0300_administracion` (modelo y datos, escrita a mano y verificada con psql) y regla de datos del encargo (H-ADM-23). La cuenta personal sin afiliar y la de invitación pendiente de `e2e/cuentas.json` llegan con T-062 y T-063; la semilla de desarrollo solo marca a `gerente@nexoai.test` como administradora
+- **Nota (25 de noviembre de 2026, fusión de `main`):** la migración `20261107T0300_administracion` se reescribió sin `equipo` ni `miembro_equipo`: el modelo de equipo es el de CUN-05 (D-F1). Las reglas de nombre único y de un responsable pasan a `20261125000000_equipo_reglas_administracion`. La prueba `administracion.clases-de-organizacion` las comprueba sobre `miembro_de_equipo`
 
 ---
 
@@ -123,6 +124,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Pruebas:** `equipos.crear-y-componer`, `equipos.un-responsable`, `equipos.autoridad-por-equipo` · también `acceso.solo-el-responsable-asigna-tareas` y `acceso.colaborador-solo-ve-lo-suyo` (reescritas)
 - **Estado:** pendiente
 - **Nota (7 de noviembre de 2026):** la lectura `GET /administracion/equipos` ya existe (T-061) y la web la muestra en solo lectura (T-062)
+- **Nota (25 de noviembre de 2026, fusión de `main`):** se escribe sobre `miembro_de_equipo` de CUN-05 (D-F1), no sobre `miembro_equipo`, que no existe: la autoridad es `rol_en_equipo = 'responsable'`. Sumar una cuenta afiliada depende de INC-37
 
 ### T-067 · Equipos en la web
 
@@ -132,6 +134,7 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Hecho cuando:** la administradora crea «Ventas», suma a dos personas, nombra responsable a una y la quita; el equipo queda «Sin responsable» a la vista
 - **Prueba:** `web.administracion-equipos` (extremo a extremo)
 - **Estado:** pendiente
+- **Nota (25 de noviembre de 2026, fusión de `main`):** sobre el modelo de CUN-05 (`miembro_de_equipo`), como T-066
 
 ---
 

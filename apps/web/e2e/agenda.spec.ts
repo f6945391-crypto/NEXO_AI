@@ -159,3 +159,35 @@ test.describe('web.agenda-semana-y-mes', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 });
+
+// Fusión del 25 de noviembre de 2026 · CUN-05 (specs/05-equipos/plan.md §8). «Disponibilidad de equipo» es un
+// corte de Agenda que no es un nivel de período (INC-36): no va en la dirección y, al volver a un nivel, la
+// agenda de la persona reaparece tal cual.
+test.describe('agenda.corte-disponibilidad-de-equipo', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('el corte del equipo abre la disponibilidad y los niveles devuelven la agenda propia', async ({ page }) => {
+    await entrar(page, cuentas.agenda.correo);
+    const selector = page.getByRole('tablist', { name: 'Niveles' });
+    await expect(page.getByRole('list', { name: 'Compromisos de hoy' })).toBeVisible();
+
+    await selector.getByRole('tab', { name: 'Disponibilidad de equipo' }).click();
+    await expect(selector.getByRole('tab', { name: 'Disponibilidad de equipo' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('heading', { name: 'Disponibilidad del equipo' })).toBeVisible();
+    await expect(page.getByText('Encuentra un horario para reunirse')).toBeVisible();
+    // Lo de la agenda propia no se mezcla con el equipo
+    await expect(page.getByRole('list', { name: 'Compromisos de hoy' })).toHaveCount(0);
+    await expect(page).not.toHaveURL(/nivel=/);
+
+    await selector.getByRole('tab', { name: 'Semana' }).click();
+    await expect(page).toHaveURL(/nivel=semana/);
+    await expect(selector.getByRole('tab', { name: 'Semana' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('heading', { name: 'Disponibilidad del equipo' })).toHaveCount(0);
+
+    await selector.getByRole('tab', { name: 'Disponibilidad de equipo' }).click();
+    await expect(page.getByRole('heading', { name: 'Disponibilidad del equipo' })).toBeVisible();
+    await selector.getByRole('tab', { name: 'Hoy' }).click();
+    await expect(page.getByRole('list', { name: 'Compromisos de hoy' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Disponibilidad del equipo' })).toHaveCount(0);
+  });
+});

@@ -128,7 +128,7 @@ export class LecturasAdministracion {
     const datos = this.prisma.deOrganizacion(empresaId);
     const [miembros, enEquipos] = await Promise.all([
       datos.miembroOrganizacion.findMany({ where: { estado: { in: ['vigente', 'invitada'] } } }),
-      datos.miembroEquipo.findMany({ include: { equipo: { select: { id: true, nombre: true } } }, orderBy: { equipo: { nombre: 'asc' } } }),
+      datos.miembroDeEquipo.findMany({ include: { equipo: { select: { id: true, nombre: true } } }, orderBy: { equipo: { nombre: 'asc' } } }),
     ]);
     const cuentas = await this.cuentasDe(empresaId, miembros.map((m) => m.perfilId));
     const lista = miembros.flatMap((m) => {
@@ -152,7 +152,7 @@ export class LecturasAdministracion {
           plan: invitacion ? 'empresarial' : cuenta.plan,
           equipos: invitacion
             ? []
-            : enEquipos.filter((e) => e.perfilId === m.perfilId).map((e) => ({ id: e.equipo.id, nombre: e.equipo.nombre, responsable: e.responsable })),
+            : enEquipos.filter((e) => e.perfilId === m.perfilId).map((e) => ({ id: e.equipo.id, nombre: e.equipo.nombre, responsable: e.rolEnEquipo === 'responsable' })),
           administrador: !invitacion && m.administrador,
         }),
       ];
@@ -168,23 +168,23 @@ export class LecturasAdministracion {
     const administrador = await this.pertenencias.esAdministrador(contexto);
     const suyos = administrador
       ? null
-      : (await datos.miembroEquipo.findMany({ where: { perfilId: contexto.perfilId, responsable: true }, select: { equipoId: true } })).map((e) => e.equipoId);
+      : (await datos.miembroDeEquipo.findMany({ where: { perfilId: contexto.perfilId, rolEnEquipo: 'responsable' }, select: { equipoId: true } })).map((e) => e.equipoId);
     if (suyos && suyos.length === 0) throw errorApi(403, 'ADMINISTRACION_NO_PERMITIDA', SOLO_EL_ADMINISTRADOR);
 
     const equipos = await datos.equipo.findMany({
       where: suyos ? { id: { in: suyos } } : {},
-      include: { miembros: { orderBy: { desde: 'asc' } } },
+      include: { miembros: { orderBy: { incorporadoEn: 'asc' } } },
       orderBy: { nombre: 'asc' },
     });
     const cuentas = await this.cuentasDe(empresaId, equipos.flatMap((e) => e.miembros.map((m) => m.perfilId)));
     const correo = (perfilId: string) => cuentas.get(perfilId)?.correo ?? '';
     return equipos.map((e) => {
-      const responsable = e.miembros.find((m) => m.responsable);
+      const responsable = e.miembros.find((m) => m.rolEnEquipo === 'responsable');
       return EquipoOrganizacion.parse({
         id: e.id,
         nombre: e.nombre,
         responsable: responsable ? { perfilId: responsable.perfilId, correo: correo(responsable.perfilId) } : null,
-        miembros: e.miembros.filter((m) => !m.responsable).map((m) => ({ perfilId: m.perfilId, correo: correo(m.perfilId) })),
+        miembros: e.miembros.filter((m) => m.rolEnEquipo === 'integrante').map((m) => ({ perfilId: m.perfilId, correo: correo(m.perfilId) })),
       });
     });
   }

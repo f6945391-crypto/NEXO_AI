@@ -115,7 +115,7 @@ describe('T-059 · pertenencia en la sesión, estado de la cuenta y zona de empr
     it('un responsable que no administra entra en la zona, pero una ruta de administración lo rechaza y deja registro', async () => {
       const { correo, perfilId } = await cuentaDeAcme();
       const ventas = await prisma.equipo.create({ data: { organizacionId: acme, nombre: 'Ventas' } });
-      await prisma.miembroEquipo.create({ data: { organizacionId: acme, equipoId: ventas.id, perfilId, responsable: true } });
+      await prisma.miembroDeEquipo.create({ data: { organizacionId: acme, equipoId: ventas.id, perfilId, rolEnEquipo: 'responsable' } });
 
       const zona = await entrarEnZona(correo).expect(200);
       const r = await http().get('/prueba-zona').set('Authorization', bearer(zona.body)).expect(403);

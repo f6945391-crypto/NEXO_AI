@@ -29,7 +29,8 @@ test.describe('movil.captura-propone-y-confirma', () => {
     // H-CAP-01: plegada, con el compromiso, cuándo con su zona (P-05) y lo que puso el sistema por su cuenta
     // (decisión 19 de 02-agenda); las etiquetas, a demanda y en la misma tarjeta
     await expect(tarjeta.getByText('Revisión', { exact: true })).toBeVisible();
-    await expect(tarjeta.getByText(/^.+ · 23:00 – 00:00 · Hora de Lima \(GMT-5\)$/)).toBeVisible();
+    // T-043 (REQ-CUN01-01): el fin cae al día siguiente, y la tarjeta dice qué día
+    await expect(tarjeta.getByText(/^.+ · 23:00 – 00:00 \([a-záéíóú]+, \d+ de [a-z]+\) · Hora de Lima \(GMT-5\)$/)).toBeVisible();
     await expect(tarjeta.getByText('1 hora, porque no indicaste la hora de fin', { exact: true })).toBeVisible();
     // Al llegar, la tarjeta entera queda a la vista, botones incluidos
     await expect(tarjeta.getByRole('button', { name: 'Confirmar' })).toBeInViewport();

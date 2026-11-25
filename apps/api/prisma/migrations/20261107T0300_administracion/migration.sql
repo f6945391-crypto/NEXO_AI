@@ -1,3 +1,6 @@
+-- Reescrita el 25 de noviembre de 2026: las tablas de equipo son las de `20261110145111_agregar_equipos` (CUN-05).
+-- Esta migración creaba también "equipo" y "miembro_equipo" (T-058); se quitaron porque nunca llegó a `main` y
+-- las dos chocaban en una base nueva (D-F1 y S-1 de GUIA-FUSION-MAIN-2026-11-25.md). Lo demás no cambia.
 -- specs/08-administracion/plan.md §3 (opción B) · T-065 · REQ-ADM-01, REQ-ADM-03, REQ-ADM-04
 -- Escrita a mano: el motor de Prisma no se puede descargar en este equipo. Verificada con psql sobre una
 -- base vacía y sobre una con los datos de la semilla anterior.
@@ -43,74 +46,23 @@ CREATE TABLE "miembro_organizacion" (
     CONSTRAINT "miembro_organizacion_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "equipo" (
-    "id" UUID NOT NULL,
-    "organizacion_id" UUID NOT NULL,
-    "nombre" TEXT NOT NULL,
-    "creado_en" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "equipo_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "miembro_equipo" (
-    "id" UUID NOT NULL,
-    "organizacion_id" UUID NOT NULL,
-    "equipo_id" UUID NOT NULL,
-    "perfil_id" UUID NOT NULL,
-    "responsable" BOOLEAN NOT NULL DEFAULT false,
-    "desde" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "miembro_equipo_pkey" PRIMARY KEY ("id")
-);
-
 -- CreateIndex
 CREATE INDEX "miembro_organizacion_organizacion_id_idx" ON "miembro_organizacion"("organizacion_id");
 
 -- CreateIndex
 CREATE INDEX "miembro_organizacion_perfil_id_idx" ON "miembro_organizacion"("perfil_id");
 
--- CreateIndex
-CREATE INDEX "equipo_organizacion_id_idx" ON "equipo"("organizacion_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "equipo_organizacion_id_nombre_key" ON "equipo"("organizacion_id", "nombre");
-
--- CreateIndex
-CREATE INDEX "miembro_equipo_organizacion_id_idx" ON "miembro_equipo"("organizacion_id");
-
--- CreateIndex
-CREATE INDEX "miembro_equipo_perfil_id_idx" ON "miembro_equipo"("perfil_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "miembro_equipo_equipo_id_perfil_id_key" ON "miembro_equipo"("equipo_id", "perfil_id");
-
 -- Índices únicos parciales (Prisma no los declara; plan §3.2)
 -- H-ADM-04: una sola pertenencia vigente por perfil en todo el sistema
 CREATE UNIQUE INDEX "miembro_organizacion_un_vigente_por_perfil" ON "miembro_organizacion"("perfil_id") WHERE "estado" = 'vigente';
 -- Una invitación pendiente o una pertenencia vigente por organización y perfil
 CREATE UNIQUE INDEX "miembro_organizacion_una_abierta_por_organizacion" ON "miembro_organizacion"("organizacion_id", "perfil_id") WHERE "estado" IN ('invitada', 'vigente');
--- H-ADM-09: un responsable por equipo como mucho
-CREATE UNIQUE INDEX "miembro_equipo_un_responsable" ON "miembro_equipo"("equipo_id") WHERE "responsable";
 
 -- AddForeignKey
 ALTER TABLE "miembro_organizacion" ADD CONSTRAINT "miembro_organizacion_organizacion_id_fkey" FOREIGN KEY ("organizacion_id") REFERENCES "organizacion"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "miembro_organizacion" ADD CONSTRAINT "miembro_organizacion_perfil_id_fkey" FOREIGN KEY ("perfil_id") REFERENCES "perfil_usuario"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "equipo" ADD CONSTRAINT "equipo_organizacion_id_fkey" FOREIGN KEY ("organizacion_id") REFERENCES "organizacion"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "miembro_equipo" ADD CONSTRAINT "miembro_equipo_organizacion_id_fkey" FOREIGN KEY ("organizacion_id") REFERENCES "organizacion"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "miembro_equipo" ADD CONSTRAINT "miembro_equipo_equipo_id_fkey" FOREIGN KEY ("equipo_id") REFERENCES "equipo"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "miembro_equipo" ADD CONSTRAINT "miembro_equipo_perfil_id_fkey" FOREIGN KEY ("perfil_id") REFERENCES "perfil_usuario"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Migración de los datos existentes (plan §3.3, con la regla del encargo del 7 de noviembre de 2026)
 -- 1. Empresa si tiene más de una cuenta o alguna cuenta con el Plan Empresarial; si no, personal.

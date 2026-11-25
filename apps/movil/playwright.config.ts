@@ -14,6 +14,7 @@ export default defineConfig({
   testDir: 'e2e',
   reporter: 'list',
   workers: 1,
+  timeout: process.env.CI ? 90_000 : 30_000,
   expect: { timeout: 20_000 },
   use: {
     baseURL: `http://localhost:${PUERTO}`,

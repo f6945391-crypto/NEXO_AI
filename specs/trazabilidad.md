@@ -10,11 +10,11 @@
 | Área | Requisitos | pendiente | en curso | implementado | verificado | retirado |
 |---|---|---|---|---|---|---|
 | 01-captura | 25 | 17 | 3 | 5 | 0 | 0 |
-| 02-agenda | 15 | 0 | 2 | 13 | 0 | 0 |
+| 02-agenda | 15 | 0 | 0 | 15 | 0 | 0 |
 | 02-jornada | 35 | 25 | 0 | 10 | 0 | 0 |
 | 03-tareas | 26 | 26 | 0 | 0 | 0 | 0 |
 | 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
-| 05-equipos | 17 | 17 | 0 | 0 | 0 | 0 |
+| 05-equipos | 17 | 1 | 16 | 0 | 0 | 0 |
 | 06-acceso | 17 | 2 | 0 | 15 | 0 | 0 |
 | 07-agente | 5 | 2 | 1 | 2 | 0 | 0 |
 | 08-administracion | 32 | 15 | 4 | 13 | 0 | 0 |
@@ -153,23 +153,23 @@
 | REQ-ENC-11 | 04-comunicaciones | CUN-04, CUN-07; D-17 | 4 | — | — | retirado |
 | REQ-ENC-12 | 04-comunicaciones | CUN-04, CUN-07; D-17 | 4 | — | — | pendiente |
 | REQ-ENC-13 | 04-comunicaciones | CUN-04, CUN-07; D-17 | 4 | — | — | retirado |
-| REQ-CUN05-01 | 05-equipos | CUN-05 flujo principal, pasos 1 y 2 | 4 | — | — | pendiente |
-| REQ-CUN05-02 | 05-equipos | CUN-05 flujo principal, paso 3; RN-OP-02 | 4 | — | — | pendiente |
-| REQ-CUN05-03 | 05-equipos | RN-INF-01, RN-CAL-01 punto 1 | 4 | — | — | pendiente |
-| REQ-CUN05-04 | 05-equipos | RN-CAL-01 punto 1 | 4 | — | — | pendiente |
-| REQ-CUN05-05 | 05-equipos | RN-CAL-01 punto 2 | 4 | — | — | pendiente |
-| REQ-CUN05-06 | 05-equipos | RN-CAL-01 puntos 3 y 4 | 4 | — | — | pendiente |
-| REQ-CUN05-07 | 05-equipos | RN-CAL-01, consecuencia declarada; REQ-CUN01-10 | 4 | — | — | pendiente |
-| REQ-CUN05-08 | 05-equipos | CUN-05 EX-01 | 4 | — | — | pendiente |
-| REQ-CUN05-09 | 05-equipos | CUN-05 EX-02, RN-ER-01 | 4 | — | — | pendiente |
-| REQ-CUN05-10 | 05-equipos | CUN-05 FA-01 | 4 | — | — | pendiente |
-| REQ-CUN05-11 | 05-equipos | RN-OP-01, RN-OP-02 | 4 | — | — | pendiente |
+| REQ-CUN05-01 | 05-equipos | CUN-05 flujo principal, pasos 1 y 2 | 4 | T-114 | CUN-05 - Seleccion de participantes HTTP; CUN-05 - Contratos compartidos de equipos; CUN-05 - Herramientas del agente | en curso |
+| REQ-CUN05-02 | 05-equipos | CUN-05 flujo principal, paso 3; RN-OP-02 | 4 | T-108 | CUN-05 - Disponibilidad parcial; CUN-05 - Contratos compartidos de equipos; CUN-05 - Duracion opcional; CUN-05 - Herramientas del agente | en curso |
+| REQ-CUN05-03 | 05-equipos | RN-INF-01, RN-CAL-01 punto 1 | 4 | T-108 | CUN-05 - Disponibilidad parcial; CUN-05 - Contratos compartidos de equipos; CUN-05 - Duracion opcional; CUN-05 - Disponibilidad mediante HTTP; CUN-05 - Disponibilidad individual | en curso |
+| REQ-CUN05-04 | 05-equipos | RN-CAL-01 punto 1 | 4 | T-108 | CUN-05 - Disponibilidad común; CUN-05 - Contratos compartidos de equipos; CUN-05 - Duracion opcional; CUN-05 - Disponibilidad mediante HTTP; CUN-05 - Disponibilidad parcial; CUN-05 - Disponibilidad individual | en curso |
+| REQ-CUN05-05 | 05-equipos | RN-CAL-01 punto 2 | 4 | T-109 | CUN-05 - Reglas de bandas horarias; CUN-05 - Contratos compartidos de equipos; CUN-05 - Disponibilidad individual | en curso |
+| REQ-CUN05-06 | 05-equipos | RN-CAL-01 puntos 3 y 4 | 4 | T-109 | CUN-05 - Rango de disponibilidad por defecto; CUN-05 - Duracion opcional | en curso |
+| REQ-CUN05-07 | 05-equipos | RN-CAL-01, consecuencia declarada; REQ-CUN01-10 | 4 | T-110 | CUN-05 - Seguridad de zona horaria; CUN-05 - Contratos compartidos de equipos; CUN-05 - Herramientas del agente | en curso |
+| REQ-CUN05-08 | 05-equipos | CUN-05 EX-01 | 4 | T-108 | CUN-05 - Disponibilidad parcial; CUN-05 - Contratos compartidos de equipos; CUN-05 - Consentimiento individual mediante Operaciones; CUN-05 - Duracion opcional; CUN-05 - Disponibilidad individual; CUN-05 - Herramientas del agente | en curso |
+| REQ-CUN05-09 | 05-equipos | CUN-05 EX-02, RN-ER-01 | 4 | T-116 | CUN-05 - Disponibilidad parcial; CUN-05 - Duracion opcional | en curso |
+| REQ-CUN05-10 | 05-equipos | CUN-05 FA-01 | 4 | T-111 | CUN-05 - Seleccion de participantes | en curso |
+| REQ-CUN05-11 | 05-equipos | RN-OP-01, RN-OP-02 | 4 | T-104 | CUN-05 - Autorizacion real por membresia HTTP; CUN-05 - Contratos compartidos de equipos; CUN-05 - Herramientas del agente | en curso |
 | REQ-CUN05-12 | 05-equipos | decisión de alcance; RN-OP-02 | 4 | — | — | pendiente |
-| REQ-CUN05-13 | 05-equipos | regla de producto R-13; propuesta técnica §9, minimización | 4 | — | — | pendiente |
-| REQ-CUN05-14 | 05-equipos | regla de producto R-14; RN-OP-01 | 4 | — | — | pendiente |
-| REQ-CUN05-15 | 05-equipos | REQ-CUN05-12 y 14 | 4 | — | — | pendiente |
-| REQ-CUN05-16 | 05-equipos | decisión D-17; RN-OP-02; R-14 | 4 | — | — | pendiente |
-| REQ-CUN05-17 | 05-equipos | decisión del equipo del 23 de octubre de 2026 (rango del colaborador, pregunta 1) | 4 | — | — | pendiente |
+| REQ-CUN05-13 | 05-equipos | regla de producto R-13; propuesta técnica §9, minimización | 4 | T-107 | CUN-05 - Disponibilidad individual; CUN-05 - Herramientas del agente | en curso |
+| REQ-CUN05-14 | 05-equipos | regla de producto R-14; RN-OP-01 | 4 | T-112 | CUN-05 - Revocacion de consentimiento; CUN-05 - Contratos compartidos de equipos; CUN-05 - Consentimiento individual mediante Operaciones; CUN-05 - Disponibilidad individual | en curso |
+| REQ-CUN05-15 | 05-equipos | REQ-CUN05-12 y 14 | 4 | T-106 | CUN-05 - Disponibilidad parcial; CUN-05 - Contratos compartidos de equipos; CUN-05 - Consentimiento individual mediante Operaciones | en curso |
+| REQ-CUN05-16 | 05-equipos | decisión D-17; RN-OP-02; R-14 | 4 | T-107 | CUN-05 - Disponibilidad parcial; CUN-05 - Consentimiento individual mediante Operaciones; CUN-05 - Disponibilidad individual | en curso |
+| REQ-CUN05-17 | 05-equipos | decisión del equipo del 23 de octubre de 2026 (rango del colaborador, pregunta 1) | 4 | T-104 | CUN-05 - Autorizacion de bandas horarias; CUN-05 - Contratos compartidos de equipos; CUN-05 - Herramientas del agente | en curso |
 | REQ-ACC-01 | 06-acceso | Requisito del sistema | 1 | T-002 | acceso.sin-registro-abierto | implementado |
 | REQ-ACC-02 | 06-acceso | Requisito del sistema | 1 | T-004, T-011, T-024, T-028 | acceso.recorrido-web | implementado |
 | REQ-ACC-03 | 06-acceso | Requisito del sistema | 1 | T-004, T-011, T-028 | acceso.error-no-revela-correo | implementado |
@@ -188,7 +188,7 @@
 | REQ-ACC-16 | 06-acceso | Requisito del sistema | 4 | — | — | pendiente |
 | REQ-ACC-17 | 06-acceso | Requisito del sistema | 4 | — | — | pendiente |
 | REQ-AGT-01 | 07-agente | `PROPUESTA-TECNICA.md` §7.4, memoria de conversación; H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6 y §8.1; glosario, «Episodio» y «Nota de continuidad» | 2 | T-032, T-034, T-038, T-040, T-041 | agente.conversacion-con-contexto | en curso |
-| REQ-AGT-02 | 07-agente | decisión del equipo, 24 de octubre de 2026; REQ-CAP-02, REQ-CAP-23 | 2 | T-033, T-034 | agente.tarea-queda-en-espera | implementado |
+| REQ-AGT-02 | 07-agente | decisión del equipo, 24 de octubre de 2026; REQ-CAP-02, REQ-CAP-23; `09-tareas-personales` §10 (la tarea deja de esperar: REQ-CUN03-01); REQ-CUN03-16 (lo que las tareas personales no hacen) | 2 | T-033, T-034 | agente.tarea-queda-en-espera | implementado |
 | REQ-AGT-03 | 07-agente | H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6.1 y §8.1; `design/ARQUITECTURA-VISUAL-WEB.md` §5 y §6 («lo cerrado no se pierde») | 2 | T-038, T-039, T-041 | agente.transcripcion-persiste, web.asistente-historial | implementado |
 | REQ-AGT-04 | 07-agente | H-AGT-17; `INFORME-MEMORIA-AGENTE.md` §6.4.5; decisión 17 de `02-agenda` (las alternativas no pasan por el modelo); P-02, P-03 | 2 | T-042 | — | pendiente |
 | REQ-AGT-05 | 07-agente | H-AGT-17; `INFORME-MEMORIA-AGENTE.md` §6.4.3 y §6.4.4; glosario, «Hilo» | 2 | — | — | pendiente |

@@ -288,8 +288,9 @@ export class CerrarCuenta extends CambioDeEstado {
   // oyente de la salida de equipo cuando existan las tareas del equipo (plan §5.4, fase 4).
   protected override async despues(contexto: ContextoSolicitud, carga: CuentaCarga): Promise<Record<string, unknown>> {
     const datos = this.prisma.deOrganizacion(this.empresa(contexto));
-    const equipos = await datos.miembroEquipo.findMany({ where: { perfilId: carga.perfilId }, select: { equipoId: true } });
-    await datos.miembroEquipo.deleteMany({ where: { perfilId: carga.perfilId } });
+    // Desde el 25 de noviembre de 2026, sobre `miembro_de_equipo` de CUN-05 (D-F1)
+    const equipos = await datos.miembroDeEquipo.findMany({ where: { perfilId: carga.perfilId }, select: { equipoId: true } });
+    await datos.miembroDeEquipo.deleteMany({ where: { perfilId: carga.perfilId } });
     await datos.miembroOrganizacion.updateMany({ where: { perfilId: carga.perfilId, estado: 'vigente' }, data: { administrador: false } });
     return { equipos: equipos.map((e) => e.equipoId) };
   }

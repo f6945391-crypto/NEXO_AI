@@ -10,6 +10,7 @@ import { conectarGoogle, salir } from '../acciones';
 import { Actividad } from './actividad';
 import { AgendaMes, AgendaSemana, ListaCompromisos } from './agenda';
 import { CambioZona } from './cambio-zona';
+import { DisponibilidadEquipo } from './disponibilidad-equipo';
 import { FranjaEnEspera } from './en-espera';
 import { Conversacion } from './conversacion';
 import {
@@ -100,15 +101,29 @@ export function Aplicacion({
   const actual = SECCIONES[seccion];
   const router = useRouter();
   const [cambiando, enTransicion] = useTransition();
-  // En Agenda el nivel lo dice la dirección; en las otras secciones, el estado de la página
-  const corteVisible = seccion === 'agenda' ? NIVELES.indexOf(vista.nivel) : corte;
+  // CUN-05 (specs/05-equipos/plan.md §8): «Disponibilidad de equipo» es un corte de Agenda que no es un nivel
+  // de período (INC-36). No va en la dirección: lo recuerda el estado de la página, como los cortes de Tareas.
+  const vistaEquipo = seccion === 'agenda' && actual.cortes[corte] === 'Disponibilidad de equipo';
+  const vistaAgendaPersonal = seccion === 'agenda' && !vistaEquipo;
+  // En Agenda el nivel lo dice la dirección; en las otras secciones, y en el corte del equipo, el estado de la página
+  const corteVisible = vistaAgendaPersonal ? NIVELES.indexOf(vista.nivel) : corte;
+
+  const ejemplos = vistaEquipo
+    ? [
+        'Consulta la disponibilidad de mi equipo para mañana',
+        'Busca un horario de 30 minutos para reunirnos',
+        'Consulta la disponibilidad de mi equipo el viernes',
+      ]
+    : actual.ejemplos;
 
   function irA(nueva: VistaAgenda) {
+    setCorte(0);
     enTransicion(() => router.push(direccion(nueva), { scroll: false }));
   }
 
   function elegirCorte(indice: number) {
-    if (seccion === 'agenda') irA({ nivel: NIVELES[indice] ?? 'dia', fecha: null });
+    const nivel = NIVELES[indice];
+    if (seccion === 'agenda' && nivel) irA({ nivel, fecha: null });
     else setCorte(indice);
   }
 
@@ -124,14 +139,15 @@ export function Aplicacion({
     requestAnimationFrame(() => entrada.current?.focus());
   }
 
-  const lista = seccion === 'agenda' && agenda.estado === 'lista' ? agenda : null;
+  const lista = vistaAgendaPersonal && agenda.estado === 'lista' ? agenda : null;
   const dia = lista?.nivel === 'dia' ? lista : null;
   // T-053: con tareas del día, Hoy es una lista aunque no haya compromisos (el estado vacío va arriba)
-  const conTareasDelDia = seccion === 'agenda' && vista.nivel === 'dia' && (tareasDelDia?.tareas.length ?? 0) > 0;
+  const conTareasDelDia = vistaAgendaPersonal && vista.nivel === 'dia' && (tareasDelDia?.tareas.length ?? 0) > 0;
   // T-052: la franja de Tareas es una lista salvo que esté vacía del todo
   const franja = seccion === 'tareas' ? FRANJAS[corteVisible] : undefined;
   const conTareas = franja !== undefined && tareas.estado === 'lista' && !franjaVacia(tareas, franja);
-  const conLista = (lista !== null && (lista.nivel !== 'dia' || lista.compromisos.length > 0)) || conTareasDelDia || conTareas || seccion === 'actividad';
+  const conLista =
+    (lista !== null && (lista.nivel !== 'dia' || lista.compromisos.length > 0)) || conTareasDelDia || conTareas || seccion === 'actividad' || vistaEquipo;
 
   // «Encargadas» es lo que encargaste a otros: el colaborador no asigna tareas (REQ-ACC-15)
   const encarga = plan === 'empresarial' && rol !== 'colaborador';
@@ -172,7 +188,7 @@ export function Aplicacion({
         </div>
       </nav>
 
-      {!expandido && <Conversacion inicial={conversacion} ejemplos={actual.ejemplos} zona={perfil?.zonaHoraria ?? undefined} entrada={entrada} />}
+      {!expandido && <Conversacion inicial={conversacion} ejemplos={ejemplos} zona={perfil?.zonaHoraria ?? undefined} entrada={entrada} />}
 
       <main className="lienzo">
         {aviso && (
@@ -186,7 +202,7 @@ export function Aplicacion({
         <header className="lienzo__cabecera">
           <div>
             <h1>{actual.nombre}</h1>
-            <p className="lienzo__pregunta">{actual.pregunta}</p>
+            <p className="lienzo__pregunta">{vistaEquipo ? 'Encuentra un horario para reunirse' : actual.pregunta}</p>
           </div>
           <button
             type="button"
@@ -208,10 +224,10 @@ export function Aplicacion({
         </div>
 
         {/* REQ-CAP-25: encima de la agenda de hoy, mientras haya algo en espera */}
-        {seccion === 'agenda' && vista.nivel === 'dia' && <FranjaEnEspera cosas={enEspera} />}
+        {vistaAgendaPersonal && vista.nivel === 'dia' && <FranjaEnEspera cosas={enEspera} />}
 
         <div className={`lienzo__cuerpo${conLista ? ' lienzo__cuerpo--lista' : ''}`} aria-busy={cambiando || undefined}>
-          {seccion === 'agenda' && agenda.estado === 'sin-calendario' && (
+          {vistaAgendaPersonal && agenda.estado === 'sin-calendario' && (
             <div className="vacio">
               <h2>Tu agenda llega con tu calendario</h2>
               <p>Para mostrarte tus compromisos, NexoAI necesita permiso para ver y editar tu calendario de Google.</p>
@@ -220,7 +236,7 @@ export function Aplicacion({
               </button>
             </div>
           )}
-          {seccion === 'agenda' && agenda.estado === 'error' && (
+          {vistaAgendaPersonal && agenda.estado === 'error' && (
             <div className="vacio" role="alert">
               <h2>No pudimos leer tu agenda</h2>
               <p>{agenda.mensaje}</p>
@@ -261,7 +277,18 @@ export function Aplicacion({
           {lista?.nivel === 'semana' && <AgendaSemana agenda={lista} irA={irA} />}
           {lista?.nivel === 'mes' && <AgendaMes agenda={lista} irA={irA} />}
           {/* REQ-CUN03-13: debajo de los compromisos de Hoy, y nunca en Semana ni en Mes */}
-          {seccion === 'agenda' && vista.nivel === 'dia' && <TareasParaEsteDia dia={tareasDelDia} />}
+          {vistaAgendaPersonal && vista.nivel === 'dia' && <TareasParaEsteDia dia={tareasDelDia} />}
+          {/* CUN-05: la rejilla de disponibilidad del equipo (05-equipos) */}
+          {vistaEquipo && (
+            perfil ? (
+              <DisponibilidadEquipo key={perfil.perfilId} zona={perfil.zonaHoraria ?? 'America/Lima'} perfilId={perfil.perfilId} />
+            ) : (
+              <div className="vacio">
+                <h2>No pudimos identificar tu perfil</h2>
+                <p>Vuelve a iniciar sesión para consultar tu equipo.</p>
+              </div>
+            )
+          )}
           {franja && <SeccionTareas key={franja} tareas={tareas} franja={franja} alPedir={abrirCaptura} />}
           {/* H-TP-13: «Encargadas» es de 03-tareas, no de las tareas personales */}
           {seccion === 'tareas' && !franja && (

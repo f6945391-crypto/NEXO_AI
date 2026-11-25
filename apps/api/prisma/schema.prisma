@@ -50,8 +50,9 @@ model Organizacion {
   puntosControl    PuntoControlAgente[]
   turnos           TurnoTranscripcion[]
   miembros         MiembroOrganizacion[]
+  // 05-equipos (CUN-05); desde el 25 de noviembre de 2026 los lee también 08-administracion (D-F1)
   equipos          Equipo[]
-  miembrosEquipo   MiembroEquipo[]
+  miembrosDeEquipo MiembroDeEquipo[]
   // 09-tareas-personales
   tareas           TareaPersonal[]
 
@@ -86,10 +87,11 @@ model PerfilUsuario {
   invocaciones       InvocacionHerramienta[]
   turnos             TurnoTranscripcion[]
   pertenencias       MiembroOrganizacion[]
-  equipos            MiembroEquipo[]
+  membresiasEquipo   MiembroDeEquipo[]
   // 09-tareas-personales
   tareas             TareaPersonal[]
 
+  @@unique([id, organizacionId])
   @@index([organizacionId])
   @@map("perfil_usuario")
 }
@@ -521,38 +523,64 @@ model MiembroOrganizacion {
   @@map("miembro_organizacion")
 }
 
-// EN-05 Equipo de Trabajo (REQ-ADM-28)
+// EN-05 Equipo de Trabajo — CUN-05 (specs/05-equipos/plan.md). Cada equipo pertenece a una organización.
+// Desde la fusión del 25 de noviembre de 2026 es el único modelo de equipo: lo lee y lo administrará
+// 08-administracion (REQ-ADM-28), que retiró el suyo (D-F1).
 model Equipo {
   id             String   @id @default(uuid()) @db.Uuid
   organizacionId String   @map("organizacion_id") @db.Uuid
   nombre         String
   creadoEn       DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
 
-  organizacion Organizacion    @relation(fields: [organizacionId], references: [id])
-  miembros     MiembroEquipo[]
+  organizacion Organizacion      @relation(fields: [organizacionId], references: [id])
+  miembros     MiembroDeEquipo[]
 
+  @@unique([id, organizacionId])
+  // REQ-ADM-28 (migración 20261125000000). El responsable único (REQ-ADM-30) es un índice parcial del SQL
   @@unique([organizacionId, nombre])
   @@index([organizacionId])
   @@map("equipo")
 }
 
-// Un responsable por equipo como mucho (H-ADM-09): índice único parcial en el SQL de la migración.
-model MiembroEquipo {
-  id             String   @id @default(uuid()) @db.Uuid
-  organizacionId String   @map("organizacion_id") @db.Uuid
-  equipoId       String   @map("equipo_id") @db.Uuid
-  perfilId       String   @map("perfil_id") @db.Uuid
-  responsable    Boolean  @default(false)
-  desde          DateTime @default(now()) @db.Timestamptz(3)
+// Pertenencia y autoridad por equipo (D-17, REQ-ACC-16).
+enum RolEnEquipo {
+  responsable
+  integrante
+
+  @@map("rol_en_equipo")
+}
+
+// REQ-CUN05-14 y 15: consentimiento individual para compartir disponibilidad.
+enum EstadoConsentimientoEquipo {
+  pendiente
+  concedida
+  rechazada
+  revocada
+
+  @@map("estado_consentimiento_equipo")
+}
+
+model MiembroDeEquipo {
+  id             String      @id @default(uuid()) @db.Uuid
+  organizacionId String      @map("organizacion_id") @db.Uuid
+  equipoId       String      @map("equipo_id") @db.Uuid
+  perfilId       String      @map("perfil_id") @db.Uuid
+  rolEnEquipo    RolEnEquipo @map("rol_en_equipo")
+  incorporadoEn  DateTime    @default(now()) @map("incorporado_en") @db.Timestamptz(3)
+
+  // Autorización concedida por el propio integrante, nunca por el responsable.
+  estadoConsentimiento     EstadoConsentimientoEquipo @default(pendiente) @map("estado_consentimiento")
+  consentimientoCambiadoEn DateTime?                  @map("consentimiento_cambiado_en") @db.Timestamptz(3)
 
   organizacion Organizacion  @relation(fields: [organizacionId], references: [id])
-  equipo       Equipo        @relation(fields: [equipoId], references: [id], onDelete: Cascade)
-  perfil       PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  equipo       Equipo        @relation(fields: [equipoId, organizacionId], references: [id, organizacionId])
+  perfil       PerfilUsuario @relation(fields: [perfilId, organizacionId], references: [id, organizacionId])
 
+  // Un usuario no puede aparecer dos veces en el mismo equipo.
   @@unique([equipoId, perfilId])
   @@index([organizacionId])
   @@index([perfilId])
-  @@map("miembro_equipo")
+  @@map("miembro_de_equipo")
 }
 
 // ---- 09-tareas-personales ----

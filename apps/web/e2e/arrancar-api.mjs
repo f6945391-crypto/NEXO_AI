@@ -64,12 +64,13 @@ if (empresas.Acme && perfiles.acmeResponsable) {
   const acme = empresas.Acme;
   const ventas = await prisma.equipo.create({ data: { organizacionId: acme, nombre: 'Ventas' } });
   const soporte = await prisma.equipo.create({ data: { organizacionId: acme, nombre: 'Soporte' } });
-  await prisma.miembroEquipo.createMany({
+  // Desde la fusión del 25 de noviembre de 2026, sobre `miembro_de_equipo` de CUN-05 (D-F1)
+  await prisma.miembroDeEquipo.createMany({
     data: [
-      { organizacionId: acme, equipoId: ventas.id, perfilId: perfiles.acmeResponsable, responsable: true },
-      { organizacionId: acme, equipoId: ventas.id, perfilId: perfiles.acmeSuspender },
-      { organizacionId: acme, equipoId: ventas.id, perfilId: perfiles.acmeRestablecer },
-      { organizacionId: acme, equipoId: soporte.id, perfilId: perfiles.acmeRestablecer },
+      { organizacionId: acme, equipoId: ventas.id, perfilId: perfiles.acmeResponsable, rolEnEquipo: 'responsable' },
+      { organizacionId: acme, equipoId: ventas.id, perfilId: perfiles.acmeSuspender, rolEnEquipo: 'integrante' },
+      { organizacionId: acme, equipoId: ventas.id, perfilId: perfiles.acmeRestablecer, rolEnEquipo: 'integrante' },
+      { organizacionId: acme, equipoId: soporte.id, perfilId: perfiles.acmeRestablecer, rolEnEquipo: 'integrante' },
     ],
   });
 }

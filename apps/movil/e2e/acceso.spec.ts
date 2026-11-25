@@ -4,7 +4,7 @@ import cuentas from './cuentas.json';
 // T-028 · REQ-ACC-02 a REQ-ACC-05 en el móvil, contra la API real de pruebas del móvil.
 test.describe('movil.acceso-recorrido', () => {
   test('unas credenciales erróneas dan el mismo mensaje que la web, sin revelar si el correo existe', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
     await page.getByLabel('Correo').fill(cuentas.credencialesErroneas.correo);
     await page.getByLabel('Contraseña', { exact: true }).fill('no-es-la-contrasena');
     await page.getByRole('button', { name: 'Entrar' }).click();
@@ -12,7 +12,7 @@ test.describe('movil.acceso-recorrido', () => {
   });
 
   test('entrar, completar el primer ingreso eligiendo la zona, llegar a la aplicación y salir', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
     await page.getByLabel('Correo').fill(cuentas.recorrido.correo);
     await page.getByLabel('Contraseña', { exact: true }).fill(cuentas.contrasenaTemporal);
     await page.getByRole('button', { name: 'Entrar' }).click();

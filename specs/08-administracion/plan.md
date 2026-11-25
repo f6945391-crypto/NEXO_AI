@@ -77,6 +77,8 @@ El costo de B: una cuenta afiliada trabaja con **dos organizaciones**, la suya p
 
 Los índices parciales se escriben a mano en el SQL de la migración (Prisma no los declara). Las tres tablas nuevas entran en `MODELOS_CON_ORGANIZACION`; si no, falla `plataforma.aislamiento-entre-organizaciones`.
 
+**Nota de la fusión del 25 de noviembre de 2026 (D-F1, `GUIA-FUSION-MAIN-2026-11-25.md`).** Las filas `equipo` y `miembro_equipo` de esta tabla **no se crearon**: se retiraron de la migración `20261107T0300_administracion` antes de que llegara a `main`. El modelo de equipo es el de `specs/05-equipos/plan.md` §4 y §12: `equipo` y `miembro_de_equipo`, donde «responsable» es `rol_en_equipo = 'responsable'`, «miembro» es `rol_en_equipo = 'integrante'` y el consentimiento va en sus columnas. Las dos reglas que esta área pedía siguen en la base, en la migración `20261125000000_equipo_reglas_administracion`: un nombre por organización (REQ-ADM-28) y un responsable por equipo como mucho (REQ-ADM-30, H-ADM-09). **Queda abierto INC-37:** `miembro_de_equipo` exige que el perfil sea de la organización del equipo, y con la opción B de §3.1 una cuenta afiliada no lo es; hay que resolverlo antes de T-063 y T-066.
+
 ### 3.3 Migración de los datos que ya existen
 
 Solo hay bases de desarrollo y de pruebas, pero la migración tiene que dejarlas coherentes:

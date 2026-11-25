@@ -1337,4 +1337,211 @@ body {
   display: block;
   font-weight: 400;
   font-size: var(--tam-etiqueta);
+\n/* CUN-05: rejilla de disponibilidad reutilizable */
+
+.rejilla-disponibilidad {
+  width: 100%;
+  min-width: 0;
+  margin-block: var(--espaciado-24);
+  color: var(--texto-fuerte);
+}
+
+.rejilla-encabezado {
+  margin-bottom: var(--espaciado-16);
+}
+
+.rejilla-encabezado h3 {
+  margin: 0 0 4px;
+}
+
+.rejilla-encabezado p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.rejilla-aviso-parcial {
+  padding: var(--espaciado-12);
+  margin-bottom: var(--espaciado-16);
+  border-radius: var(--radio-sm);
+  background: var(--estado-advertencia-suave);
+  color: var(--texto-fuerte);
+}
+
+.rejilla-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaciado-16);
+  margin-bottom: var(--espaciado-16);
+  font-size: 12px;
+}
+
+.rejilla-leyenda > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rejilla-muestra {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.rejilla-libre {
+  background: var(--superficie-base);
+}
+
+.rejilla-ocupado {
+  background: var(--borde-fuerte);
+}
+
+.rejilla-comun {
+  background: var(--estado-exito-suave);
+  border-color: var(--estado-exito);
+}
+
+.rejilla-sin-datos {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--superficie-hundida),
+    var(--superficie-hundida) 5px,
+    var(--borde-fuerte) 5px,
+    var(--borde-fuerte) 6px
+  );
+}
+
+.rejilla-desplazamiento {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: var(--espaciado-8);
+}
+
+.rejilla-tabla {
+  width: 100%;
+  min-width: 720px;
+}
+
+.rejilla-fila {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--espaciado-12);
+  margin-bottom: 6px;
+}
+
+.rejilla-participante {
+  min-width: 0;
+  padding: var(--espaciado-8);
+  font-size: 12px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.rejilla-eje {
+  position: relative;
+  height: 32px;
+}
+
+.rejilla-marca {
+  position: absolute;
+  top: 8px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+.rejilla-marca-inicial {
+  transform: none;
+}
+
+.rejilla-marca-final {
+  transform: translateX(-100%);
+}
+
+.rejilla-linea {
+  position: relative;
+  isolation: isolate;
+  min-height: 44px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rejilla-guia {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--borde-fuerte);
+  opacity: 0.45;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.rejilla-bloque {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 3px;
+  z-index: 3;
+}
+
+.rejilla-banda-comun {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--estado-exito-suave);
+  border-inline: 1px solid var(--estado-exito);
+  box-sizing: border-box;
+  z-index: 2;
+}
+
+.rejilla-motivo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--superficie-hundida);
+  color: var(--texto-suave);
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 4;
+}
+
+.rejilla-duraciones {
+  position: relative;
+  height: 28px;
+}
+
+.rejilla-duracion {
+  position: absolute;
+  top: 4px;
+  color: var(--estado-exito);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rejilla-fila-eje .rejilla-participante,
+.rejilla-fila-duraciones .rejilla-participante {
+  color: var(--texto-suave);
+}
+
+.disponibilidad-equipo {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--espaciado-24);
 }

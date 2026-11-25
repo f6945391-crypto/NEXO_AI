@@ -86,18 +86,20 @@ describe('T-061 · cuentas de la organización', () => {
       const invitado = await afiliada();
       await prisma.miembroOrganizacion.update({ where: { id: invitado.miembroId }, data: { estado: 'invitada' } });
       const ventas = await prisma.equipo.create({ data: { organizacionId: acme, nombre: 'Ventas' } });
-      await prisma.miembroEquipo.create({ data: { organizacionId: acme, equipoId: ventas.id, perfilId: lista.perfilId, responsable: true } });
-      await prisma.miembroEquipo.create({ data: { organizacionId: acme, equipoId: ventas.id, perfilId: vasco.perfilId } });
+      await prisma.miembroDeEquipo.create({ data: { organizacionId: acme, equipoId: ventas.id, perfilId: lista.perfilId, rolEnEquipo: 'responsable' } });
+      // INC-37 (fusión del 25 de noviembre de 2026): `miembro_de_equipo` exige que el perfil sea de la organización
+      // del equipo, y la cuenta afiliada sigue en la suya (H-ADM-16). Hasta decidirlo, la integrante es una propia.
+      await prisma.miembroDeEquipo.create({ data: { organizacionId: acme, equipoId: ventas.id, perfilId: suspendida.perfilId, rolEnEquipo: 'integrante' } });
 
       const r = await http().get('/administracion/personas').set('Authorization', zona).expect(200);
       const filas = PersonaOrganizacion.array().parse(r.body);
       expect(filas.map((p) => [p.correo, p.clase, p.estado, p.plan, p.equipos.map((e) => `${e.nombre}${e.responsable ? ' (responsable)' : ''}`), p.administrador])).toEqual([
         [invitado.correo, 'invitacion', 'invitacion_pendiente', 'empresarial', [], false],
         [correoAna, 'propia', 'activa', 'empresarial', [], true],
-        [vasco.correo, 'afiliada', 'activa', 'empresarial', ['Ventas'], false],
+        [vasco.correo, 'afiliada', 'activa', 'empresarial', [], false],
         [lista.correo, 'propia', 'activa', 'empresarial', ['Ventas (responsable)'], false],
         [pendiente.correo, 'propia', 'primer_ingreso_pendiente', 'personal', [], false],
-        [suspendida.correo, 'propia', 'suspendida', 'empresarial', [], false],
+        [suspendida.correo, 'propia', 'suspendida', 'empresarial', ['Ventas'], false],
       ]);
       // Ni la zona horaria ni el plan propio de la afiliada (REQ-ADM-08)
       expect(JSON.stringify(r.body)).not.toContain('America/Lima');
@@ -106,7 +108,7 @@ describe('T-061 · cuentas de la organización', () => {
     it('a quien no administra no se le muestra, y queda registrado', async () => {
       const responsable = await propia();
       const ventas = await prisma.equipo.create({ data: { organizacionId: acme, nombre: 'Ventas' } });
-      await prisma.miembroEquipo.create({ data: { organizacionId: acme, equipoId: ventas.id, perfilId: responsable.perfilId, responsable: true } });
+      await prisma.miembroDeEquipo.create({ data: { organizacionId: acme, equipoId: ventas.id, perfilId: responsable.perfilId, rolEnEquipo: 'responsable' } });
       const suya = token((await http().post('/administracion/entrar').send({ correo: responsable.correo, contrasena: CONTRASENA }).expect(200)).body);
       const r = await http().get('/administracion/personas').set('Authorization', suya).expect(403);
       expect(ErrorApi.parse(r.body).codigo).toBe('ADMINISTRACION_NO_PERMITIDA');
@@ -231,7 +233,7 @@ describe('T-061 · cuentas de la organización', () => {
     it('dar de baja dice que no se deshace, cierra la cuenta para siempre, la saca de sus equipos y no borra nada', async () => {
       const beto = await propia();
       const ventas = await prisma.equipo.create({ data: { organizacionId: acme, nombre: 'Ventas' } });
-      await prisma.miembroEquipo.create({ data: { organizacionId: acme, equipoId: ventas.id, perfilId: beto.perfilId, responsable: true } });
+      await prisma.miembroDeEquipo.create({ data: { organizacionId: acme, equipoId: ventas.id, perfilId: beto.perfilId, rolEnEquipo: 'responsable' } });
 
       const p = await proponer('administracion.cerrar_cuenta', { perfilId: beto.perfilId });
       expect(p.vistaConfirmacion.irreversible).toMatch(/No se puede deshacer/);
@@ -240,7 +242,7 @@ describe('T-061 · cuentas de la organización', () => {
       expect(ErrorApi.parse((await entrar(beto.correo).expect(403)).body).codigo).toBe('CUENTA_CERRADA');
       const reactivar = await proponer('administracion.reactivar_cuenta', { perfilId: beto.perfilId });
       expect(reactivar.vistaConfirmacion.confirmable).toBe(false);
-      expect(await prisma.miembroEquipo.count({ where: { perfilId: beto.perfilId } })).toBe(0);
+      expect(await prisma.miembroDeEquipo.count({ where: { perfilId: beto.perfilId } })).toBe(0);
       expect(await prisma.perfilUsuario.count({ where: { id: beto.perfilId } })).toBe(1);
       expect((await personas()).find((x) => x.perfilId === beto.perfilId)?.estado).toBe('cerrada');
     });

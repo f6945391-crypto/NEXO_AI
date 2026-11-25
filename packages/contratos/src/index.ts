@@ -11,3 +11,4 @@ export * from './plataforma';
 export * from './actividad';
 export * from './administracion';
 export * from './tareas';
+export * from './equipos';

@@ -46,7 +46,8 @@ test.describe('web.asistente-agenda-y-confirma', () => {
     const lista = page.getByRole('region', { name: /^[A-ZÁÉÍÓÚ][a-záéíóúñ]+, \d+ de / });
     await expect(lista).toContainText('Hora de Lima (GMT-5)');
     await expect(lista.getByRole('listitem')).toHaveCount(1);
-    await expect(lista).toContainText('23:00 – 00:00 Revisión');
+    // T-043 (REQ-CUN01-01): el fin cae al día siguiente, y la lista dice qué día
+    await expect(lista).toContainText(/23:00 – 00:00 \([a-záéíóú]+, \d+ de [a-z]+\) Revisión/);
 
     // T-039 · REQ-AGT-03: lo de antes sigue a la vista, separado por una línea que dice qué se hizo
     await expect(page.getByText(/^Listo: «Revisión» quedó en tu calendario/)).toBeVisible();

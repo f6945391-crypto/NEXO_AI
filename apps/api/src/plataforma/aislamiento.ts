@@ -23,10 +23,12 @@ export const MODELOS_CON_ORGANIZACION: ReadonlySet<string> = new Set([
   'PuntoControlAgente',
   // T-038: la transcripción
   'TurnoTranscripcion',
-  // T-058: pertenencia y equipos (specs/08-administracion/plan.md §3.2)
+  // T-058: pertenencia a la organización (specs/08-administracion/plan.md §3.2)
   'MiembroOrganizacion',
+  // CUN-05: equipos y su pertenencia (specs/05-equipos/plan.md). Desde la fusión del 25 de noviembre de 2026
+  // son también los de la administración: `equipo` y `miembro_equipo` de T-058 se retiraron (D-F1)
   'Equipo',
-  'MiembroEquipo',
+  'MiembroDeEquipo',
   // T-047: las tareas personales (09-tareas-personales)
   'TareaPersonal',
 ]);

@@ -44,8 +44,8 @@ export class PertenenciasRepositorio {
 
   async esResponsable(contexto: Pick<ContextoSolicitud, 'perfilId' | 'empresa'>): Promise<boolean> {
     if (!contexto.empresa) return false;
-    const n = await this.prisma.deOrganizacion(contexto.empresa.organizacionId).miembroEquipo.count({
-      where: { perfilId: contexto.perfilId, responsable: true },
+    const n = await this.prisma.deOrganizacion(contexto.empresa.organizacionId).miembroDeEquipo.count({
+      where: { perfilId: contexto.perfilId, rolEnEquipo: 'responsable' },
     });
     return n > 0;
   }
