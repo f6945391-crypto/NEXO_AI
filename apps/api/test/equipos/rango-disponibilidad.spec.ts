@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { rangoDisponibilidadPorDefecto } from '../../src/equipos/rango-disponibilidad';
 
 describe('CUN-05 - Rango de disponibilidad por defecto', () => {
@@ -46,4 +46,20 @@ describe('CUN-05 - Rango de disponibilidad por defecto', () => {
       resultado.hasta.getTime(),
     );
   });
+
+  it('respeta el retorno al horario de invierno en Nueva York', () => {
+    const resultado = rangoDisponibilidadPorDefecto(
+      'America/New_York',
+      new Date('2026-10-31T17:00:00Z'),
+    );
+
+    expect(resultado.desde.toISOString()).toBe(
+      '2026-11-01T04:00:00.000Z',
+    );
+
+    expect(resultado.hasta.toISOString()).toBe(
+      '2026-11-08T05:00:00.000Z',
+    );
+  });
+
 });

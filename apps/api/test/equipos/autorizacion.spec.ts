@@ -1,5 +1,12 @@
+import {
+  respuestaSinIntervalos,
+} from './respuesta-disponibilidad';
+
 import 'reflect-metadata';
-import { BadRequestException, ForbiddenException, INestApplication } from '@nestjs/common';
+import { ConsultaDisponibilidadEquipo } from '@nexoai/contratos';
+import { ValidarCon } from '../../src/plataforma/errores';
+
+import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -11,11 +18,22 @@ import { DisponibilidadEquipoService } from '../../src/equipos/disponibilidad-eq
 describe('CUN-05 - Autorizacion de bandas horarias', () => {
   let app: INestApplication;
 
-  const consultarEquipo = vi.fn().mockResolvedValue({
-    disponibilidadCompleta: true,
-    intervalos: [],
-    advertencia: null,
-  });
+  const consultarEquipo = vi.fn().mockImplementation(
+    async (
+    _contexto: unknown,
+    equipoId: string,
+    desde: Date,
+    hasta: Date,
+    _duracion?: number,
+    _banda?: string,
+    seleccion?: string[],
+    ) => respuestaSinIntervalos(
+      equipoId,
+      desde,
+      hasta,
+      ['22222222-2222-4222-8222-222222222222'],
+    ),
+  );
 
   beforeAll(async () => {
     const modulo = await Test.createTestingModule({
@@ -26,7 +44,6 @@ describe('CUN-05 - Autorizacion de bandas horarias', () => {
           useValue: {
             misEquipos: vi.fn(),
             integrantes: vi.fn(),
-            cambiarMiConsentimiento: vi.fn(),
           },
         },
         {
@@ -60,9 +77,29 @@ describe('CUN-05 - Autorizacion de bandas horarias', () => {
   // En estas pruebas se simula mediante la invocacion directa.
   const controlador = () => app.get(EquiposController);
 
+  // Reproduce la validacion HTTP en las pruebas directas.
+  async function consultarValidado(
+    contexto: Parameters<
+      EquiposController['consultarDisponibilidad']
+    >[0],
+    equipoId: string,
+    consulta: unknown,
+  ) {
+    const validada =
+      new ValidarCon(ConsultaDisponibilidadEquipo)
+        .transform(consulta);
+
+    return controlador().consultarDisponibilidad(
+      contexto,
+      equipoId,
+      validada,
+    );
+  }
+
+
   it('rechaza una banda desconocida con error 400', async () => {
     await expect(
-      controlador().consultarDisponibilidad(
+      consultarValidado(
         {
           perfilId: 'perfil-prueba',
           organizacionId: 'organizacion-prueba',
@@ -73,27 +110,71 @@ describe('CUN-05 - Autorizacion de bandas horarias', () => {
         equipoId,
         { ...fechas, bandaHoraria: 'desconocida' },
       ),
-    ).rejects.toThrow(BadRequestException);
+    ).rejects.toMatchObject({
+      status: 400,
+      response: {
+        codigo: 'SOLICITUD_INVALIDA',
+      },
+    });
   });
 
-  it('rechaza la banda extendida para un colaborador', async () => {
-    await expect(
-      controlador().consultarDisponibilidad(
+  it('permite al colaborador solicitar la banda extendida', async () => {
+    consultarEquipo.mockClear();
+
+    await consultarValidado(
+      {
+        perfilId: 'perfil-prueba',
+        organizacionId: 'organizacion-prueba',
+        rol: 'colaborador',
+        plan: 'empresarial',
+        primerIngresoPendiente: false,
+      },
+      equipoId,
+      { ...fechas, bandaHoraria: 'extendida' },
+    );
+
+    expect(consultarEquipo).toHaveBeenCalledWith(
+      expect.objectContaining({ rol: 'colaborador' }),
+      equipoId,
+      expect.any(Date),
+      expect.any(Date),
+      undefined,
+      'extendida',
+      undefined,
+    );
+  });
+
+  it.each(['gerente', 'colaborador'] as const)(
+    'permite solicitar fuera de banda al rol %s',
+    async (rol) => {
+      consultarEquipo.mockClear();
+
+      await consultarValidado(
         {
           perfilId: 'perfil-prueba',
           organizacionId: 'organizacion-prueba',
-          rol: 'colaborador',
+          rol,
           plan: 'empresarial',
           primerIngresoPendiente: false,
         },
         equipoId,
-        { ...fechas, bandaHoraria: 'extendida' },
-      ),
-    ).rejects.toThrow(ForbiddenException);
-  });
+        { ...fechas, bandaHoraria: 'fueraDeBanda' },
+      );
+
+      expect(consultarEquipo).toHaveBeenCalledWith(
+        expect.objectContaining({ rol }),
+        equipoId,
+        expect.any(Date),
+        expect.any(Date),
+        undefined,
+        'fueraDeBanda',
+        undefined,
+      );
+    },
+  );
 
   it('permite al gerente solicitar la banda extendida', async () => {
-    await controlador().consultarDisponibilidad(
+    await consultarValidado(
       {
         perfilId: 'perfil-prueba',
         organizacionId: 'organizacion-prueba',
@@ -112,6 +193,7 @@ describe('CUN-05 - Autorizacion de bandas horarias', () => {
       expect.any(Date),
       undefined,
       'extendida',
+      undefined,
     );
   });
 
@@ -120,7 +202,7 @@ describe('CUN-05 - Autorizacion de bandas horarias', () => {
 
     const antes = new Date();
 
-    await controlador().consultarDisponibilidad(
+    await consultarValidado(
       {
         perfilId: 'perfil-prueba',
         organizacionId: 'organizacion-prueba',
@@ -167,7 +249,7 @@ describe('CUN-05 - Autorizacion de bandas horarias', () => {
   it('respeta las fechas indicadas explicitamente', async () => {
     consultarEquipo.mockClear();
 
-    await controlador().consultarDisponibilidad(
+    await consultarValidado(
       {
         perfilId: 'perfil-prueba',
         organizacionId: 'organizacion-prueba',
@@ -192,7 +274,7 @@ describe('CUN-05 - Autorizacion de bandas horarias', () => {
 
   it('rechaza consultas con una sola fecha', async () => {
     await expect(
-      controlador().consultarDisponibilidad(
+      consultarValidado(
         {
           perfilId: 'perfil-prueba',
           organizacionId: 'organizacion-prueba',
@@ -203,6 +285,11 @@ describe('CUN-05 - Autorizacion de bandas horarias', () => {
         equipoId,
         { desde: fechas.desde },
       ),
-    ).rejects.toThrow(BadRequestException);
+    ).rejects.toMatchObject({
+      status: 400,
+      response: {
+        codigo: 'SOLICITUD_INVALIDA',
+      },
+    });
   });
 });

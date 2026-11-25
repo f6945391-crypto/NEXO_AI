@@ -1,3 +1,4 @@
+import { CambiarConsentimientoEquipo } from './cambiar-consentimiento';
 
 import { Module } from '@nestjs/common';
 import { AgendaModule } from '../agenda/agenda.module';
@@ -15,6 +16,7 @@ import { EquiposService } from './equipos.service';
   ],
   controllers: [EquiposController],
   providers: [
+    CambiarConsentimientoEquipo,
     EquiposService,
     DisponibilidadEquipoService,
   ],

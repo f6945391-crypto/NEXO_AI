@@ -36,7 +36,16 @@ describe('CUN-05 - Autorizacion real por membresia HTTP', () => {
     await prisma?.$disconnect();
   });
 
-  it('rechaza con 403 a un usuario autenticado que no pertenece al equipo', async () => {
+  it.each([
+    ['gerente', 'normal'],
+    ['gerente', 'extendida'],
+    ['gerente', 'fueraDeBanda'],
+    ['colaborador', 'normal'],
+    ['colaborador', 'extendida'],
+    ['colaborador', 'fueraDeBanda'],
+  ] as const)(
+    'rechaza con 403 al rol %s ajeno al equipo en banda %s',
+    async (rol, bandaHoraria) => {
     await vaciarTablas();
 
     const organizacionId = await crearOrganizacion(
@@ -44,14 +53,14 @@ describe('CUN-05 - Autorizacion real por membresia HTTP', () => {
       'Organizacion de prueba membresia CUN-05',
     );
 
-    const correo = 'usuario-ajeno-cun05@nexoai.test';
+    const correo = `usuario-ajeno-${rol}-${bandaHoraria}@nexoai.test`;
 
     await crearCuentaLista(
       prisma,
       {
         organizacionId,
         correo,
-        rol: 'gerente',
+        rol,
         plan: 'empresarial',
       },
       contrasena,
@@ -77,15 +86,23 @@ describe('CUN-05 - Autorizacion real por membresia HTTP', () => {
       .get(`/equipos/${equipo.id}/disponibilidad`)
       .set('Authorization', `Bearer ${sesion.tokenAcceso}`)
       .query({
-        desde: '2026-11-12T08:00:00-05:00',
-        hasta: '2026-11-12T20:00:00-05:00',
+        bandaHoraria,
+        desde: bandaHoraria === 'fueraDeBanda'
+          ? '2026-11-12T00:00:00-05:00'
+          : '2026-11-12T08:00:00-05:00',
+        hasta: bandaHoraria === 'fueraDeBanda'
+          ? '2026-11-13T00:00:00-05:00'
+          : bandaHoraria === 'extendida'
+            ? '2026-11-12T22:00:00-05:00'
+            : '2026-11-12T20:00:00-05:00',
       })
       .expect(403);
 
     expect(respuesta.body).toMatchObject({
       codigo: 'SOLICITUD_INVALIDA',
     });
-  });
+    },
+  );
 
   it('permite consultar integrantes al usuario que pertenece al equipo', async () => {
     await vaciarTablas();
@@ -205,8 +222,16 @@ describe('CUN-05 - Autorizacion real por membresia HTTP', () => {
     expect(respuesta.body).toMatchObject({
       equipoId: equipo.id,
       disponibilidadCompleta: false,
+      estadoDisponibilidad: 'sin_datos',
       participantesConsultados: 0,
       participantesSinDatos: [perfilId],
+      disponibilidadIndividual: [{
+        perfilId,
+        estado: 'sin_datos',
+        intervalosOcupados: [],
+        intervalosLibres: [],
+      }],
+      intervalosComunes: [],
       intervalos: [],
     });
 
