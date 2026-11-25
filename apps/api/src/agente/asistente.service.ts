@@ -19,6 +19,7 @@ import { PuntoControlConversacion } from './grafo/punto-control-prisma';
 import { EjecutorHerramientas } from './herramientas/ejecutor-herramientas';
 import { LlamadasAuditadas } from './llamadas-auditadas';
 import { TranscripcionService } from './transcripcion';
+import { NotaDeContinuidad } from './nota-de-continuidad';
 import { ConsultaTareasService } from '../tareas/consulta-tareas.service';
 import { accionDeEtiqueta, armarBitacora, tipoDe } from './herramientas/herramientas-tareas';
 
@@ -49,6 +50,7 @@ export class AsistenteService {
     private readonly ejecutor: EjecutorHerramientas,
     private readonly transcripcion: TranscripcionService,
     private readonly tareas: ConsultaTareasService,
+    private readonly nota: NotaDeContinuidad,
   ) {}
 
   async conversacion(contexto: ContextoSolicitud, consulta: ConsultaConversacion = { limite: 3 }): Promise<ConversacionAsistente> {
@@ -129,7 +131,7 @@ export class AsistenteService {
     const previa = op.conversacionId ? await this.datos(contexto).conversacionAgente.findFirst({ where: { id: op.conversacionId, estado: 'abierta' } }) : null;
     const conversacion = previa ?? (await this.abierta(contexto)) ?? (await this.abrir(contexto));
     const turnos: TurnoAsistente[] = [];
-    const { grafo, config } = await this.grafo(contexto, conversacion.id, turnos);
+    const { grafo, config } = await this.grafo(contexto, conversacion.id, turnos, op.id);
     // Con una tarjeta esperando a la persona, no se le pone otra encima: se atiende en la siguiente pasada
     if ((await grafo.getState(config)).next.includes('esperar_decision')) return 'ocupada';
 
@@ -319,11 +321,15 @@ export class AsistenteService {
     return true;
   }
 
-  // `turnos` recoge lo que la persona verá de esta invocación (plan §14.2)
-  private async grafo(contexto: ContextoSolicitud, conversacionId: string, turnos: TurnoAsistente[]) {
+  // `turnos` recoge lo que la persona verá de esta invocación (plan §14.2). T-040 · REQ-AGT-01 v2: la nota de
+  // continuidad se arma una vez por invocación, y solo si el grafo llama al modelo; `excluir` deja fuera la
+  // Operación en espera que se está atendiendo, que ya es el mensaje de la persona
+  private async grafo(contexto: ContextoSolicitud, conversacionId: string, turnos: TurnoAsistente[], excluir?: string) {
     const punto = await PuntoControlConversacion.cargar(this.datos(contexto), contexto.organizacionId, conversacionId);
     const anotar = (nuevos: TurnoAsistente[]) => void turnos.push(...nuevos);
-    const grafo = construirGrafo({ llamadas: this.llamadas, ejecutor: this.ejecutor, operaciones: this.operaciones }, contexto, conversacionId, punto, anotar);
+    let nota: Promise<string | null> | null = null;
+    const deNota = () => (nota ??= this.nota.armar(contexto, excluir ? { excluir } : {}));
+    const grafo = construirGrafo({ llamadas: this.llamadas, ejecutor: this.ejecutor, operaciones: this.operaciones }, contexto, conversacionId, punto, anotar, deNota);
     return { grafo, config: { configurable: { thread_id: conversacionId }, recursionLimit: LIMITE_PASOS } };
   }
 

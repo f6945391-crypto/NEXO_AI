@@ -1315,6 +1315,37 @@ body {
   font-size: var(--tam-etiqueta);
 }
 
+/* T-130 · REQ-CUN03-28 · H-TP-35: el resumen del asistente, con el tinte del asistente y su etiqueta, para que
+   no se lea como un avance */
+.resumen-bitacora {
+  margin: 0 0 var(--espaciado-8);
+  padding: var(--espaciado-8) var(--espaciado-12);
+  border-radius: var(--radio-sm);
+  background: var(--agente-suave);
+  font-size: var(--tam-etiqueta);
+  line-height: 1.4;
+}
+
+.resumen-bitacora p {
+  margin: 0;
+}
+
+.resumen-bitacora .resumen-bitacora__etiqueta {
+  font-size: var(--tam-micro);
+  font-weight: 600;
+  color: var(--agente-base);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.resumen-bitacora .resumen-bitacora__texto {
+  color: var(--texto-fuerte);
+}
+
+.resumen-bitacora__cuando {
+  color: var(--texto-suave);
+}
+
 .tarea .tarea__avance {
   color: var(--texto-fuerte);
   line-height: 1.4;

@@ -48,10 +48,17 @@ test.describe('movil.tareas-bitacora', () => {
     const tesis = fila(page, 'Enviar la tesis');
     await expect(tesis.getByText('La reviso con la profesora Díaz', { exact: true })).toBeVisible();
     await expect(tesis.getByText(/^\p{L}+ \d+ · Me devolvió correcciones; falta la bibliografía$/u)).toBeVisible();
+    // T-130 · REQ-CUN03-28 · H-TP-35: el resumen del asistente, con su fecha y su etiqueta, sobre el último avance
+    const resumen = tesis.getByRole('note', { name: 'Resumen de Enviar la tesis' });
+    await expect(resumen).toContainText('Escrito por el asistente');
+    await expect(resumen).toContainText(/Resumen al \p{Ll}+ \d+ de \p{L}+ · Correcciones recibidas de la profesora Díaz; falta la bibliografía\./u);
+    expect((await resumen.boundingBox())!.y).toBeLessThan((await tesis.getByText(/^\p{L}+ \d+ · Me devolvió correcciones/u).boundingBox())!.y);
     // El más antiguo no se ve con la bitácora plegada
     await expect(tesis.getByText('Mandé el capítulo 3 a la profesora Díaz')).toHaveCount(0);
     // Una tarea sin avances no muestra nada de bitácora
     await expect(fila(page, 'Pagar el recibo').getByRole('button', { name: /^Ver bitácora/ })).toHaveCount(0);
+    // T-130: ni resumen
+    await expect(fila(page, 'Pagar el recibo').getByRole('note', { name: /^Resumen de/ })).toHaveCount(0);
     await capturar(page, '01-tareas-bitacora-plegada');
 
     const ver = tesis.getByRole('button', { name: 'Ver bitácora de Enviar la tesis, 2 avances' });
@@ -105,7 +112,7 @@ test.describe('movil.tareas-bitacora', () => {
     await expect(page.getByText(/¿La das por hecha o la mantienes abierta\?/)).toHaveCount(0);
   });
 
-  test('en la capa de captura, «¿cómo va…?» muestra la bitácora tal como está, y un avance se propone en su tarjeta (REQ-CUN03-21, 23)', async () => {
+  test('en la capa de captura, «¿cómo va…?» muestra el resumen y la bitácora tal como está, y un avance se propone en su tarjeta (REQ-CUN03-21, 23, 28)', async () => {
     await page.getByRole('button', { name: 'Pedir algo al asistente' }).click();
     await page.getByLabel('Pídele algo al asistente').fill('¿cómo va enviar la tesis?');
     await page.getByRole('button', { name: 'Enviar', exact: true }).click();
@@ -116,6 +123,11 @@ test.describe('movil.tareas-bitacora', () => {
     await expect(avances.nth(0)).toContainText('Me devolvió correcciones; falta la bibliografía');
     await expect(avances.nth(1)).toContainText('Mandé el capítulo 3 a la profesora Díaz');
     await expect(avances.nth(0)).toContainText(/\p{L}+ \d+ de \p{L}+, \d{2}:\d{2}/u);
+    // T-130 · REQ-CUN03-28: el resumen arriba, junto a los avances y no en su lugar (H-TP-29)
+    const resumen = comoVa.getByRole('note', { name: 'Resumen de Enviar la tesis' });
+    await expect(resumen).toContainText('Escrito por el asistente');
+    await expect(resumen).toContainText(/Resumen al \p{Ll}+ \d+ de \p{L}+ · Correcciones recibidas de la profesora Díaz; falta la bibliografía\./u);
+    expect((await resumen.boundingBox())!.y).toBeLessThan((await avances.nth(0).boundingBox())!.y);
     await capturar(page, '04-captura-como-va');
 
     // La tarjeta plegada dice la tarea y el texto que se anotará; no se confirma, para no tocar los datos compartidos

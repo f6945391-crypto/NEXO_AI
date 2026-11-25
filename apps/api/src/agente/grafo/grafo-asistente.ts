@@ -128,12 +128,16 @@ export interface DependenciasGrafo {
 
 // Se compila en cada petición: los nodos cierran sobre la identidad de quien pide, que nunca pasa por el
 // estado ni por el modelo (P-04).
+// T-040 · plan §14.2: `nota` da la nota de continuidad ya escrita por el servicio, para que el grafo no lea
+// Operaciones. Se pide solo si `interpretar` llama al modelo, y no entra en el estado: no pesa en el punto de
+// control y en cada invocación llega al día.
 export function construirGrafo(
   deps: DependenciasGrafo,
   contexto: ContextoSolicitud,
   conversacionId: string,
   punto: PuntoControlConversacion,
   anotar: (turnos: TurnoAsistente[]) => void,
+  nota: () => Promise<string | null> = async () => null,
 ) {
   const con = (turnos: TurnoAsistente[], cambio: Partial<EstadoAsistente>): Partial<EstadoAsistente> => {
     anotar(turnos);
@@ -161,8 +165,11 @@ export function construirGrafo(
   async function interpretar(estado: EstadoAsistente): Promise<Partial<EstadoAsistente>> {
     if (estado.vueltas >= TOPE_VUELTAS) return con([turnoFallo(FALLO)], { siguiente: 'fin' });
     const referencia = referenciaDe(estado);
+    const datos = await nota();
     const r = await deps.llamadas.llamar(contexto, conversacionId, {
       sistema: instrucciones(referencia),
+      // REQ-AGT-01 v2: lo último que hizo la persona, como datos y aparte de las instrucciones (H-AGT-15)
+      ...(datos ? { nota: datos } : {}),
       mensajes: recortar(estado.mensajes),
       herramientas: deps.ejecutor.definiciones(),
       maxTokens: 1024,

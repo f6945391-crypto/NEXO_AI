@@ -260,6 +260,10 @@ for (const perfilId of [perfiles.tareas, perfiles.tareasBitacora].filter(Boolean
         { texto: 'Mandé el capítulo 3 a la profesora Díaz', hace: -2 },
         { texto: 'Me devolvió correcciones; falta la bibliografía', hace: -1 },
       ],
+      // T-130 · REQ-CUN03-28: el resumen del asistente, de hace una hora, posterior a los dos avances. Las demás
+      // tareas, sin resumen
+      resumen: 'Correcciones recibidas de la profesora Díaz; falta la bibliografía.',
+      resumenHace: -1 / 24,
     },
     { texto: 'Llamar al dentista', creada: -1 },
     { texto: 'Devolver el libro', creada: -5 },
@@ -296,6 +300,8 @@ for (const perfilId of [perfiles.tareas, perfiles.tareasBitacora].filter(Boolean
         hechaEn: t.hecha ? new Date(Date.now() + t.hecha * 24 * 3600_000) : null,
         operacionOrigenId: op.id,
         contexto: t.contexto ?? null,
+        resumen: t.resumen ?? null,
+        resumenEn: t.resumen ? new Date(Date.now() + t.resumenHace * 24 * 3600_000) : null,
         creadaEn,
       },
     });

@@ -34,6 +34,17 @@ export const AvanceTarea = z.strictObject({
 });
 export type AvanceTarea = z.infer<typeof AvanceTarea>;
 
+// REQ-CUN03-28 · T-129 · H-TP-34, 35: el resumen breve de la bitácora, redactado por el asistente como mucho
+// una vez al día. Dice de cuándo es, para que nadie lo tome por un avance; los avances posteriores no están en él
+export const RESUMEN_BITACORA_MAXIMO = 280;
+export const ResumenBitacora = z.strictObject({
+  texto: z.string().min(1).max(RESUMEN_BITACORA_MAXIMO),
+  en: Instante,
+  // «Resumen al miércoles 25 de noviembre»
+  cuando: z.string(),
+});
+export type ResumenBitacora = z.infer<typeof ResumenBitacora>;
+
 export const EstadoTarea = z.enum(['pendiente', 'hecha', 'descartada']);
 export type EstadoTarea = z.infer<typeof EstadoTarea>;
 
@@ -66,6 +77,8 @@ export const TareaPersonal = z.strictObject({
   contexto: z.string().nullable(),
   // REQ-CUN03-22, 24: la bitácora, del avance más reciente al más antiguo
   bitacora: z.array(AvanceTarea),
+  // REQ-CUN03-28 · T-129: el último resumen guardado, o nulo si no hay
+  resumen: ResumenBitacora.nullable(),
   // REQ-CUN03-27 · H-TP-31: vencida y sin «Mantener abierta» para su fecha
   avisoVencida: z.boolean(),
 });
@@ -155,9 +168,9 @@ export type CargaAnotarAvance = z.infer<typeof CargaAnotarAvance>;
 
 export const ArgsConsultarTareas = z
   .strictObject({
-    franja: FranjaTarea.optional().describe('Solo esa franja: con_fecha, sin_fecha o esperando'),
-    desde: Fecha.optional().describe('Con un período («esta semana»): primer día, AAAA-MM-DD'),
-    hasta: Fecha.optional().describe('Con un período: último día, incluido, AAAA-MM-DD'),
+    franja: FranjaTarea.nullable().optional().describe('Solo esa franja: con_fecha, sin_fecha o esperando'),
+    desde: Fecha.nullable().optional().describe('Con un período («esta semana»): primer día, AAAA-MM-DD'),
+    hasta: Fecha.nullable().optional().describe('Con un período: último día, incluido, AAAA-MM-DD'),
   })
   .describe('Lee las tareas pendientes de la persona');
 export type ArgsConsultarTareas = z.infer<typeof ArgsConsultarTareas>;
@@ -239,6 +252,8 @@ export const BitacoraTarea = z.strictObject({
   contexto: z.string().nullable(),
   // Del más reciente al más antiguo
   avances: z.array(AvanceTarea),
+  // REQ-CUN03-28 · T-129: junto a los avances, nunca en su lugar (H-TP-29); nulo si no hay
+  resumen: ResumenBitacora.nullable(),
   // «Esta tarea no tiene avances anotados.» cuando no hay ninguno
   vacia: z.string().nullable(),
 });

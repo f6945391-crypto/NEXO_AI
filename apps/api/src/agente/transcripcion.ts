@@ -18,7 +18,7 @@ import { PrismaService } from '../plataforma/prisma.service';
 
 type Pagina = { episodios: EpisodioAsistente[]; hayAnteriores: boolean; cursor: string | null };
 
-const DESENLACE_POR_TIPO: Readonly<Record<string, DesenlaceEpisodio>> = {
+export const DESENLACE_POR_TIPO: Readonly<Record<string, DesenlaceEpisodio>> = {
   'agenda.registrar': 'registrado',
   'agenda.modificar': 'movido',
   'agenda.cancelar': 'cancelado',

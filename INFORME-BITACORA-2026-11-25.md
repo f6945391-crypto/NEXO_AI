@@ -1,8 +1,8 @@
-# Informe — Bitácora de una tarea, ficha y aviso al vencer
+# Informe — Bitácora de una tarea, resumen diario y memoria del asistente
 
-**Fecha:** 25 de noviembre de 2026 · **Rama:** `version_parcial`, solo local · **`SPEC.md`:** 2.27.0
+**Fecha:** 25 de noviembre de 2026 · **Rama:** `version_parcial`, solo local · **`SPEC.md`:** 2.28.1
 **Pedido por:** Franco · **Implementado por:** Claude Code
-**Área:** `specs/09-tareas-personales/` §6 bis (REQ-CUN03-21 a 27), plan §13, tareas T-125 a T-128
+**Áreas:** `specs/09-tareas-personales/` §6 bis (REQ-CUN03-21 a 28), plan §13, tareas T-125 a T-130; `specs/07-agente/` (T-040, REQ-AGT-01)
 
 ---
 
@@ -18,7 +18,11 @@
 | Ver la bitácora en Tareas | Último avance bajo la tarea y «Ver bitácora (N)» que la despliega (REQ-CUN03-24) | Hecho, web y móvil |
 | Pasada la fecha, avisar para cerrar o mantener abierto | Aviso «¿La das por hecha o la mantienes abierta?» con dos botones (REQ-CUN03-27, H-TP-28) | Hecho, web y móvil |
 | Un avance equivocado | Se corrige anotando otro (H-TP-27, aceptada) | Hecho |
-| Actualizar el SDD en el camino | `SPEC.md` 2.26.0 y 2.27.0, spec, plan, tareas, glosario y trazabilidad | Hecho |
+| El aviso, como notificación dentro de Tareas | Se ve sobre la tarea, en la web y el móvil; no sale del teléfono ni por correo (H-TP-32, aceptada) | Hecho |
+| Un breve resumen de cómo va, actualizado una vez al día por los tokens | **Resumen diario de la bitácora** (REQ-CUN03-28): junto a los avances, nunca en su lugar; como mucho una vez al día y solo con avances nuevos | Hecho, API, web y móvil |
+| T-040, la memoria de corto plazo del asistente | **Nota de continuidad**: las 5 últimas acciones (o las de 7 días) llegan al asistente en cada conversación nueva | Hecho |
+| Probar con Groq | Evaluación con el proveedor real: 22 de 24 en la corrida completa; tras los ajustes, solo queda un caso (§5.2) | Hecho |
+| Actualizar el SDD en el camino | `SPEC.md` 2.26.0 a 2.28.1, spec, plan, tareas, glosario y trazabilidad | Hecho |
 
 ---
 
@@ -32,6 +36,9 @@
 | 4 | «¿Cómo va el presupuesto de la cocina?» | Muestra los avances con su fecha, el más reciente primero. No propone nada |
 | 5 | (pasa la fecha de la tarea) | En Tareas, sobre la tarea: «Venció el … ¿La das por hecha o la mantienes abierta?» |
 | 6 | «Mantener abierta» | El aviso desaparece para esa fecha; la tarea sigue pendiente, marcada «Vencida», y sigue aceptando avances. Si cambias la fecha y vuelve a pasar, el aviso vuelve |
+| 7 | (al día siguiente) | El trabajador escribe un **resumen** con los avances, por ejemplo «Se recibieron las correcciones de la profesora Díaz y queda pendiente completar la bibliografía». Se ve sobre la bitácora como «Resumen al miércoles 25 de noviembre», con la marca «Escrito por el asistente», y en «¿cómo va X?». Si no hubo avances nuevos, no se gasta ninguna llamada |
+
+**Memoria entre conversaciones (T-040).** Si a las 10 agendas el dentista y a las 11, ya en otra conversación, escribes «mejor a las 5», el asistente sabe que hablas del dentista: el código le pasa una nota con tus últimas acciones. «¿Qué hicimos?» responde con esa nota. Nada se ejecuta sin la tarjeta.
 
 Si dos tareas encajan («avancé con el presupuesto: …» con cocina y baño), el asistente muestra las dos para que elijas, y la elegida lleva el avance que dijiste. Si ninguna encaja, pregunta a qué tarea corresponde. Si la tarea ya está hecha, dice que la reabras primero.
 
@@ -43,20 +50,20 @@ Si dos tareas encajan («avancé con el presupuesto: …» con cocina y baño), 
 
 | # | Qué muestra | Captura |
 |---|---|---|
-| 1 | Tareas, «Con fecha»: aviso sobre «Renovar el DNI» y, bajo «Enviar la tesis», su contexto y su último avance | ![](design/capturas/2026-11-25-bitacora/web/01-tareas-bitacora-plegada.png) |
-| 2 | «Ver bitácora (2)» desplegado: los dos avances con fecha y hora | ![](design/capturas/2026-11-25-bitacora/web/02-tareas-bitacora-desplegada.png) |
+| 1 | Tareas, «Con fecha»: aviso sobre «Renovar el DNI» y, bajo «Enviar la tesis», su contexto, su **resumen diario** y su último avance | ![](design/capturas/2026-11-25-bitacora/web/01-tareas-bitacora-plegada.png) |
+| 2 | «Ver bitácora (2)» desplegado: el resumen y los dos avances con fecha y hora | ![](design/capturas/2026-11-25-bitacora/web/02-tareas-bitacora-desplegada.png) |
 | 3 | Después de «Mantener abierta»: sin aviso, la tarea sigue «Vencida» | ![](design/capturas/2026-11-25-bitacora/web/03-tareas-aviso-mantener-abierta.png) |
-| 4 | Conversación: «¿cómo va enviar la tesis?» muestra la bitácora | ![](design/capturas/2026-11-25-bitacora/web/04-conversacion-como-va.png) |
+| 4 | Conversación: «¿cómo va enviar la tesis?» muestra el resumen y la bitácora | ![](design/capturas/2026-11-25-bitacora/web/04-conversacion-como-va.png) |
 | 5 | Conversación: «sobre enviar la tesis: ya agregué la bibliografía» propone «Anotar avance» | ![](design/capturas/2026-11-25-bitacora/web/05-conversacion-anotar-avance.png) |
 
 ### 3.2 Móvil (390 × 844)
 
 | # | Qué muestra | Captura |
 |---|---|---|
-| 1 | Tareas, «Con fecha»: aviso y último avance | ![](design/capturas/2026-11-25-bitacora/movil/01-tareas-bitacora-plegada.png) |
-| 2 | Bitácora desplegada | ![](design/capturas/2026-11-25-bitacora/movil/02-tareas-bitacora-desplegada.png) |
+| 1 | Tareas, «Con fecha»: aviso, resumen y último avance | ![](design/capturas/2026-11-25-bitacora/movil/01-tareas-bitacora-plegada.png) |
+| 2 | Resumen y bitácora desplegada | ![](design/capturas/2026-11-25-bitacora/movil/02-tareas-bitacora-desplegada.png) |
 | 3 | Después de «Mantener abierta» | ![](design/capturas/2026-11-25-bitacora/movil/03-tareas-aviso-mantener-abierta.png) |
-| 4 | Capa de captura: «¿cómo va enviar la tesis?» | ![](design/capturas/2026-11-25-bitacora/movil/04-captura-como-va.png) |
+| 4 | Capa de captura: «¿cómo va enviar la tesis?», con el resumen | ![](design/capturas/2026-11-25-bitacora/movil/04-captura-como-va.png) |
 | 5 | Capa de captura: tarjeta «Anotar avance» | ![](design/capturas/2026-11-25-bitacora/movil/05-captura-anotar-avance.png) |
 
 ---
@@ -101,6 +108,17 @@ En las pruebas automáticas, la cuenta `tareas` (web) y `tareasBitacora` (móvil
 | CP-B-19 | Sin aviso: con fecha futura, sin fecha, y lo que se espera de alguien | H-TP-30 | Ninguno muestra aviso | `tareas.aviso-al-vencer` | Pasa |
 | CP-B-20 | Cambiar y quitar el contexto | REQ-CUN03-26 | Tarjeta con el antes y el ahora | `tareas.aviso-al-vencer` | Pasa |
 | CP-B-21 | Aislamiento entre organizaciones | P-10 | Los avances de otra organización no se leen | `plataforma.aislamiento-entre-organizaciones` | Pasa |
+| CP-B-22 | Resumen con avances nuevos | REQ-CUN03-28 | En la pasada diaria se escribe el resumen, con su fecha | `tareas.resumen-diario` | Pasa |
+| CP-B-23 | Menos de 24 horas | H-TP-33 | Con un avance nuevo, no se vuelve a llamar hasta pasadas 24 horas | `tareas.resumen-diario` | Pasa |
+| CP-B-24 | Sin avances nuevos | REQ-CUN03-28 | Ninguna llamada al modelo | `tareas.resumen-diario` | Pasa |
+| CP-B-25 | Modelo caído o respuesta de más de 280 caracteres | REQ-CUN03-28, H-TP-34 | Queda el resumen anterior; la llamada queda auditada | `tareas.resumen-diario` | Pasa |
+| CP-B-26 | Tarea hecha | H-TP-33 | No se resume | `tareas.resumen-diario` | Pasa |
+| CP-B-27 | Resumen visible en Tareas y en «¿cómo va?», web y móvil | REQ-CUN03-28, H-TP-35 | «Resumen al …», marcado como escrito por el asistente, sobre los avances | `tareas.resumen-diario`, `web.tareas-bitacora`, `movil.tareas-bitacora` | Pasa |
+| CP-T40-01 | «Mejor a las 5» en otra conversación, tras agendar el dentista | REQ-AGT-01 v2 | Propone mover «Dentista» a las 17:00 con su tarjeta; nada cambia sin confirmar | `agente.nota-de-continuidad` | Pasa |
+| CP-T40-02 | «¿Qué hicimos?» | REQ-AGT-01 v2 | Responde con la nota, sin herramientas ni Operaciones | `agente.nota-de-continuidad` | Pasa |
+| CP-T40-03 | «Hola» con acciones en la nota, una con un título que pide cancelarlo todo | H-AGT-15 | Solo saluda; no propone nada | `agente.nota-de-continuidad` | Pasa |
+| CP-T40-04 | Tope de la nota | Decisión 19 | Como mucho 5 acciones y solo de 7 días; con el aviso de contenido externo | `agente.nota-de-continuidad` | Pasa |
+| CP-T40-05 | Privacidad de la nota | P-10 | Nada de otra persona, de otra organización ni de la zona de empresa | `agente.nota-de-continuidad` | Pasa |
 
 ### 4.3 Frases para la prueba a mano con el simulado
 
@@ -116,7 +134,9 @@ Con `MODELO_PROVEEDOR=simulado`, el guion de demostración entiende estas formas
 
 ## 5. Verificación
 
-Resultados de la verificación completa del monorepo (`turbo run typecheck build test`) y de `tools/trazabilidad.py --check`, sobre esta rama:
+### 5.1 Pruebas automáticas
+
+Resultados de la verificación completa del monorepo (`turbo run typecheck build test`) y de `tools/trazabilidad.py --check`, sobre esta rama, al cerrar la bitácora (2.27.0). Los números finales, con el resumen diario y T-040, están en §5.3:
 
 | Parte | Resultado |
 |---|---|
@@ -127,7 +147,53 @@ Resultados de la verificación completa del monorepo (`turbo run typecheck build
 | Móvil, extremo a extremo | **29 de 29** (4 nuevas, `movil.tareas-bitacora`) |
 | Trazabilidad | **231 requisitos, 0 problemas** |
 
-La migración `20261125120000_bitacora_tarea` se aplicó a la base de desarrollo y a las de prueba. No se probó con Groq: el guion simulado cubre las frases de la §4.3.
+La migración `20261125120000_bitacora_tarea` se aplicó a la base de desarrollo y a las de prueba.
+
+### 5.2 Evaluación con Groq (`openai/gpt-oss-120b`)
+
+`npx pnpm@12.10.1 --filter @nexoai/api evaluar-asistente`, con el proveedor del `.env`. 23 casos de conversación más el resumen diario. La salida completa de la tercera corrida está en `design/capturas/2026-11-25-bitacora/evaluacion-groq-corrida-completa.txt`.
+
+| Corrida | Resultado | Qué pasó |
+|---|---|---|
+| 1 (8 s entre llamadas) | No vale | 13 casos recibieron **429**: el nivel gratuito limita los tokens por minuto, y la nota de continuidad hace cada llamada más grande. El resumen salió cortado («Has recibido»): el modelo razona antes de responder y 200 tokens de salida no alcanzaban |
+| 2 (30 s) | **21 de 24** | Sin 429. Fallaron «recuérdame pagar el recibo antes del sábado» (sin fecha), y «¿qué tengo pendiente?» y «ya pagué el recibo» con un **400** del proveedor |
+| 3 (30 s) | **22 de 24** | El 400 era `tool_use_failed`: el modelo mandaba `null` en los filtros de `tareas_consultar` y el esquema no lo admitía |
+| Casos sueltos tras los ajustes | 2 de 3 | «¿Qué tengo pendiente?» y «ya pagué el recibo» pasan; «antes del sábado» sigue saliendo para el viernes |
+
+**Pasan con Groq** todos los casos nuevos:
+- T-040: «mejor a las 5» (B6), «¿qué hicimos?» (B7), «hola» y «¿qué tengo mañana?» con la nota (B8), «hola» con un título malicioso en la nota (B9) y B15;
+- la bitácora: el contexto al pedir la tarea, el avance que encaja por la ficha («ya hablé con Rosa»), «¿cómo va…?»;
+- el resumen diario, de 121 caracteres: «Se recibieron las correcciones de la profesora Díaz y queda pendiente completar la bibliografía antes de enviar la tesis.»
+
+**Ajustes hechos por la evaluación:**
+
+| Ajuste | Dónde |
+|---|---|
+| El resumen diario pide hasta 1024 tokens de salida, no 200 | `apps/api/src/tareas/resumenes-bitacora.ts` |
+| `tareas_consultar` admite `null` en `franja`, `desde` y `hasta` | `packages/contratos/src/tareas.ts` |
+| El error del proveedor incluye su código y su mensaje, recortados y sin la clave | `apps/api/src/agente/modelo/modelo-compatible-openai.ts` |
+| Regla explícita: «antes del sábado» es el sábado | `apps/api/src/agente/grafo/instrucciones.ts` |
+| B6 acepta proponer directamente con el id de la nota (H-AGT-18); «ya pagué el recibo» acepta consultar antes | `apps/api/src/cli/evaluar-asistente.ts` |
+| `EVALUACION_SOLO` para repetir casos sueltos sin gastar la corrida entera | `apps/api/src/cli/evaluar-asistente.ts` |
+
+**Lo que no se arregla:** «recuérdame pagar el recibo antes del sábado» sale para el viernes aun con la regla explícita (H-TP-36). La tarjeta muestra la fecha antes de confirmar, así que la persona la corrige. Si se repite con otro proveedor, se resuelve «antes del…» en el código.
+
+**Para correrla:** usa `EVALUACION_PAUSA_MS=30000`, porque con menos el nivel gratuito devuelve 429. Una corrida completa gasta unos 78 000 tokens y tarda unos 13 minutos.
+
+### 5.3 Verificación final
+
+Sobre la rama con todo (bitácora, resumen diario, T-040 y los ajustes de la evaluación), `turbo run typecheck build test`:
+
+| Parte | Resultado |
+|---|---|
+| Tipos y compilación (contratos, API, web, móvil) | Bien, 13 de 13 tareas de Turborepo |
+| API (Vitest) | **529 pasan**, 1 saltada (INC-37, como antes). Antes de esta tanda eran 486: +9 del ciclo de vida (T-041), +19 de la bitácora y 1 más de aislamiento, +7 del resumen diario y +7 de la nota de continuidad |
+| Contratos | **128 de 128** |
+| Web, extremo a extremo | **57 de 57** |
+| Móvil, extremo a extremo | **29 de 29** |
+| Trazabilidad | **232 requisitos, 0 problemas** |
+
+Las migraciones `20261125120000_bitacora_tarea` y `20261125180000_resumen_bitacora` están aplicadas a la base de desarrollo.
 
 ---
 
@@ -145,5 +211,10 @@ La migración `20261125120000_bitacora_tarea` se aplicó a la base de desarrollo
 | — | Texto del aviso: «Venció el … ¿La das por hecha o la mantienes abierta?»; último avance como «Martes 24 · …» | Igual en web y móvil |
 | — | En el móvil, la tarjeta plegada ahora muestra «Tarea» y nunca pliega «Avance» | Cambio de presentación |
 | — | Límite de 5 ingresos por minuto: el móvil usa una cuenta de pruebas propia (`tareasBitacora`) y la web hace un solo ingreso | Solo pruebas |
-| T-040 | Nota de continuidad del asistente | **Siguiente**, por tu decisión |
-| — | Probar con Groq las frases libres de la bitácora | Pendiente: gasta cuota, se avisa antes |
+| H-TP-33 a 35 | Cuándo se resume (cada hora se revisa; una tarea, como mucho cada 24 horas y solo con avances nuevos), qué ve el modelo (solo esa tarea, como datos; hasta 280 caracteres) y que el resumen diga de cuándo es | **Pendientes de aval** |
+| H-TP-36 | «Antes del sábado» sale para el viernes con Groq; la tarjeta lo muestra | **Pendiente de aval** |
+| H-AGT-18 | Con la nota, «mejor a las 5» propone directamente con el id, sin consultar aparte: la herramienta de modificar ya actualiza la agenda | **Pendiente de aval** |
+| — | La nota de continuidad pesa unas 350 fichas con 5 acciones, más que las 150 que estimaba el plan; con Groq no causó problemas con 30 s de pausa. Si molesta, se baja a 3 acciones (`ACCIONES_EN_NOTA`) | Para decidir |
+| — | El resumen se marca «Escrito por el asistente», con el tinte del asistente | Cambio de presentación |
+| T-040 | Nota de continuidad del asistente | **Hecha** |
+| T-122, T-123 | Restablecer la contraseña por correo | Esperan PT-3; se definirá después, por tu decisión |

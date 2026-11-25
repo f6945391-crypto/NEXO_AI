@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ControlTarea, OperacionRespuesta, RespuestaTareas, TareasDelDia, type FranjaTarea, type TareaPersonal } from '@nexoai/contratos';
-import { Aviso, Boton } from '../componentes';
+import { Aviso, Boton, ResumenDeBitacora } from '../componentes';
 import { conSesion, mensajeDeError, SIN_CONEXION } from '../sesion';
 import { color, espaciado, tipografia } from '../tokens';
 
@@ -159,6 +159,8 @@ function Bitacora({ tarea }: { tarea: TareaPersonal }) {
   const n = tarea.bitacora.length;
   return (
     <View>
+      {/* T-130 · REQ-CUN03-28: el resumen del asistente, sobre el último avance y «Ver bitácora» */}
+      <ResumenDeBitacora tarea={tarea.texto} resumen={tarea.resumen} />
       {!abierta && (
         <Text style={estilos.ultimoAvance}>
           {diaDelAvance(ultimo.cuando)} · {ultimo.texto}

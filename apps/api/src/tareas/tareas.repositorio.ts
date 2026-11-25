@@ -5,7 +5,7 @@ import type { AvanceTarea as FilaAvanceTarea, Prisma, TareaPersonal as FilaTarea
 import type { ContextoSolicitud } from '../identidad/contexto';
 import { errorApi } from '../plataforma/errores';
 import { PrismaService } from '../plataforma/prisma.service';
-import { textoAvance, textoCierre, textoCuando, textoEspera } from './dominio/formato';
+import { textoAvance, textoCierre, textoCuando, textoEspera, textoResumen } from './dominio/formato';
 import { franjaDe, vencida, type DatosFranja } from './dominio/franja';
 
 // specs/09-tareas-personales/plan.md §2 · T-048 · REQ-CUN03-19. Lectura y escritura de `tarea`, **siempre
@@ -58,6 +58,8 @@ export function aContrato(fila: FilaTarea, ahora: Date, zonaPerfil: string, avan
     cierre: fila.estado === 'hecha' ? textoCierre({ deQuien: fila.deQuien, hechaEn: fila.hechaEn }, zonaPerfil) : null,
     contexto: fila.contexto,
     bitacora: avances.map((a) => ({ id: a.id, texto: a.texto, anotadoEn: isoConDesfase(a.anotadoEn, zonaPerfil), cuando: textoAvance(a.anotadoEn, zonaPerfil) })),
+    // REQ-CUN03-28 · T-129: el último resumen guardado, tal cual. Leer nunca genera uno
+    resumen: fila.resumen && fila.resumenEn ? { texto: fila.resumen, en: isoConDesfase(fila.resumenEn, zonaPerfil), cuando: textoResumen(fila.resumenEn, zonaPerfil) } : null,
     // REQ-CUN03-27 · H-TP-30, 31: solo lo de «Con fecha», y no si ya eligió mantenerla abierta para esa fecha
     avisoVencida: estaVencida && !fila.deQuien && comoFecha(fila.vencimientoAtendido) !== datos.fecha,
   });

@@ -72,6 +72,8 @@ describe('contratos.tareas', () => {
       // T-125 · REQ-CUN03-24, 26, 27
       contexto: 'Lo saco en la oficina de Miraflores',
       bitacora: [{ id: ID, texto: 'Pedí la cita', anotadoEn: '2026-11-05T09:30:00-05:00', cuando: 'Jueves 5 de noviembre, 09:30' }],
+      // T-129 · REQ-CUN03-28
+      resumen: { texto: 'Ya pediste la cita; falta ir a la oficina.', en: '2026-11-06T03:00:00-05:00', cuando: 'Resumen al viernes 6 de noviembre' },
       avisoVencida: true,
     };
     expect(TareaPersonal.parse(tarea)).toEqual(tarea);
@@ -79,6 +81,9 @@ describe('contratos.tareas', () => {
     // Una tarea sin bitácora la trae vacía, no ausente
     const { bitacora: _, ...sinBitacora } = tarea;
     expect(TareaPersonal.safeParse(sinBitacora).success).toBe(false);
+    // T-129: sin resumen, nulo; un resumen de más de 280 caracteres no vale
+    expect(TareaPersonal.safeParse({ ...tarea, resumen: null }).success).toBe(true);
+    expect(TareaPersonal.safeParse({ ...tarea, resumen: { ...tarea.resumen, texto: 'x'.repeat(281) } }).success).toBe(false);
   });
 
   it('T-125, T-126: el avance, la bitácora del asistente y el desenlace «anotado»', () => {
@@ -88,7 +93,7 @@ describe('contratos.tareas', () => {
     expect(ArgsAnotarAvance.safeParse({ avance: 'Ya hablé con Juan' }).success).toBe(false);
     expect(ArgsAnotarAvance.safeParse({ tarea: 'presupuesto', avance: 'Ya hablé con Juan' }).success).toBe(true);
     expect(DesenlaceEpisodio.safeParse('anotado').success).toBe(true);
-    const bitacora = { tareaId: ID, tarea: 'Presupuesto', contexto: null, avances: [], vacia: 'Esta tarea no tiene avances anotados.' };
+    const bitacora = { tareaId: ID, tarea: 'Presupuesto', contexto: null, avances: [], resumen: null, vacia: 'Esta tarea no tiene avances anotados.' };
     expect(TurnoDeHerramienta.safeParse({ tipo: 'bitacora', bitacora }).success).toBe(true);
   });
 

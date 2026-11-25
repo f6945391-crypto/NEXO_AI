@@ -358,6 +358,8 @@ export function armarBitacora(tarea: TareaPersonal): BitacoraTarea {
     tarea: tarea.texto,
     contexto: tarea.contexto,
     avances: tarea.bitacora,
+    // REQ-CUN03-28 · T-129: el resumen guardado, junto a los avances y nunca en su lugar
+    resumen: tarea.resumen,
     vacia: tarea.bitacora.length === 0 ? 'Esta tarea no tiene avances anotados.' : null,
   };
 }

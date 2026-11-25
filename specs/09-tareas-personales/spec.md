@@ -472,6 +472,26 @@ ENTONCES queda hecha como con «Hecho», con «Deshacer»
 
 ---
 
+### REQ-CUN03-28
+
+**Requisito:** DONDE una tarea tenga avances en su bitácora, EL SISTEMA mostrará, junto a los avances tal como están, un resumen breve redactado por el asistente, con la fecha en que se hizo, que se actualizará como mucho una vez al día y solo si hubo avances nuevos desde el último; y SI el asistente no está disponible, ENTONCES mostrará el último resumen que haya, o ninguno, sin dejar de mostrar los avances.
+
+**Origen:** decisión de Franco del 25 de noviembre de 2026 («un breve resumen de lo que se tiene, que solo se actualice cada día, porque consume tokens»); H-TP-29; P-06
+**Tipo:** complejo
+
+**Criterio de aceptación**
+DADO «Presupuesto de la cocina» con dos avances y el asistente disponible
+CUANDO pase la actualización diaria
+ENTONCES en Tareas, sobre su bitácora, se lee «Resumen al miércoles 25 de noviembre: …», y los dos avances siguen tal cual
+Y CUANDO el usuario pregunte «¿cómo va el presupuesto de la cocina?»
+ENTONCES ve el resumen y los avances
+Y CUANDO anote otro avance ese mismo día
+ENTONCES el resumen no cambia hasta la actualización del día siguiente
+Y una tarea sin avances nuevos desde su último resumen no hace ninguna llamada al asistente
+Y SI el asistente no responde en la actualización, ENTONCES sigue el resumen anterior
+
+---
+
 ## 7. Lo que estaba en espera
 
 ### REQ-CUN03-17
@@ -593,7 +613,7 @@ No se aplican aquí: los edita quien integre, con su línea en `SPEC.md` §11.
 | 3 y 4, lista y controles | CUN-03 | Gratuito |
 | 5, tareas en Hoy | CUN-01, CUN-03 | Gratuito |
 | 6, asistente | CUN-03 | Gratuito |
-| 6 bis, bitácora, ficha y aviso al vencer | CUN-03 | Gratuito; R-27 la pone en el Plan Personal, sin marca de plan en esta versión (H-TP-12) |
+| 6 bis, bitácora, ficha, aviso al vencer y resumen diario | CUN-03 | Gratuito; R-27 la pone en el Plan Personal, sin marca de plan en esta versión (H-TP-12) |
 | 7, conversión de lo en espera | Transversal | Gratuito |
 | 8, sin asistente, privacidad y calendario | Transversal | Gratuito |
 
@@ -632,8 +652,12 @@ Detectadas al escribir esta especificación el 6 de noviembre de 2026. **Pendien
 | H-TP-26 | **Para anotar un avance, el modelo elige la tarea mirando la ficha de cada pendiente**: texto, contexto (REQ-CUN03-26), cuándo o de quién, y sus tres últimos avances, que le da el código marcados como datos (H-AGT-15). La tarjeta nombra la tarea para que la persona vea si se equivocó (REQ-CUN03-21). Si el modelo no da un id, el código compara lo dicho con el texto, el contexto y los avances de cada ficha (la regla de H-TP-23, ampliada); con un empate muestra candidatas, y sin ninguna, se pregunta a qué tarea corresponde. *Propuesto el 25 de noviembre de 2026; **precisado por Franco** el mismo día: la ficha se caracteriza más para que el asistente discierna el contexto* | REQ-CUN03-21, 23; H-TP-23 |
 | H-TP-27 | **La bitácora no se corrige ni se borra avance por avance** en esta versión: un avance equivocado se corrige anotando otro. Se borra con la tarea. *Aceptada por Franco el 25 de noviembre de 2026* | REQ-CUN03-22 |
 | H-TP-28 | **R-27 dice que el hilo del Plan Personal «se cierra con un límite de tiempo».** **Decidida por Franco el 25 de noviembre de 2026:** no se cierra sola. Cuando pasa la fecha de la tarea, un aviso le ofrece a la persona darla por hecha o mantenerla abierta (REQ-CUN03-27); la bitácora deja de admitir avances solo cuando la tarea queda hecha o descartada (REQ-CUN03-25). Una tarea sin fecha no tiene aviso | REQ-CUN03-25, 27; R-27 |
-| H-TP-29 | **La respuesta a «¿cómo va X?» la arma el código** con los avances tal como están (REQ-CUN03-23), como la lista de REQ-CUN03-14. Un resumen redactado por el modelo («falta hablar con Rosa») queda para después: podría añadir u omitir algo. *Aceptada por Franco el 25 de noviembre de 2026* | REQ-CUN03-23; P-02 |
+| H-TP-29 | **La respuesta a «¿cómo va X?» la arma el código** con los avances tal como están (REQ-CUN03-23), como la lista de REQ-CUN03-14. Un resumen redactado por el modelo («falta hablar con Rosa») queda para después: podría añadir u omitir algo. *Aceptada por Franco el 25 de noviembre de 2026. Ampliada el mismo día:* el resumen sí entra, **junto a** los avances tal cual y nunca en su lugar, y solo una vez al día (REQ-CUN03-28) | REQ-CUN03-23; P-02 |
 | H-TP-30 | **El aviso al vencer vale para toda tarea vencida de «Con fecha»**, tenga o no bitácora: decidir si cerrarla es lo mismo con o sin avances. Lo que se espera de alguien con la fecha pasada no lleva aviso: su fecha es cuándo debía llegar (H-TP-04) y ya se marca como pasada | REQ-CUN03-27 |
 | H-TP-31 | **«Mantener abierta» es un control directo sin tarjeta**, como «Hecho» (H-TP-07): no sale de NexoAI y solo quita el aviso. Pasa por una Operación (AD-09) para que quede en la auditoría. Vale **para esa fecha**: si la fecha cambia y vuelve a pasar, el aviso vuelve. «Darla por hecha» es el mismo «Hecho» de la lista, con «Deshacer» | REQ-CUN03-27 |
-| H-TP-32 | **El aviso no es una notificación del teléfono ni un correo**: en esta versión no hay avisos de tareas fuera de la aplicación (H-TP-10). Se ve en Tareas, sobre la tarea, en la web y en el móvil. Llevarlo a una notificación queda para cuando las haya | REQ-CUN03-27; H-TP-10 |
+| H-TP-32 | **El aviso no es una notificación del teléfono ni un correo**: en esta versión no hay avisos de tareas fuera de la aplicación (H-TP-10). Se ve en Tareas, sobre la tarea, en la web y en el móvil. Llevarlo a una notificación queda para cuando las haya. *Aceptada por Franco el 25 de noviembre de 2026* | REQ-CUN03-27; H-TP-10 |
+| H-TP-33 | **«Una vez al día»** se cumple así: el trabajador repasa cada hora y resume solo las tareas pendientes con avances anotados después de su último resumen, y cuyo último resumen tiene más de 24 horas (o no tiene). Una tarea hecha o descartada no se resume más | REQ-CUN03-28 |
+| H-TP-34 | **Qué ve el modelo y qué devuelve.** Ve el texto, el contexto y los avances de la tarea, marcados como datos (H-AGT-15), y nada de otras tareas. Devuelve texto plano de hasta 280 caracteres, en español, sin prometer nada. Si devuelve algo vacío o más largo, se descarta y queda el resumen anterior. Cada llamada queda en la auditoría con su costo (P-07) | REQ-CUN03-28; P-06, P-07 |
+| H-TP-35 | **El resumen dice de cuándo es** («Resumen al miércoles 25 de noviembre») y que lo escribió el asistente, para que nadie lo tome por un avance. Los avances que llegaron después no están en él | REQ-CUN03-28 |
+| H-TP-36 | **«Antes del sábado» con Groq** (evaluación del 25 de noviembre de 2026). El modelo `openai/gpt-oss-120b` propone la tarea para el viernes, aunque las instrucciones dicen que es el sábado (como pide el criterio de REQ-CUN03-01). No se cambia nada en el código: la fecha la interpreta el modelo, y la tarjeta la muestra antes de confirmar (P-03), así que la persona la corrige. Revisar con otro proveedor o resolver «antes del…» en el código si se repite. **Pendiente de aval** | REQ-CUN03-01 |
 | H-TP-25 | **«Las hechas de los últimos siete días»** son las de las últimas 168 horas desde el momento de la consulta, no siete días de calendario | REQ-CUN03-10; H-TP-06 |

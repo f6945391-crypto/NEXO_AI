@@ -384,3 +384,18 @@ Sin escrituras anidadas: el avance se crea en su ejecutor, con su `tareaId`. La 
 | CUN03-23 | `agente.tareas-bitacora` | Integración: turno armado por el código, vacía, candidatas |
 | CUN03-27 | `tareas.aviso-al-vencer` | Integración: aviso, mantener abierta, vuelve con otra fecha |
 | CUN03-24, 26, 27 | `web.tareas-bitacora`, `movil.tareas-bitacora` | Extremo a extremo |
+
+### 13.8 Resumen diario de la bitácora (T-129, T-130)
+
+*Añadido el 25 de noviembre de 2026* para REQ-CUN03-28 (H-TP-33 a 35).
+
+| Pieza | Contenido |
+|---|---|
+| Datos | `tarea_personal.resumen` (`varchar(280)`, nula) y `tarea_personal.resumen_en` (`timestamptz`, nula). Migración nueva, generada con `prisma migrate diff --from-config-datasource` |
+| Contratos | `ResumenBitacora` = `{ texto, en, cuando }` («Resumen al miércoles 25 de noviembre»). `TareaPersonal.resumen` y `BitacoraTarea.resumen`, nulos si no hay |
+| Trabajo | `ResumenesBitacora.repasar(ahora)` en el proceso trabajador, cola `tareas-resumen-diario`, cada hora. Elige, con `sinAislar` (justificado como el ciclo de vida de 07-agente §14.8), las tareas pendientes con algún avance posterior a `resumen_en` y `resumen_en` nulo o de hace más de 24 horas. Por cada una, una llamada por `LlamadorModelo` (P-06), sin herramientas, con su costo auditado en `llamada_modelo` sin conversación. Respuesta vacía, de más de 280 caracteres o fallo: no se guarda nada |
+| Instrucciones | Breves y fijas: resumir en una o dos frases cómo va la tarea y qué falta, solo con lo anotado, sin inventar ni prometer; los avances llegan marcados como datos (H-AGT-15) |
+| Simulado | El guion responde a la petición de resumen con un texto fijo armado con el último avance, para las pruebas |
+| Lectura | `GET /tareas`, `GET /tareas/:id` y el turno `bitacora` de «¿cómo va X?» traen el resumen guardado. Nunca se genera al leer |
+| Pantallas | Sobre la bitácora, en web y móvil: «Resumen al miércoles 25 de noviembre · {texto}», con un estilo distinto del de los avances |
+| Pruebas | `tareas.resumen-diario` (API: se resume con avances nuevos; no se llama sin avances nuevos ni antes de 24 horas; un fallo conserva el anterior; la llamada queda auditada) y `web.tareas-bitacora`, `movil.tareas-bitacora` ampliadas |

@@ -6,6 +6,7 @@ import { TareasModule } from '../tareas/tareas.module';
 import { AsistenteController } from './asistente.controller';
 import { AsistenteService } from './asistente.service';
 import { TranscripcionService } from './transcripcion';
+import { NotaDeContinuidad } from './nota-de-continuidad';
 import { CicloDeVidaAsistente } from './ciclo-de-vida';
 import { ProcesadorEnEspera } from './en-espera';
 import { EjecutorHerramientas } from './herramientas/ejecutor-herramientas';
@@ -59,6 +60,7 @@ export function crearProveedorModelo(entorno: NodeJS.ProcessEnv = process.env): 
     HerramientasEquipos,
     AsistenteService,
     TranscripcionService,
+    NotaDeContinuidad,
     ProcesadorEnEspera,
     CicloDeVidaAsistente,
   ],

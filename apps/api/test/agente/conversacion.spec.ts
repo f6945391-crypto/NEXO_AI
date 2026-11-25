@@ -170,12 +170,20 @@ describe('T-032 · conversación con el asistente', () => {
       expect(textos).toEqual(['Agéndame dentista el viernes a las 4', 'mejor a las 5']);
     });
 
-    it('después de confirmar, la conversación se cierra y la siguiente empieza sin ese contexto', async () => {
+    // T-040 · REQ-AGT-01 v2, criterio 2: sin los turnos del episodio cerrado, pero con la nota de continuidad
+    it('después de confirmar, el episodio se cierra y el siguiente empieza sin sus turnos y con la nota de lo confirmado', async () => {
       const primera = await enviar('Agéndame dentista el viernes a las 4');
-      await decidir({ operacionId: primera.pendiente, decision: 'confirmar' });
+      const hecha = await decidir({ operacionId: primera.pendiente, decision: 'confirmar' });
+      const evento = (hecha.turnos[0] as Extract<TurnoAsistente, { tipo: 'resultado' }>).operacion.resultado as { id: string };
       const despues = await enviar('Hola');
       expect(despues.episodioId).not.toBe(primera.episodioId);
-      expect(simulado.peticiones.at(-1)!.mensajes).toEqual([{ rol: 'persona', texto: 'Hola' }]);
+      const peticion = simulado.peticiones.at(-1)!;
+      expect(peticion.mensajes).toEqual([{ rol: 'persona', texto: 'Hola' }]);
+      expect(peticion.nota).toMatch(/^- registrado · compromiso «Dentista» · .+ · eventoId [0-9a-f-]{36} · hace un momento$/m);
+      expect(peticion.nota).toContain(evento.id);
+      // La nota va aparte de las instrucciones, y no lleva lo que se dijo en el episodio anterior
+      expect(peticion.sistema).not.toContain('Dentista');
+      expect(peticion.nota).not.toContain('Agéndame dentista');
       expect(tipos(despues.turnos)).toEqual(['persona', 'texto']);
     });
 

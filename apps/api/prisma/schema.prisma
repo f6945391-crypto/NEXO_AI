@@ -624,6 +624,10 @@ model TareaPersonal {
   contexto            String?     @db.VarChar(200)
   // REQ-CUN03-27 · H-TP-31: la fecha para la que la persona eligió «Mantener abierta»; el aviso vuelve con otra
   vencimientoAtendido DateTime?   @map("vencimiento_atendido") @db.Date
+  // REQ-CUN03-28 · T-129 · H-TP-33 a 35: el resumen de la bitácora que redactó el asistente, y cuándo. Lo
+  // escribe solo el trabajo diario; nunca se genera al leer. Nulos hasta el primer resumen
+  resumen             String?     @db.VarChar(280)
+  resumenEn           DateTime?   @map("resumen_en") @db.Timestamptz(3)
   creadaEn            DateTime    @default(now()) @map("creada_en") @db.Timestamptz(3)
   actualizadaEn       DateTime    @updatedAt @map("actualizada_en") @db.Timestamptz(3)
 

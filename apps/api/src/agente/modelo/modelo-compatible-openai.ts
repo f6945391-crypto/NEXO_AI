@@ -30,9 +30,12 @@ type RespuestaOpenAI = {
   usage?: { prompt_tokens?: number; completion_tokens?: number };
 };
 
-function aMensajes(sistema: string, mensajes: MensajeModelo[]): MensajeOpenAI[] {
+// T-040: la nota de continuidad va como un mensaje de la parte de la persona, antes de la conversación, y no en
+// el de sistema: los títulos que lleva no tienen la autoridad de las instrucciones (H-AGT-15)
+function aMensajes(sistema: string, mensajes: MensajeModelo[], nota?: string): MensajeOpenAI[] {
   return [
     { role: 'system', content: sistema },
+    ...(nota ? [{ role: 'user' as const, content: nota }] : []),
     ...mensajes.map((m): MensajeOpenAI => {
       if (m.rol === 'persona') return { role: 'user', content: m.texto };
       if (m.rol === 'herramienta') return { role: 'tool', tool_call_id: m.llamadaId, content: m.contenido };
@@ -70,7 +73,7 @@ export class ModeloCompatibleOpenAI implements ProveedorModelo {
         headers: { 'Content-Type': 'application/json', ...(clave ? { Authorization: `Bearer ${clave}` } : {}) },
         body: JSON.stringify({
           model: modelo,
-          messages: aMensajes(peticion.sistema, peticion.mensajes),
+          messages: aMensajes(peticion.sistema, peticion.mensajes, peticion.nota),
           ...(peticion.herramientas.length > 0
             ? {
                 tools: peticion.herramientas.map((h) => ({ type: 'function', function: { name: h.nombre, description: h.descripcion, parameters: h.esquema } })),
@@ -87,7 +90,15 @@ export class ModeloCompatibleOpenAI implements ProveedorModelo {
 
     if (!respuesta.ok) {
       if (respuesta.status >= 500 || NO_DISPONIBLE.has(respuesta.status)) throw new ModeloNoDisponible(`el proveedor respondió ${respuesta.status}`);
-      throw new FalloDelModelo(`el proveedor rechazó la petición (${respuesta.status})`);
+      // El motivo que da el proveedor (p. ej. `tool_use_failed`), recortado; nunca lleva la clave
+      let motivo = '';
+      try {
+        const error = ((await respuesta.json()) as { error?: { code?: unknown; message?: unknown } }).error;
+        motivo = [error?.code, error?.message].filter((v) => typeof v === 'string').join(': ').slice(0, 200);
+      } catch {
+        // Sin cuerpo legible: basta el estado
+      }
+      throw new FalloDelModelo(`el proveedor rechazó la petición (${respuesta.status})${motivo ? `: ${motivo}` : ''}`);
     }
 
     let cuerpo: RespuestaOpenAI;

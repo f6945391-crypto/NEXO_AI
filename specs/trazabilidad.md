@@ -18,7 +18,7 @@
 | 06-acceso | 19 | 3 | 0 | 16 | 0 | 0 |
 | 07-agente | 5 | 2 | 1 | 2 | 0 | 0 |
 | 08-administracion | 32 | 15 | 4 | 13 | 0 | 0 |
-| 09-tareas-personales | 27 | 8 | 1 | 18 | 0 | 0 |
+| 09-tareas-personales | 28 | 2 | 1 | 25 | 0 | 0 |
 
 ## Requisitos
 
@@ -191,7 +191,7 @@
 | REQ-ACC-17 | 06-acceso | Requisito del sistema | 4 | — | — | pendiente |
 | REQ-ACC-18 | 06-acceso | Requisito del sistema | 1 | T-121 | acceso.cambiar-contrasena; acceso.cambiar-contrasena-desde-ajustes; movil.cambiar-contrasena | implementado |
 | REQ-ACC-19 | 06-acceso | Requisito del sistema | 1 | T-122, T-123 | — | pendiente |
-| REQ-AGT-01 | 07-agente | `PROPUESTA-TECNICA.md` §7.4, memoria de conversación; H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6 y §8.1; glosario, «Episodio» y «Nota de continuidad» | 2 | T-032, T-034, T-038, T-040, T-041 | agente.conversacion-con-contexto, agente.episodio-caduca, agente.propuesta-caduca, agente.tope-del-grafo | en curso |
+| REQ-AGT-01 | 07-agente | `PROPUESTA-TECNICA.md` §7.4, memoria de conversación; H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6 y §8.1; glosario, «Episodio» y «Nota de continuidad» | 2 | T-032, T-034, T-038, T-040, T-041 | agente.conversacion-con-contexto, agente.nota-de-continuidad, agente.episodio-caduca, agente.propuesta-caduca, agente.tope-del-grafo | implementado |
 | REQ-AGT-02 | 07-agente | decisión del equipo, 24 de octubre de 2026; REQ-CAP-02, REQ-CAP-23; `09-tareas-personales` §10 (la tarea deja de esperar: REQ-CUN03-01); REQ-CUN03-16 (lo que las tareas personales no hacen) | 2 | T-033, T-034 | agente.tarea-queda-en-espera | implementado |
 | REQ-AGT-03 | 07-agente | H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6.1 y §8.1; `design/ARQUITECTURA-VISUAL-WEB.md` §5 y §6 («lo cerrado no se pierde») | 2 | T-038, T-039, T-041 | agente.transcripcion-persiste, web.asistente-historial, agente.retencion-puntos-de-control, agente.retencion-transcripcion | implementado |
 | REQ-AGT-04 | 07-agente | H-AGT-17; `INFORME-MEMORIA-AGENTE.md` §6.4.5; decisión 17 de `02-agenda` (las alternativas no pasan por el modelo); P-02, P-03 | 2 | T-042 | — | pendiente |
@@ -255,3 +255,4 @@
 | REQ-CUN03-25 | 09-tareas-personales | R-42; P-11; REQ-CUN03-18; H-TP-01 | 1 | T-125, T-126 | tareas.bitacora, agente.tareas-anotar-avance | implementado |
 | REQ-CUN03-26 | 09-tareas-personales | H-TP-26, precisada por Franco el 25 de noviembre de 2026 (la ficha de la tarea); REQ-CUN03-21 | 1 | T-125, T-126, T-127, T-128 | tareas.aviso-al-vencer, agente.tareas-anotar-avance, web.tareas-bitacora, movil.tareas-bitacora | implementado |
 | REQ-CUN03-27 | 09-tareas-personales | H-TP-28, decisión de Franco del 25 de noviembre de 2026 («pasada la fecha, una notificación para cerrar o mantener abierto»); R-27; H-TP-07; DP-01 | 1 | T-125, T-127, T-128 | tareas.aviso-al-vencer, web.tareas-bitacora, movil.tareas-bitacora | implementado |
+| REQ-CUN03-28 | 09-tareas-personales | decisión de Franco del 25 de noviembre de 2026 («un breve resumen de lo que se tiene, que solo se actualice cada día, porque consume tokens»); H-TP-29; P-06 | 1 | T-129, T-130 | tareas.resumen-diario, web.tareas-bitacora, movil.tareas-bitacora | implementado |

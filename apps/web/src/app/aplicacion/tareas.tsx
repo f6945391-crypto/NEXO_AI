@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 import type { FranjaTarea, OperacionRespuesta, TareaPersonal, TareasDelDia } from '@nexoai/contratos';
 import type { Tareas } from '../../lib/tareas';
 import { confirmarDescartarTarea, descartarOperacion, mantenerAbierta, marcarHecha, proponerDescartarTarea, reabrirTarea } from '../acciones';
+import { ResumenDeBitacora } from './resumen-bitacora';
 
 // T-052, T-053 · specs/09-tareas-personales/plan.md §8.1 · REQ-CUN03-06 a 11, 13 · R-38, R-40, R-42. La sección
 // Tareas del lienzo y el grupo «Tareas para este día» de Hoy. Los textos de fecha y espera los arma la API.
@@ -120,6 +121,8 @@ function Bitacora({ tarea }: { tarea: TareaPersonal }) {
   if (!ultimo) return null;
   return (
     <div className="tarea__bitacora">
+      {/* T-130 · REQ-CUN03-28: el resumen del asistente, sobre el último avance y «Ver bitácora» */}
+      <ResumenDeBitacora tarea={tarea.texto} resumen={tarea.resumen} />
       {!abierta && (
         <p className="tarea__avance">
           <span className="tarea__avance-cuando">{soloElDia(ultimo.cuando)}</span> · {ultimo.texto}

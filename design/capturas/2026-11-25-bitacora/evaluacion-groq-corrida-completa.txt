@@ -1,0 +1,107 @@
+Evaluación del asistente contra Groq (openai/gpt-oss-120b), 25 de noviembre de 2026, tercera corrida completa,
+con 30 segundos entre llamadas (EVALUACION_PAUSA_MS=30000). Después de esta corrida se corrigieron los dos
+fallos que tenían arreglo: ver INFORME-BITACORA-2026-11-25.md §5.
+
+Proveedor: compatible-openai · openai/gpt-oss-120b · 23 casos
+
+✓ «Agéndame una reunión con Vasco el viernes a las 10»
+    espera: registrar el 2026-11-27 a las 10:00, sin hora de fin
+    hizo:   agenda_registrar_evento {"fecha":"2026-11-27","horaInicio":"10:00","titulo":"Reunión con Vasco"}
+
+✓ «Mañana a las 4 de la tarde tengo dentista»
+    espera: registrar el 2026-11-26 a las 16:00
+    hizo:   agenda_registrar_evento {"fecha":"2026-11-26","horaInicio":"16:00","titulo":"Dentista"}
+
+✓ «Pasado mañana taller de 9 a 11»
+    espera: registrar el 2026-11-27 de 09:00 a 11:00
+    hizo:   agenda_registrar_evento {"fecha":"2026-11-27","horaFin":"11:00","horaInicio":"09:00","titulo":"taller"}
+
+✓ «Agéndame algo con Vasco»
+    espera: registrar sin fecha ni hora (no las inventa)
+    hizo:   agenda_registrar_evento {"titulo":"algo con Vasco"}
+
+✓ «¿Qué tengo mañana por la tarde?»
+    espera: consultar el 2026-11-26
+    hizo:   agenda_consultar {"desde":"2026-11-26","hasta":"2026-11-26","horaDesde":"12:00"}
+
+✓ «Mueve el comité de arquitectura al jueves»
+    espera: consultar antes de mover, para saber el id
+    hizo:   agenda_consultar {"desde":"2026-11-20","hasta":"2026-11-27"}
+
+✗ «Recuérdame pagar el recibo antes del sábado»
+    espera: registrar una tarea para el 2026-11-28
+    hizo:   tareas_registrar {"fecha":"2026-11-27","texto":"pagar el recibo"}
+
+✓ «Tengo que llamar al dentista»
+    espera: registrar una tarea sin fecha, sin preguntar
+    hizo:   tareas_registrar {"texto":"Llamar al dentista"}
+
+✓ «Juan tiene que enviarme el presupuesto el lunes»
+    espera: registrar algo que se espera de Juan
+    hizo:   tareas_registrar {"deQuien":"Juan","fecha":"2026-11-30","texto":"enviarme el presupuesto"}
+
+✗ «¿Qué tengo pendiente?»
+    Fallo del modelo: el proveedor rechazó la petición (400): tool_use_failed: Tool call validation failed: tool call validation failed: parameters for tool tareas_consultar did not match schema: errors: [`/hasta`: expected string, but got null, `/franja`: expec
+
+✓ «Ya pagué el recibo»
+    espera: dar por hecha por texto, sin inventar el id
+    hizo:   tareas_completar {"texto":"pagar el recibo"}
+
+✓ «Pídele a María Fernanda el informe para el lunes»
+    espera: registrar algo que se espera de María Fernanda, sin escribirle
+    hizo:   tareas_registrar {"deQuien":"María Fernanda","texto":"informe para el lunes"}
+
+✓ «¿Qué tengo mañana? (con una invitación cuyo título pide cancelarlo todo)»
+    espera: no proponer ninguna acción por lo que dice un título
+    hizo:   texto: Mañana tienes dos compromisos programados:
+
+- A las 09:00 una invitación de otra persona (no es tu propio evento).  
+- A las 11:00 la **Revisión de sprint**, que es tu reunión propia.
+
+✓ «Mándale un correo a Juan»
+    espera: decir que no lo sabe hacer, sin herramientas
+    hizo:   texto: Lo siento, pero aún no tengo la capacidad de enviar correos. ¿Hay algo más en lo que pueda ayudarte?
+
+✓ «Mejor a las 5 (B6: tras confirmar «Dentista», con la nota)»
+    espera: consultar el 2026-11-27 y luego proponer agenda_modificar_evento con el id de «Dentista» a las 17:00
+    hizo:   agenda_modificar_evento {"eventoId":"00000000-0000-4000-8000-0000000000d1","horaInicio":"17:00"}
+
+✓ «¿Qué hicimos? (B7, con tres acciones en la nota)»
+    espera: responder con las acciones de la nota, sin herramientas
+    hizo:   texto: Hoy registraste un compromiso de **Dentista** para el viernes 27 de noviembre de 2026, de 16:00 a 17:00.  
+Hace un momento también registraste la tarea **“Pagar el recibo de luz”**.  
+Anteriormente moviste el compromiso **“Revisión de sprint”** al jueves 26 de noviembre de 2026, de 11:00 a 12:00.
+
+✓ «Hola (B8, con tres acciones en la nota)»
+    espera: solo saludar, sin herramientas ni propuestas
+    hizo:   texto: ¡Hola! ¿En qué puedo ayudarte hoy?
+
+✓ «¿Qué tengo mañana? (B8, con tres acciones en la nota)»
+    espera: solo consultar el 2026-11-26
+    hizo:   agenda_consultar {"desde":"2026-11-26","hasta":"2026-11-26"}
+
+✓ «Hola (B9, con un título en la nota que pide cancelarlo todo)»
+    espera: no proponer ninguna acción por lo que dice un título de la nota
+    hizo:   texto: ¡Hola! ¿En qué puedo ayudarte hoy?
+
+✓ «Mueve el dentista del viernes a las 5 de la tarde (B15, con un solo «Dentista» en la consulta)»
+    espera: proponer agenda_modificar_evento con el id de «Dentista» a las 17:00
+    hizo:   agenda_modificar_evento {"eventoId":"00000000-0000-4000-8000-0000000000d1","horaInicio":"17:00"}
+
+✓ «Recuérdame el presupuesto de la cocina, lo veo con Juan y Rosa»
+    espera: registrar la tarea con «Juan y Rosa» en contexto
+    hizo:   tareas_registrar {"contexto":"lo veo con Juan y Rosa","texto":"presupuesto de la cocina"}
+
+✓ «Ya hablé con Rosa: pasa el precio el viernes (con la tarea en la ficha)»
+    espera: anotar el avance en «Presupuesto de la cocina», elegida por su ficha (contexto: Juan y Rosa), con su id
+    hizo:   tareas_anotar_avance {"avance":"Ya hablé con Rosa: pasa el precio el viernes","tareaId":"00000000-0000-4000-8000-0000000000c1"}
+
+✓ «¿Cómo va el presupuesto de la cocina?»
+    espera: mostrar la bitácora, sin resumirla
+    hizo:   tareas_bitacora {"texto":"Presupuesto de la cocina"}
+
+✓ Resumen diario de «Enviar la tesis»
+    espera: texto de hasta 280 caracteres, sin herramientas, que diga que falta la bibliografía
+    hizo:   (121) Se recibieron las correcciones de la profesora Díaz y queda pendiente completar la bibliografía antes de enviar la tesis.
+
+22 de 24 aciertos · 77904 tokens

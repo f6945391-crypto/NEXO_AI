@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextStyle } from 'react-native';
 import { ConversacionAsistente, Perfil, RespuestaAsistente, type DecisionAsistente, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
-import { Aviso, Boton } from '../componentes';
+import { Aviso, Boton, ResumenDeBitacora } from '../componentes';
 import { conSesion, mensajeDeError, SIN_CONEXION } from '../sesion';
 import { elementosDe, textoDelSeparador, type Elemento } from '../separador';
 import { color, espaciado, tipografia } from '../tokens';
@@ -227,6 +227,8 @@ function Turno({ turno, pendiente, ocupado, alDecidir }: { turno: TurnoAsistente
         <View accessibilityLabel={`Cómo va «${turno.bitacora.tarea}»`} style={estilos.agenda}>
           <Text style={estilos.accion}>{turno.bitacora.tarea}</Text>
           {turno.bitacora.contexto && <Text style={estilos.suave}>{turno.bitacora.contexto}</Text>}
+          {/* T-130 · REQ-CUN03-28: el resumen arriba, si lo hay, y debajo los avances tal como están (H-TP-29) */}
+          <ResumenDeBitacora tarea={turno.bitacora.tarea} resumen={turno.bitacora.resumen} />
           {turno.bitacora.avances.length === 0 ? (
             <Text style={estilos.cuerpo}>{turno.bitacora.vacia ?? 'Esta tarea no tiene avances anotados.'}</Text>
           ) : (

@@ -5,6 +5,7 @@ import type { ConversacionAsistente, DecisionAsistente, OperacionRespuesta, Turn
 import { decidirEnAsistente, enviarAlAsistente, verAnteriores } from '../acciones';
 import { elementosDe, textoDelSeparador, type Elemento } from '../../lib/separador';
 import { IconoEnviar } from './iconos';
+import { ResumenDeBitacora } from './resumen-bitacora';
 
 // T-034 · specs/07-agente/plan.md §9 · REQ-CAP-23. La conversación con el asistente. Cada turno se muestra
 // según su tipo, para que no se parezca lo que significa cosas distintas: una tarjeta que espera tu
@@ -205,6 +206,8 @@ function Turno({
           <section className="turno-agenda" aria-label={`Bitácora de ${turno.bitacora.tarea}`}>
             <h3 className="turno-bitacora__tarea">{turno.bitacora.tarea}</h3>
             {turno.bitacora.contexto && <p className="turno-agenda__rango">{turno.bitacora.contexto}</p>}
+            {/* T-130 · REQ-CUN03-28: el resumen arriba, si lo hay, y debajo los avances tal como están (H-TP-29) */}
+            <ResumenDeBitacora tarea={turno.bitacora.tarea} resumen={turno.bitacora.resumen} />
             {turno.bitacora.avances.length === 0 ? (
               <p className="turno__texto">{turno.bitacora.vacia ?? 'Esta tarea no tiene avances anotados.'}</p>
             ) : (

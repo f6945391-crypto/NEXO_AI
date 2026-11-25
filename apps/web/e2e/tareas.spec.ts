@@ -212,6 +212,13 @@ test.describe('web.tareas-bitacora', () => {
     const tesis = tarea(page, 'Enviar la tesis');
     await expect(tesis.locator('.tarea__contexto')).toHaveText('La reviso con la profesora Díaz');
     await expect(tesis.locator('.tarea__avance')).toHaveText(/^\p{Lu}\p{L}+ \d+ · Me devolvió correcciones; falta la bibliografía$/u);
+    // T-130 · REQ-CUN03-28 · H-TP-35: el resumen del asistente, con su fecha y su etiqueta, sobre el último avance
+    const resumen = tesis.getByRole('note', { name: 'Resumen de Enviar la tesis' });
+    await expect(resumen.locator('.resumen-bitacora__etiqueta')).toHaveText('Escrito por el asistente');
+    await expect(resumen.locator('.resumen-bitacora__texto')).toHaveText(
+      /^Resumen al \p{Ll}+ \d+ de \p{L}+ · Correcciones recibidas de la profesora Díaz; falta la bibliografía\.$/u,
+    );
+    expect((await resumen.boundingBox())!.y).toBeLessThan((await tesis.locator('.tarea__avance').boundingBox())!.y);
 
     const ver = tesis.getByRole('button', { name: 'Ver bitácora (2)' });
     await expect(ver).toHaveAttribute('aria-expanded', 'false');
@@ -231,6 +238,8 @@ test.describe('web.tareas-bitacora', () => {
     // Una tarea sin avances ni contexto no muestra nada de eso
     const recibo = tarea(page, 'Pagar el recibo');
     await expect(recibo.locator('.tarea__contexto, .tarea__bitacora')).toHaveCount(0);
+    // T-130: ni resumen
+    await expect(recibo.getByRole('note', { name: /^Resumen de/ })).toHaveCount(0);
   });
 
   test('una tarea vencida avisa con «Darla por hecha» y «Mantener abierta»; mantenerla quita el aviso, también al recargar, y sigue vencida (REQ-CUN03-27)', async () => {
@@ -263,7 +272,7 @@ test.describe('web.tareas-bitacora', () => {
     await expect(listaPendientes(page).getByRole('region', { name: /^Aviso:/ })).toHaveCount(0);
   });
 
-  test('«¿cómo va enviar la tesis?» muestra en la conversación la bitácora tal como está (REQ-CUN03-23)', async () => {
+  test('«¿cómo va enviar la tesis?» muestra en la conversación el resumen y, debajo, la bitácora tal como está (REQ-CUN03-23, 28)', async () => {
     const page = sesion;
     await volverAAgenda(page);
     await page.getByLabel('Pídele algo al asistente').fill('¿cómo va enviar la tesis?');
@@ -275,6 +284,11 @@ test.describe('web.tareas-bitacora', () => {
     await expect(avances).toHaveCount(2);
     await expect(avances.nth(0)).toContainText(/\p{L}+ \d+ de \p{L}+, \d{2}:\d{2}\s*Me devolvió correcciones; falta la bibliografía/u);
     await expect(avances.nth(1)).toContainText('Mandé el capítulo 3 a la profesora Díaz');
+    // T-130 · REQ-CUN03-28: el resumen arriba, junto a los avances y no en su lugar (H-TP-29)
+    const resumen = turno.getByRole('note', { name: 'Resumen de Enviar la tesis' });
+    await expect(resumen).toContainText('Escrito por el asistente');
+    await expect(resumen).toContainText(/Resumen al \p{Ll}+ \d+ de \p{L}+ · Correcciones recibidas de la profesora Díaz; falta la bibliografía\./u);
+    expect((await resumen.boundingBox())!.y).toBeLessThan((await turno.getByRole('list', { name: 'Avances de Enviar la tesis' }).boundingBox())!.y);
     // No propone nada
     await expect(page.getByRole('article', { name: 'Para confirmar' })).toHaveCount(0);
   });

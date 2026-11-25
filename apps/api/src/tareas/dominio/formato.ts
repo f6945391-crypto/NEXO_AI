@@ -45,6 +45,11 @@ export function textoAvance(anotadoEn: Date, zonaPerfil: string): string {
   return `${mayuscula(diaLargo(diaEn(anotadoEn, zonaPerfil)))}, ${hora}`;
 }
 
+// REQ-CUN03-28 · H-TP-35: «Resumen al miércoles 25 de noviembre», el día del resumen en la zona del perfil
+export function textoResumen(resumenEn: Date, zonaPerfil: string): string {
+  return `Resumen al ${diaLargo(diaEn(resumenEn, zonaPerfil))}`;
+}
+
 export function textoCierre(tarea: Pick<DatosFranja, 'deQuien'> & { hechaEn: Date | null }, zonaPerfil: string): string | null {
   if (!tarea.hechaEn) return null;
   const dia = diaLargo(diaEn(tarea.hechaEn, zonaPerfil));

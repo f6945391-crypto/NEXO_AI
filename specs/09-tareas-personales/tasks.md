@@ -186,6 +186,25 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Prueba:** `movil.tareas-bitacora` (extremo a extremo)
 - **Estado:** hecha · 25 de noviembre de 2026. Mismo aviso y mismo último avance que la web (R-41). Al desplegar la bitácora se oculta la línea del último avance, que la lista ya incluye. La tarjeta plegada de la capa muestra ahora «Tarea» y nunca pliega «Avance». Cuenta de pruebas propia, `tareasBitacora`, sembrada igual que `tareas`, por el límite de 5 ingresos por minuto. Capturas en `design/capturas/2026-11-25-bitacora/movil/`
 
+
+### T-129 · Resumen diario de la bitácora en la API
+
+- **Satisface:** REQ-CUN03-28 · H-TP-33, H-TP-34, H-TP-35
+- **Depende de:** T-125, T-126
+- **Contenido:** plan §13.8: columnas `resumen` y `resumen_en`, contratos, trabajo `ResumenesBitacora` cada hora en el trabajador, llamada por `LlamadorModelo` auditada, guion del simulado, resumen en las lecturas y en el turno `bitacora`
+- **Hecho cuando:** con el simulado, una tarea con avances nuevos recibe su resumen en la pasada; otra pasada en menos de 24 horas no llama al modelo aunque haya un avance nuevo, y pasadas las 24 horas sí; una tarea sin avances nuevos no llama; con el modelo caído, queda el resumen anterior; la llamada queda en `llamada_modelo` con su costo; `GET /tareas` y «¿cómo va X?» traen el resumen
+- **Prueba:** `tareas.resumen-diario`
+- **Estado:** hecha · 25 de noviembre de 2026. Migración `20261125180000_resumen_bitacora`, generada con `prisma migrate diff --from-config-datasource`, solo con las dos columnas. `ResumenesBitacora` (`src/tareas/resumenes-bitacora.ts`) va en su propio `ResumenesModule`, que importa `AgenteModule` por `LlamadasAuditadas`; lo importa solo el proceso trabajador, porque el agente ya importa Tareas. `TrabajadorResumenes`, cola `tareas-resumen-diario`, cada hora. **Ajustes al plan:** como mucho 50 tareas por pasada (las que nunca tuvieron resumen, primero; lo demás entra en la siguiente); una respuesta con llamadas a herramientas también se descarta; el resumen se guarda solo si la tarea sigue pendiente y nadie la resumió mientras tanto. `resumen_en` es el momento de la pasada. El modelo ve una petición fija que empieza por «Resumen de la bitácora de una tarea.», con el aviso de contenido externo, la tarea, su contexto y los avances «- [cuándo] texto», del más reciente al más antiguo; el guion de demostración responde «Lo último anotado: …» con el último. `ResumenBitacora.cuando` es «Resumen al miércoles 25 de noviembre», en la zona del perfil. 7 pruebas en `test/tareas/resumen-diario.spec.ts` **Ajuste tras la evaluación con Groq (25 de noviembre de 2026):** `maxTokens` pasa de 200 a 1024, porque `openai/gpt-oss-120b` razona antes de responder y con 200 el resumen salía cortado («Has recibido»); con 1024 da un resumen completo de menos de 280 caracteres
+
+### T-130 · Resumen diario en la web y el móvil
+
+- **Satisface:** REQ-CUN03-28 (interfaz)
+- **Depende de:** T-129, T-127, T-128
+- **Contenido:** «Resumen al … · …» sobre la bitácora de cada tarea y en el turno `bitacora` de la conversación, en la web y en el móvil
+- **Hecho cuando:** la cuenta de pruebas ve el resumen de «Enviar la tesis» sobre su bitácora y en «¿cómo va enviar la tesis?»; una tarea sin resumen no muestra nada
+- **Pruebas:** `web.tareas-bitacora`, `movil.tareas-bitacora` (ampliadas)
+- **Estado:** hecha · 25 de noviembre de 2026. Un solo componente por plataforma, `ResumenDeBitacora` (web: `src/app/aplicacion/resumen-bitacora.tsx`; móvil: `src/componentes.tsx`), que usan la sección Tareas y el turno `bitacora`. Bloque con el tinte del asistente (`agente.suave`), la etiqueta «Escrito por el asistente» en `agente.base` y debajo «Resumen al … · …», para que no se lea como un avance (H-TP-35); rol `note` con el nombre «Resumen de {tarea}». Va dentro de la bitácora, antes del último avance y de «Ver bitácora», y sigue a la vista al desplegarla; en el turno, bajo el contexto y sobre los avances. Sin resumen, nada. Semilla: «Enviar la tesis», en `tareas` y `tareasBitacora`, con un resumen de hace una hora, posterior a sus avances. Las pruebas existentes no cambian lo que esperaban; solo se añaden comprobaciones. Capturas regeneradas en `design/capturas/2026-11-25-bitacora/`
+
 ---
 
 **Fuera de este desglose:** el hilo de la conversación sobre una tarea (REQ-AGT-05), los avisos fuera de la aplicación (H-TP-10, H-TP-32), la marca por plan (H-TP-12, con REQ-CAP-05), las tareas en Semana y Mes (H-TP-09, revisable con CUN-02) y las tareas en la sección Actividad (hito 4).

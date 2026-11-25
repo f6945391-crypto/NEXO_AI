@@ -32,6 +32,21 @@ export const GUION_DEMOSTRACION: ReglaGuion[] = [
     si: `^¿?qu[eé] tengo (?:el |este )?${DIA}\\??$`,
     pasos: [{ llamadas: [{ nombre: 'agenda_consultar', argumentos: { desde: '{$1}', hasta: '{$1}' } }] }, { texto: '' }],
   },
+  // T-040 · REQ-AGT-01 v2 · plan §14.5: lo que usa la nota de continuidad. El simulado la lee solo con las
+  // marcas {nota:…} (modelo-simulado.ts). «Mejor a las 5» va siempre sobre el último compromiso de la nota: con
+  // una propuesta abierta, que el simulado no ve, este guion no distingue el criterio 1 de REQ-AGT-01. «A las 5»
+  // se lee por la tarde, como en el criterio del requisito
+  {
+    si: `^mejor a las ${HORA}(?: de la tarde)?$`,
+    pasos: [
+      { llamadas: [{ nombre: 'agenda_consultar', argumentos: { desde: '{nota:fecha}', hasta: '{nota:fecha}' } }] },
+      { llamadas: [{ nombre: 'agenda_modificar_evento', argumentos: { eventoId: '{nota:eventoId}', horaInicio: '{tarde:$1}' } }] },
+      { texto: '' },
+    ],
+  },
+  { si: '^¿?qu[eé] hicimos\\??$', pasos: [{ texto: '{nota:resumen}' }] },
+  // La nota no empuja a actuar: un saludo es solo un saludo (B8)
+  { si: '^(?:hola|buenas)[.!]?$', pasos: [{ texto: 'Hola, ¿qué hacemos?' }] },
   // T-050, T-051 · 09-tareas-personales: las tareas personales. Una tarea ya no queda en espera: se propone
   {
     si: '^¿?qu[eé] tengo pendiente esta semana\\??$',
@@ -97,5 +112,12 @@ export const GUION_DEMOSTRACION: ReglaGuion[] = [
   {
     si: '^(?:ponle prioridad|div[ií]dela|hazla repetir|as[ií]gnale)',
     pasos: [{ texto: 'Las tareas personales no tienen prioridades, pasos ni repeticiones, y no se asignan a otras personas. No cambié nada.' }],
+  },
+  // T-129 · REQ-CUN03-28: el resumen diario de la bitácora (src/tareas/resumenes-bitacora.ts). La petición
+  // empieza por MARCA_PETICION_RESUMEN y lista los avances del más reciente al más antiguo, «- [cuándo] texto»;
+  // el simulado responde con un texto fijo armado con el último
+  {
+    si: '^Resumen de la bitácora de una tarea\\.[\\s\\S]*?\\n- \\[[^\\]\\n]*\\] ([^\\n]+)',
+    pasos: [{ texto: 'Lo último anotado: $1' }],
   },
 ];
