@@ -67,7 +67,7 @@ export const EstadoAsistente = Annotation.Root({
   cerrada: reemplazar<boolean>(false),
   // T-051 · REQ-CUN03-15: las tareas candidatas que se ofrecieron y qué se haría con la elegida. Escribir otra
   // cosa las descarta (plan §14.9)
-  candidatas: reemplazar<{ accion: string; ids: string[] } | null>(null),
+  candidatas: reemplazar<{ accion: string; ids: string[]; avance?: string } | null>(null),
 });
 export type EstadoAsistente = typeof EstadoAsistente.State;
 
@@ -214,10 +214,16 @@ export function construirGrafo(
         const base = { id: randomUUID(), en: ahora() };
         if (turno.data.tipo === 'agenda') turnos.push({ ...base, tipo: 'agenda', lista: turno.data.lista });
         else if (turno.data.tipo === 'tareas') turnos.push({ ...base, tipo: 'tareas', lista: turno.data.lista });
+        // T-126 · REQ-CUN03-23: la bitácora es una lista, como la de tareas; no cierra el episodio
+        else if (turno.data.tipo === 'bitacora') turnos.push({ ...base, tipo: 'bitacora', bitacora: turno.data.bitacora });
         else if (turno.data.tipo === 'propuesta') turnos.push({ ...base, tipo: 'propuesta', operacion: turno.data.operacion });
         else if (turno.data.tipo === 'alternativas_de_referente') {
           turnos.push({ ...base, tipo: 'alternativas_de_referente', lista: turno.data.lista });
-          candidatas = { accion: turno.data.lista.accion, ids: turno.data.lista.candidatas.map((c) => c.id) };
+          candidatas = {
+            accion: turno.data.lista.accion,
+            ids: turno.data.lista.candidatas.map((c) => c.id),
+            ...(turno.data.lista.avance ? { avance: turno.data.lista.avance } : {}),
+          };
         } else {
           turnos.push({ ...base, ...turno.data });
           guardada = true;

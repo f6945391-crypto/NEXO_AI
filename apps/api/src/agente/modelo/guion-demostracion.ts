@@ -50,6 +50,11 @@ export const GUION_DEMOSTRACION: ReglaGuion[] = [
     si: `^recu[eé]rdame (.+?) (?:antes del|para el|el) ${DIA}$`,
     pasos: [{ llamadas: [{ nombre: 'tareas_registrar', argumentos: { texto: '{titulo:$1}', fecha: '{$2}' } }] }, { texto: '' }],
   },
+  // T-126 · REQ-CUN03-26: con quién o para qué es la tarea, como contexto
+  {
+    si: '^recu[eé]rdame (.+?), (lo veo con .+|es para .+)$',
+    pasos: [{ llamadas: [{ nombre: 'tareas_registrar', argumentos: { texto: '{titulo:$1}', contexto: '{titulo:$2}' } }] }, { texto: '' }],
+  },
   {
     si: '^(?:recu[eé]rdame|tengo que) (.+)$',
     pasos: [{ llamadas: [{ nombre: 'tareas_registrar', argumentos: { texto: '{titulo:$1}' } }] }, { texto: '' }],
@@ -62,6 +67,19 @@ export const GUION_DEMOSTRACION: ReglaGuion[] = [
   {
     si: `^(.+?) tiene que (?:enviarme|mandarme|darme) (?:el|la|los|las) (.+?) (?:el|este) ${DIA}(?: que viene)?$`,
     pasos: [{ llamadas: [{ nombre: 'tareas_registrar', argumentos: { texto: '{titulo:$2}', deQuien: '$1', fecha: '{$3}' } }] }, { texto: '' }],
+  },
+  // T-126 · REQ-CUN03-21, 23: la bitácora de una tarea. Antes que «ya …», que es darla por hecha
+  {
+    si: '^(?:sobre|avanc[eé] con) (?:el |la |los |las |lo de )?(.+?): (.+)$',
+    pasos: [{ llamadas: [{ nombre: 'tareas_anotar_avance', argumentos: { tarea: '$1', avance: '{titulo:$2}' } }] }, { texto: '' }],
+  },
+  {
+    si: '^(ya habl[eé] con (.+?)(?:,|:) .+)$',
+    pasos: [{ llamadas: [{ nombre: 'tareas_anotar_avance', argumentos: { tarea: '$2', avance: '{titulo:$1}' } }] }, { texto: '' }],
+  },
+  {
+    si: '^¿?c[oó]mo va (?:el |la |los |las |lo de )?(.+?)\\??$',
+    pasos: [{ llamadas: [{ nombre: 'tareas_bitacora', argumentos: { texto: '$1' } }] }, { texto: '' }],
   },
   {
     si: '^ya (.+)$',

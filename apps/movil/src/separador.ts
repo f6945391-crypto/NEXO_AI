@@ -16,6 +16,7 @@ const QUE_PASO: Record<CierreEpisodio['desenlace'], (titulo: string | null) => s
   reabierto: (t) => (t ? `Se reabrió «${t}»` : 'Tarea reabierta'),
   cambiado: (t) => (t ? `Se cambió «${t}»` : 'Tarea cambiada'),
   quitado: (t) => (t ? `Se descartó la tarea «${t}»` : 'Tarea descartada'),
+  anotado: (t) => (t ? `Se anotó un avance en «${t}»` : 'Avance anotado'),
   sin_accion: () => null,
 };
 

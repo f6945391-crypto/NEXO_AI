@@ -1,5 +1,6 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import {
+  CargaAnotarAvance,
   CargaCambiarTarea,
   CargaRegistrarTarea,
   CargaTareaExistente,
@@ -29,7 +30,17 @@ const NOMBRE_FRANJA: Readonly<Record<FranjaTarea, string>> = {
   esperando: 'Esperando de alguien',
 };
 
-export const TIPOS_TAREAS = ['tareas.registrar', 'tareas.cambiar', 'tareas.completar', 'tareas.recibido', 'tareas.reabrir', 'tareas.descartar'] as const;
+export const TIPOS_TAREAS = [
+  'tareas.registrar',
+  'tareas.cambiar',
+  'tareas.completar',
+  'tareas.recibido',
+  'tareas.reabrir',
+  'tareas.descartar',
+  // T-125 · plan §13.2
+  'tareas.anotar_avance',
+  'tareas.mantener_abierta',
+] as const;
 
 // «Para el sábado 14 de noviembre, antes de las 18:00»
 const paraCuando = (fecha: string | null | undefined, hora: string | null | undefined) =>
@@ -44,6 +55,7 @@ function datosDe(fila: FilaTarea, zona: string): VistaConfirmacion['datos'] {
     { etiqueta: 'Tarea', valor: tarea.texto },
     ...(tarea.espera ? [{ etiqueta: 'De quién', valor: tarea.espera }] : []),
     ...(tarea.cuando ? [{ etiqueta: 'Cuándo', valor: tarea.cuando }] : []),
+    ...(tarea.contexto ? [{ etiqueta: 'Contexto', valor: tarea.contexto }] : []),
   ];
 }
 
@@ -55,7 +67,6 @@ const vista = (accion: string, datos: VistaConfirmacion['datos'], irreversible: 
   motivoNoConfirmable: null,
 });
 
-const ejecutada = (fila: FilaTarea, zona: string): ResultadoEjecucion => ({ tipo: 'ejecutada', resultado: aContrato(fila, new Date(), zona) });
 
 @Injectable()
 export class EjecutoresTareas implements OnModuleInit {
@@ -65,7 +76,7 @@ export class EjecutoresTareas implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    for (const ejecutor of [this.registrar(), this.cambiar(), this.completar(), this.recibido(), this.reabrir(), this.descartar()]) {
+    for (const ejecutor of [this.registrar(), this.cambiar(), this.completar(), this.recibido(), this.reabrir(), this.descartar(), this.anotarAvance(), this.mantenerAbierta()]) {
       this.registro.registrar(ejecutor as EjecutorOperacion<unknown>);
     }
   }
@@ -90,6 +101,7 @@ export class EjecutoresTareas implements OnModuleInit {
           { etiqueta: 'Tarea', valor: completa.texto },
           ...(completa.deQuien ? [{ etiqueta: 'De quién', valor: completa.deQuien }] : []),
           { etiqueta: 'Cuándo', valor: paraCuando(completa.fecha, completa.horaLimite) },
+          ...(completa.contexto ? [{ etiqueta: 'Contexto', valor: completa.contexto }] : []),
           dondeAparece(franja),
           // R-12, H-TP-14: esperar algo de alguien no le escribe
           ...(completa.deQuien ? [{ etiqueta: 'Aviso', valor: `NexoAI no le escribe a ${completa.deQuien}` }] : []),
@@ -99,7 +111,7 @@ export class EjecutoresTareas implements OnModuleInit {
       ejecutar: async (contexto, carga, operacion): Promise<ResultadoEjecucion> => {
         const zona = await this.tareas.zonaDe(contexto);
         const previa = await this.tareas.porOrigen(contexto, operacion.id);
-        if (previa) return ejecutada(previa, zona);
+        if (previa) return this.ejecutada(contexto, previa, zona);
         const fila = await this.tareas.crear(contexto, {
           texto: carga.texto,
           fecha: aColumnaFecha(carga.fecha) ?? null,
@@ -107,9 +119,10 @@ export class EjecutoresTareas implements OnModuleInit {
           zonaHoraria: carga.zonaHoraria ?? zona,
           deQuien: carga.deQuien ?? null,
           esperadaDesde: aColumnaFecha(carga.esperadaDesde) ?? null,
+          contexto: carga.contexto ?? null,
           operacionOrigenId: operacion.id,
         });
-        return ejecutada(fila, zona);
+        return this.ejecutada(contexto, fila, zona);
       },
     };
   }
@@ -150,6 +163,9 @@ export class EjecutoresTareas implements OnModuleInit {
         if (completa.deQuien !== undefined) {
           partes.push([antes.deQuien ? `De ${antes.deQuien}` : 'No se espera de nadie', despues.deQuien ? `De ${despues.deQuien}` : 'No se espera de nadie']);
         }
+        if (completa.contexto !== undefined && completa.contexto !== fila.contexto) {
+          partes.push([fila.contexto ? `Contexto: ${fila.contexto}` : 'Sin contexto', completa.contexto ? `Contexto: ${completa.contexto}` : 'Sin contexto']);
+        }
         const franjaAntes = franjaDe(antes);
         const franjaDespues = franjaDe(despues);
         const datos: VistaConfirmacion['datos'] = [
@@ -170,9 +186,10 @@ export class EjecutoresTareas implements OnModuleInit {
           ...(carga.deQuien !== undefined ? { deQuien: carga.deQuien } : {}),
           ...(carga.esperadaDesde !== undefined ? { esperadaDesde: aColumnaFecha(carga.esperadaDesde) } : {}),
           ...(carga.zonaHoraria ? { zonaHoraria: carga.zonaHoraria } : {}),
+          ...(carga.contexto !== undefined ? { contexto: carga.contexto } : {}),
         });
         if (!cambiada) throw noModificable();
-        return ejecutada(cambiada, zona);
+        return this.ejecutada(contexto, cambiada, zona);
       },
     };
   }
@@ -209,10 +226,10 @@ export class EjecutoresTareas implements OnModuleInit {
         const fila = await this.tareas.existente(contexto, carga.tareaId);
         comprobar(fila);
         // Ya hecha: mismo resultado, sin repetir el efecto
-        if (fila.estado === 'hecha') return ejecutada(fila, zona);
+        if (fila.estado === 'hecha') return this.ejecutada(contexto, fila, zona);
         const hecha = await this.tareas.cambiar(contexto, carga.tareaId, ['pendiente'], { estado: 'hecha', hechaEn: new Date() });
-        if (!hecha) return ejecutada(await this.siguePudiendo(contexto, carga.tareaId, 'hecha'), zona);
-        return ejecutada(hecha, zona);
+        if (!hecha) return this.ejecutada(contexto, await this.siguePudiendo(contexto, carga.tareaId, 'hecha'), zona);
+        return this.ejecutada(contexto, hecha, zona);
       },
     };
   }
@@ -232,10 +249,10 @@ export class EjecutoresTareas implements OnModuleInit {
       ejecutar: async (contexto, carga) => {
         const zona = await this.tareas.zonaDe(contexto);
         const fila = await this.tareas.existente(contexto, carga.tareaId);
-        if (fila.estado === 'pendiente') return ejecutada(fila, zona);
+        if (fila.estado === 'pendiente') return this.ejecutada(contexto, fila, zona);
         const abierta = await this.tareas.cambiar(contexto, carga.tareaId, ['hecha'], { estado: 'pendiente', hechaEn: null });
-        if (!abierta) return ejecutada(await this.siguePudiendo(contexto, carga.tareaId, 'pendiente'), zona);
-        return ejecutada(abierta, zona);
+        if (!abierta) return this.ejecutada(contexto, await this.siguePudiendo(contexto, carga.tareaId, 'pendiente'), zona);
+        return this.ejecutada(contexto, abierta, zona);
       },
     };
   }
@@ -255,12 +272,74 @@ export class EjecutoresTareas implements OnModuleInit {
       ejecutar: async (contexto, carga) => {
         const zona = await this.tareas.zonaDe(contexto);
         const fila = await this.tareas.existente(contexto, carga.tareaId);
-        if (fila.estado === 'descartada') return ejecutada(fila, zona);
+        if (fila.estado === 'descartada') return this.ejecutada(contexto, fila, zona);
         const descartada = await this.tareas.cambiar(contexto, carga.tareaId, ['pendiente', 'hecha'], { estado: 'descartada', descartadaEn: new Date() });
-        if (!descartada) return ejecutada(await this.siguePudiendo(contexto, carga.tareaId, 'descartada'), zona);
-        return ejecutada(descartada, zona);
+        if (!descartada) return this.ejecutada(contexto, await this.siguePudiendo(contexto, carga.tareaId, 'descartada'), zona);
+        return this.ejecutada(contexto, descartada, zona);
       },
     };
+  }
+
+  // T-125 · REQ-CUN03-21, 22, 25 · plan §13.2. Anotar un avance: solo por el asistente (R-42), con tarjeta, y
+  // solo en una tarea pendiente. Confirmar dos veces anota uno: el avance guarda la Operación que lo anotó.
+  private anotarAvance(): EjecutorOperacion<CargaAnotarAvance> {
+    const pendiente = (fila: FilaTarea) => {
+      if (fila.estado === 'hecha') throw errorApi(409, 'TAREA_NO_MODIFICABLE', 'Esa tarea ya está hecha: si quieres seguir anotando, reábrela.');
+      if (fila.estado !== 'pendiente') throw noModificable();
+    };
+    return {
+      tipo: 'tareas.anotar_avance',
+      esquema: CargaAnotarAvance,
+      origenes: ['agente'] satisfies OrigenOperacion[],
+      nombresDeCampos: { tareaId: 'en qué tarea', texto: 'qué avance anotar' },
+      proponer: async (contexto, carga) => {
+        const fila = await this.tareas.existente(contexto, carga.tareaId);
+        pendiente(fila);
+        const datos: VistaConfirmacion['datos'] = [
+          ...datosDe(fila, await this.tareas.zonaDe(contexto)),
+          { etiqueta: 'Avance', valor: carga.texto },
+          { etiqueta: 'Dónde aparece', valor: 'En Tareas, en la bitácora de la tarea' },
+        ];
+        return vista('Anotar avance', datos);
+      },
+      ejecutar: async (contexto, carga, operacion) => {
+        const zona = await this.tareas.zonaDe(contexto);
+        const fila = await this.tareas.existente(contexto, carga.tareaId);
+        if (!(await this.tareas.avancePorOrigen(contexto, operacion.id))) {
+          pendiente(fila);
+          await this.tareas.crearAvance(contexto, { tareaId: fila.id, texto: carga.texto, zonaHoraria: zona, operacionOrigenId: operacion.id });
+        }
+        return this.ejecutada(contexto, fila, zona);
+      },
+    };
+  }
+
+  // T-125 · REQ-CUN03-27 · H-TP-31. «Mantener abierta» desde el aviso al vencer: control directo en un paso, sin
+  // tarjeta; guarda para qué fecha se eligió, así el aviso vuelve si la fecha cambia y vuelve a pasar.
+  private mantenerAbierta(): EjecutorOperacion<CargaTareaExistente> {
+    return {
+      tipo: 'tareas.mantener_abierta',
+      esquema: CargaTareaExistente,
+      origenes: ['control_directo'] satisfies OrigenOperacion[],
+      nombresDeCampos: { tareaId: 'qué tarea' },
+      proponer: async (contexto, carga) => {
+        const fila = await this.tareas.existente(contexto, carga.tareaId);
+        if (fila.estado !== 'pendiente' || !fila.fecha) throw noModificable();
+        return vista('Mantener abierta', datosDe(fila, await this.tareas.zonaDe(contexto)));
+      },
+      ejecutar: async (contexto, carga) => {
+        const zona = await this.tareas.zonaDe(contexto);
+        const fila = await this.tareas.existente(contexto, carga.tareaId);
+        if (!fila.fecha) throw noModificable();
+        const abierta = await this.tareas.cambiar(contexto, carga.tareaId, ['pendiente'], { vencimientoAtendido: fila.fecha });
+        if (!abierta) throw noModificable();
+        return this.ejecutada(contexto, abierta, zona);
+      },
+    };
+  }
+
+  private async ejecutada(contexto: ContextoSolicitud, fila: FilaTarea, zona: string): Promise<ResultadoEjecucion> {
+    return { tipo: 'ejecutada', resultado: await this.tareas.contrato(contexto, fila, new Date(), zona) };
   }
 
   // Otro control ganó la carrera: si dejó la tarea como se pedía, mismo resultado; si no, no se puede

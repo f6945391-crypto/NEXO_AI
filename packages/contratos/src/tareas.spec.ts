@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { ArgsRegistrarEvento, TurnoDeHerramienta } from './agente';
 import { DecisionAsistente, DesenlaceEpisodio } from './asistente';
 import {
+  ArgsAnotarAvance,
+  CargaAnotarAvance,
   ArgsTareaExistente,
   CargaCambiarTarea,
   CargaRegistrarTarea,
@@ -67,9 +69,27 @@ describe('contratos.tareas', () => {
       cuando: 'Vencía el viernes 6 de noviembre',
       espera: null,
       cierre: null,
+      // T-125 · REQ-CUN03-24, 26, 27
+      contexto: 'Lo saco en la oficina de Miraflores',
+      bitacora: [{ id: ID, texto: 'Pedí la cita', anotadoEn: '2026-11-05T09:30:00-05:00', cuando: 'Jueves 5 de noviembre, 09:30' }],
+      avisoVencida: true,
     };
     expect(TareaPersonal.parse(tarea)).toEqual(tarea);
     expect(TareaPersonal.safeParse({ ...tarea, franja: 'vencida' }).success).toBe(false);
+    // Una tarea sin bitácora la trae vacía, no ausente
+    const { bitacora: _, ...sinBitacora } = tarea;
+    expect(TareaPersonal.safeParse(sinBitacora).success).toBe(false);
+  });
+
+  it('T-125, T-126: el avance, la bitácora del asistente y el desenlace «anotado»', () => {
+    expect(CargaAnotarAvance.safeParse({ tareaId: ID, texto: 'Ya hablé con Juan' }).success).toBe(true);
+    expect(CargaAnotarAvance.safeParse({ tareaId: ID, texto: '' }).success).toBe(false);
+    expect(CargaAnotarAvance.safeParse({ tareaId: ID, texto: 'x'.repeat(501) }).success).toBe(false);
+    expect(ArgsAnotarAvance.safeParse({ avance: 'Ya hablé con Juan' }).success).toBe(false);
+    expect(ArgsAnotarAvance.safeParse({ tarea: 'presupuesto', avance: 'Ya hablé con Juan' }).success).toBe(true);
+    expect(DesenlaceEpisodio.safeParse('anotado').success).toBe(true);
+    const bitacora = { tareaId: ID, tarea: 'Presupuesto', contexto: null, avances: [], vacia: 'Esta tarea no tiene avances anotados.' };
+    expect(TurnoDeHerramienta.safeParse({ tipo: 'bitacora', bitacora }).success).toBe(true);
   });
 
   it('los contratos existentes siguen validando lo mismo', () => {

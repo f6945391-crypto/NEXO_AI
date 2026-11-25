@@ -23,6 +23,11 @@ export class ControlesTareasService {
     return this.enUnPaso(contexto, fila.deQuien ? 'tareas.recibido' : 'tareas.completar', id);
   }
 
+  // T-125 · REQ-CUN03-27 · H-TP-31: «Mantener abierta» desde el aviso al vencer
+  mantenerAbierta(contexto: ContextoSolicitud, id: string): Promise<ControlTarea> {
+    return this.enUnPaso(contexto, 'tareas.mantener_abierta', id);
+  }
+
   // También es el «Deshacer» de «Hecho»
   reabrir(contexto: ContextoSolicitud, id: string): Promise<ControlTarea> {
     return this.enUnPaso(contexto, 'tareas.reabrir', id);

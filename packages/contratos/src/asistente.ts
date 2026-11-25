@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ListaAgenda, MotivoEspera } from './agente';
 import { OperacionRespuesta } from './operaciones';
-import { CandidatasDeReferente, ListaTareas } from './tareas';
+import { BitacoraTarea, CandidatasDeReferente, ListaTareas } from './tareas';
 
 // Conversación con el asistente (specs/07-agente/plan.md §9) · T-032. Lo que ven la web y la capa de
 // captura del móvil. Cada turno tiene un tipo, para que la interfaz muestre distinto lo que es distinto
@@ -29,6 +29,8 @@ export const TurnoAsistente = z.discriminatedUnion('tipo', [
   z.strictObject({ ...base, tipo: z.literal('tareas'), lista: ListaTareas }),
   // T-051 · REQ-CUN03-15, REQ-AGT-04: varias tareas encajan; la persona elige una y ve su tarjeta
   z.strictObject({ ...base, tipo: z.literal('alternativas_de_referente'), lista: CandidatasDeReferente }),
+  // T-126 · REQ-CUN03-23: la bitácora de una tarea, armada por el código
+  z.strictObject({ ...base, tipo: z.literal('bitacora'), bitacora: BitacoraTarea }),
 ]);
 export type TurnoAsistente = z.infer<typeof TurnoAsistente>;
 
@@ -52,7 +54,8 @@ export type DecisionAsistente = z.infer<typeof DecisionAsistente>;
 // Desde T-050 ya no se produce: registrar una tarea da `registrado`. Se conserva para lo ya transcrito.
 // T-046 · 09-tareas-personales plan §6: `hecho`, `reabierto`, `cambiado` y `quitado` (una tarea descartada,
 // distinto de `descartado`, que es una propuesta descartada)
-export const DesenlaceEpisodio = z.enum(['registrado', 'movido', 'cancelado', 'descartado', 'guardado', 'hecho', 'reabierto', 'cambiado', 'quitado', 'sin_accion']);
+// T-125: `anotado`, un avance en la bitácora de una tarea
+export const DesenlaceEpisodio = z.enum(['registrado', 'movido', 'cancelado', 'descartado', 'guardado', 'hecho', 'reabierto', 'cambiado', 'quitado', 'anotado', 'sin_accion']);
 export type DesenlaceEpisodio = z.infer<typeof DesenlaceEpisodio>;
 
 export const CierreEpisodio = z.strictObject({ en: Instante, desenlace: DesenlaceEpisodio, titulo: z.string().nullable() });

@@ -32,7 +32,7 @@ function desenlace(elementos: Elemento[], desde: number, operacionId: string): s
   for (const e of elementos.slice(desde + 1)) {
     if (e.clase === 'separador') {
       if (e.cierre.desenlace === 'descartado') return 'Descartado';
-      return ['registrado', 'movido', 'cancelado'].includes(e.cierre.desenlace) ? 'Confirmado' : null;
+      return ['registrado', 'movido', 'cancelado', 'anotado'].includes(e.cierre.desenlace) ? 'Confirmado' : null;
     }
     const t = e.turno;
     if (t.tipo === 'resultado' && t.operacion.id === operacionId) return 'Confirmado';
@@ -193,6 +193,29 @@ function Turno({
                   </ol>
                 </div>
               ))
+            )}
+          </section>
+        </li>
+      );
+    // T-127 · REQ-CUN03-23 · H-TP-29: «¿cómo va…?», armado por la API con los avances tal como están, del más
+    // reciente al más antiguo, o el texto de que no hay ninguno
+    case 'bitacora':
+      return (
+        <li className="turno">
+          <section className="turno-agenda" aria-label={`Bitácora de ${turno.bitacora.tarea}`}>
+            <h3 className="turno-bitacora__tarea">{turno.bitacora.tarea}</h3>
+            {turno.bitacora.contexto && <p className="turno-agenda__rango">{turno.bitacora.contexto}</p>}
+            {turno.bitacora.avances.length === 0 ? (
+              <p className="turno__texto">{turno.bitacora.vacia ?? 'Esta tarea no tiene avances anotados.'}</p>
+            ) : (
+              <ol className="turno-bitacora__lista" aria-label={`Avances de ${turno.bitacora.tarea}`}>
+                {turno.bitacora.avances.map((a) => (
+                  <li key={a.id}>
+                    <span className="turno-agenda__dia">{a.cuando}</span>
+                    <span>{a.texto}</span>
+                  </li>
+                ))}
+              </ol>
             )}
           </section>
         </li>

@@ -50,6 +50,13 @@ export class TareasController {
     return this.controles.darPorHecha(contexto, id);
   }
 
+  // T-125 · REQ-CUN03-27: quita el aviso al vencer para esa fecha; la tarea sigue pendiente
+  @Post(':id/mantener-abierta')
+  @HttpCode(200)
+  mantenerAbierta(@Contexto() contexto: ContextoSolicitud, @Param('id', idValido) id: string): Promise<ControlTarea> {
+    return this.controles.mantenerAbierta(contexto, id);
+  }
+
   @Post(':id/reabrir')
   @HttpCode(200)
   reabrir(@Contexto() contexto: ContextoSolicitud, @Param('id', idValido) id: string): Promise<ControlTarea> {

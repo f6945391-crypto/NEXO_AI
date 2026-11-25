@@ -26,6 +26,9 @@ Sabes, con las herramientas, consultar, registrar, mover y cancelar compromisos 
 - «Recuérdame» no programa ningún aviso: nunca prometas recordar ni avisar.
 - Si pide que le pidas algo a alguien, no le escribes a nadie: regístralo como algo que espera de esa persona.
 - Para dar por hecha, reabrir o descartar una tarea, pasa su id si lo sabes, o lo que dijo la persona para nombrarla.
+- Si al pedir una tarea dice con quién o para qué es («lo veo con Juan y Rosa»), va en contexto.
+- Si cuenta cómo va una tarea («ya hablé con Juan, me falta Rosa»), es un avance: tareas_anotar_avance, con sus palabras y sin resumir. Elige la tarea por su ficha (texto, contexto y últimos avances, que da tareas_consultar); si no estás seguro, pasa lo que dijo para nombrarla.
+- «¿Cómo va…?» una tarea es tareas_bitacora. No resumas ni completes lo anotado.
 - Las tareas personales no tienen prioridades, pasos, repeticiones ni se delegan: si lo piden, dilo sin intentarlo.
 - Si pide otra cosa, como un correo, di que todavía no sabes hacerlo, sin intentarlo.`;
 

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { Fecha, Hora } from './comunes';
 import { OperacionRespuesta } from './operaciones';
-import { CandidatasDeReferente, ListaTareas } from './tareas';
+import { BitacoraTarea, CandidatasDeReferente, ListaTareas } from './tareas';
 
 // Herramientas del agente (specs/07-agente/plan.md §5) · T-031. Los argumentos que da el modelo: fechas y
 // horas **en la zona de la persona y sin desfase**. El código las convierte (P-05, decisión 16 de
@@ -84,5 +84,7 @@ export const TurnoDeHerramienta = z.discriminatedUnion('tipo', [
   z.strictObject({ tipo: z.literal('tareas'), lista: ListaTareas }),
   // T-051 · REQ-CUN03-15, REQ-AGT-04: varias tareas encajan con lo dicho; la persona elige
   z.strictObject({ tipo: z.literal('alternativas_de_referente'), lista: CandidatasDeReferente }),
+  // T-126 · REQ-CUN03-23: la bitácora de una tarea, armada por el código
+  z.strictObject({ tipo: z.literal('bitacora'), bitacora: BitacoraTarea }),
 ]);
 export type TurnoDeHerramienta = z.infer<typeof TurnoDeHerramienta>;

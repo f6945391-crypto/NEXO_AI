@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { TareaPersonal } from '@nexoai/contratos';
 import { isoConDesfase } from '../agenda/dominio/tiempo';
-import type { Prisma, TareaPersonal as FilaTareaPersonal } from '../generado/prisma/client';
+import type { AvanceTarea as FilaAvanceTarea, Prisma, TareaPersonal as FilaTareaPersonal } from '../generado/prisma/client';
 import type { ContextoSolicitud } from '../identidad/contexto';
 import { errorApi } from '../plataforma/errores';
 import { PrismaService } from '../plataforma/prisma.service';
-import { textoCierre, textoCuando, textoEspera } from './dominio/formato';
+import { textoAvance, textoCierre, textoCuando, textoEspera } from './dominio/formato';
 import { franjaDe, vencida, type DatosFranja } from './dominio/franja';
 
 // specs/09-tareas-personales/plan.md §2 · T-048 · REQ-CUN03-19. Lectura y escritura de `tarea`, **siempre
@@ -13,6 +13,7 @@ import { franjaDe, vencida, type DatosFranja } from './dominio/franja';
 // de su equipo (P-10). Solo lo usan los ejecutores de Operaciones y la consulta.
 
 export type FilaTarea = FilaTareaPersonal;
+export type FilaAvance = FilaAvanceTarea;
 
 // `date` de Postgres llega como medianoche en UTC
 const comoFecha = (valor: Date | null) => (valor ? valor.toISOString().slice(0, 10) : null);
@@ -32,10 +33,12 @@ export function datosFranja(fila: FilaTarea): DatosFranja {
   };
 }
 
-// La tarea tal como sale de la API, con su franja, «vencida» y sus textos en la zona del perfil (P-02)
-export function aContrato(fila: FilaTarea, ahora: Date, zonaPerfil: string): TareaPersonal {
+// La tarea tal como sale de la API, con su franja, «vencida» y sus textos en la zona del perfil (P-02).
+// `avances`, de esa tarea y del más reciente al más antiguo (T-125); quien no los tenga a mano pasa ninguno.
+export function aContrato(fila: FilaTarea, ahora: Date, zonaPerfil: string, avances: FilaAvance[] = []): TareaPersonal {
   const datos = datosFranja(fila);
   const pendiente = fila.estado === 'pendiente';
+  const estaVencida = pendiente && vencida(datos, ahora, zonaPerfil);
   return TareaPersonal.parse({
     id: fila.id,
     texto: fila.texto,
@@ -46,13 +49,17 @@ export function aContrato(fila: FilaTarea, ahora: Date, zonaPerfil: string): Tar
     zonaHoraria: datos.zonaHoraria,
     deQuien: datos.deQuien,
     esperadaDesde: datos.esperadaDesde,
-    vencida: pendiente && vencida(datos, ahora, zonaPerfil),
+    vencida: estaVencida,
     hechaEn: fila.hechaEn ? isoConDesfase(fila.hechaEn, zonaPerfil) : null,
     creadaEn: isoConDesfase(fila.creadaEn, zonaPerfil),
     // Una hecha dice cuándo se hizo; su fecha ya no apremia
     cuando: pendiente ? textoCuando(datos, ahora, zonaPerfil) : null,
     espera: pendiente ? textoEspera(datos, ahora, zonaPerfil) : null,
     cierre: fila.estado === 'hecha' ? textoCierre({ deQuien: fila.deQuien, hechaEn: fila.hechaEn }, zonaPerfil) : null,
+    contexto: fila.contexto,
+    bitacora: avances.map((a) => ({ id: a.id, texto: a.texto, anotadoEn: isoConDesfase(a.anotadoEn, zonaPerfil), cuando: textoAvance(a.anotadoEn, zonaPerfil) })),
+    // REQ-CUN03-27 · H-TP-30, 31: solo lo de «Con fecha», y no si ya eligió mantenerla abierta para esa fecha
+    avisoVencida: estaVencida && !fila.deQuien && comoFecha(fila.vencimientoAtendido) !== datos.fecha,
   });
 }
 
@@ -93,6 +100,33 @@ export class TareasRepositorio {
   async cambiar(contexto: ContextoSolicitud, id: string, desde: FilaTarea['estado'][], datos: Prisma.TareaPersonalUncheckedUpdateManyInput): Promise<FilaTarea | null> {
     const r = await this.datos(contexto).tareaPersonal.updateMany({ where: { id, perfilId: contexto.perfilId, estado: { in: desde } }, data: datos });
     return r.count === 1 ? this.porId(contexto, id) : null;
+  }
+
+  // T-125 · REQ-CUN03-22: los avances de varias tareas, en una consulta aparte (no un `include`, para que pase
+  // por el filtro de organización), del más reciente al más antiguo
+  async avancesDe(contexto: ContextoSolicitud, tareaIds: string[]): Promise<Map<string, FilaAvance[]>> {
+    const porTarea = new Map<string, FilaAvance[]>();
+    if (tareaIds.length === 0) return porTarea;
+    const filas = await this.datos(contexto).avanceTarea.findMany({
+      where: { tareaId: { in: tareaIds }, perfilId: contexto.perfilId },
+      orderBy: [{ anotadoEn: 'desc' }, { id: 'desc' }],
+    });
+    for (const f of filas) porTarea.set(f.tareaId, [...(porTarea.get(f.tareaId) ?? []), f]);
+    return porTarea;
+  }
+
+  // La tarea tal como sale de la API, con su bitácora
+  async contrato(contexto: ContextoSolicitud, fila: FilaTarea, ahora = new Date(), zona?: string): Promise<TareaPersonal> {
+    const avances = await this.avancesDe(contexto, [fila.id]);
+    return aContrato(fila, ahora, zona ?? (await this.zonaDe(contexto)), avances.get(fila.id) ?? []);
+  }
+
+  avancePorOrigen(contexto: ContextoSolicitud, operacionId: string): Promise<FilaAvance | null> {
+    return this.datos(contexto).avanceTarea.findFirst({ where: { operacionOrigenId: operacionId, perfilId: contexto.perfilId } });
+  }
+
+  crearAvance(contexto: ContextoSolicitud, datos: { tareaId: string; texto: string; zonaHoraria: string; operacionOrigenId: string }): Promise<FilaAvance> {
+    return this.datos(contexto).avanceTarea.create({ data: { ...datos, organizacionId: contexto.organizacionId, perfilId: contexto.perfilId } });
   }
 
   async zonaDe(contexto: ContextoSolicitud): Promise<string> {

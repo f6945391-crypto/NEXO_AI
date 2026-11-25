@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react';
 import type { FranjaTarea, OperacionRespuesta, TareaPersonal, TareasDelDia } from '@nexoai/contratos';
 import type { Tareas } from '../../lib/tareas';
-import { confirmarDescartarTarea, descartarOperacion, marcarHecha, proponerDescartarTarea, reabrirTarea } from '../acciones';
+import { confirmarDescartarTarea, descartarOperacion, mantenerAbierta, marcarHecha, proponerDescartarTarea, reabrirTarea } from '../acciones';
 
 // T-052, T-053 · specs/09-tareas-personales/plan.md §8.1 · REQ-CUN03-06 a 11, 13 · R-38, R-40, R-42. La sección
 // Tareas del lienzo y el grupo «Tareas para este día» de Hoy. Los textos de fecha y espera los arma la API.
@@ -103,6 +103,91 @@ function Detalle({ tarea }: { tarea: TareaPersonal }) {
         </p>
       )}
     </>
+  );
+}
+
+// T-127 · REQ-CUN03-24, 26 · plan §13.6. Bajo el texto, con quién o para qué es; debajo, el último avance de
+// la bitácora y «Ver bitácora (N)», que la despliega entera en la misma tarea, del más reciente al más antiguo.
+// La fecha de cada avance la arma la API («Martes 24 de noviembre, 18:40»); en la línea del último basta el día.
+// REQ-CUN03-24: «Martes 24», como el móvil (R-41): el día de la semana y el número, sin mes ni hora
+const soloElDia = (cuando: string) => cuando.split(' de ')[0]!.replace(/, \d{1,2}:\d{2}$/, '');
+
+function Bitacora({ tarea }: { tarea: TareaPersonal }) {
+  const [abierta, setAbierta] = useState(false);
+  const idLista = `bitacora-${tarea.id}`;
+  const ultimo = tarea.bitacora[0];
+  // Una tarea sin avances no muestra nada de bitácora (REQ-CUN03-24)
+  if (!ultimo) return null;
+  return (
+    <div className="tarea__bitacora">
+      {!abierta && (
+        <p className="tarea__avance">
+          <span className="tarea__avance-cuando">{soloElDia(ultimo.cuando)}</span> · {ultimo.texto}
+        </p>
+      )}
+      {abierta && (
+        <ol id={idLista} className="bitacora" aria-label={`Bitácora de ${tarea.texto}`}>
+          {tarea.bitacora.map((a) => (
+            <li key={a.id} className="bitacora__avance">
+              <span className="bitacora__cuando">{a.cuando}</span>
+              <span>{a.texto}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+      <button
+        type="button"
+        className="tarea__ver-bitacora"
+        aria-expanded={abierta}
+        aria-controls={abierta ? idLista : undefined}
+        aria-label={abierta ? `Ocultar bitácora de ${tarea.texto}` : `Ver bitácora (${tarea.bitacora.length}) de ${tarea.texto}`}
+        onClick={() => setAbierta((v) => !v)}
+      >
+        {abierta ? 'Ocultar bitácora' : `Ver bitácora (${tarea.bitacora.length})`}
+      </button>
+    </div>
+  );
+}
+
+// T-127 · REQ-CUN03-27 · H-TP-30, 31: sobre una tarea vencida de «Con fecha», la persona decide. «Darla por
+// hecha» es el «Hecho» de la lista, con «Deshacer»; «Mantener abierta» no lleva tarjeta y quita el aviso para
+// esa fecha. El texto de la fecha lo arma la API («Vencía el sábado 22 de noviembre»)
+const vencioEl = (tarea: TareaPersonal) => (tarea.cuando ? `${tarea.cuando.replace(/^Vencía/, 'Venció')}.` : 'Esta tarea venció.');
+
+function AvisoVencida({ tarea, ocupado, alDarlaPorHecha }: { tarea: TareaPersonal; ocupado: boolean; alDarlaPorHecha: () => void }) {
+  const [error, setError] = useState<string | null>(null);
+  const [manteniendo, enTransicion] = useTransition();
+  return (
+    <section className="aviso aviso--advertencia tarea__aviso" aria-label={`Aviso: ${tarea.texto} venció`}>
+      <p className="tarea__aviso-texto">
+        {vencioEl(tarea)} ¿La das por hecha o la mantienes abierta?
+      </p>
+      <div className="tarea__aviso-acciones">
+        <button type="button" className="boton boton--secundario" disabled={ocupado || manteniendo} onClick={alDarlaPorHecha} aria-label={`Darla por hecha: ${tarea.texto}`}>
+          Darla por hecha
+        </button>
+        <button
+          type="button"
+          className="boton boton--secundario"
+          disabled={ocupado || manteniendo}
+          aria-label={`Mantener abierta: ${tarea.texto}`}
+          onClick={() =>
+            enTransicion(async () => {
+              setError(null);
+              const r = await mantenerAbierta(tarea.id);
+              if (!r.tarea) setError(r.error ?? 'No se pudo mantener abierta la tarea.');
+            })
+          }
+        >
+          Mantener abierta
+        </button>
+      </div>
+      {error && (
+        <p className="turno__fallo" role="alert">
+          {error}
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -228,9 +313,12 @@ export function SeccionTareas({ tareas, franja, alPedir }: { tareas: Tareas; fra
         <ol className="tareas__lista" aria-label="Pendientes">
           {pendientes.map((t) => (
             <li key={t.id} className={`tarea${t.vencida ? ' tarea--vencida' : ''}`}>
+              {t.avisoVencida && <AvisoVencida tarea={t} ocupado={ocupado} alDarlaPorHecha={() => hecho(t)} />}
               <div className="tarea__cuerpo">
                 <p className="tarea__texto">{t.texto}</p>
+                {t.contexto && <p className="tarea__contexto">{t.contexto}</p>}
                 <Detalle tarea={t} />
+                <Bitacora tarea={t} />
               </div>
               <div className="tarea__acciones">
                 <button type="button" className="boton boton--secundario tarea__hecho" disabled={ocupado} onClick={() => hecho(t)} aria-label={`${nombreHecho(t)}: ${t.texto}`}>
@@ -256,6 +344,8 @@ export function SeccionTareas({ tareas, franja, alPedir }: { tareas: Tareas; fra
                   <div className="tarea__cuerpo">
                     <p className="tarea__texto">{t.texto}</p>
                     {t.cierre && <p className="tarea__detalle">{t.cierre}</p>}
+                    {t.contexto && <p className="tarea__contexto">{t.contexto}</p>}
+                    <Bitacora tarea={t} />
                   </div>
                   <div className="tarea__acciones">
                     <button type="button" className="boton boton--secundario" disabled={ocupado} onClick={() => reabrir(t)} aria-label={`Reabrir: ${t.texto}`}>

@@ -39,6 +39,12 @@ export function textoEspera(tarea: DatosFranja, ahora: Date, zonaPerfil: string)
 }
 
 // H-TP-15: lo que se esperaba se da por recibido, con su propio texto
+// REQ-CUN03-22, 24 · T-125: «Martes 24 de noviembre, 18:40», en la zona del perfil
+export function textoAvance(anotadoEn: Date, zonaPerfil: string): string {
+  const hora = new Intl.DateTimeFormat('es', { timeZone: zonaPerfil, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(anotadoEn);
+  return `${mayuscula(diaLargo(diaEn(anotadoEn, zonaPerfil)))}, ${hora}`;
+}
+
 export function textoCierre(tarea: Pick<DatosFranja, 'deQuien'> & { hechaEn: Date | null }, zonaPerfil: string): string | null {
   if (!tarea.hechaEn) return null;
   const dia = diaLargo(diaEn(tarea.hechaEn, zonaPerfil));

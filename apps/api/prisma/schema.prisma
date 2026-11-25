@@ -55,6 +55,7 @@ model Organizacion {
   miembrosDeEquipo MiembroDeEquipo[]
   // 09-tareas-personales
   tareas           TareaPersonal[]
+  avancesTarea     AvanceTarea[]
 
   @@map("organizacion")
 }
@@ -90,6 +91,7 @@ model PerfilUsuario {
   membresiasEquipo   MiembroDeEquipo[]
   // 09-tareas-personales
   tareas             TareaPersonal[]
+  avancesTarea       AvanceTarea[]
 
   @@unique([id, organizacionId])
   @@index([organizacionId])
@@ -171,6 +173,8 @@ model Operacion {
   conversacion ConversacionAgente? @relation(fields: [conversacionId], references: [id])
   // 09-tareas-personales: la tarea que creó esta Operación `tareas.registrar`
   tareaCreada  TareaPersonal?
+  // 09-tareas-personales plan §13 · T-125: el avance que anotó esta Operación `tareas.anotar_avance`
+  avanceCreado AvanceTarea?
 
   @@index([organizacionId, perfilId, estado])
   @@index([organizacionId, ambito, creadaEn])
@@ -597,33 +601,62 @@ enum EstadoTarea {
 }
 
 model TareaPersonal {
-  id                String      @id @default(uuid()) @db.Uuid
-  organizacionId    String      @map("organizacion_id") @db.Uuid
+  id                  String      @id @default(uuid()) @db.Uuid
+  organizacionId      String      @map("organizacion_id") @db.Uuid
   // RN-EST-01: la tarea personal es de un perfil, y solo ese perfil la ve (REQ-CUN03-19)
-  perfilId          String      @map("perfil_id") @db.Uuid
-  texto             String      @db.VarChar(200)
+  perfilId            String      @map("perfil_id") @db.Uuid
+  texto               String      @db.VarChar(200)
   // H-TP-03: día del calendario de la persona; nula = sin fecha
-  fecha             DateTime?   @db.Date
+  fecha               DateTime?   @db.Date
   // Hora límite opcional, «HH:mm» en `zonaHoraria`; solo con fecha
-  horaLimite        String?     @map("hora_limite") @db.VarChar(5)
+  horaLimite          String?     @map("hora_limite") @db.VarChar(5)
   // IANA en que se dijo la fecha (P-05): la del perfil al registrar o al cambiar la fecha
-  zonaHoraria       String      @map("zona_horaria")
+  zonaHoraria         String      @map("zona_horaria")
   // Esperando de alguien (REQ-CUN03-04, R-12): solo el nombre, sin contacto
-  deQuien           String?     @map("de_quien") @db.VarChar(80)
-  esperadaDesde     DateTime?   @map("esperada_desde") @db.Date
-  estado            EstadoTarea @default(pendiente)
-  hechaEn           DateTime?   @map("hecha_en") @db.Timestamptz(3)
-  descartadaEn      DateTime?   @map("descartada_en") @db.Timestamptz(3)
+  deQuien             String?     @map("de_quien") @db.VarChar(80)
+  esperadaDesde       DateTime?   @map("esperada_desde") @db.Date
+  estado              EstadoTarea @default(pendiente)
+  hechaEn             DateTime?   @map("hecha_en") @db.Timestamptz(3)
+  descartadaEn        DateTime?   @map("descartada_en") @db.Timestamptz(3)
   // La Operación tareas.registrar que la creó (AD-09); única: confirmar dos veces crea una
-  operacionOrigenId String      @unique @map("operacion_origen_id") @db.Uuid
-  creadaEn          DateTime    @default(now()) @map("creada_en") @db.Timestamptz(3)
-  actualizadaEn     DateTime    @updatedAt @map("actualizada_en") @db.Timestamptz(3)
+  operacionOrigenId   String      @unique @map("operacion_origen_id") @db.Uuid
+  // REQ-CUN03-26 · T-125: con quién o para qué es, tal como lo dijo la persona; forma parte de la ficha
+  contexto            String?     @db.VarChar(200)
+  // REQ-CUN03-27 · H-TP-31: la fecha para la que la persona eligió «Mantener abierta»; el aviso vuelve con otra
+  vencimientoAtendido DateTime?   @map("vencimiento_atendido") @db.Date
+  creadaEn            DateTime    @default(now()) @map("creada_en") @db.Timestamptz(3)
+  actualizadaEn       DateTime    @updatedAt @map("actualizada_en") @db.Timestamptz(3)
 
   organizacion    Organizacion  @relation(fields: [organizacionId], references: [id])
   perfil          PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)
   operacionOrigen Operacion     @relation(fields: [operacionOrigenId], references: [id])
+  avances         AvanceTarea[]
 
   @@index([perfilId, estado, fecha])
   @@index([organizacionId])
   @@map("tarea_personal")
+}
+
+// 09-tareas-personales plan §13.1 · T-125 · REQ-CUN03-22. La bitácora de una tarea: cada avance que la persona
+// confirmó, con su momento y su zona (P-05). Es un dato de la tarea, no de la conversación: no lo toca la
+// retención de la transcripción. No se corrige ni se borra uno a uno (H-TP-27); se borra con la tarea.
+model AvanceTarea {
+  id                String   @id @default(uuid()) @db.Uuid
+  organizacionId    String   @map("organizacion_id") @db.Uuid
+  perfilId          String   @map("perfil_id") @db.Uuid
+  tareaId           String   @map("tarea_id") @db.Uuid
+  texto             String   @db.VarChar(500)
+  anotadoEn         DateTime @default(now()) @map("anotado_en") @db.Timestamptz(3)
+  zonaHoraria       String   @map("zona_horaria")
+  // La Operación tareas.anotar_avance que lo anotó (AD-09); única: confirmar dos veces anota uno
+  operacionOrigenId String   @unique @map("operacion_origen_id") @db.Uuid
+
+  organizacion    Organizacion  @relation(fields: [organizacionId], references: [id])
+  perfil          PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  tarea           TareaPersonal @relation(fields: [tareaId], references: [id], onDelete: Cascade)
+  operacionOrigen Operacion     @relation(fields: [operacionOrigenId], references: [id])
+
+  @@index([tareaId, anotadoEn])
+  @@index([organizacionId])
+  @@map("avance_tarea")
 }

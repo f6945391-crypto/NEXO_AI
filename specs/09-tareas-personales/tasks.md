@@ -1,6 +1,6 @@
 # Tareas — Tareas personales (CUN-03)
 
-**Plan:** `specs/09-tareas-personales/plan.md` (propuesta del 6 de noviembre de 2026, pendiente de aval)
+**Plan:** `specs/09-tareas-personales/plan.md` (propuesta del 6 de noviembre de 2026, pendiente de aval; §13, del 25 de noviembre de 2026)
 **Numeración:** sigue a `specs/02-agenda/tasks.md`, que termina en T-045. *El carril de administración numera a la vez, veinte números más adelante; si al integrar cambia el orden, se renumera aquí antes de que exista código.*
 **Regla:** una tarea cabe en una sesión de trabajo. Termina cuando se cumple su «Hecho cuando», su prueba pasa y `python tools/trazabilidad.py --check` sigue limpio.
 **Orden:** contrato → modelo y migración → Operaciones y rutas → agente → web → móvil → conversión de lo que estaba en espera. Web y móvil pueden ir en paralelo una vez hecha T-049.
@@ -145,6 +145,47 @@ Estados: `pendiente` · `en curso` · `hecha`.
 - **Pruebas:** `web.tareas-por-confirmar`, `movil.tareas-por-confirmar` (extremo a extremo)
 - **Estado:** pendiente
 
+
+## 8. Bitácora de una tarea, ficha y aviso al vencer
+
+*Añadidas el 25 de noviembre de 2026* (plan §13). Numeradas desde T-125: T-120 a T-124 son de `05-equipos` y `06-acceso`.
+
+### T-125 · Bitácora, contexto y aviso al vencer en la API
+
+- **Satisface:** REQ-CUN03-22, 24 (datos), 25, 26 (datos), 27 · H-TP-27, H-TP-30, H-TP-31
+- **Depende de:** T-048, T-049
+- **Contenido:** migración `20261125120000_bitacora_tarea` (plan §13.1); contratos de §13.3; Operaciones `tareas.anotar_avance` y `tareas.mantener_abierta`, y `contexto` en registrar y cambiar; `bitacora`, `contexto` y `avisoVencida` en cada tarea; `POST /tareas/:id/mantener-abierta`; desenlace `anotado`
+- **Hecho cuando:** confirmar un avance lo deja en la bitácora con su momento y su zona, y confirmarlo dos veces anota uno; dos avances salen del más reciente al más antiguo; borrar los turnos de la transcripción no los toca; anotar en una tarea hecha se rechaza; una tarea vencida trae `avisoVencida`, «Mantener abierta» lo apaga y lo deja auditado como `control_directo`, y con otra fecha vencida vuelve
+- **Pruebas:** `tareas.bitacora`, `tareas.aviso-al-vencer`
+- **Estado:** hecha · 25 de noviembre de 2026. Migración generada con `prisma migrate diff --from-config-datasource` contra la base de desarrollo (la de migraciones pide una base sombra), con solo los cambios nuevos. `avisoVencida` excluye lo que se espera de alguien (H-TP-30). Anotar con origen `control_directo` responde 403 `ORIGEN_NO_PERMITIDO`, como registrar. El texto de anotar en una tarea hecha dice «si quieres seguir anotando, reábrela». 8 pruebas en `test/tareas/bitacora.spec.ts`
+
+### T-126 · La bitácora por conversación
+
+- **Satisface:** REQ-CUN03-21, 23, 25, 26 · H-TP-26, H-TP-29
+- **Depende de:** T-125, T-051
+- **Contenido:** la ficha en `tareas.consultar`; herramientas `tareas.anotar_avance` y `tareas.bitacora`; `encajan` sobre texto, contexto y avances; candidatas con `avance` y «Ver cómo va»; turno `bitacora`; instrucciones; guion de demostración
+- **Hecho cuando:** con el simulado, «sobre el presupuesto de la cocina: ya hablé con Juan» propone anotar en esa tarea; «ya hablé con Rosa: …» encaja por el contexto; con dos presupuestos, salen las candidatas y elegir una propone el avance; sin ninguna, no se anota nada; en una tarea hecha, se ofrece reabrirla; «¿cómo va el presupuesto de la cocina?» muestra los avances tal como están, y una tarea sin avances lo dice
+- **Pruebas:** `agente.tareas-anotar-avance`, `agente.tareas-bitacora`
+- **Estado:** hecha · 25 de noviembre de 2026. `encajan` acepta los avances de cada tarea además de su texto, de quién y contexto. Una tarea que no está pendiente pero sí entre las hechas de los últimos siete días: anotar devuelve «ya está hecha… pídeme que la reabra», y «¿cómo va?» muestra su bitácora igual. Elegir «Ver cómo va» entre candidatas añade el turno `bitacora` sin pasar por el modelo. Guion de demostración: «sobre X: …», «avancé con X: …», «ya hablé con …: …» y «¿cómo va X?», antes de «ya …»; y «recuérdame X, lo veo con …» con contexto. 11 pruebas en `test/agente/tareas-bitacora.spec.ts`
+
+### T-127 · Bitácora y aviso en la web
+
+- **Satisface:** REQ-CUN03-24, 26, 27 (interfaz)
+- **Depende de:** T-125, T-126, T-052
+- **Contenido:** contexto, último avance y «Ver bitácora» en cada tarea; aviso al vencer con «Darla por hecha» y «Mantener abierta»; turno `bitacora` en la conversación
+- **Hecho cuando:** la cuenta `tareas` ve el último avance de «Enviar la tesis» y despliega los dos; «Renovar el DNI» muestra el aviso, «Mantener abierta» lo quita también al recargar, y la tarea sigue vencida; «¿cómo va…?» en la conversación muestra la bitácora
+- **Prueba:** `web.tareas-bitacora` (extremo a extremo)
+- **Estado:** hecha · 25 de noviembre de 2026. Acción de servidor `mantenerAbierta` por el mismo camino que `/hecha`. El aviso dice «Venció el … ¿La das por hecha o la mantienes abierta?», a partir del texto `cuando`. El último avance va como «Martes 24 · …», igual que el móvil. Las hechas recientes también muestran contexto y bitácora, sin aviso. Los nombres accesibles llevan la tarea («Mantener abierta: Renovar el DNI»). Las pruebas van al final de `e2e/tareas.spec.ts`, con un solo ingreso, por el límite de 5 ingresos por minuto. Capturas en `design/capturas/2026-11-25-bitacora/web/`
+
+### T-128 · Bitácora y aviso en el móvil
+
+- **Satisface:** REQ-CUN03-24, 26, 27 (interfaz)
+- **Depende de:** T-125, T-126, T-054
+- **Contenido:** lo mismo que T-127 en la sección Tareas y en la capa de captura del móvil
+- **Hecho cuando:** lo mismo que T-127, a 390 × 844
+- **Prueba:** `movil.tareas-bitacora` (extremo a extremo)
+- **Estado:** hecha · 25 de noviembre de 2026. Mismo aviso y mismo último avance que la web (R-41). Al desplegar la bitácora se oculta la línea del último avance, que la lista ya incluye. La tarjeta plegada de la capa muestra ahora «Tarea» y nunca pliega «Avance». Cuenta de pruebas propia, `tareasBitacora`, sembrada igual que `tareas`, por el límite de 5 ingresos por minuto. Capturas en `design/capturas/2026-11-25-bitacora/movil/`
+
 ---
 
-**Fuera de este desglose:** el hilo de una tarea (REQ-AGT-05), los avisos (H-TP-10), la marca por plan (H-TP-12, con REQ-CAP-05), las tareas en Semana y Mes (H-TP-09, revisable con CUN-02) y las tareas en la sección Actividad (hito 4).
+**Fuera de este desglose:** el hilo de la conversación sobre una tarea (REQ-AGT-05), los avisos fuera de la aplicación (H-TP-10, H-TP-32), la marca por plan (H-TP-12, con REQ-CAP-05), las tareas en Semana y Mes (H-TP-09, revisable con CUN-02) y las tareas en la sección Actividad (hito 4).

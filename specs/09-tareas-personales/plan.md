@@ -312,3 +312,75 @@ Registrados en `spec.md`, «Decisiones tomadas durante el diseño», y para `SPE
 | CUN03-17 | `web.tareas-por-confirmar`, `movil.tareas-por-confirmar` | Extremo a extremo |
 
 **Evaluación del modelo** (`evaluar-asistente`, se ejecuta a mano): suma «recuérdame pagar el recibo antes del sábado» (registrar con fecha), «tengo que llamar al dentista» (sin fecha, sin pregunta), «Juan tiene que enviarme el presupuesto el lunes» (esperando), «ya pagué el recibo» con dos candidatas, «¿qué tengo pendiente?» y «pídele a María Fernanda el informe» (sin delegar).
+
+
+## 13. Bitácora de una tarea, ficha y aviso al vencer (T-125 a T-128)
+
+*Añadido el 25 de noviembre de 2026* para `spec.md` §6 bis (REQ-CUN03-21 a 27), con las decisiones de Franco del mismo día: lo que falta va como texto del avance, la ficha de la tarea sirve para discernir de cuál se habla (H-TP-26) y, al vencer, la persona decide si la cierra (H-TP-28).
+
+### 13.1 Modelo de datos (migración `20261125120000_bitacora_tarea`)
+
+| Cambio | Contenido |
+|---|---|
+| Tabla nueva `avance_tarea` | `id`, `organizacion_id`, `perfil_id`, `tarea_id` (a `tarea_personal`, en cascada), `texto` (`varchar(500)`), `anotado_en` (`timestamptz`), `zona_horaria` (IANA del perfil al anotar, P-05), `operacion_origen_id` (única: confirmar dos veces anota uno). Índice por `tarea_id, anotado_en`. **Entra en `MODELOS_CON_ORGANIZACION`** |
+| `tarea_personal.contexto` | `varchar(200)`, nula (REQ-CUN03-26) |
+| `tarea_personal.vencimiento_atendido` | `date`, nula: la fecha para la que la persona eligió «Mantener abierta» (H-TP-31). El aviso se muestra si la tarea está vencida y esta columna no es igual a su `fecha` |
+
+Sin escrituras anidadas: el avance se crea en su ejecutor, con su `tareaId`. La lectura de los avances de varias tareas es **una consulta aparte** por `tarea_id in (…)`, no un `include`, para que pase por el filtro de organización.
+
+### 13.2 Operaciones (AD-09)
+
+| Tipo | Origen | Tarjeta | Qué hace al ejecutar | REQ |
+|---|---|---|---|---|
+| `tareas.anotar_avance` | `agente` (R-42) | Sí: «Anotar avance», la tarea, su contexto si lo tiene, y el texto | Crea el avance. Rechaza una tarea hecha o descartada con `TAREA_NO_MODIFICABLE` («ya está hecha; si quieres seguir anotando, reábrela») | CUN03-21, 22, 25 |
+| `tareas.mantener_abierta` | `control_directo` | No (H-TP-31): se propone y confirma en un paso, como «Hecho» | `vencimiento_atendido = fecha`. Solo si está pendiente, tiene fecha y está vencida | CUN03-27 |
+| `tareas.registrar`, `tareas.cambiar` | (como antes) | La tarjeta suma «Contexto» | Guardan `contexto`; `null` lo quita al cambiar | CUN03-26 |
+
+`cierreDe` da a `tareas.anotar_avance` el desenlace nuevo `anotado`, con el separador «Se anotó un avance en «…»».
+
+### 13.3 Contratos
+
+- `AvanceTarea`: `id`, `texto`, `anotadoEn` (ISO con desfase) y `cuando` («Martes 24 de noviembre, 18:40»), armado en la zona del perfil.
+- `TareaPersonal` suma `contexto`, `bitacora` (del más reciente al más antiguo) y `avisoVencida` (`boolean`). La bitácora va dentro de la tarea: son tareas de una persona, pocas y con pocos avances; si crece, se pagina después.
+- `CargaAnotarAvance` (`tareaId`, `texto`) y `contexto` en `CargaRegistrarTarea` y `CargaCambiarTarea`.
+- Agente: `ArgsAnotarAvance` (`tareaId` o `tarea`, lo que dijo la persona para nombrarla, y `avance`), `ArgsTareaExistente` para `tareas.bitacora`, y `contexto` en `ArgsRegistrarTarea` y `ArgsCambiarTarea`.
+- Turno nuevo `bitacora` en `TurnoAsistente` y `TurnoDeHerramienta`: `BitacoraTarea` con `tarea`, `contexto`, `avances` y `vacia`, armada por el código (H-TP-29).
+- `CandidatasDeReferente` suma `avance`, opcional: el texto que se anotará en la elegida. `DesenlaceEpisodio` suma `anotado`.
+
+### 13.4 Rutas
+
+| Ruta | Qué hace | REQ |
+|---|---|---|
+| `GET /tareas`, `GET /tareas/dia`, `GET /tareas/:id` | Cada tarea trae `contexto`, `bitacora` y `avisoVencida` | CUN03-24, 26, 27 |
+| `POST /tareas/:id/mantener-abierta` | `tareas.mantener_abierta` en un paso; devuelve `ControlTarea` | CUN03-27 |
+
+«Darla por hecha» usa `POST /tareas/:id/hecha`, el mismo «Hecho» con «Deshacer».
+
+### 13.5 Agente
+
+| Herramienta | Qué hace |
+|---|---|
+| `tareas.consultar` | Al modelo le da, por cada pendiente, **su ficha**: id, texto, contexto, franja, fecha, de quién y sus tres últimos avances, marcada como datos (H-AGT-15). La lista que ve la persona no cambia |
+| `tareas.anotar_avance` | Con `tareaId`, propone `tareas.anotar_avance`. Sin id, el código busca con `encajan` sobre texto, contexto y avances de cada pendiente (H-TP-26): una, propone; varias, candidatas con `avance`; ninguna entre las pendientes pero sí entre las hechas recientes, error `TAREA_HECHA` que ofrece reabrir; ninguna, `TAREA_NO_ENCONTRADA`, y el modelo pregunta |
+| `tareas.bitacora` | Busca la tarea igual y devuelve el turno `bitacora`, armado por el código; con varias, candidatas con la acción «Ver cómo va». No propone nada |
+
+- Elegir una candidata (`POST /asistente/decisiones`, `referente`) con la acción «Anotar avance» propone `tareas.anotar_avance` con el `avance` guardado en el estado del grafo; con «Ver cómo va», añade el turno `bitacora` sin proponer nada.
+- El nodo `herramientas` trata el turno `bitacora` como uno de lista (como `tareas`): no cierra el episodio.
+- Instrucciones: contar cómo va una tarea es `tareas_anotar_avance`, con el texto tal como lo dijo, sin resumirlo; «¿cómo va…?» es `tareas_bitacora`; lo que se dice con quién o para qué al pedir una tarea va en `contexto`.
+- Guion de demostración: «sobre X: …», «avancé con X: …», «ya hablé con … : …» y «¿cómo va X?», **antes** de la regla «ya …», que es completar.
+
+### 13.6 Pantallas (web y móvil, R-41)
+
+- Bajo el texto de cada tarea, su contexto; debajo, el último avance («Martes 24 · Rosa pasa el precio el viernes») y el control «Ver bitácora (2)», que despliega la lista en la misma tarea.
+- Sobre una tarea con `avisoVencida`: «Venció el … ¿La das por hecha o la mantienes abierta?», con «Darla por hecha» (el «Hecho» de siempre, con «Deshacer») y «Mantener abierta».
+- En la conversación, el turno `bitacora`: el nombre de la tarea, su contexto y los avances con fecha, o «Esta tarea no tiene avances anotados».
+
+### 13.7 Verificación
+
+| REQ | Prueba | Tipo |
+|---|---|---|
+| CUN03-21, 26 | `agente.tareas-anotar-avance` | Integración con el simulado: con id, por la ficha (contexto y avances), candidatas, ninguna, tarea hecha |
+| CUN03-22, 25 | `tareas.bitacora` | Integración: anotar, idempotencia, orden, sobrevive a la retención de la transcripción, hecha rechaza |
+| CUN03-23 | `agente.tareas-bitacora` | Integración: turno armado por el código, vacía, candidatas |
+| CUN03-27 | `tareas.aviso-al-vencer` | Integración: aviso, mantener abierta, vuelve con otra fecha |
+| CUN03-24, 26, 27 | `web.tareas-bitacora`, `movil.tareas-bitacora` | Extremo a extremo |

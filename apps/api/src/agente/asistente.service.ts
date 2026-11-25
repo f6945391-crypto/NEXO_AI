@@ -20,7 +20,7 @@ import { EjecutorHerramientas } from './herramientas/ejecutor-herramientas';
 import { LlamadasAuditadas } from './llamadas-auditadas';
 import { TranscripcionService } from './transcripcion';
 import { ConsultaTareasService } from '../tareas/consulta-tareas.service';
-import { accionDeEtiqueta, tipoDe } from './herramientas/herramientas-tareas';
+import { accionDeEtiqueta, armarBitacora, tipoDe } from './herramientas/herramientas-tareas';
 
 // specs/07-agente/plan.md §4.3 y §9 · T-032 · REQ-AGT-01. La conversación con el asistente: cada persona
 // tiene como mucho una abierta; se cierra cuando se cierra su acción (H-AGT-05), y la siguiente solicitud
@@ -206,12 +206,19 @@ export class AsistenteService {
     await this.anotarActividad(contexto, episodioId);
     const accion = accionDeEtiqueta(candidatas.accion);
     const tarea = await this.tareas.porId(contexto, referenteId);
+    // T-126 · REQ-CUN03-23: con «Ver cómo va», la bitácora de la elegida, sin proponer nada
+    if (accion === 'bitacora') {
+      turnos.push({ id: randomUUID(), en: new Date().toISOString(), tipo: 'bitacora', bitacora: armarBitacora(tarea) });
+      await grafo.updateState(config, { candidatas: null, siguiente: 'fin' }, 'herramientas');
+      return this.responder(contexto, episodioId, (await grafo.getState(config)).values as EstadoAsistente, turnos);
+    }
     const ultima = [...(valores.mensajes ?? [])].reverse().find((m) => m.rol === 'persona');
     const op = await this.operaciones.proponer(
       contexto,
       {
         tipo: tipoDe(accion, tarea),
-        carga: { tareaId: referenteId },
+        // T-126 · REQ-CUN03-21: con «Anotar avance», el texto guardado con las candidatas
+        carga: accion === 'anotar' ? { tareaId: referenteId, texto: candidatas.avance ?? '' } : { tareaId: referenteId },
         origen: 'agente',
         ...(ultima?.rol === 'persona' ? { solicitudOriginal: ultima.texto.slice(0, 2000) } : {}),
       },

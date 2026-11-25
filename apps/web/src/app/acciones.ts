@@ -228,7 +228,7 @@ export async function salir(): Promise<void> {
 // pinta la tarjeta tal como llega y se confirma o se deja. Crear y cambiar no tienen camino aquí (R-42).
 export type ResultadoControl = { tarea?: TareaPersonal; error?: string };
 
-async function controlDeTarea(id: string, accion: 'hecha' | 'reabrir'): Promise<ResultadoControl> {
+async function controlDeTarea(id: string, accion: 'hecha' | 'reabrir' | 'mantener-abierta'): Promise<ResultadoControl> {
   const token = await tokenDeAcceso();
   try {
     const respuesta = await llamarApi(`/tareas/${encodeURIComponent(id)}/${accion}`, { metodo: 'POST', token });
@@ -247,6 +247,12 @@ export async function marcarHecha(id: string): Promise<ResultadoControl> {
 
 export async function reabrirTarea(id: string): Promise<ResultadoControl> {
   return controlDeTarea(id, 'reabrir');
+}
+
+// T-127 · REQ-CUN03-27 · H-TP-31: «Mantener abierta» sobre el aviso de una tarea vencida. Sin tarjeta, como
+// «Hecho»: la API propone y confirma en un paso, y la página se vuelve a pedir sin el aviso
+export async function mantenerAbierta(id: string): Promise<ResultadoControl> {
+  return controlDeTarea(id, 'mantener-abierta');
 }
 
 export async function proponerDescartarTarea(id: string): Promise<ResultadoPropuesta> {

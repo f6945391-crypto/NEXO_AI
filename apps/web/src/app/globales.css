@@ -1268,6 +1268,94 @@ body {
   padding: var(--espaciado-8) var(--espaciado-16);
 }
 
+/* T-127 · REQ-CUN03-24, 26, 27: contexto, bitácora y el aviso al vencer, dentro de la misma tarea */
+.tarea:has(> .tarea__aviso) {
+  flex-wrap: wrap;
+}
+
+.tarea__aviso {
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  margin-bottom: 0;
+}
+
+.tarea .tarea__aviso-texto {
+  flex: 1 1 280px;
+  line-height: 1.5;
+}
+
+.tarea__aviso-acciones {
+  display: flex;
+  gap: var(--espaciado-8);
+  flex-shrink: 0;
+}
+
+.tarea__aviso-acciones .boton {
+  min-height: 36px;
+}
+
+.tarea__aviso .turno__fallo {
+  flex-basis: 100%;
+}
+
+.tarea__cuerpo {
+  flex: 1 1 0;
+}
+
+.tarea__contexto {
+  margin-top: 2px;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.tarea__bitacora {
+  margin-top: var(--espaciado-8);
+  padding-left: var(--espaciado-12);
+  border-left: 2px solid var(--borde-base);
+  font-size: var(--tam-etiqueta);
+}
+
+.tarea .tarea__avance {
+  color: var(--texto-fuerte);
+  line-height: 1.4;
+}
+
+.tarea__avance-cuando,
+.bitacora__cuando {
+  color: var(--texto-suave);
+}
+
+.tarea__ver-bitacora {
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  padding: var(--espaciado-8) 0 0;
+  border: none;
+  background: none;
+  color: var(--marca-base);
+  cursor: pointer;
+}
+
+.tarea__ver-bitacora:focus-visible,
+.tareas__ver-hechas:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+.bitacora {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.bitacora__avance {
+  display: grid;
+  gap: 2px;
+  line-height: 1.4;
+}
+
 .tarea--hecha .tarea__texto {
   color: var(--texto-suave);
   text-decoration: line-through;
@@ -1318,6 +1406,27 @@ body {
 
 .turno-tareas__vencida {
   color: var(--estado-error);
+}
+
+/* T-127 · REQ-CUN03-23: la bitácora de una tarea en la conversación */
+.turno-bitacora__tarea {
+  margin: 0 0 var(--espaciado-8);
+  font-size: var(--tam-cuerpo);
+  font-weight: 600;
+}
+
+.turno-bitacora__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.turno-bitacora__lista li {
+  display: grid;
+  gap: 2px;
+  line-height: 1.4;
 }
 
 .candidatas {

@@ -342,6 +342,10 @@ ENTONCES el asistente dice que las tareas personales no tienen prioridades ni pa
 
 **Lo que falta hacer va en el texto del avance**, sin una lista aparte de pendientes que se tachen (decisión de Franco del 25 de noviembre de 2026). Así las tareas personales siguen sin pasos ni subtareas (§9, REQ-CUN03-16).
 
+**La ficha de la tarea.** Para saber de qué tarea se habla, el asistente no mira solo el título: mira la **ficha** de cada tarea pendiente, que lleva su texto, su contexto (REQ-CUN03-26), cuándo es o de quién se espera, y sus últimos avances. «Ya hablé con Rosa» encaja con «Presupuesto de la cocina» porque Rosa aparece en su contexto o en un avance (H-TP-26, precisada por Franco el 25 de noviembre de 2026).
+
+**Al vencer, la persona decide** si la cierra o la mantiene abierta (REQ-CUN03-27): la bitácora no se cierra sola por tiempo (H-TP-28, decisión de Franco del 25 de noviembre de 2026).
+
 ### REQ-CUN03-21
 
 **Requisito:** CUANDO el usuario le cuente al asistente un avance sobre una tarea pendiente, EL SISTEMA propondrá anotarlo en la bitácora de esa tarea, en una tarjeta que diga qué tarea es y el texto que se anotará, y solo lo anotará al confirmar; SI hay más de una tarea que encaja con lo dicho, ENTONCES mostrará las candidatas para que el usuario elija, sin proponer nada hasta entonces; y SI no encaja ninguna, ENTONCES lo dirá y preguntará a qué tarea corresponde, sin anotar nada.
@@ -428,6 +432,43 @@ ENTONCES queda visible como en espera, no se anota nada y no se ofrece ningún f
 Y DADO «Pagar el recibo de la luz», hecha
 CUANDO el usuario le cuente un avance sobre ella
 ENTONCES el asistente dice que la tarea ya está hecha y ofrece reabrirla, sin anotar nada
+
+---
+
+### REQ-CUN03-26
+
+**Requisito:** DONDE el usuario diga, al pedir una tarea o al cambiarla, con quién o para qué es, EL SISTEMA lo guardará como contexto de la tarea, lo mostrará en la tarjeta y bajo la tarea en Tareas, y lo usará, junto con los avances, para reconocer de qué tarea se habla.
+
+**Origen:** H-TP-26, precisada por Franco el 25 de noviembre de 2026 (la ficha de la tarea); REQ-CUN03-21
+**Tipo:** opcional
+
+**Criterio de aceptación**
+DADO un usuario sin tareas
+CUANDO escriba «recuérdame el presupuesto de la cocina, lo veo con Juan y Rosa» y confirme la tarjeta, que dice «Contexto · Lo veo con Juan y Rosa»
+ENTONCES la tarea «Presupuesto de la cocina» queda con ese contexto, y en Tareas se lee bajo su texto
+Y CUANDO escriba «ya hablé con Rosa: pasa el precio el viernes»
+ENTONCES ve la tarjeta «Anotar avance · Presupuesto de la cocina», aunque el título no nombre a Rosa
+Y una tarea registrada sin contexto no muestra ninguno
+
+---
+
+### REQ-CUN03-27
+
+**Requisito:** CUANDO haya pasado la fecha de una tarea pendiente con fecha, EL SISTEMA mostrará sobre esa tarea, en Tareas, un aviso que ofrezca darla por hecha o mantenerla abierta; y SI el usuario la mantiene abierta, ENTONCES el aviso no volverá a mostrarse para esa fecha, y la tarea seguirá pendiente, marcada como vencida y admitiendo avances.
+
+**Origen:** H-TP-28, decisión de Franco del 25 de noviembre de 2026 («pasada la fecha, una notificación para cerrar o mantener abierto»); R-27; H-TP-07; DP-01
+**Tipo:** complejo
+
+**Criterio de aceptación**
+DADO «Renovar el DNI», pendiente, con fecha de ayer
+CUANDO el usuario abra Tareas
+ENTONCES sobre esa tarea ve «Venció el … ¿La das por hecha o la mantienes abierta?», con «Darla por hecha» y «Mantener abierta»
+Y CUANDO pulse «Mantener abierta»
+ENTONCES el aviso desaparece, también al volver a abrir Tareas, y la tarea sigue pendiente, con «Vencida»
+Y CUANDO le cambie la fecha por conversación y esa nueva fecha también pase
+ENTONCES el aviso vuelve a aparecer
+Y CUANDO en otra tarea vencida pulse «Darla por hecha»
+ENTONCES queda hecha como con «Hecho», con «Deshacer»
 
 ---
 
@@ -552,7 +593,7 @@ No se aplican aquí: los edita quien integre, con su línea en `SPEC.md` §11.
 | 3 y 4, lista y controles | CUN-03 | Gratuito |
 | 5, tareas en Hoy | CUN-01, CUN-03 | Gratuito |
 | 6, asistente | CUN-03 | Gratuito |
-| 6 bis, bitácora de una tarea | CUN-03 | Gratuito; R-27 la pone en el Plan Personal, sin marca de plan en esta versión (H-TP-12) |
+| 6 bis, bitácora, ficha y aviso al vencer | CUN-03 | Gratuito; R-27 la pone en el Plan Personal, sin marca de plan en esta versión (H-TP-12) |
 | 7, conversión de lo en espera | Transversal | Gratuito |
 | 8, sin asistente, privacidad y calendario | Transversal | Gratuito |
 
@@ -588,8 +629,11 @@ Detectadas al escribir esta especificación el 6 de noviembre de 2026. **Pendien
 | H-TP-22 | **Lo que se espera de alguien no entra en «Tareas para este día»**, aunque su fecha sea ese día: es cuándo debía llegar, no un plazo propio (H-TP-04). Solo las tareas de «Con fecha» | REQ-CUN03-13 |
 | H-TP-23 | **Qué tareas encajan con lo dicho** se decide en código: se comparan las palabras con sentido por su comienzo (cinco letras) y ganan las que más comparten; con un empate entre varias, se muestran como candidatas. «Ya pagué el recibo» encaja con «Pagar el recibo de la luz» y «del agua» por «recibo». Revisable con la evaluación del modelo | REQ-CUN03-15 |
 | H-TP-24 | **La tarjeta de algo que se espera de alguien dice «NexoAI no le escribe a …»**, armado por el código. Cumple lo que pide REQ-CUN03-16 («dice que no le escribe a nadie») sin otra vuelta del modelo, que no la hay porque la tarjeta detiene el grafo | REQ-CUN03-04, 16 |
-| H-TP-26 | **Para anotar un avance, el modelo elige la tarea entre las pendientes que le da el código**, y la tarjeta la nombra para que la persona vea si se equivocó (REQ-CUN03-21). La comparación por palabras de H-TP-23 no basta: «ya hablé con Juan» no comparte palabras con «Presupuesto de la cocina». Si el modelo no la puede elegir, o si la comparación por palabras da un empate, se muestran candidatas. *Propuesto el 25 de noviembre de 2026* | REQ-CUN03-21, 23; H-TP-23 |
-| H-TP-27 | **La bitácora no se corrige ni se borra avance por avance** en esta versión: un avance equivocado se corrige anotando otro. Se borra con la tarea | REQ-CUN03-22 |
-| H-TP-28 | **R-27 dice que el hilo del Plan Personal «se cierra con un límite de tiempo».** En esta versión la bitácora se cierra cuando la tarea queda hecha o descartada (REQ-CUN03-25), no por tiempo. Hay que decidir si hace falta un límite de tiempo y cuál | REQ-CUN03-25; R-27 |
-| H-TP-29 | **La respuesta a «¿cómo va X?» la arma el código** con los avances tal como están (REQ-CUN03-23), como la lista de REQ-CUN03-14. Un resumen redactado por el modelo («falta hablar con Rosa») queda para después: podría añadir u omitir algo | REQ-CUN03-23; P-02 |
+| H-TP-26 | **Para anotar un avance, el modelo elige la tarea mirando la ficha de cada pendiente**: texto, contexto (REQ-CUN03-26), cuándo o de quién, y sus tres últimos avances, que le da el código marcados como datos (H-AGT-15). La tarjeta nombra la tarea para que la persona vea si se equivocó (REQ-CUN03-21). Si el modelo no da un id, el código compara lo dicho con el texto, el contexto y los avances de cada ficha (la regla de H-TP-23, ampliada); con un empate muestra candidatas, y sin ninguna, se pregunta a qué tarea corresponde. *Propuesto el 25 de noviembre de 2026; **precisado por Franco** el mismo día: la ficha se caracteriza más para que el asistente discierna el contexto* | REQ-CUN03-21, 23; H-TP-23 |
+| H-TP-27 | **La bitácora no se corrige ni se borra avance por avance** en esta versión: un avance equivocado se corrige anotando otro. Se borra con la tarea. *Aceptada por Franco el 25 de noviembre de 2026* | REQ-CUN03-22 |
+| H-TP-28 | **R-27 dice que el hilo del Plan Personal «se cierra con un límite de tiempo».** **Decidida por Franco el 25 de noviembre de 2026:** no se cierra sola. Cuando pasa la fecha de la tarea, un aviso le ofrece a la persona darla por hecha o mantenerla abierta (REQ-CUN03-27); la bitácora deja de admitir avances solo cuando la tarea queda hecha o descartada (REQ-CUN03-25). Una tarea sin fecha no tiene aviso | REQ-CUN03-25, 27; R-27 |
+| H-TP-29 | **La respuesta a «¿cómo va X?» la arma el código** con los avances tal como están (REQ-CUN03-23), como la lista de REQ-CUN03-14. Un resumen redactado por el modelo («falta hablar con Rosa») queda para después: podría añadir u omitir algo. *Aceptada por Franco el 25 de noviembre de 2026* | REQ-CUN03-23; P-02 |
+| H-TP-30 | **El aviso al vencer vale para toda tarea vencida de «Con fecha»**, tenga o no bitácora: decidir si cerrarla es lo mismo con o sin avances. Lo que se espera de alguien con la fecha pasada no lleva aviso: su fecha es cuándo debía llegar (H-TP-04) y ya se marca como pasada | REQ-CUN03-27 |
+| H-TP-31 | **«Mantener abierta» es un control directo sin tarjeta**, como «Hecho» (H-TP-07): no sale de NexoAI y solo quita el aviso. Pasa por una Operación (AD-09) para que quede en la auditoría. Vale **para esa fecha**: si la fecha cambia y vuelve a pasar, el aviso vuelve. «Darla por hecha» es el mismo «Hecho» de la lista, con «Deshacer» | REQ-CUN03-27 |
+| H-TP-32 | **El aviso no es una notificación del teléfono ni un correo**: en esta versión no hay avisos de tareas fuera de la aplicación (H-TP-10). Se ve en Tareas, sobre la tarea, en la web y en el móvil. Llevarlo a una notificación queda para cuando las haya | REQ-CUN03-27; H-TP-10 |
 | H-TP-25 | **«Las hechas de los últimos siete días»** son las de las últimas 168 horas desde el momento de la consulta, no siete días de calendario | REQ-CUN03-10; H-TP-06 |

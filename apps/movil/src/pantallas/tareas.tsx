@@ -10,6 +10,9 @@ import { color, espaciado, tipografia } from '../tokens';
 // mismos textos que la web: los arma la API en la zona del perfil. «Hecho» y «Recibido» no llevan tarjeta y se
 // deshacen unos segundos (H-TP-07); tocar una tarea abre su detalle, desde donde se descarta con su tarjeta.
 // Crear y cambiar se le piden al asistente (H-TP-08): no hay formulario.
+// T-128 · plan §13.6 · REQ-CUN03-24, 26, 27 · R-41: bajo el texto de cada tarea, su contexto; debajo, el último
+// avance y «Ver bitácora (N)», que despliega la lista en la misma tarea. Sobre una tarea vencida, el aviso que
+// ofrece darla por hecha (el «Hecho» de siempre, con «Deshacer») o mantenerla abierta (sin tarjeta, H-TP-31).
 
 const FRANJAS: { clave: FranjaTarea; nombre: string }[] = [
   { clave: 'con_fecha', nombre: 'Con fecha' },
@@ -40,7 +43,7 @@ function useHecho(alCambiar: () => void, alSalir: () => void) {
   const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => void (temporizador.current && clearTimeout(temporizador.current)), []);
 
-  async function control(tarea: TareaPersonal, accion: 'hecha' | 'reabrir'): Promise<boolean> {
+  async function control(tarea: TareaPersonal, accion: 'hecha' | 'reabrir' | 'mantener-abierta'): Promise<boolean> {
     setError(null);
     setOcupado(true);
     try {
@@ -90,7 +93,15 @@ function useHecho(alCambiar: () => void, alSalir: () => void) {
       {error && <Aviso texto={error} />}
     </>
   );
-  return { hecho, reabrir: (t: TareaPersonal) => void control(t, 'reabrir'), ocupado, aviso, conAviso: hecha !== null || error !== null };
+  return {
+    hecho,
+    reabrir: (t: TareaPersonal) => void control(t, 'reabrir'),
+    // REQ-CUN03-27 · H-TP-31: solo quita el aviso; la tarea sigue pendiente y vencida
+    mantenerAbierta: (t: TareaPersonal) => void control(t, 'mantener-abierta'),
+    ocupado,
+    aviso,
+    conAviso: hecha !== null || error !== null,
+  };
 }
 
 function Detalle({ tarea }: { tarea: TareaPersonal }) {
@@ -107,22 +118,111 @@ function Detalle({ tarea }: { tarea: TareaPersonal }) {
   );
 }
 
-function Fila({ tarea, ocupado, alHecho, alAbrir }: { tarea: TareaPersonal; ocupado: boolean; alHecho: () => void; alAbrir?: () => void }) {
+// «Martes 24 de noviembre, 18:40» → «Martes 24»: el día del avance (REQ-CUN03-24)
+const diaDelAvance = (cuando: string) => cuando.split(' de ')[0] ?? cuando;
+// «Vencía el viernes 20 de noviembre» → «Venció el viernes 20 de noviembre.» (REQ-CUN03-27)
+const vencio = (t: TareaPersonal) => (t.cuando ? `${t.cuando.replace(/^Vencía/, 'Venció')}.` : 'Ya pasó su fecha.');
+
+function AvisoVencida({ tarea, ocupado, alHecho, alMantener }: { tarea: TareaPersonal; ocupado: boolean; alHecho: () => void; alMantener: () => void }) {
   return (
-    <View role="listitem" style={estilos.tarea}>
-      <Pressable accessibilityRole="button" accessibilityLabel={`${tarea.texto}, ver detalle`} disabled={!alAbrir} onPress={alAbrir} style={estilos.tareaCuerpo}>
-        <Text style={estilos.tareaTexto}>{tarea.texto}</Text>
-        <Detalle tarea={tarea} />
-      </Pressable>
+    <View accessibilityLabel={`Aviso: «${tarea.texto}» venció`} style={estilos.avisoVencida}>
+      <Text style={estilos.avisoTexto}>{vencio(tarea)} ¿La das por hecha o la mantienes abierta?</Text>
+      <View style={estilos.avisoAcciones}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Darla por hecha: ${tarea.texto}`}
+          disabled={ocupado}
+          onPress={alHecho}
+          style={[estilos.hecho, estilos.avisoBoton, ocupado && estilos.apagado]}
+        >
+          <Text style={estilos.hechoTexto}>Darla por hecha</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Mantener abierta: ${tarea.texto}`}
+          disabled={ocupado}
+          onPress={alMantener}
+          style={[estilos.hecho, estilos.avisoBoton, estilos.avisoSecundario]}
+        >
+          <Text style={[estilos.hechoTexto, estilos.avisoSecundarioTexto]}>Mantener abierta</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+// REQ-CUN03-24: el último avance y, a demanda, la bitácora completa del más reciente al más antiguo
+function Bitacora({ tarea }: { tarea: TareaPersonal }) {
+  const [abierta, setAbierta] = useState(false);
+  const ultimo = tarea.bitacora[0];
+  if (!ultimo) return null;
+  const n = tarea.bitacora.length;
+  return (
+    <View>
+      {!abierta && (
+        <Text style={estilos.ultimoAvance}>
+          {diaDelAvance(ultimo.cuando)} · {ultimo.texto}
+        </Text>
+      )}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${nombreHecho(tarea)}: ${tarea.texto}`}
-        disabled={ocupado}
-        onPress={alHecho}
-        style={[estilos.hecho, ocupado && estilos.apagado]}
+        accessibilityLabel={abierta ? `Ocultar bitácora de ${tarea.texto}` : `Ver bitácora de ${tarea.texto}, ${n} ${n === 1 ? 'avance' : 'avances'}`}
+        accessibilityState={{ expanded: abierta }}
+        aria-expanded={abierta}
+        onPress={() => setAbierta((a) => !a)}
+        style={estilos.enlace}
       >
-        <Text style={estilos.hechoTexto}>{nombreHecho(tarea)}</Text>
+        <Text style={estilos.enlaceTexto}>{abierta ? 'Ocultar bitácora' : `Ver bitácora (${n})`}</Text>
       </Pressable>
+      {abierta && (
+        <View accessibilityRole="list" accessibilityLabel={`Bitácora de ${tarea.texto}`} style={estilos.avances}>
+          {tarea.bitacora.map((a) => (
+            <View key={a.id} role="listitem" style={estilos.avance}>
+              <Text style={estilos.suave}>{a.cuando}</Text>
+              <Text style={estilos.cuerpo}>{a.texto}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function Fila({
+  tarea,
+  ocupado,
+  alHecho,
+  alMantener,
+  alAbrir,
+}: {
+  tarea: TareaPersonal;
+  ocupado: boolean;
+  alHecho: () => void;
+  alMantener: () => void;
+  alAbrir?: () => void;
+}) {
+  return (
+    <View role="listitem" style={estilos.filaTarea}>
+      {tarea.avisoVencida && <AvisoVencida tarea={tarea} ocupado={ocupado} alHecho={alHecho} alMantener={alMantener} />}
+      <View style={[estilos.tarea, estilos.tareaEnFila]}>
+        <View style={estilos.tareaCuerpo}>
+          <Pressable accessibilityRole="button" accessibilityLabel={`${tarea.texto}, ver detalle`} disabled={!alAbrir} onPress={alAbrir} style={estilos.tareaCuerpo}>
+            <Text style={estilos.tareaTexto}>{tarea.texto}</Text>
+            {tarea.contexto && <Text style={estilos.suave}>{tarea.contexto}</Text>}
+            <Detalle tarea={tarea} />
+          </Pressable>
+          <Bitacora tarea={tarea} />
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${nombreHecho(tarea)}: ${tarea.texto}`}
+          disabled={ocupado}
+          onPress={alHecho}
+          style={[estilos.hecho, ocupado && estilos.apagado]}
+        >
+          <Text style={estilos.hechoTexto}>{nombreHecho(tarea)}</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -138,7 +238,7 @@ export function SeccionTareas({ alAbrirCaptura, alSalir, version = 0 }: { alAbri
   const [errorDetalle, setErrorDetalle] = useState<string | null>(null);
   const [recarga, setRecarga] = useState(0);
   const recargar = useCallback(() => setRecarga((n) => n + 1), []);
-  const { hecho, reabrir, ocupado, aviso } = useHecho(recargar, alSalir);
+  const { hecho, reabrir, mantenerAbierta, ocupado, aviso } = useHecho(recargar, alSalir);
 
   useEffect(() => {
     let vigente = true;
@@ -216,7 +316,14 @@ export function SeccionTareas({ alAbrirCaptura, alSalir, version = 0 }: { alAbri
           ) : (
             <View accessibilityRole="list" accessibilityLabel="Pendientes">
               {pendientes.map((t) => (
-                <Fila key={t.id} tarea={t} ocupado={ocupado} alHecho={() => void hecho(t)} alAbrir={() => setAbierta({ tarea: t, propuesta: null })} />
+                <Fila
+                  key={t.id}
+                  tarea={t}
+                  ocupado={ocupado}
+                  alHecho={() => void hecho(t)}
+                  alMantener={() => mantenerAbierta(t)}
+                  alAbrir={() => setAbierta({ tarea: t, propuesta: null })}
+                />
               ))}
             </View>
           )}
@@ -258,6 +365,7 @@ export function SeccionTareas({ alAbrirCaptura, alSalir, version = 0 }: { alAbri
                   <Text style={estilos.enlaceTexto}>Cerrar</Text>
                 </Pressable>
               </View>
+              {abierta.tarea.contexto && <Text style={estilos.suave}>{abierta.tarea.contexto}</Text>}
               <Detalle tarea={abierta.tarea} />
               {abierta.propuesta ? (
                 <View accessibilityLabel={abierta.propuesta.vistaConfirmacion.accion} style={estilos.tarjeta}>
@@ -361,6 +469,8 @@ const estilos = StyleSheet.create({
   cuerpo: { fontSize: tipografia.cuerpo, color: color.texto.fuerte },
   titulo: { flex: 1, fontSize: tipografia.cuerpo, fontWeight: '700', color: color.texto.fuerte },
   tarea: { flexDirection: 'row', alignItems: 'center', gap: espaciado[12], minHeight: 56, paddingVertical: espaciado[12], borderTopWidth: 1, borderTopColor: color.borde.base },
+  // T-128: la fila de Pendientes lleva encima el aviso al vencer, si lo hay
+  filaTarea: { gap: espaciado[8], paddingTop: espaciado[12], borderTopWidth: 1, borderTopColor: color.borde.base },
   tareaCuerpo: { flex: 1, gap: 2 },
   tareaTexto: { fontSize: tipografia.cuerpo, fontWeight: '600', color: color.texto.fuerte },
   enLinea: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: espaciado[8] },
@@ -385,4 +495,15 @@ const estilos = StyleSheet.create({
   cabeceraHoja: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: espaciado[8] },
   tarjeta: { gap: espaciado[8], padding: espaciado[16], borderRadius: 12, borderWidth: 1, borderColor: color.borde.base, backgroundColor: color.superficie.elevada },
   irreversible: { fontSize: tipografia.etiqueta, color: color.estado.error },
+  ultimoAvance: { fontSize: tipografia.etiqueta, lineHeight: 20, color: color.texto.fuerte },
+  avances: { gap: espaciado[8], paddingLeft: espaciado[12], marginBottom: espaciado[4], borderLeftWidth: 2, borderLeftColor: color.borde.base },
+  avance: { gap: 2 },
+  avisoVencida: { gap: espaciado[8], padding: espaciado[12], borderRadius: 12, backgroundColor: color.tinte.espera },
+  avisoTexto: { fontSize: tipografia.etiqueta, lineHeight: 20, color: color.tinte.esperaTexto },
+  avisoAcciones: { flexDirection: 'row', flexWrap: 'wrap', gap: espaciado[8] },
+  avisoBoton: { backgroundColor: color.superficie.base },
+  avisoSecundario: { borderColor: color.borde.fuerte },
+  avisoSecundarioTexto: { color: color.texto.fuerte },
+  // La tarea dentro de su fila: el borde y el aire de arriba los pone la fila
+  tareaEnFila: { borderTopWidth: 0, paddingTop: 0 },
 });

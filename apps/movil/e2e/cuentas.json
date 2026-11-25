@@ -72,6 +72,11 @@
     "rol": "usuario_personal",
     "plan": "personal"
   },
+  "tareasBitacora": {
+    "correo": "movil-tareas-bitacora-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
   "contrasena": {
     "correo": "contrasena-movil@nexoai.test",
     "rol": "usuario_personal",

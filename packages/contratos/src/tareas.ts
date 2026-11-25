@@ -12,10 +12,27 @@ export const TEXTO_TAREA_MAXIMO = 200;
 export const DE_QUIEN_MAXIMO = 80;
 // H-TP-06: las hechas se ven siete días al pie de su franja
 export const HECHAS_VISIBLES_DIAS = 7;
+// 09-tareas-personales plan §13 · T-125: el contexto de la tarea y el texto de un avance
+export const CONTEXTO_TAREA_MAXIMO = 200;
+export const AVANCE_MAXIMO = 500;
+// H-TP-26: cuántos avances lleva la ficha que ve el modelo
+export const AVANCES_EN_FICHA = 3;
 
 const TextoTarea = z.string().trim().min(1).max(TEXTO_TAREA_MAXIMO);
 // R-12, REQ-CUN03-04: solo el nombre tal como lo dijo la persona; ningún dato de contacto
 const DeQuien = z.string().trim().min(1).max(DE_QUIEN_MAXIMO);
+const ContextoTarea = z.string().trim().min(1).max(CONTEXTO_TAREA_MAXIMO);
+const TextoAvance = z.string().trim().min(1).max(AVANCE_MAXIMO);
+
+// REQ-CUN03-22 · T-125: un avance de la bitácora, con su momento y su texto en la zona del perfil
+export const AvanceTarea = z.strictObject({
+  id: z.uuid(),
+  texto: z.string(),
+  anotadoEn: Instante,
+  // «Martes 24 de noviembre, 18:40»
+  cuando: z.string(),
+});
+export type AvanceTarea = z.infer<typeof AvanceTarea>;
 
 export const EstadoTarea = z.enum(['pendiente', 'hecha', 'descartada']);
 export type EstadoTarea = z.infer<typeof EstadoTarea>;
@@ -45,6 +62,12 @@ export const TareaPersonal = z.strictObject({
   espera: z.string().nullable(),
   // «Hecha el domingo 8 de noviembre» o «Recibido el lunes 16 de noviembre» (H-TP-15)
   cierre: z.string().nullable(),
+  // REQ-CUN03-26 · T-125: con quién o para qué es
+  contexto: z.string().nullable(),
+  // REQ-CUN03-22, 24: la bitácora, del avance más reciente al más antiguo
+  bitacora: z.array(AvanceTarea),
+  // REQ-CUN03-27 · H-TP-31: vencida y sin «Mantener abierta» para su fecha
+  avisoVencida: z.boolean(),
 });
 export type TareaPersonal = z.infer<typeof TareaPersonal>;
 
@@ -98,6 +121,7 @@ export const CargaRegistrarTarea = z
     deQuien: DeQuien.optional(),
     esperadaDesde: Fecha.optional(),
     zonaHoraria: ZonaHoraria.optional(),
+    contexto: ContextoTarea.optional(),
   })
   .refine(horaConFecha, { message: 'la hora límite necesita una fecha', path: ['horaLimite'] })
   .refine(desdeConQuien, { message: 'desde cuándo se espera necesita de quién', path: ['esperadaDesde'] });
@@ -114,13 +138,18 @@ export const CargaCambiarTarea = z
     esperadaDesde: Fecha.nullable().optional(),
     // La completa la propuesta cuando cambia la fecha: la zona en que se dijo la nueva (P-05)
     zonaHoraria: ZonaHoraria.optional(),
+    contexto: ContextoTarea.nullable().optional(),
   })
   .refine(({ tareaId: _, zonaHoraria: __, ...cambios }) => Object.values(cambios).some((v) => v !== undefined), 'no dice qué cambiar');
 export type CargaCambiarTarea = z.infer<typeof CargaCambiarTarea>;
 
-// Carga de `tareas.completar`, `tareas.recibido`, `tareas.reabrir` y `tareas.descartar`
+// Carga de `tareas.completar`, `tareas.recibido`, `tareas.reabrir`, `tareas.descartar` y `tareas.mantener_abierta`
 export const CargaTareaExistente = z.strictObject({ tareaId: z.uuid() });
 export type CargaTareaExistente = z.infer<typeof CargaTareaExistente>;
+
+// Carga de `tareas.anotar_avance` (REQ-CUN03-21): el texto tal como lo dijo la persona
+export const CargaAnotarAvance = z.strictObject({ tareaId: z.uuid(), texto: TextoAvance });
+export type CargaAnotarAvance = z.infer<typeof CargaAnotarAvance>;
 
 // ---- Agente (plan §7.1). Fechas y horas en la zona de la persona, sin desfase, como las de agenda ----
 
@@ -139,6 +168,7 @@ export const ArgsRegistrarTarea = z.strictObject({
   fecha: Fecha.optional().describe('Solo si la persona dijo para cuándo; si no, omítela'),
   horaLimite: Hora.optional().describe('Solo si dijo «antes de las…»'),
   deQuien: DeQuien.optional().describe('Si es algo que otra persona tiene que darle o hacer: su nombre, tal como lo dijo'),
+  contexto: ContextoTarea.optional().describe('Solo si dijo con quién o para qué es («lo veo con Juan y Rosa»), con sus palabras'),
 });
 export type ArgsRegistrarTarea = z.infer<typeof ArgsRegistrarTarea>;
 
@@ -148,8 +178,19 @@ export const ArgsCambiarTarea = z.strictObject({
   fecha: Fecha.nullable().optional().describe('Fecha nueva; null para quitarla'),
   horaLimite: Hora.nullable().optional().describe('Hora límite nueva; null para quitarla'),
   deQuien: DeQuien.nullable().optional().describe('De quién se espera; null para quitarlo'),
+  contexto: ContextoTarea.nullable().optional().describe('Con quién o para qué es; null para quitarlo'),
 });
 export type ArgsCambiarTarea = z.infer<typeof ArgsCambiarTarea>;
+
+// T-126 · REQ-CUN03-21 · H-TP-26: la tarea por su id (mirando la ficha que dio tareas_consultar) o por lo que dijo
+export const ArgsAnotarAvance = z
+  .strictObject({
+    tareaId: z.uuid().optional().describe('Id de la tarea, si por su ficha en tareas_consultar sabes cuál es'),
+    tarea: z.string().trim().min(1).max(TEXTO_TAREA_MAXIMO).optional().describe('Si no sabes el id: lo que dijo la persona para nombrar la tarea'),
+    avance: TextoAvance.optional().describe('Cómo va, con las palabras de la persona, sin resumirlo; lo que falta hacer va aquí'),
+  })
+  .refine(({ tareaId, tarea }) => !!tareaId || !!tarea, 'falta qué tarea');
+export type ArgsAnotarAvance = z.infer<typeof ArgsAnotarAvance>;
 
 // T-051: la tarea por su id o por lo que dijo la persona; si varias encajan, el código muestra las candidatas
 export const ArgsTareaExistente = z
@@ -183,8 +224,22 @@ export type ListaTareas = z.infer<typeof ListaTareas>;
 export const CandidatasDeReferente = z.strictObject({
   // «¿Cuál de estas?»
   texto: z.string(),
-  // Lo que se propondrá con la elegida: «Dar por hecha»
+  // Lo que se propondrá con la elegida: «Dar por hecha», «Anotar avance» o «Ver cómo va»
   accion: z.string(),
   candidatas: z.array(z.strictObject({ id: z.uuid(), titulo: z.string(), detalle: z.string().nullable() })),
+  // T-126: con «Anotar avance», el texto que se anotará en la elegida
+  avance: z.string().optional(),
 });
 export type CandidatasDeReferente = z.infer<typeof CandidatasDeReferente>;
+
+// T-126 · REQ-CUN03-23 · H-TP-29: «¿cómo va X?», armado por el código con los avances tal como están
+export const BitacoraTarea = z.strictObject({
+  tareaId: z.uuid(),
+  tarea: z.string(),
+  contexto: z.string().nullable(),
+  // Del más reciente al más antiguo
+  avances: z.array(AvanceTarea),
+  // «Esta tarea no tiene avances anotados.» cuando no hay ninguno
+  vacia: z.string().nullable(),
+});
+export type BitacoraTarea = z.infer<typeof BitacoraTarea>;

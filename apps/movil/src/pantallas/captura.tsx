@@ -13,6 +13,8 @@ import { color, espaciado, tipografia } from '../tokens';
 // Cada tipo de turno se ve distinto: la tarjeta que espera tu confirmación, lo que quedó en espera y un fallo.
 // T-039 · REQ-AGT-03: la capa ya no se vacía. Abre con lo que se está pidiendo y lo anterior, separados por
 // una línea con la hora y lo que se hizo, y «Ver anteriores» trae lo más viejo.
+// T-128 · 09-tareas-personales plan §13.6: el turno «¿cómo va…?» con la bitácora de la tarea, y la tarjeta
+// «Anotar avance» deja a la vista la tarea y el texto que se anotará aunque esté plegada.
 // Pulido · «Ver anteriores» visible: el botón se queda pegado arriba de la lista aunque se haga scroll,
 // mientras quede algo anterior (`stickyHeaderIndices`, que en Expo web es `position: sticky`).
 
@@ -34,8 +36,10 @@ const seCruzaCon = (eventos: { titulo: string }[]) => `Se cruza con ${enLista(ev
 // H-CAP-01 (revisada el 7 de noviembre de 2026, auditoría MC-17 y MC-18): lo que la tarjeta plegada deja a la
 // vista, armado con los datos que trae la propia tarjeta y sin inventar nada.
 type Dato = { etiqueta: string; valor: string };
-// El compromiso del que se habla, si la acción no lo nombra
-const NOMBRE = ['Título', 'Compromiso', 'Título nuevo'];
+// El compromiso o la tarea de que se habla, si la acción no lo nombra
+const NOMBRE = ['Título', 'Compromiso', 'Título nuevo', 'Tarea'];
+// T-128 · REQ-CUN03-21: el texto que se anotará en la bitácora tampoco se pliega (P-03, los datos exactos)
+const SIN_PLEGAR = ['Avance'];
 // Cuándo, siempre con su zona (P-05)
 const CUANDO = ['Fecha', 'Hora', 'Cuándo', 'Ahora', 'Nueva', 'Zona horaria'];
 // Lo que puso el sistema por su cuenta lleva su explicación, y nunca se pliega (decisión 19 de 02-agenda)
@@ -44,10 +48,11 @@ const explica = (d: Dato) => d.valor.includes('porque');
 function plegada(accion: string, datos: Dato[]) {
   const valores = (etiquetas: string[]) => etiquetas.flatMap((e) => datos.filter((d) => d.etiqueta === e && !explica(d)).map((d) => d.valor));
   const nombre = valores(NOMBRE).filter((v) => !accion.includes(v));
+  const sinPlegar = valores(SIN_PLEGAR);
   let cuando = valores(CUANDO);
   // Una tarjeta con otros datos: los dos primeros, tal cual
   if (nombre.length === 0 && cuando.length === 0) cuando = datos.filter((d) => d.etiqueta !== 'Alternativas' && !explica(d)).slice(0, 2).map((d) => d.valor);
-  return { nombre: nombre.join(' · '), cuando: cuando.join(' · '), explicaciones: datos.filter(explica) };
+  return { nombre: nombre.join(' · '), cuando: cuando.join(' · '), sinPlegar, explicaciones: datos.filter(explica) };
 }
 
 // Qué se decidió sobre una tarjeta que ya no espera: se lee en lo que vino después
@@ -94,7 +99,7 @@ function Tarjeta({
   // Con los botones a la vista, las alternativas no se repiten en texto. Desde la decisión 28 de 02-agenda la API
   // ya no manda esa fila; el filtro queda por las propuestas guardadas antes, que todavía la traen
   const datos = activa && alternativas.length > 0 ? vista.datos.filter((d) => d.etiqueta !== 'Alternativas') : vista.datos;
-  const { nombre, cuando, explicaciones } = plegada(vista.accion, vista.datos);
+  const { nombre, cuando, sinPlegar, explicaciones } = plegada(vista.accion, vista.datos);
   return (
     // P-03: la acción exacta, sus datos y qué es irreversible, antes de ejecutarla. H-CAP-01: plegada por
     // defecto; «Ver detalles» muestra todos los datos en la misma tarjeta (REQ-CAP-01)
@@ -106,6 +111,12 @@ function Tarjeta({
       <Text style={estilos.accion}>{vista.accion}</Text>
       {nombre !== '' && <Text style={estilos.cuerpo}>{nombre}</Text>}
       {cuando !== '' && <Text style={estilos.esencial}>{cuando}</Text>}
+      {!detalles &&
+        sinPlegar.map((v) => (
+          <Text key={v} style={estilos.cuerpo}>
+            «{v}»
+          </Text>
+        ))}
       {!detalles &&
         explicaciones.map((d) => (
           <Text key={d.etiqueta} style={estilos.suave}>
@@ -210,11 +221,33 @@ function Turno({ turno, pendiente, ocupado, alDecidir }: { turno: TurnoAsistente
           )}
         </View>
       );
+    // T-128 · REQ-CUN03-23 · H-TP-29: «¿cómo va…?», con los avances tal como están anotados, armado por la API
+    case 'bitacora':
+      return (
+        <View accessibilityLabel={`Cómo va «${turno.bitacora.tarea}»`} style={estilos.agenda}>
+          <Text style={estilos.accion}>{turno.bitacora.tarea}</Text>
+          {turno.bitacora.contexto && <Text style={estilos.suave}>{turno.bitacora.contexto}</Text>}
+          {turno.bitacora.avances.length === 0 ? (
+            <Text style={estilos.cuerpo}>{turno.bitacora.vacia ?? 'Esta tarea no tiene avances anotados.'}</Text>
+          ) : (
+            <View accessibilityRole="list" accessibilityLabel={`Bitácora de ${turno.bitacora.tarea}`} style={estilos.avances}>
+              {turno.bitacora.avances.map((a) => (
+                <View key={a.id} role="listitem">
+                  <Text style={estilos.suave}>{a.cuando}</Text>
+                  <Text style={estilos.cuerpo}>{a.texto}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      );
     // T-054 · REQ-CUN03-15: varias tareas encajan; elegir una la propone el código
     case 'alternativas_de_referente':
       return (
         <View style={estilos.respuesta}>
           <Text style={estilos.cuerpo}>{turno.lista.texto}</Text>
+          {/* T-128: con «Anotar avance», lo que se anotará en la que se elija */}
+          {turno.lista.avance && <Text style={estilos.suave}>«{turno.lista.avance}»</Text>}
           {turno.lista.candidatas.map((c) => (
             <Boton
               key={c.id}
@@ -510,6 +543,7 @@ const estilos = StyleSheet.create({
   pedidoTexto: { fontSize: tipografia.cuerpo, color: color.texto.inverso },
   respuesta: { alignSelf: 'flex-start', maxWidth: '92%', padding: espaciado[12], borderRadius: 12, backgroundColor: color.agente.suave },
   grupoTareas: { fontWeight: '600', marginTop: espaciado[4] },
+  avances: { gap: espaciado[8], marginTop: espaciado[4] },
   agenda: { gap: espaciado[4], padding: espaciado[12], borderRadius: 12, borderWidth: 1, borderColor: color.borde.base, backgroundColor: color.superficie.elevada },
   tarjeta: { gap: espaciado[8], padding: espaciado[16], borderRadius: 12, borderWidth: 1, borderColor: color.borde.fuerte, backgroundColor: color.superficie.base },
   // Ya decidida: deja de pedir atención (ARQUITECTURA-VISUAL-MOVIL §3, el borde graduado)

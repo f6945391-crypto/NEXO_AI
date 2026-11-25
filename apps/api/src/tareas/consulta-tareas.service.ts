@@ -36,10 +36,12 @@ export class ConsultaTareasService {
       ahora,
       zona,
     );
+    // T-125 · REQ-CUN03-24: cada tarea con su bitácora
+    const avances = await this.tareas.avancesDe(contexto, [...pendientes, ...hechas].map((f) => f.id));
     return {
       zona: nombreDeZona(zona, ahora),
-      pendientes: ordenadas.map((t) => aContrato(t.fila, ahora, zona)),
-      hechasRecientes: hechas.map((f) => aContrato(f, ahora, zona)),
+      pendientes: ordenadas.map((t) => aContrato(t.fila, ahora, zona, avances.get(t.fila.id))),
+      hechasRecientes: hechas.map((f) => aContrato(f, ahora, zona, avances.get(f.id))),
       // REQ-CUN03-17: lo convertido desde la espera llega con T-056
       porConfirmar: [],
     };
@@ -58,17 +60,24 @@ export class ConsultaTareasService {
       zona,
     );
     const anteriores = esHoy ? ordenar('con_fecha', conFecha.filter((t) => t.fecha! < fecha && vencida(t, ahora, zona)), ahora, zona) : [];
+    const todas = [...delDia, ...anteriores];
+    const avances = await this.tareas.avancesDe(contexto, todas.map((t) => t.fila.id));
     return {
       fecha,
       zona: nombreDeZona(zona, ahora),
       esHoy,
-      tareas: [...delDia, ...anteriores].map((t) => aContrato(t.fila, ahora, zona)),
+      tareas: todas.map((t) => aContrato(t.fila, ahora, zona, avances.get(t.fila.id))),
     };
   }
 
   async porId(contexto: ContextoSolicitud, id: string, ahora = new Date()): Promise<TareaPersonal> {
     const fila = await this.tareas.existente(contexto, id);
-    return aContrato(fila, ahora, await this.tareas.zonaDe(contexto));
+    return this.tareas.contrato(contexto, fila, ahora);
+  }
+
+  // T-126 · H-TP-26: los avances de varias tareas, para armar su ficha o su bitácora
+  avancesDe(contexto: ContextoSolicitud, tareaIds: string[]) {
+    return this.tareas.avancesDe(contexto, tareaIds);
   }
 
   // Lo que el agente busca por texto (T-051): las pendientes de una franja, o las hechas recientes para reabrir

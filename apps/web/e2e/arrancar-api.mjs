@@ -89,7 +89,7 @@ const { calendarioDeDemostracion: calendario } = desdeApi('./dist/integraciones/
 // T-050: las cuentas de «en espera» no conectan el calendario: desde que las tareas existen, lo que queda en
 // espera en estas pruebas es un compromiso sin permiso de calendario
 const SIN_CALENDARIO = ['asistenteEspera', 'capturaEspera', 'enEspera'];
-for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial', 'agendaSemana', 'enEspera', 'historialLargo', 'semanaLlena', 'tareas', 'tareasVacio'].filter((c) => perfiles[c])) {
+for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial', 'agendaSemana', 'enEspera', 'historialLargo', 'semanaLlena', 'tareas', 'tareasVacio', 'tareasBitacora'].filter((c) => perfiles[c])) {
   const perfilId = perfiles[clave];
   await prisma.perfilUsuario.update({ where: { id: perfilId }, data: { debeCambiarContrasena: false, zonaHoraria: 'America/Lima' } });
   if (SIN_CALENDARIO.includes(clave)) continue;
@@ -241,15 +241,26 @@ if (perfiles.actividadSinCalendario) {
 // T-052 a T-055 · 09-tareas-personales: tareas en las tres franjas, una hecha ayer y un compromiso hoy, para
 // ver la sección Tareas y el grupo «Tareas para este día» de Hoy. Cada tarea con la Operación que la creó
 // (AD-09), como si la hubiera confirmado la persona. La otra cuenta no tiene ninguna.
-if (perfiles.tareas) {
-  const perfilId = perfiles.tareas;
+// T-128: `tareasBitacora`, solo en las cuentas del móvil, recibe las mismas tareas: así sus pruebas no comparten
+// datos con las de `tareas` ni su límite de 5 ingresos por minuto (specs/06-acceso/plan.md §5.1)
+for (const perfilId of [perfiles.tareas, perfiles.tareasBitacora].filter(Boolean)) {
   const enDias = (n) => new Date(Date.parse(`${hoy}T12:00:00Z`) + n * 24 * 3600_000).toISOString().slice(0, 10);
   const fecha = (dia) => (dia ? new Date(`${dia}T00:00:00Z`) : null);
   calendario.sembrar(perfilId, { titulo: 'Dentista', inicio: aLas(hoy, '10:00'), fin: aLas(hoy, '11:00'), zonaHoraria: 'America/Lima' });
   const tareas = [
     { texto: 'Pagar el recibo', fecha: hoy, horaLimite: '23:00', creada: -2 },
     { texto: 'Renovar el DNI', fecha: enDias(-3), creada: -10 },
-    { texto: 'Enviar la tesis', fecha: enDias(5), creada: -4 },
+    // T-127, T-128: con contexto y dos avances en su bitácora (REQ-CUN03-24, 26)
+    {
+      texto: 'Enviar la tesis',
+      fecha: enDias(5),
+      creada: -4,
+      contexto: 'La reviso con la profesora Díaz',
+      avances: [
+        { texto: 'Mandé el capítulo 3 a la profesora Díaz', hace: -2 },
+        { texto: 'Me devolvió correcciones; falta la bibliografía', hace: -1 },
+      ],
+    },
     { texto: 'Llamar al dentista', creada: -1 },
     { texto: 'Devolver el libro', creada: -5 },
     { texto: 'Presupuesto', deQuien: 'Juan', esperadaDesde: enDias(-6), fecha: enDias(7), creada: -6 },
@@ -271,7 +282,7 @@ if (perfiles.tareas) {
         ejecutadaEn: creadaEn,
       },
     });
-    await prisma.tareaPersonal.create({
+    const tarea = await prisma.tareaPersonal.create({
       data: {
         organizacionId,
         perfilId,
@@ -284,9 +295,30 @@ if (perfiles.tareas) {
         estado: t.hecha ? 'hecha' : 'pendiente',
         hechaEn: t.hecha ? new Date(Date.now() + t.hecha * 24 * 3600_000) : null,
         operacionOrigenId: op.id,
+        contexto: t.contexto ?? null,
         creadaEn,
       },
     });
+    for (const a of t.avances ?? []) {
+      const anotadoEn = new Date(Date.now() + a.hace * 24 * 3600_000);
+      const opAvance = await prisma.operacion.create({
+        data: {
+          organizacionId,
+          perfilId,
+          tipo: 'tareas.anotar_avance',
+          origen: 'agente',
+          carga: { tareaId: tarea.id, texto: a.texto },
+          vistaConfirmacion: { accion: 'Anotar avance', datos: [], irreversible: null, confirmable: true, motivoNoConfirmable: null },
+          estado: 'ejecutada',
+          creadaEn: anotadoEn,
+          confirmadaEn: anotadoEn,
+          ejecutadaEn: anotadoEn,
+        },
+      });
+      await prisma.avanceTarea.create({
+        data: { organizacionId, perfilId, tareaId: tarea.id, texto: a.texto, anotadoEn, zonaHoraria: 'America/Lima', operacionOrigenId: opAvance.id },
+      });
+    }
   }
 }
 // T-124 · specs/05-equipos/casos-de-prueba.md: el escenario de reuniones. «Proyecto Alfa» en Reuniones Demo, con

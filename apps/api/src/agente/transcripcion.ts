@@ -29,6 +29,8 @@ const DESENLACE_POR_TIPO: Readonly<Record<string, DesenlaceEpisodio>> = {
   'tareas.recibido': 'hecho',
   'tareas.reabrir': 'reabierto',
   'tareas.descartar': 'quitado',
+  // T-125: un avance en la bitácora
+  'tareas.anotar_avance': 'anotado',
 };
 
 type OperacionDelEpisodio = { tipo: string; estado: string; motivoEspera?: string | null; carga: unknown; resultado: unknown };
