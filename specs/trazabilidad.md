@@ -18,7 +18,7 @@
 | 06-acceso | 19 | 3 | 0 | 16 | 0 | 0 |
 | 07-agente | 5 | 2 | 1 | 2 | 0 | 0 |
 | 08-administracion | 32 | 15 | 4 | 13 | 0 | 0 |
-| 09-tareas-personales | 20 | 1 | 1 | 18 | 0 | 0 |
+| 09-tareas-personales | 25 | 6 | 1 | 18 | 0 | 0 |
 
 ## Requisitos
 
@@ -248,3 +248,8 @@
 | REQ-CUN03-18 | 09-tareas-personales | R-42; P-11; DP-01; REQ-CAP-24; REQ-CUN01-11 (por analogía) | 1, 2 | T-049 | tareas.consulta-sin-proveedor-de-modelo | implementado |
 | REQ-CUN03-19 | 09-tareas-personales | RN-OP-01; RN-EST-01; P-10; REQ-ACC-17 («nunca ve las tareas que el miembro se creó para sí») | 1 | T-047, T-049 | tareas.solo-las-propias, plataforma.aislamiento-entre-organizaciones | implementado |
 | REQ-CUN03-20 | 09-tareas-personales | CUN-03 (no depende de EN-02); REQ-ACC-08 (el permiso de calendario solo bloquea lo que lo necesita) | 1 | T-049 | tareas.sin-calendario | implementado |
+| REQ-CUN03-21 | 09-tareas-personales | R-27; propuesta de Franco del 25 de noviembre de 2026; REQ-CUN03-15 (candidatas); RN-ER-03; P-03 | 1 | — | — | pendiente |
+| REQ-CUN03-22 | 09-tareas-personales | R-27; P-05; decisión 20 de `07-agente` (la transcripción, 90 días); propuesta de Franco del 25 de noviembre de 2026 (la fuente de verdad no es el chat) | 1 | — | — | pendiente |
+| REQ-CUN03-23 | 09-tareas-personales | R-27; REQ-CUN03-14 (la respuesta tal como está); H-AGT-15; P-02 | 1 | — | — | pendiente |
+| REQ-CUN03-24 | 09-tareas-personales | R-27; R-17 (el hilo vive dentro de la tarea, nunca como sección propia); R-41 (lo mismo en las dos plataformas) | 1 | — | — | pendiente |
+| REQ-CUN03-25 | 09-tareas-personales | R-42; P-11; REQ-CUN03-18; H-TP-01 | 1 | — | — | pendiente |

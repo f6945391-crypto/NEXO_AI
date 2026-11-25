@@ -334,6 +334,103 @@ ENTONCES el asistente dice que las tareas personales no tienen prioridades ni pa
 
 ---
 
+## 6 bis. La bitácora de una tarea
+
+*Añadida el 25 de noviembre de 2026, a propuesta de Franco; pendiente de aval del equipo.* Se numera «6 bis» para no renumerar las secciones siguientes (como `02-jornada` §8 bis, H-JOR-01), y sus requisitos siguen desde REQ-CUN03-21.
+
+**Por qué.** Hoy lo que la persona le cuenta al asistente sobre una tarea («ya hablé con Juan, me falta hablar con Rosa») solo queda en la transcripción: el asistente lo olvida al cerrar el episodio, y la transcripción se borra a los 90 días (decisión 20 de `07-agente`). La bitácora guarda esos avances **como datos de la tarea**, que son la fuente de verdad, y no como parte de la conversación. Es el hilo del Plan Personal que describe R-27: lo actualiza la propia persona.
+
+**Lo que falta hacer va en el texto del avance**, sin una lista aparte de pendientes que se tachen (decisión de Franco del 25 de noviembre de 2026). Así las tareas personales siguen sin pasos ni subtareas (§9, REQ-CUN03-16).
+
+### REQ-CUN03-21
+
+**Requisito:** CUANDO el usuario le cuente al asistente un avance sobre una tarea pendiente, EL SISTEMA propondrá anotarlo en la bitácora de esa tarea, en una tarjeta que diga qué tarea es y el texto que se anotará, y solo lo anotará al confirmar; SI hay más de una tarea que encaja con lo dicho, ENTONCES mostrará las candidatas para que el usuario elija, sin proponer nada hasta entonces; y SI no encaja ninguna, ENTONCES lo dirá y preguntará a qué tarea corresponde, sin anotar nada.
+
+**Origen:** R-27; propuesta de Franco del 25 de noviembre de 2026; REQ-CUN03-15 (candidatas); RN-ER-03; P-03
+**Tipo:** complejo
+
+**Criterio de aceptación**
+DADO «Presupuesto de la cocina», pendiente y sin bitácora
+CUANDO el usuario escriba «sobre el presupuesto de la cocina: ya hablé con Juan, me falta hablar con Rosa»
+ENTONCES ve la tarjeta «Anotar avance · Presupuesto de la cocina» con el texto «Ya hablé con Juan, me falta hablar con Rosa»
+Y CUANDO confirme
+ENTONCES la bitácora de la tarea tiene ese avance, con la fecha y la hora de ahora, y la tarea sigue pendiente y en la misma franja
+Y DADO también «Presupuesto del baño», pendiente
+CUANDO escriba «avancé con el presupuesto: ya llamé al gasfitero»
+ENTONCES ve las dos tareas como candidatas, y no se propone nada
+Y CUANDO escriba «ya hablé con el contador» y ninguna tarea encaja
+ENTONCES el asistente pregunta a qué tarea corresponde, y no se anota nada
+
+---
+
+### REQ-CUN03-22
+
+**Requisito:** EL SISTEMA guardará cada avance con su texto, el momento en que se anotó con su zona horaria y la tarea a la que pertenece, en el orden en que se anotaron, y lo conservará mientras exista la tarea, aunque se cierre el episodio en que se contó o venza el plazo de la transcripción.
+
+**Origen:** R-27; P-05; decisión 20 de `07-agente` (la transcripción, 90 días); propuesta de Franco del 25 de noviembre de 2026 (la fuente de verdad no es el chat)
+**Tipo:** ubicuo
+
+**Criterio de aceptación**
+DADO el avance anotado en el criterio de REQ-CUN03-21
+CUANDO el episodio se cierre, y más tarde se borre la transcripción de ese día
+ENTONCES el avance sigue en la bitácora de «Presupuesto de la cocina», con su texto y su fecha
+Y CUANDO se anote otro avance
+ENTONCES los dos quedan en el orden en que se anotaron, y el primero no cambia
+
+---
+
+### REQ-CUN03-23
+
+**Requisito:** CUANDO el usuario pregunte al asistente cómo va una tarea, EL SISTEMA responderá con la bitácora de esa tarea tal como está anotada, con la fecha de cada avance, sin añadir ni omitir ninguno; SI la tarea no tiene avances, ENTONCES lo dirá; y SI hay más de una tarea que encaja, ENTONCES mostrará las candidatas.
+
+**Origen:** R-27; REQ-CUN03-14 (la respuesta tal como está); H-AGT-15; P-02
+**Tipo:** complejo
+
+**Criterio de aceptación**
+DADO «Presupuesto de la cocina» con dos avances: «Ya hablé con Juan, me falta hablar con Rosa», del lunes 23, y «Rosa pasa el precio el viernes», del martes 24 de noviembre
+CUANDO el usuario pregunte «¿cómo va el presupuesto de la cocina?»
+ENTONCES la respuesta muestra los dos avances con su fecha, el más reciente primero, y nada que no esté anotado
+Y CUANDO pregunte por «Renovar el DNI», que no tiene avances
+ENTONCES el asistente dice que esa tarea no tiene avances anotados
+
+---
+
+### REQ-CUN03-24
+
+**Requisito:** EL SISTEMA mostrará en la sección Tareas, en la web y en el móvil, el último avance de cada tarea que tenga bitácora, y permitirá desplegar en la misma tarea la bitácora completa, del avance más reciente al más antiguo.
+
+**Origen:** R-27; R-17 (el hilo vive dentro de la tarea, nunca como sección propia); R-41 (lo mismo en las dos plataformas)
+**Tipo:** ubicuo
+
+**Criterio de aceptación**
+DADO la tarea con dos avances del criterio de REQ-CUN03-23
+CUANDO el usuario abra Tareas
+ENTONCES bajo «Presupuesto de la cocina» ve «Martes 24 · Rosa pasa el precio el viernes»
+Y CUANDO despliegue la bitácora
+ENTONCES ve los dos avances con su fecha, sin salir de la sección
+Y una tarea sin avances no muestra nada de bitácora
+
+---
+
+### REQ-CUN03-25
+
+**Requisito:** MIENTRAS el asistente no esté disponible, EL SISTEMA seguirá mostrando la bitácora de cada tarea y encolará lo que se pida anotar, sin anotar nada; y SI la tarea está hecha o descartada, ENTONCES no admitirá avances nuevos.
+
+**Origen:** R-42; P-11; REQ-CUN03-18; H-TP-01
+**Tipo:** complejo
+
+**Criterio de aceptación**
+DADO que el proveedor de modelo no responde
+CUANDO el usuario abra Tareas
+ENTONCES ve el último avance de cada tarea y puede desplegar su bitácora
+Y CUANDO escriba un avance sobre «Presupuesto de la cocina»
+ENTONCES queda visible como en espera, no se anota nada y no se ofrece ningún formulario
+Y DADO «Pagar el recibo de la luz», hecha
+CUANDO el usuario le cuente un avance sobre ella
+ENTONCES el asistente dice que la tarea ya está hecha y ofrece reabrirla, sin anotar nada
+
+---
+
 ## 7. Lo que estaba en espera
 
 ### REQ-CUN03-17
@@ -424,7 +521,7 @@ Dicho explícito para que no se cuele por analogía con `03-tareas`. Cubierto po
 | Duración estimada y colocación en huecos del día | CUN-02 (`02-jornada`, REQ-CUN02-09) |
 | Avisos a una hora («te lo recuerdo a las 9») | No en esta versión (decisión H-TP-10) |
 | Categorías y ámbito laboral / personal | D-16, REQ-CUN02-19 |
-| Hilo de la tarea | REQ-AGT-05, sin plan; R-27 describe el del Plan Personal |
+| Hilo de la tarea | La **bitácora** (§6 bis) cubre lo que R-27 describe para el Plan Personal. El hilo de la conversación sobre la tarea sigue siendo REQ-AGT-05, sin plan |
 | Apuntes (lo que se pensó o pasó y no pide nada) | `design/ARQUITECTURA-VISUAL-MOVIL.md` §2, sin requisito todavía |
 
 ---
@@ -455,6 +552,7 @@ No se aplican aquí: los edita quien integre, con su línea en `SPEC.md` §11.
 | 3 y 4, lista y controles | CUN-03 | Gratuito |
 | 5, tareas en Hoy | CUN-01, CUN-03 | Gratuito |
 | 6, asistente | CUN-03 | Gratuito |
+| 6 bis, bitácora de una tarea | CUN-03 | Gratuito; R-27 la pone en el Plan Personal, sin marca de plan en esta versión (H-TP-12) |
 | 7, conversión de lo en espera | Transversal | Gratuito |
 | 8, sin asistente, privacidad y calendario | Transversal | Gratuito |
 
@@ -490,4 +588,8 @@ Detectadas al escribir esta especificación el 6 de noviembre de 2026. **Pendien
 | H-TP-22 | **Lo que se espera de alguien no entra en «Tareas para este día»**, aunque su fecha sea ese día: es cuándo debía llegar, no un plazo propio (H-TP-04). Solo las tareas de «Con fecha» | REQ-CUN03-13 |
 | H-TP-23 | **Qué tareas encajan con lo dicho** se decide en código: se comparan las palabras con sentido por su comienzo (cinco letras) y ganan las que más comparten; con un empate entre varias, se muestran como candidatas. «Ya pagué el recibo» encaja con «Pagar el recibo de la luz» y «del agua» por «recibo». Revisable con la evaluación del modelo | REQ-CUN03-15 |
 | H-TP-24 | **La tarjeta de algo que se espera de alguien dice «NexoAI no le escribe a …»**, armado por el código. Cumple lo que pide REQ-CUN03-16 («dice que no le escribe a nadie») sin otra vuelta del modelo, que no la hay porque la tarjeta detiene el grafo | REQ-CUN03-04, 16 |
+| H-TP-26 | **Para anotar un avance, el modelo elige la tarea entre las pendientes que le da el código**, y la tarjeta la nombra para que la persona vea si se equivocó (REQ-CUN03-21). La comparación por palabras de H-TP-23 no basta: «ya hablé con Juan» no comparte palabras con «Presupuesto de la cocina». Si el modelo no la puede elegir, o si la comparación por palabras da un empate, se muestran candidatas. *Propuesto el 25 de noviembre de 2026* | REQ-CUN03-21, 23; H-TP-23 |
+| H-TP-27 | **La bitácora no se corrige ni se borra avance por avance** en esta versión: un avance equivocado se corrige anotando otro. Se borra con la tarea | REQ-CUN03-22 |
+| H-TP-28 | **R-27 dice que el hilo del Plan Personal «se cierra con un límite de tiempo».** En esta versión la bitácora se cierra cuando la tarea queda hecha o descartada (REQ-CUN03-25), no por tiempo. Hay que decidir si hace falta un límite de tiempo y cuál | REQ-CUN03-25; R-27 |
+| H-TP-29 | **La respuesta a «¿cómo va X?» la arma el código** con los avances tal como están (REQ-CUN03-23), como la lista de REQ-CUN03-14. Un resumen redactado por el modelo («falta hablar con Rosa») queda para después: podría añadir u omitir algo | REQ-CUN03-23; P-02 |
 | H-TP-25 | **«Las hechas de los últimos siete días»** son las de las últimas 168 horas desde el momento de la consulta, no siete días de calendario | REQ-CUN03-10; H-TP-06 |
