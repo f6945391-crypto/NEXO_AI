@@ -227,6 +227,16 @@
 
 - **Avance 25/11/2026:** Dos herramientas registradas. 6/6 pruebas especificas y 69/69 del agente aprobadas. Pendiente IA real e integracion.
 
+### T-120 · Disponibilidad solo para quien corresponde, con el responsable visible
+
+- **Satisface:** REQ-CUN05-18, REQ-CUN05-19 · H-ACC-07 (`specs/06-acceso/plan.md` §8)
+- **Depende de:** T-104, T-114, T-119 · la respuesta del equipo a H-EQ-01 a 03 (`spec.md` §7)
+- **Contenido:** `Perfil` gana `planEfectivo` y `equipos` (cuántos equipos integra); `GET /perfil` los calcula con `PertenenciasService.planEfectivo` y `miembro_de_equipo`. El controlador de equipos rechaza con 403 `SIN_PLAN_EMPRESARIAL` o `SIN_EQUIPO`, y conserva `@SobreLoPropio()`. `GET /equipos` lleva por equipo su responsable y cuántos integrantes tiene. En la web, «Disponibilidad de equipo» entra en los cortes de Agenda solo con plan efectivo Empresarial y algún equipo, y la misma condición decide «Encargadas»; bajo el selector, «Responsable: … · n integrantes» o «Sin responsable · n integrantes»
+- **Hecho cuando:** una cuenta Personal y una Empresarial sin equipo no ven el corte y reciben 403; una en un equipo lo ve con su responsable; ninguna prueba de T-099 a T-119 cambia su expectativa (solo su semilla, si hace falta); `pnpm verificar` en verde y `trazabilidad.py --check` en 0; capturas de Agenda con la cuenta personal y con la de empresa
+- **Pruebas:** `equipos.disponibilidad-sin-plan`, `equipos.disponibilidad-sin-equipo`, `equipos.disponibilidad-afiliada` (en `skip` mientras INC-37 lo impida), `acceso.perfil-plan-efectivo` · extremo a extremo web `agenda.corte-disponibilidad-por-plan`
+- **Estado:** pendiente
+- **Origen:** revisión de las capturas de la fusión por Franco, 25 de noviembre de 2026 (`ENCARGO-CLAUDE-CODE-2026-11-25.md`)
+
 ## Orden sugerido de entregas
 
 **Entrega A — Fundamentos:** T-099, T-100, T-102, T-104, T-105, T-106 (equipos, miembros, permisos y contratos).

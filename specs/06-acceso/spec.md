@@ -38,6 +38,20 @@
 
 **REQ-ACC-17** · Ubicuo — De cada miembro de su equipo, el responsable solo ve su disponibilidad como libre u ocupado y las tareas del equipo. Nunca ve el contenido de su agenda, ni las tareas que el miembro se creó para sí, ni nada marcado como personal (P-10). *(Decisión del equipo, 23 de octubre de 2026)*
 
+**REQ-ACC-18** · CUANDO el usuario pida cambiar su contraseña desde Ajustes, el sistema le exigirá la contraseña actual y una nueva de al menos 12 caracteres distinta de la actual (H-ACC-02), la cambiará y cerrará todas las demás sesiones de la cuenta, dejando el cambio en la auditoría. *(Revisión de Franco del 25 de noviembre de 2026. No contradice REQ-ACC-12: la contraseña no es correo, plan ni baja.)*
+
+DADO una cuenta con sesión abierta en la web y otra en el móvil
+CUANDO cambie su contraseña desde Ajustes de la web con la actual correcta
+ENTONCES la siguiente renovación del móvil falla y la web sigue; con la actual incorrecta, un solo error y nada cambia
+
+**REQ-ACC-19** · CUANDO alguien pida restablecer la contraseña de un correo desde Entrar, el sistema responderá siempre lo mismo, exista o no la cuenta, y si existe le enviará al correo de la cuenta, desde la dirección de la plataforma, un enlace de un solo uso que vence a los 30 minutos; CUANDO se use el enlace con una contraseña nueva válida, el sistema la cambiará, cerrará todas las sesiones de la cuenta y lo dejará en la auditoría. *(Revisión de Franco del 25 de noviembre de 2026. Complementa a REQ-ADM-14, el restablecimiento por el administrador. Mismo límite de intentos que REQ-ACC-03. No pasa por Google: INC-13. **Bloqueado por PT-3**.)*
+
+DADO un correo que no existe
+CUANDO se pida restablecer
+ENTONCES la respuesta es idéntica a la de un correo que existe y no se envía nada
+Y DADO un enlace ya usado o vencido
+ENTONCES un solo mensaje de error y nada cambia
+
 ---
 
 ## 2. Permisos de Google
