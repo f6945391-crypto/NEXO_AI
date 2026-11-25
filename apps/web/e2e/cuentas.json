@@ -142,5 +142,55 @@
     "correo": "tareas-vacio-e2e@nexoai.test",
     "rol": "usuario_personal",
     "plan": "personal"
+  },
+  "reunionesAdmin": {
+    "correo": "admin@reuniones.test",
+    "rol": "gerente",
+    "plan": "empresarial",
+    "administrador": true,
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesLider": {
+    "correo": "lider@reuniones.test",
+    "rol": "gerente",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesAna": {
+    "correo": "ana@reuniones.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesBeto": {
+    "correo": "beto@reuniones.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesCarla": {
+    "correo": "carla@reuniones.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesDiego": {
+    "correo": "diego@reuniones.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesPablo": {
+    "correo": "pablo@reuniones.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "organizacion": "Reuniones Demo",
+    "lista": true
   }
 }

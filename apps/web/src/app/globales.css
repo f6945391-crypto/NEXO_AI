@@ -1337,7 +1337,9 @@ body {
   display: block;
   font-weight: 400;
   font-size: var(--tam-etiqueta);
-\n/* CUN-05: rejilla de disponibilidad reutilizable */
+}
+
+/* CUN-05: rejilla de disponibilidad reutilizable */
 
 .rejilla-disponibilidad {
   width: 100%;

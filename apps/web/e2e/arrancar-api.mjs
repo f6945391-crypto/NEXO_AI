@@ -289,6 +289,38 @@ if (perfiles.tareas) {
     });
   }
 }
+// T-124 · specs/05-equipos/casos-de-prueba.md: el escenario de reuniones. «Proyecto Alfa» en Reuniones Demo, con
+// lider de responsable, ana y beto autorizados y con calendario, carla sin autorizar y diego sin calendario;
+// el administrador no está en el equipo, y pablo es de Plan Personal.
+if (empresas['Reuniones Demo'] && perfiles.reunionesLider) {
+  const demo = empresas['Reuniones Demo'];
+  for (const clave of ['reunionesLider', 'reunionesAna', 'reunionesBeto', 'reunionesCarla']) {
+    await prisma.consentimientoIntegracion.create({
+      data: { organizacionId: demo, perfilId: perfiles[clave], proveedor: 'google', alcance: 'calendario', estado: 'concedido' },
+    });
+  }
+  for (const [clave, inicio, fin, titulo] of [
+    ['reunionesLider', '09:00', '10:00', 'Comité'],
+    ['reunionesLider', '15:00', '16:00', 'Revisión'],
+    ['reunionesAna', '10:00', '11:00', 'Cliente'],
+    ['reunionesAna', '15:30', '17:00', 'Taller'],
+    ['reunionesBeto', '08:00', '09:30', 'Desayuno'],
+    ['reunionesBeto', '13:00', '14:00', 'Almuerzo'],
+    ['reunionesCarla', '11:00', '12:00', 'Privado'],
+  ]) {
+    calendario.sembrar(perfiles[clave], { titulo, inicio: aLas(manana, inicio), fin: aLas(manana, fin), zonaHoraria: 'America/Lima' });
+  }
+  const alfa = await prisma.equipo.create({ data: { organizacionId: demo, nombre: 'Proyecto Alfa' } });
+  for (const [clave, rolEnEquipo, estadoConsentimiento] of [
+    ['reunionesLider', 'responsable', 'concedida'],
+    ['reunionesAna', 'integrante', 'concedida'],
+    ['reunionesBeto', 'integrante', 'concedida'],
+    ['reunionesCarla', 'integrante', 'pendiente'],
+    ['reunionesDiego', 'integrante', 'concedida'],
+  ]) {
+    await prisma.miembroDeEquipo.create({ data: { organizacionId: demo, equipoId: alfa.id, perfilId: perfiles[clave], rolEnEquipo, estadoConsentimiento } });
+  }
+}
 await prisma.$disconnect();
 
 // La API corre en este mismo proceso, así Playwright la detiene al terminar.

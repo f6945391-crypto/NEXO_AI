@@ -243,6 +243,17 @@
   - El consentimiento propio queda fuera del cierre (H-EQ-03): va por `POST /operaciones` y no pasa por `EquiposService`.
 - **Origen:** revisión de las capturas de la fusión por Franco, 25 de noviembre de 2026 (`ENCARGO-CLAUDE-CODE-2026-11-25.md`)
 
+### T-124 · Escenario de prueba de reuniones: administrador, líder e integrantes
+
+- **Satisface:** REQ-CUN05-01, 02, 03, 04, 08, 13, 14, 15, 17, 18, 19 (prueba de conjunto; no añade comportamiento)
+- **Depende de:** T-120
+- **Contenido:** `casos-de-prueba.md`: los datos que hacen falta (organización «Reuniones Demo», equipo «Proyecto Alfa», siete cuentas con su papel, autorización, calendario y eventos), doce casos CP-R-01 a 12 y cómo se ejecutan. Prueba de la API con el calendario simulado; las mismas cuentas sembradas en las pruebas web para probar el corte en pantalla y tomar las capturas
+- **Hecho cuando:** los casos automáticos pasan; el documento dice qué hace falta para la prueba manual con Gmail reales
+- **Pruebas:** `equipos.escenario-reuniones` · extremo a extremo web `web.escenario-reuniones`
+- **Estado:** hecha · 25 de noviembre de 2026. Los 12 casos pasan (11 en la API, 4 en pantalla). La prueba manual con Gmail reales queda para el equipo (`INFORME-PRUEBAS-REUNIONES-2026-11-25.md` §6)
+- **Notas de implementación:** las cuentas del escenario van en `apps/web/e2e/cuentas.json` con el prefijo `reuniones`, y `e2e/arrancar-api.mjs` siembra el equipo, las autorizaciones, los calendarios conectados y los eventos de mañana. Al tomar las capturas apareció un defecto de la fusión en `globales.css`: a `.candidatas__detalle` le faltaba su llave de cierre y la rejilla de CUN-05 se veía sin estilos. Corregido
+- **Origen:** pedido de Franco del 25 de noviembre de 2026, tras revisar las capturas
+
 ## Orden sugerido de entregas
 
 **Entrega A — Fundamentos:** T-099, T-100, T-102, T-104, T-105, T-106 (equipos, miembros, permisos y contratos).
