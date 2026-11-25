@@ -16,15 +16,15 @@
 | 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
 | 05-equipos | 17 | 17 | 0 | 0 | 0 | 0 |
 | 06-acceso | 17 | 2 | 0 | 15 | 0 | 0 |
-| 07-agente | 5 | 2 | 1 | 2 | 0 | 0 |
-| 08-tareas-personales | 10 | 10 | 0 | 0 | 0 | 0 |
+| 07-agente | 5 | 2 | 2 | 1 | 0 | 0 |
+| 08-tareas-personales | 10 | 0 | 10 | 0 | 0 | 0 |
 
 ## Requisitos
 
 | Requisito | Área | Origen | Fase | Tarea | Prueba | Estado |
 |---|---|---|---|---|---|---|
 | REQ-CAP-01 | 01-captura | CUN-01 y CUN-03, flujo principal paso 1 | 2 | T-034, T-035 | movil.captura-propone-y-confirma | en curso |
-| REQ-CAP-02 | 01-captura | CUN-01 paso 2, CUN-03 paso 2 | 2 | T-032, T-033 | agente.tarea-queda-en-espera | en curso |
+| REQ-CAP-02 | 01-captura | CUN-01 paso 2, CUN-03 paso 2 | 2 | T-032, T-033 | agente.en-espera-tarea-a-propuesta | en curso |
 | REQ-CAP-03 | 01-captura | RN-ER-03 | 2 | T-032, T-035 | agente.interrumpe-hasta-decidir | implementado |
 | REQ-CAP-04 | 01-captura | CUN-01 y CUN-03, excepción «información insuficiente»; regla de producto R-20 | 2 | T-032, T-035 | agente.pregunta-de-uno-en-uno | implementado |
 | REQ-CAP-05 | 01-captura | decisión de producto; RN-OP-01 | 2 | — | — | pendiente |
@@ -176,17 +176,17 @@
 | REQ-ACC-16 | 06-acceso | Requisito del sistema | 4 | — | — | pendiente |
 | REQ-ACC-17 | 06-acceso | Requisito del sistema | 4 | — | — | pendiente |
 | REQ-AGT-01 | 07-agente | `PROPUESTA-TECNICA.md` §7.4, memoria de conversación; H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6 y §8.1; glosario, «Episodio» y «Nota de continuidad» | 2 | T-032, T-034, T-038, T-040, T-041 | agente.conversacion-con-contexto | en curso |
-| REQ-AGT-02 | 07-agente | decisión del equipo, 24 de octubre de 2026; REQ-CAP-02, REQ-CAP-23 | 2 | T-033, T-034 | agente.tarea-queda-en-espera | implementado |
+| REQ-AGT-02 | 07-agente | decisión del equipo, 24 de octubre de 2026; REQ-CAP-02, REQ-CAP-23 | 2 | T-033, T-034, T-052 | web.asistente-en-espera, agente.en-espera-tarea-a-propuesta | en curso |
 | REQ-AGT-03 | 07-agente | H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6.1 y §8.1; `design/ARQUITECTURA-VISUAL-WEB.md` §5 y §6 («lo cerrado no se pierde») | 2 | T-038, T-039, T-041 | agente.transcripcion-persiste, web.asistente-historial | implementado |
 | REQ-AGT-04 | 07-agente | H-AGT-17; `INFORME-MEMORIA-AGENTE.md` §6.4.5; decisión 17 de `02-agenda` (las alternativas no pasan por el modelo); P-02, P-03 | 2 | T-042 | — | pendiente |
 | REQ-AGT-05 | 07-agente | H-AGT-17; `INFORME-MEMORIA-AGENTE.md` §6.4.3 y §6.4.4; glosario, «Hilo» | 2 | — | — | pendiente |
-| REQ-CUN03-01 | 08-tareas-personales | CUN-03 flujo principal; REQ-CAP-02; REQ-CAP-07; R-38; P-03; REQ-CUN01-03 | 1 | — | — | pendiente |
-| REQ-CUN03-02 | 08-tareas-personales | regla «tarea o apunte» de `design/ARQUITECTURA-VISUAL-MOVIL.md`; REQ-CAP-02 | 1 | — | — | pendiente |
-| REQ-CUN03-03 | 08-tareas-personales | R-38; R-23; P-02 | 1 | — | — | pendiente |
-| REQ-CUN03-04 | 08-tareas-personales | hito 3 de `PLAN-VALOR-USUARIO.md`; REQ-CUN01-13 (misma regla para la agenda) | 1 | — | — | pendiente |
-| REQ-CUN03-05 | 08-tareas-personales | CUN-03; DP-01; R-25 | 1 | — | — | pendiente |
-| REQ-CUN03-06 | 08-tareas-personales | CUN-03; R-25; P-03; REQ-CUN01-02 | 1 | — | — | pendiente |
-| REQ-CUN03-07 | 08-tareas-personales | R-12; REQ-CAP-02; P-09 | 1 | — | — | pendiente |
-| REQ-CUN03-08 | 08-tareas-personales | hito 3 de `PLAN-VALOR-USUARIO.md` (tarea con fecha y hora en la agenda); R-23; REQ-CUN01-02 | 1 | — | — | pendiente |
-| REQ-CUN03-09 | 08-tareas-personales | REQ-AGT-02; REQ-CAP-24; P-11; decisión 27 de `07-agente` | 1 | — | — | pendiente |
-| REQ-CUN03-10 | 08-tareas-personales | P-04; P-10; R-22; REQ-ACC-17 | 1 | — | — | pendiente |
+| REQ-CUN03-01 | 08-tareas-personales | CUN-03 flujo principal; REQ-CAP-02; REQ-CAP-07; R-38; P-03; REQ-CUN01-03 | 1 | T-048, T-051 | tareas.registrar-propone-y-confirma, tareas.sin-fecha-no-inventa, agente.herramientas-de-tareas, web.tareas-completar | en curso |
+| REQ-CUN03-02 | 08-tareas-personales | regla «tarea o apunte» de `design/ARQUITECTURA-VISUAL-MOVIL.md`; REQ-CAP-02 | 1 | T-051 | agente.apunte-no-es-tarea | en curso |
+| REQ-CUN03-03 | 08-tareas-personales | R-38; R-23; P-02 | 1 | T-047, T-049, T-053, T-054 | tareas.franjas-y-atrasadas, tareas.rutas-de-consulta, web.tareas-franjas, movil.tareas-franjas | en curso |
+| REQ-CUN03-04 | 08-tareas-personales | hito 3 de `PLAN-VALOR-USUARIO.md`; REQ-CUN01-13 (misma regla para la agenda) | 1 | T-051 | agente.consultar-pendientes | en curso |
+| REQ-CUN03-05 | 08-tareas-personales | CUN-03; DP-01; R-25 | 1 | T-048, T-049, T-053, T-054 | tareas.completar-y-reabrir, web.tareas-completar, movil.tareas-completar | en curso |
+| REQ-CUN03-06 | 08-tareas-personales | CUN-03; R-25; P-03; REQ-CUN01-02 | 1 | T-048 | tareas.actualizar-muestra-antes-y-despues, tareas.cancelar-no-borra, tareas.cambios | en curso |
+| REQ-CUN03-07 | 08-tareas-personales | R-12; REQ-CAP-02; P-09 | 1 | T-048 | tareas.esperando-no-contacta | en curso |
+| REQ-CUN03-08 | 08-tareas-personales | hito 3 de `PLAN-VALOR-USUARIO.md` (tarea con fecha y hora en la agenda); R-23; REQ-CUN01-02 | 1 | T-050 | agenda.tarea-no-es-conflicto | en curso |
+| REQ-CUN03-09 | 08-tareas-personales | REQ-AGT-02; REQ-CAP-24; P-11; decisión 27 de `07-agente` | 1 | T-052 | agente.en-espera-tarea-a-propuesta | en curso |
+| REQ-CUN03-10 | 08-tareas-personales | P-04; P-10; R-22; REQ-ACC-17 | 1 | T-049 | tareas.aislamiento-por-perfil | en curso |

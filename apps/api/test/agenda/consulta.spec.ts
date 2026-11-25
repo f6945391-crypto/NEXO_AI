@@ -19,6 +19,16 @@ const calendario = new ProveedorCalendarioSimulado();
 const Lista = z.array(EventoAgenda);
 const DIA = 24 * 3600_000;
 
+// El primer día, desde dentro de una semana, en que Madrid está en UTC+1 (hora de invierno). Lima no cambia de hora
+function diaConMadridEnInvierno(): string {
+  const desfase = (d: Date) => new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Madrid', timeZoneName: 'shortOffset' }).formatToParts(d).find((p) => p.type === 'timeZoneName')?.value;
+  for (let n = 7; n < 300; n++) {
+    const d = new Date(Date.now() + n * DIA);
+    if (desfase(d) === 'GMT+1') return d.toISOString().slice(0, 10);
+  }
+  throw new Error('no hay un día de invierno en Madrid en la ventana');
+}
+
 describe('T-015 · consulta de la agenda', () => {
   let app: INestApplication;
   let prisma: PrismaClient;
@@ -145,15 +155,17 @@ describe('T-015 · consulta de la agenda', () => {
   describe('agenda.horas-con-zona-horaria', () => {
     it('cada hora sale con el desfase de su zona y con la zona IANA aparte', async () => {
       const { autorizacion, perfilId } = await persona();
-      // El lunes siguiente al cambio de hora de Madrid: 09:00 UTC son las 10:00 en Madrid (+01:00)
-      calendario.sembrar(perfilId, { titulo: 'Madrid', inicio: new Date('2026-10-26T09:00:00Z'), fin: new Date('2026-10-26T10:00:00Z'), zonaHoraria: 'Europe/Madrid' });
-      calendario.sembrar(perfilId, { titulo: 'Lima', inicio: new Date('2026-10-26T15:00:00Z'), fin: new Date('2026-10-26T16:00:00Z'), zonaHoraria: 'America/Lima' });
-      const eventos = Lista.parse(
-        (await consultar(autorizacion, { desde: '2026-10-26T00:00:00-05:00', hasta: '2026-10-27T00:00:00-05:00' }).expect(200)).body,
-      );
+      // Un día en que Madrid está en hora de invierno (+01:00): 09:00 UTC son las 10:00 en Madrid. El día se
+      // busca desde hoy, dentro de la ventana de la réplica (−30 a +365 días); antes era fijo, el 26 de octubre
+      // de 2026, y la prueba empezó a fallar cuando ese día quedó a más de 30 días (25 de noviembre de 2026)
+      const d = diaConMadridEnInvierno();
+      calendario.sembrar(perfilId, { titulo: 'Madrid', inicio: new Date(`${d}T09:00:00Z`), fin: new Date(`${d}T10:00:00Z`), zonaHoraria: 'Europe/Madrid' });
+      calendario.sembrar(perfilId, { titulo: 'Lima', inicio: new Date(`${d}T15:00:00Z`), fin: new Date(`${d}T16:00:00Z`), zonaHoraria: 'America/Lima' });
+      const siguiente = new Date(Date.parse(`${d}T12:00:00Z`) + 24 * 3600_000).toISOString().slice(0, 10);
+      const eventos = Lista.parse((await consultar(autorizacion, { desde: `${d}T00:00:00-05:00`, hasta: `${siguiente}T00:00:00-05:00` }).expect(200)).body);
       expect(eventos.map((e) => [e.titulo, e.inicio, e.fin, e.zonaHoraria])).toEqual([
-        ['Madrid', '2026-10-26T10:00:00+01:00', '2026-10-26T11:00:00+01:00', 'Europe/Madrid'],
-        ['Lima', '2026-10-26T10:00:00-05:00', '2026-10-26T11:00:00-05:00', 'America/Lima'],
+        ['Madrid', `${d}T10:00:00+01:00`, `${d}T11:00:00+01:00`, 'Europe/Madrid'],
+        ['Lima', `${d}T10:00:00-05:00`, `${d}T11:00:00-05:00`, 'America/Lima'],
       ]);
     });
   });

@@ -1,7 +1,8 @@
 @echo off
 chcp 65001 >nul
 setlocal
-cd /d "%~dp0"
+rem Vive en tools\windows: la raiz del repositorio esta dos carpetas arriba
+cd /d "%~dp0..\.."
 if not exist "_local" mkdir "_local"
 set "PNPM=npx pnpm@12.10.1"
 

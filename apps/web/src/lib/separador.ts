@@ -6,10 +6,13 @@ import type { CierreEpisodio, EpisodioAsistente, TurnoAsistente } from '@nexoai/
 // para que concuerde con cualquier título: «Se registró «Revisión»».
 
 const QUE_PASO: Record<CierreEpisodio['desenlace'], (titulo: string | null) => string | null> = {
-  registrado: (t) => (t ? `Se registró «${t}»` : 'Compromiso registrado'),
-  movido: (t) => (t ? `Se movió «${t}»` : 'Compromiso movido'),
-  cancelado: (t) => (t ? `Se canceló «${t}»` : 'Compromiso cancelado'),
-  completado: (t) => (t ? `Se completó «${t}»` : 'Tarea completada'),
+  // Sin título, el texto no dice si era un compromiso o una tarea: puede ser cualquiera de los dos
+  registrado: (t) => (t ? `Se registró «${t}»` : 'Se registró'),
+  movido: (t) => (t ? `Se movió «${t}»` : 'Se movió'),
+  cambiado: (t) => (t ? `Se cambió «${t}»` : 'Se cambió'),
+  cancelado: (t) => (t ? `Se canceló «${t}»` : 'Se canceló'),
+  completado: (t) => (t ? `Se completó «${t}»` : 'Se completó'),
+  reabierto: (t) => (t ? `Se reabrió «${t}»` : 'Se reabrió'),
   descartado: (t) => (t ? `Se descartó «${t}»` : 'Propuesta descartada'),
   guardado: () => 'Tarea guardada',
   sin_accion: () => null,

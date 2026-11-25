@@ -142,7 +142,7 @@ test.describe('web.asistente-historial', () => {
     await entrar(page, cuentas.asistenteEspera.correo);
     await pedir(page, 'Recuérdame comprar pan');
     await page.getByRole('article', { name: 'Para confirmar' }).last().getByRole('button', { name: 'Confirmar' }).click();
-    await expect(page.getByRole('separator', { name: /· Se registró «comprar pan»$/ })).toBeVisible();
+    await expect(page.getByRole('separator', { name: /· Se registró «Comprar pan»$/ })).toBeVisible();
   });
 });
 

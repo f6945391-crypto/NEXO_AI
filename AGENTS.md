@@ -65,7 +65,10 @@ Requisitos: Node.js 22.12 o posterior (`.nvmrc`), Python 3.12 y Docker. pnpm no 
 | `npx pnpm@12.10.1 --filter @nexoai/movil start` | Arranca el móvil para abrirlo con Expo Go en un teléfono (`EXPO_PUBLIC_API_URL` con la IP del equipo) |
 | `npx pnpm@12.10.1 audit --audit-level high` | Auditoría de dependencias. También corre en la integración continua. Las excepciones, solo para vulnerabilidades **sin versión corregida** y con motivo escrito, van en `pnpm-workspace.yaml` (`auditConfig`) |
 | `python tools/trazabilidad.py` | Regenera `specs/trazabilidad.md` desde los `spec.md` |
-| `python tools/trazabilidad.py --check` | Verifica la sincronía entre especificaciones y trazabilidad; sale con 1 si hay problemas |
+| `python tools/trazabilidad.py --check` | Verifica la sincronía entre especificaciones y trazabilidad; sale con 1 si hay problemas. También falla si una fila cita una prueba que no existe en ningún `describe` |
+| `tools\windows\levantar-nexoai.cmd` | **Solo Windows.** Prepara el entorno de una vez: Docker, `.env`, dependencias, Prisma, migraciones, compilación, semilla, tipos y trazabilidad. El detalle queda en `_local\levantar.log` |
+| `tools\windows\arrancar-nexoai.cmd` | **Solo Windows.** Abre la API, el trabajador y la web en tres ventanas, con registros en `_local\`. Usa el proveedor del modelo del `.env` |
+| `tools\windows\probar-nexoai.cmd` | **Solo Windows.** Instala el navegador de Playwright y ejecuta `verificar`; el resultado queda en `_local\pruebas.log`. Antes, cierra la web de `arrancar` |
 
 **Stack:** TypeScript en todo el monorepo (pnpm + Turborepo). API en NestJS + Prisma, cola con BullMQ, agente con LangGraph.js, web con Next.js, móvil con Expo, pruebas con Vitest y Playwright. El detalle está en `PROPUESTA-TECNICA.md` §4. **Las versiones están fijadas exactas** en cada `package.json`; antes de cambiar la configuración de una herramienta, lee la documentación de la versión instalada, que puede diferir de lo que conoces: `node_modules/turbo/docs` y, **antes de escribir código de la web**, `apps/web/node_modules/next/dist/docs/` (Next.js 16 cambió APIs y convenciones).
 

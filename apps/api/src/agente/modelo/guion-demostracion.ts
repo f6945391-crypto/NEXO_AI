@@ -37,20 +37,23 @@ export const GUION_DEMOSTRACION: ReglaGuion[] = [
     si: '^¿?qu[eé] tengo pendiente\\??$',
     pasos: [{ llamadas: [{ nombre: 'tareas_consultar', argumentos: {} }] }, { texto: '' }],
   },
-  // T-051 · REQ-CUN03-01: una tarea se propone con tarjeta; la fecha, solo si la persona dijo el día
+  // T-051 · REQ-CUN03-01: una tarea se propone con tarjeta; la fecha, solo si la persona dijo el día.
+  // Un día de la semana solo cuenta precedido de «el», «este» o «para el» («el lunes», «el lunes que
+  // viene»): así «antes del sábado» no se parte en título y fecha, y queda sin fecha, sin inventarla.
+  // «Hoy», «mañana» y «pasado mañana» van solos. El grupo 2 o el 3 trae el día; el otro llega vacío.
   {
-    si: `^recu[eé]rdame (.+?) (?:el |este |para el )?${DIA}$`,
-    pasos: [{ llamadas: [{ nombre: 'captura_guardar_tarea', argumentos: { texto: '$1', clase: 'tarea', fecha: '{$2}' } }] }, { texto: '' }],
+    si: '^recu[eé]rdame (.+?) (?:(?:el|este|para el) (lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)(?: que viene| próximo| proximo)?|(hoy|mañana|pasado mañana))$',
+    pasos: [{ llamadas: [{ nombre: 'captura_guardar_tarea', argumentos: { texto: '{titulo:$1}', clase: 'tarea', fecha: '{$2$3}' } }] }, { texto: '' }],
   },
   {
     si: '^(?:recu[eé]rdame|tengo que) (.+)$',
-    pasos: [{ llamadas: [{ nombre: 'captura_guardar_tarea', argumentos: { texto: '$1', clase: 'tarea' } }] }, { texto: '' }],
+    pasos: [{ llamadas: [{ nombre: 'captura_guardar_tarea', argumentos: { texto: '{titulo:$1}', clase: 'tarea' } }] }, { texto: '' }],
   },
   // T-051 · REQ-CUN03-07: solo de quién y qué se espera
   {
     si: '^estoy esperando que (\\S+) me (?:mande|envíe|envie|pase) (?:el |la |los |las )?(.+)$',
     pasos: [
-      { llamadas: [{ nombre: 'captura_guardar_tarea', argumentos: { texto: '$2 de $1', clase: 'esperando_de_alguien', esperaDe: '$1', esperaQue: '$2' } }] },
+      { llamadas: [{ nombre: 'captura_guardar_tarea', argumentos: { texto: '{titulo:$2} de $1', clase: 'esperando_de_alguien', esperaDe: '$1', esperaQue: '$2' } }] },
       { texto: '' },
     ],
   },

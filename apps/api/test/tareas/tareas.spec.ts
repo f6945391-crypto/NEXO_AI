@@ -7,6 +7,8 @@ import { z } from 'zod';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { AppModule } from '../../src/app.module';
 import { crearOrganizacion } from '../../src/identidad/alta-cuentas';
+import { ProveedorCalendarioSimulado } from '../../src/integraciones/calendario/calendario-simulado';
+import { PROVEEDOR_CALENDARIO } from '../../src/integraciones/calendario/proveedor-calendario';
 import type { PrismaClient } from '../../src/plataforma/prisma';
 import { hoyEnZona } from '../../src/tareas/dominio/franjas';
 import { clientePrueba, crearCuentaLista, vaciarTablas } from '../utilidades/base-prueba';
@@ -17,6 +19,7 @@ const CONTRASENA = 'una-contrasena-de-prueba';
 const DIA_MS = 24 * 3600_000;
 const dia = (desdeHoy: number) => new Date(Date.now() + desdeHoy * DIA_MS).toISOString().slice(0, 10);
 const Lista = z.array(Tarea);
+const calendario = new ProveedorCalendarioSimulado();
 
 describe('T-048 y T-049 · tareas personales', () => {
   let app: INestApplication;
@@ -26,10 +29,13 @@ describe('T-048 y T-049 · tareas personales', () => {
 
   const http = () => request(app.getHttpServer());
 
-  async function persona(rol: 'usuario_personal' | 'gerente' | 'colaborador' = 'usuario_personal') {
+  async function persona(rol: 'usuario_personal' | 'gerente' | 'colaborador' = 'usuario_personal', conCalendario = false) {
     const correo = `ta${++n}@nexoai.test`;
     const plan = rol === 'usuario_personal' ? 'personal' : 'empresarial';
     const { perfilId } = await crearCuentaLista(prisma, { organizacionId, correo, rol, plan }, CONTRASENA, 'America/Lima');
+    if (conCalendario) {
+      await prisma.consentimientoIntegracion.create({ data: { organizacionId, perfilId, proveedor: 'google', alcance: 'calendario', estado: 'concedido' } });
+    }
     const s = IngresoRespuesta.parse((await http().post('/auth/ingreso').send({ correo, contrasena: CONTRASENA }).expect(200)).body);
     return { perfilId, autorizacion: `Bearer ${s.tokenAcceso}` };
   }
@@ -47,7 +53,8 @@ describe('T-048 y T-049 · tareas personales', () => {
   }
 
   beforeAll(async () => {
-    const modulo = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    // El calendario simulado: así se comprueba que una tarea no crea nada en Google (REQ-CUN03-08)
+    const modulo = await Test.createTestingModule({ imports: [AppModule] }).overrideProvider(PROVEEDOR_CALENDARIO).useValue(calendario).compile();
     app = modulo.createNestApplication();
     await app.init();
     prisma = clientePrueba();
@@ -60,6 +67,7 @@ describe('T-048 y T-049 · tareas personales', () => {
 
   beforeEach(async () => {
     await vaciarTablas();
+    calendario.reiniciar();
     organizacionId = await crearOrganizacion(prisma, 'Organización de prueba');
   });
 
@@ -122,7 +130,22 @@ describe('T-048 y T-049 · tareas personales', () => {
     });
   });
 
-  describe('tareas.franjas-y-atrasadas', () => {
+  describe('tareas.modelo-y-restricciones', () => {
+    // T-046: las restricciones de la migración, comprobadas en la base misma, sin pasar por la API
+    it('la base rechaza una hora sin fecha, una espera a medias y un cierre que no casa con el estado', async () => {
+      const { perfilId } = await persona();
+      const base = { organizacionId, perfilId };
+      await expect(prisma.tarea.create({ data: { ...base, titulo: 'Hora sin fecha', hora: '10:00' } })).rejects.toThrow(/tarea_hora_con_fecha/);
+      await expect(prisma.tarea.create({ data: { ...base, titulo: 'Espera a medias', esperaDe: 'Marta' } })).rejects.toThrow(/tarea_espera_completa/);
+      await expect(prisma.tarea.create({ data: { ...base, titulo: 'Hecha sin fecha de cierre', estado: 'completada' } })).rejects.toThrow(/tarea_cierre_coherente/);
+      await expect(prisma.tarea.create({ data: { ...base, titulo: 'Pendiente con cierre', completadaEn: new Date() } })).rejects.toThrow(/tarea_cierre_coherente/);
+      // Y una fila válida entra
+      const ok = await prisma.tarea.create({ data: { ...base, titulo: 'Válida', fecha: new Date('2026-12-01T00:00:00Z'), hora: '10:00' } });
+      expect(ok.estado).toBe('pendiente');
+    });
+  });
+
+  describe('tareas.rutas-de-consulta', () => {
     it('cada tarea va a su franja y la de ayer sale atrasada, calculado por el código (REQ-CUN03-03)', async () => {
       const { autorizacion, perfilId } = await persona();
       await anotar(autorizacion, { titulo: 'Para el viernes', fecha: dia(3) });
@@ -135,6 +158,18 @@ describe('T-048 y T-049 · tareas personales', () => {
       expect(f.conFecha.map((t) => [t.titulo, t.atrasada])).toEqual([['De ayer', true], ['Para el viernes', false]]);
       expect(f.sinFecha.map((t) => t.titulo)).toEqual(['Sin fecha']);
       expect(f.esperando.map((t) => [t.titulo, t.esperaDe, t.esperaQue])).toEqual([['Contrato', 'Marta', 'el contrato']]);
+    });
+
+    it('el detalle de una tarea se lee por su id; lo cerrado no está en las franjas y sí con ?estado= (T-049)', async () => {
+      const { autorizacion } = await persona();
+      const t = await anotar(autorizacion, { titulo: 'Renovar el pasaporte' });
+      expect(Tarea.parse((await http().get(`/tareas/${t.id}`).set('Authorization', autorizacion).expect(200)).body)).toMatchObject({ id: t.id, titulo: 'Renovar el pasaporte', franja: 'sin_fecha' });
+      await http().get('/tareas/6f1c2b8e-3a1d-4c7e-9b2a-1f0e5d4c3b2a').set('Authorization', autorizacion).expect(404);
+
+      await http().post(`/tareas/${t.id}/completar`).set('Authorization', autorizacion).expect(200);
+      expect((await franjas(autorizacion)).sinFecha).toEqual([]);
+      const cerradas = Lista.parse((await http().get('/tareas').query({ estado: 'completada' }).set('Authorization', autorizacion).expect(200)).body);
+      expect(cerradas.map((x) => [x.titulo, x.estado])).toEqual([['Renovar el pasaporte', 'completada']]);
     });
   });
 
@@ -264,7 +299,28 @@ describe('T-048 y T-049 · tareas personales', () => {
   });
 
   describe('agenda.tarea-no-es-conflicto', () => {
-    it('GET /tareas/en-fechas devuelve las pendientes con fecha en el rango, y no crea nada fuera de NexoAI (REQ-CUN03-08)', async () => {
+    it('una tarea con fecha y hora no crea nada en el calendario, y un compromiso a la misma hora no choca con ella (REQ-CUN03-08)', async () => {
+      const { perfilId, autorizacion } = await persona('usuario_personal', true);
+      await anotar(autorizacion, { titulo: 'Preparar el informe', fecha: dia(3), hora: '10:00' });
+      // Anotar la tarea no escribió nada en Google
+      expect(calendario.llamadas.escrituras).toBe(0);
+
+      // Un compromiso justo a la hora de la tarea: la tarjeta no declara conflicto y se puede confirmar
+      const p = OperacionRespuesta.parse(
+        (await proponer(autorizacion, 'agenda.registrar', { titulo: 'Reunión', inicio: `${dia(3)}T10:00:00-05:00` }).expect(201)).body,
+      );
+      expect(p.vistaConfirmacion.confirmable).toBe(true);
+      expect(p.vistaConfirmacion.conflicto ?? null).toBeNull();
+      await confirmar(autorizacion, p.id).expect(200);
+
+      // En el calendario solo está el compromiso
+      const eventos = (await calendario.listar({ perfilId, organizacionId }, { tipo: 'completa', desde: new Date(0), hasta: new Date('2100-01-01') })).cambios.flatMap((c) =>
+        c.tipo === 'evento' ? [c.evento.titulo] : [],
+      );
+      expect(eventos).toEqual(['Reunión']);
+    });
+
+    it('GET /tareas/en-fechas devuelve las pendientes con fecha en el rango, aparte de los eventos', async () => {
       const { autorizacion } = await persona();
       await anotar(autorizacion, { titulo: 'Dentro', fecha: dia(3), hora: '10:00' });
       await anotar(autorizacion, { titulo: 'Fuera', fecha: dia(20) });

@@ -35,7 +35,7 @@ test.describe('web.armazon', () => {
     await expect(page.getByLabel('Pídele algo al asistente')).toHaveValue('Recuérdame llamar al dentista');
     await page.getByRole('button', { name: 'Enviar' }).click();
     await expect(page.getByText('Recuérdame llamar al dentista')).toBeVisible();
-    await expect(page.getByRole('article', { name: 'Para confirmar' }).last()).toContainText('llamar al dentista');
+    await expect(page.getByRole('article', { name: 'Para confirmar' }).last()).toContainText('Llamar al dentista');
     await page.getByRole('tablist', { name: 'Franjas' }).getByRole('tab', { name: 'Sin fecha' }).click();
     await expect(page.getByRole('heading', { name: 'No tienes tareas sin fecha' })).toBeVisible();
 

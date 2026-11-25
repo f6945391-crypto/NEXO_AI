@@ -3,6 +3,7 @@
 **Origen:** Entregable 1, modelado del negocio. Caso de uso CUN-03, trabajador TN-01 Asistente Personal Inteligente, entidad EN-04 Tarea. Hito 3 de `PLAN-VALOR-USUARIO.md`.
 **Notación:** EARS.
 **Estado:** **borrador del 8 de noviembre de 2026, ajustado el 11 de noviembre de 2026 a 10 requisitos, pendiente de aval del equipo.** Hasta que se avale, ningún requisito de este archivo se implementa.
+**Desvío del método, registrado el 25 de noviembre de 2026:** el código de este spec se escribió antes del aval, a pedido de Aixa, en la rama `aixaBranch` (`SPEC.md` §11, 2.21.1). No se fusiona en `main` hasta que el equipo avale el spec y elija entre esta implementación de CUN-03 y la de la línea de Franco (INC-20 en `SPEC.md` §9). Mientras tanto, la trazabilidad lo refleja como «en curso».
 
 ---
 
@@ -206,12 +207,27 @@ ENTONCES ve las suyas personales y las que le asignaron, separadas
 | 6 | **Sin recordatorios ni notificaciones** de tareas en esta versión | Alcance |
 | 7 | Las tareas están disponibles en todos los planes (Gratuito ⊂ Personal ⊂ Empresarial). Si D-7 fija un límite de tareas para el Gratuito, se añade un requisito | D-7 |
 | 8 | Marcar como hecha una tarea «esperando de alguien» solo la completa; el sistema no pregunta ni avisa a la otra persona | REQ-CUN03-05, 07 |
-| 9 | **De 12 a 10 requisitos (11 de noviembre de 2026).** Anotar con y sin fecha es un solo requisito (antes 01 y 02); cambiar, posponer y cancelar es un solo requisito (antes 07 y 08). No se perdió ningún criterio de aceptación | REQ-CUN03-01, 06 |
+| 9 | **De 12 a 10 requisitos (11 de noviembre de 2026).** Anotar con y sin fecha es un solo requisito (antes 01 y 02); cambiar, posponer y cancelar es un solo requisito (antes 07 y 08). No se perdió ningún criterio de aceptación. **Lo que sí cambió:** el antiguo REQ-CUN03-02 era de tipo «no deseado» (no inventar una fecha) y ahora es una cláusula del REQ-CUN03-01, que es «dirigido por evento» | REQ-CUN03-01, 06 |
+| 10 | **Hallazgo H-TAR-07, abierto (25 de noviembre de 2026).** Hoy se acepta anotar una tarea con una fecha que ya pasó, y nace atrasada. Ningún requisito lo decide. **Propuesta:** aceptarla, pero que la tarjeta diga «Esa fecha ya pasó: la tarea quedará atrasada», para que la persona lo vea antes de confirmar. Alternativa: rechazarla y preguntar otra fecha | REQ-CUN03-01, 03 |
+| 11 | **Hallazgo H-TAR-08, abierto (25 de noviembre de 2026).** La decisión 4 fija que la **fecha** es un día sin zona, pero la **hora** también se guarda sin zona y se lee en la zona actual de la persona: si cambia de zona, la hora de la tarea cambia de instante. Es una tensión con P-05. **Propuesta:** guardar con la tarea la zona en que se anotó y mostrar la hora en esa zona, como los compromisos. Cambia el modelo de datos, así que va después de elegir la implementación (INC-20) | REQ-CUN03-08, P-05 |
+
+### Hallazgos del plan que vuelven a este spec
+
+Los hallazgos de `plan.md` §8 deciden comportamiento, así que el equipo los confirma junto con este spec.
+
+| Hallazgo | Propuesta del plan |
+|---|---|
+| H-TAR-01 | Comparar los estados de EN-04 del Entregable 1 con la decisión 1 antes de avalar |
+| H-TAR-02 | Añadir `tareas.actualizar` como cuarta herramienta, porque REQ-CUN03-06 pide cambiar, posponer y cancelar |
+| H-TAR-03 | Cancelar es una variante de `tareas.actualizar`, no una Operación propia |
+| H-TAR-04 | Una tarea con hora y un compromiso a la misma hora solo se distinguen visualmente; no hay aviso de solape |
+| H-TAR-05 | Una tarea atrasada que nunca se cierra sigue visible, sin caducidad ni aviso |
+| H-TAR-06 | «Hoy», para marcar atrasada, es el de la zona del perfil; si la persona cambia de zona, una tarea puede dejar de estar atrasada |
 
 ## Cambios que este spec provoca en otros archivos
 
-- `../07-agente/spec.md`: **REQ-AGT-02** deja de decir que una tarea se conserva en espera «hasta que pueda registrarse». Las tareas pasan a registrarse; en espera solo queda lo que sigue sin existir (por ejemplo, el correo).
-- `../01-captura/spec.md`: la decisión 2 del §11 («Solo agenda… una tarea queda en espera») se retira cuando se implemente.
+- `../07-agente/spec.md`: **REQ-AGT-02** deja de decir que una tarea se conserva en espera «hasta que pueda registrarse». Las tareas pasan a registrarse; en espera solo queda lo que sigue sin existir (por ejemplo, el correo). **Hecho como propuesta el 25 de noviembre de 2026:** la versión 2 está escrita bajo la 1, que sigue aprobada hasta el aval de este spec; la decisión 27 de ese archivo lleva la misma nota.
+- `../01-captura/spec.md`: la decisión 2 del §11 («Solo agenda… una tarea queda en espera») se retira cuando se implemente. **Propuesta de retirada anotada el 25 de noviembre de 2026**; se tacha con el aval.
 - `../glosario.md`: completar la entrada **Tarea** con «personal» y los tres estados.
 - `SPEC.md`: §5 (fila nueva), §6 (CUN-03 pasa de «Parcial» a «Especificado») y una línea en §11.
 - `tools/trazabilidad.py`: añadir `"CUN03": "1"` a `FASE_POR_PREFIJO`.

@@ -22,16 +22,18 @@ const DESENLACE_POR_TIPO: Readonly<Record<string, DesenlaceEpisodio>> = {
   'agenda.registrar': 'registrado',
   'agenda.modificar': 'movido',
   'agenda.cancelar': 'cancelado',
-  // T-051: tareas personales. `tareas.actualizar` se distingue por su carga, en `desenlaceDe`
+  // T-051: tareas personales. `tareas.actualizar` y `tareas.completar` se distinguen por su carga, en `desenlaceDe`
   'tareas.registrar': 'registrado',
   'tareas.actualizar': 'movido',
   'tareas.completar': 'completado',
 };
 
 function desenlaceDe(op: { tipo: string; carga: unknown }): DesenlaceEpisodio {
-  const carga = op.carga as { cancelar?: unknown; reabrir?: unknown } | null;
+  const carga = op.carga as { cancelar?: unknown; reabrir?: unknown; titulo?: unknown; esperaDe?: unknown; esperaQue?: unknown } | null;
   if (op.tipo === 'tareas.actualizar' && carga?.cancelar === true) return 'cancelado';
-  if (op.tipo === 'tareas.completar' && carga?.reabrir === true) return 'movido';
+  // Cambiar el texto o la espera no es moverla: solo la fecha o la hora la mueven
+  if (op.tipo === 'tareas.actualizar' && [carga?.titulo, carga?.esperaDe, carga?.esperaQue].some((v) => v !== undefined)) return 'cambiado';
+  if (op.tipo === 'tareas.completar' && carga?.reabrir === true) return 'reabierto';
   return DESENLACE_POR_TIPO[op.tipo] ?? 'sin_accion';
 }
 

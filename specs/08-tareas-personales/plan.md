@@ -1,6 +1,6 @@
 # Plan técnico — Tareas personales (CUN-03)
 
-> **Estado de la implementación (11 de noviembre de 2026).** Implementado a pedido de Aixa antes del aval del equipo: modelo y migración `20261111200000_tareas`, contratos, operaciones, herramientas del agente y secciones Tareas de web y móvil. Probado en Windows el 11 de noviembre de 2026 con Docker (PostgreSQL y Redis): `npx pnpm@12.10.1 verificar` en verde, con 264 pruebas de la API (incluidas las de Redis), 16 de contratos, 24 de Playwright en la web y 14 en el móvil (`movil.tareas-franjas` y `movil.tareas-completar`, nuevas), y la trazabilidad limpia. Al ejecutarlo se corrigió: la sección Tareas del móvil no estaba conectada (mostraba el vacío de Actividad); el guion del modelo simulado no reconocía fechas ni «¿qué tengo pendiente?»; la tarea no guardaba la Operación que la creó (`operacion_id`, §3 del plan). Diferencias con lo planeado: la agenda lee las tareas con fecha por `GET /tareas/en-fechas` (no por un campo nuevo en la respuesta de agenda) y la herramienta que registra es `captura.guardar_tarea`, ampliada, que propone la Operación `tareas.registrar`. Los estados de abajo no se han actualizado tarea por tarea hasta que el equipo avale.
+> **Estado de la implementación (11 de noviembre de 2026).** Implementado a pedido de Aixa antes del aval del equipo: modelo y migración `20261111200000_tareas`, contratos, operaciones, herramientas del agente y secciones Tareas de web y móvil. Probado en Windows el 11 de noviembre de 2026 con Docker (PostgreSQL y Redis): `npx pnpm@12.10.1 verificar` en verde, con 264 pruebas de la API (incluidas las de Redis), 16 de contratos, 24 de Playwright en la web y 14 en el móvil (`movil.tareas-franjas` y `movil.tareas-completar`, nuevas), y la trazabilidad limpia. Al ejecutarlo se corrigió: la sección Tareas del móvil no estaba conectada (mostraba el vacío de Actividad); el guion del modelo simulado no reconocía fechas ni «¿qué tengo pendiente?»; la tarea no guardaba la Operación que la creó (`operacion_id`, §3 del plan). Diferencias con lo planeado: para la agenda existe la ruta `GET /tareas/en-fechas` (en lugar de un campo nuevo en la respuesta de agenda), **pero ninguna pantalla la usa todavía**, así que la tarea con fecha no aparece en Hoy (T-050) y la herramienta que registra es `captura.guardar_tarea`, ampliada, que propone la Operación `tareas.registrar`. **Corrección del 25 de noviembre de 2026**, tras la auditoría de la rama: los estados de `tasks.md` reflejan ya el avance real («en curso»); ninguna pasa a «hecha» hasta el aval.
 
 
 **Especificación:** `specs/08-tareas-personales/spec.md` (REQ-CUN03-01 a 10)
@@ -54,6 +54,14 @@ Como en agenda, la fase 1 construye exactamente lo que el agente usará en la fa
 
 Índices: `(perfil_id, estado, fecha)` para las franjas y `(perfil_id, fecha)` para la agenda del día. Una restricción de base de datos exige que `hora` solo exista con `fecha` y que `completada_en` solo exista en `completada`.
 
+**Lo que hizo la migración `20261111200000_tareas` (anotado el 25 de noviembre de 2026):** crea el enum `estado_tarea`, la tabla y tres restricciones (`tarea_hora_con_fecha`, `tarea_espera_completa` y `tarea_cierre_coherente`). Diferencias con este apartado: el índice `(perfil_id, fecha)` no se creó, porque la consulta de la agenda lo cubre en parte con `(perfil_id, estado, fecha)`; y `operacion_id` no tiene clave foránea. Prisma Migrate no revierte; si hiciera falta, el SQL inverso es:
+
+```sql
+DROP TABLE "tarea";
+DROP TYPE "estado_tarea";
+DELETE FROM "_prisma_migrations" WHERE "migration_name" = '20261111200000_tareas';
+```
+
 Los esquemas zod (`packages/contratos/src/tareas.ts`) definen la carga de cada Operación, la tarea tal como la ve la API y las franjas.
 
 ## 4. Operaciones (AD-09)
@@ -75,7 +83,9 @@ El control directo crea igualmente una Operación con `origen = control_directo`
 | `GET /tareas` | Las pendientes del perfil agrupadas en las tres franjas, ya ordenadas y con el indicador de atrasada. Las completadas y canceladas no vienen salvo `?estado=` |
 | `GET /tareas/:id` | Detalle de una tarea |
 | `POST /tareas/:id/completar` y `/reabrir` | Control directo (DP-01); crean la Operación ejecutada |
-| `GET /agenda/eventos` | Sin cambios. La agenda de Hoy trae las tareas con fecha en un campo aparte, `tareas`, para que no se mezclen con los eventos (REQ-CUN03-08) |
+| `GET /agenda/eventos` | Sin cambios. ~~La agenda de Hoy trae las tareas con fecha en un campo aparte, `tareas`~~: se sustituyó por la ruta siguiente |
+| `GET /tareas/en-fechas?desde=&hasta=` | **Añadida al implementar (anotado el 25 de noviembre de 2026).** Las tareas con fecha de un rango de días, para pintarlas en la agenda sin mezclarlas con los eventos (REQ-CUN03-08). **Ninguna pantalla la usa todavía** (T-050) |
+| `GET /tareas?estado=completada` o `cancelada` | **Añadida al implementar.** Lo cerrado, para consultarlo después (REQ-CUN03-06). Devuelve una lista y no las franjas; conviene pasarlo a una ruta propia si se mantiene esta implementación |
 
 Todas filtran por el perfil de la sesión; un gerente no tiene ruta para ver tareas personales ajenas (REQ-CUN03-10).
 

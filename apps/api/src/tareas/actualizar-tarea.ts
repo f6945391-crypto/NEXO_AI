@@ -53,7 +53,7 @@ export class ActualizarTarea implements EjecutorOperacion<ActualizacionTarea>, O
       const vista: VistaConfirmacion = {
         accion: 'Cancelar esta tarea',
         datos: [{ etiqueta: 'Tarea', valor: resumen(antes) }],
-        irreversible: 'Deja de aparecer en tus franjas. No se borra: puedes consultarla después como cancelada.',
+        irreversible: 'Deja de aparecer en tu lista de pendientes. No se borra: puedes consultarla después como cancelada.',
         confirmable: true,
         motivoNoConfirmable: null,
       };
@@ -85,7 +85,7 @@ export class ActualizarTarea implements EjecutorOperacion<ActualizacionTarea>, O
       data = { estado: 'cancelada', canceladaEn: new Date() };
     } else {
       const { tareaId: _tarea, cancelar: _cancelar, ...cambio } = carga;
-      // La agenda de la persona pudo cambiar desde la propuesta: se vuelve a calcular sobre lo de ahora
+      // La tarea pudo cambiar desde la propuesta (otro cambio confirmado antes): se aplica sobre lo de ahora
       const resultado = aplicarCambio(datosDe(fila), cambio);
       if (resultado.tipo === 'invalido') throw errorApi(400, 'SOLICITUD_INVALIDA', `No se puede aplicar el cambio: ${resultado.motivo}.`);
       const d = resultado.despues;
@@ -102,7 +102,8 @@ export class ActualizarTarea implements EjecutorOperacion<ActualizacionTarea>, O
       where: { id: fila.id, perfilId: contexto.perfilId, estado: 'pendiente' },
       data,
     });
-    if (cambiada.count !== 1) throw noPendiente('cancelada');
+    // Otra confirmación o un control directo la cerró entre medias: se dice cómo quedó de verdad
+    if (cambiada.count !== 1) throw noPendiente((await this.repositorio.porId(contexto, fila.id))?.estado ?? 'cancelada');
     const nueva = await this.repositorio.porId(contexto, fila.id);
     if (!nueva) throw noEncontrada();
     return { tipo: 'ejecutada', resultado: aContrato(nueva, hoyEnZona(new Date(), await this.repositorio.zonaDelPerfil(contexto))) };

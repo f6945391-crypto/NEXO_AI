@@ -43,10 +43,10 @@ test.describe('movil.tareas-franjas', () => {
 
   test('una tarea con día va a «Con fecha», con su día y sin «Atrasada» (REQ-CUN03-01, 03)', async ({ page }) => {
     await entrar(page);
-    await pedirYConfirmar(page, 'Recuérdame pagar el recibo el viernes', 'pagar el recibo');
+    await pedirYConfirmar(page, 'Recuérdame pagar el recibo el viernes', 'Pagar el recibo');
     const lista = page.getByRole('list', { name: 'Con fecha' });
     await expect(lista.getByRole('listitem')).toHaveCount(1);
-    await expect(lista).toContainText('pagar el recibo');
+    await expect(lista).toContainText('Pagar el recibo');
     // El guion pone el próximo viernes: nunca uno pasado
     await expect(lista).toContainText(/^Hecho.*Viernes, \d{1,2} de \p{L}+/u);
     await expect(page.getByText('Atrasada')).toHaveCount(0);
@@ -64,22 +64,22 @@ test.describe('movil.tareas-completar', () => {
     await page.getByLabel('Pídele algo al asistente').fill('Recuérdame renovar el pasaporte');
     await page.getByRole('button', { name: 'Enviar' }).click();
     const tarjeta = page.getByLabel('Para confirmar').last();
-    await expect(tarjeta).toContainText('renovar el pasaporte');
+    await expect(tarjeta).toContainText('Renovar el pasaporte');
     await page.getByRole('button', { name: 'Cerrar' }).click();
     await expect(page.getByText('No tienes tareas sin fecha')).toBeVisible();
 
     await page.getByRole('button', { name: 'Pedir algo al asistente' }).click();
     await page.getByLabel('Para confirmar').last().getByRole('button', { name: 'Confirmar' }).click();
-    await expect(page.getByRole('separator', { name: /Se registró «renovar el pasaporte»$/ })).toBeVisible();
+    await expect(page.getByRole('separator', { name: /Se registró «Renovar el pasaporte»$/ })).toBeVisible();
     await page.getByRole('button', { name: 'Cerrar' }).click();
 
     const lista = page.getByRole('list', { name: 'Sin fecha' });
     await expect(lista.getByRole('listitem')).toHaveCount(1);
     // REQ-CUN03-01: la persona no dijo ningún día, así que ninguno aparece
-    await expect(lista).toHaveText(/^Hecho\s*renovar el pasaporte$/);
+    await expect(lista).toHaveText(/^Hecho\s*Renovar el pasaporte$/);
 
     // Decisión 2: de un toque, sin tarjeta
-    await lista.getByRole('button', { name: 'Marcar como hecha: renovar el pasaporte' }).click();
+    await lista.getByRole('button', { name: 'Marcar como hecha: Renovar el pasaporte' }).click();
     await expect(page.getByText('No tienes tareas sin fecha')).toBeVisible();
     await expect(page.getByLabel('Para confirmar')).toHaveCount(0);
   });

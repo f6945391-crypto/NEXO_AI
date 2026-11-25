@@ -48,7 +48,7 @@ test.describe('web.tareas-completar', () => {
 
     // Nada existe hasta confirmar (P-03)
     const tarjeta = page.getByRole('article', { name: 'Para confirmar' }).last();
-    await expect(tarjeta).toContainText('pagar el recibo');
+    await expect(tarjeta).toContainText('Pagar el recibo');
     await franja(page, 'Sin fecha').click();
     await expect(page.getByRole('heading', { name: 'No tienes tareas sin fecha' })).toBeVisible();
 
@@ -57,10 +57,10 @@ test.describe('web.tareas-completar', () => {
     // REQ-CUN03-01: sin fecha, porque la persona no dijo ninguna; el sistema no la inventa
     const lista = page.getByRole('list', { name: 'Sin fecha' });
     await expect(lista.getByRole('listitem')).toHaveCount(1);
-    await expect(lista).toContainText('pagar el recibo');
+    await expect(lista).toContainText('Pagar el recibo');
     await expect(page.getByText('Atrasada')).toHaveCount(0);
 
-    await lista.getByRole('button', { name: 'Marcar como hecha: pagar el recibo' }).click();
+    await lista.getByRole('button', { name: 'Marcar como hecha: Pagar el recibo' }).click();
     await expect(page.getByRole('heading', { name: 'No tienes tareas sin fecha' })).toBeVisible();
   });
 });

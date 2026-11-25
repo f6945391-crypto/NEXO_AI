@@ -21,7 +21,7 @@ Decidido por el equipo el 24 de octubre de 2026.
 | Entrada | **Solo texto.** La voz queda para una versión posterior (PT-2). REQ-CAP-09 a 13 siguen especificados, sin plan |
 | Proveedor del modelo | **Simulado por ahora.** El proveedor real se elige más adelante, detrás de la interfaz propia (P-06). **Para probar, desde el 29 de octubre de 2026: Groq, en su nivel gratuito** |
 | Qué hace | **Solo agenda:** consultar, registrar, modificar y cancelar compromisos por conversación, en la web y en la capa de captura del móvil |
-| Una tarea | El asistente la reconoce, lo dice y la deja **en espera**, sin registrarla, hasta que existan las tareas personales (CUN-03) |
+| Una tarea | El asistente la reconoce, lo dice y la deja **en espera**, sin registrarla, hasta que existan las tareas personales (CUN-03). **Pendiente del aval de CUN-03:** con las tareas personales se propone con tarjeta (REQ-AGT-02 v2, INC-19) |
 
 ---
 
@@ -64,6 +64,8 @@ Y CUANDO escriba «recuérdame pagar el recibo antes del sábado»
 ENTONCES el asistente dice que lo reconoce como tarea, que lo guarda y que las tareas llegan en una próxima versión
 Y no existe ninguna tarea ni ningún compromiso nuevo
 Y lo guardado se ve como en espera, distinto de un error y de una función que su plan no incluye
+
+> **Versión 2, propuesta el 25 de noviembre de 2026, pendiente de aval junto con CUN-03 (`../08-tareas-personales/spec.md`).** SI la persona pide algo que el asistente todavía no hace en esta versión, ENTONCES EL SISTEMA lo dirá sin intentarlo y sin crear ni enviar nada. *La segunda cláusula (la tarea queda en espera) sale de aquí: anotar una tarea pasa a REQ-CUN03-01, y lo que ya esperaba se convierte en propuesta por REQ-CUN03-09. El criterio conserva el caso del correo; el de «recuérdame…» pasa al criterio de REQ-CUN03-01.* **La versión 1 sigue siendo la aprobada** hasta ese aval; el código de la rama `aixaBranch` ya se comporta según la 2 (INC-19 en `SPEC.md` §9).
 
 ---
 
@@ -178,7 +180,7 @@ Del traspaso del equipo (`TRASPASO-CLAUDE-CODE.md` §7) y de `INFORME-MEMORIA-AG
 | 23 | **No hay vaciado manual** de la conversación en esta fase | REQ-AGT-03 |
 | 24 | **Varias intenciones en una frase** («agenda el dentista y recuérdame pagar el recibo») se atienden **en secuencia**, una tarjeta cada una, y la segunda espera a que se decida la primera. Se resuelve una vez para texto y voz (REQ-CAP-10) | REQ-AGT-01, REQ-CAP-10 |
 | 25 | **Voz:** fuera de esta revisión. Solo queda escrito el principio: voz → texto que la persona aprueba → el mismo flujo | PT-2, REQ-CAP-09 a 13 |
-| 27 | **Decidida por el equipo el 6 de noviembre de 2026.** Guardar una tarea en espera **cierra el episodio**, con el desenlace `guardado` y el separador «Tarea guardada». Es distinto de `registrado` a propósito: la tarea todavía no existe, solo espera a las tareas personales | REQ-AGT-03, REQ-AGT-02 |
+| 27 | **Decidida por el equipo el 6 de noviembre de 2026.** Guardar una tarea en espera **cierra el episodio**, con el desenlace `guardado` y el separador «Tarea guardada». Es distinto de `registrado` a propósito: la tarea todavía no existe, solo espera a las tareas personales. **Propuesta del 25 de noviembre de 2026, pendiente del aval de CUN-03:** con las tareas personales, una tarea ya no espera; se propone y, al confirmarse, el episodio cierra como `registrado`. Si se avala CUN-03, esta decisión queda sin objeto y `guardado` solo describe lo anterior (INC-19) | REQ-AGT-03, REQ-AGT-02 |
 | 28 | **Decidida por el equipo el 6 de noviembre de 2026 (H-AG-08, también en `02-agenda`, decisión 12).** Una propuesta sin respuesta **caduca a las 24 horas**: el trabajador la pasa a `descartada` (no espera al siguiente mensaje, para que no quede una propuesta zombi en la agenda ni en la cola) y deja en la transcripción un turno visible: «Esta propuesta caducó; no se hizo nada». Nunca desaparece en silencio. Al caducar, su episodio se cierra con el desenlace `descartado` | REQ-AGT-01, REQ-AGT-03, REQ-CUN01-03 |
 | 26 | Las alternativas de referente (REQ-AGT-04) **las arma el código** con el resultado de la consulta; el modelo nunca elige entre candidatas parecidas. Entran en esta rama solo si hay tiempo (T-042) | REQ-AGT-04, P-02 |
 

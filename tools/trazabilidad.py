@@ -128,6 +128,21 @@ def leer_tareas():
     return tareas
 
 
+RE_DESCRIBE = re.compile(r"describe\(\s*['\"`]([^'\"`]+)['\"`]")
+CARPETAS_DE_PRUEBAS = ("apps/*/test/**/*.ts", "apps/*/e2e/**/*.ts", "apps/*/src/**/*.spec.ts", "packages/*/src/**/*.spec.ts")
+
+
+def leer_pruebas():
+    """Nombres de prueba que existen: el texto de cada `describe(...)` de las pruebas automáticas."""
+    nombres = set()
+    for patron in CARPETAS_DE_PRUEBAS:
+        for archivo in RAIZ.glob(patron):
+            if "node_modules" in archivo.parts:
+                continue
+            nombres.update(RE_DESCRIBE.findall(archivo.read_text(encoding="utf-8")))
+    return nombres
+
+
 def leer_tabla():
     """Columnas manuales de la tabla existente: id -> (fase, tarea, prueba, estado)."""
     if not SALIDA.exists():
@@ -189,12 +204,17 @@ def generar(reqs, manual):
     ])
 
 
-def verificar(reqs, duplicados, manual, tareas):
+def verificar(reqs, duplicados, manual, tareas, pruebas):
     problemas = []
     for req, (_, tarea, _, _) in manual.items():
         for t in RE_ID_TAREA.findall(tarea):
             if t not in tareas:
                 problemas.append(f"{req}: cita {t}, que no está en ningún tasks.md")
+    # Cada prueba citada tiene que existir: si se borra o se renombra, la fila deja de estar respaldada
+    for req, (_, _, prueba, _) in manual.items():
+        for nombre in (p.strip().strip("`") for p in prueba.split(",")):
+            if nombre and nombre != "—" and nombre not in pruebas:
+                problemas.append(f"{req}: cita la prueba «{nombre}», que no existe en ningún describe")
     for req, area in duplicados:
         problemas.append(f"{req} está definido más de una vez (la última en {area})")
     for req in sorted(set(reqs) - set(manual)):
@@ -221,7 +241,7 @@ def main():
     manual = leer_tabla()
 
     if "--check" in sys.argv:
-        problemas = verificar(reqs, duplicados, manual, leer_tareas())
+        problemas = verificar(reqs, duplicados, manual, leer_tareas(), leer_pruebas())
         for p in problemas:
             print(f"✗ {p}")
         print(f"{len(reqs)} requisitos, {len(problemas)} problemas")

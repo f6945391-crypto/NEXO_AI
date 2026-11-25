@@ -1,7 +1,8 @@
 @echo off
 chcp 65001 >nul
 setlocal
-cd /d "%~dp0"
+rem Vive en tools\windows: la raiz del repositorio esta dos carpetas arriba
+cd /d "%~dp0..\.."
 if not exist "_local" mkdir "_local"
 set "LOG=%CD%\_local\pruebas.log"
 set "PNPM=npx pnpm@12.10.1"
@@ -17,7 +18,7 @@ echo NexoAI pruebas - %DATE% %TIME% > "%LOG%"
 docker compose up -d >> "%LOG%" 2>&1
 
 echo.
-echo [1/3] Navegadores de Playwright ^(solo la primera vez tarda^)
+echo [1/2] Navegadores de Playwright ^(solo la primera vez tarda^)
 echo ===== 1 playwright install ===== >> "%LOG%"
 call npx playwright install chromium >> "%LOG%" 2>&1
 if errorlevel 1 (
@@ -26,22 +27,14 @@ if errorlevel 1 (
   echo       ok
 )
 
-echo [2/3] Pruebas ^(vitest de api y contratos, Playwright de web y movil^)
-echo ===== 2 pnpm test ===== >> "%LOG%"
-call %PNPM% test >> "%LOG%" 2>&1
+echo [2/2] verificar: tipos, compilacion, pruebas ^(API, contratos, Playwright de web y movil^) y trazabilidad
+echo       Antes, cierra cualquier "next dev" de apps\web: Next.js no admite dos a la vez
+echo ===== 2 pnpm verificar ===== >> "%LOG%"
+call %PNPM% verificar >> "%LOG%" 2>&1
 if errorlevel 1 (
   echo       HAY FALLOS. Estan en _local\pruebas.log
 ) else (
   echo       todo pasa
-)
-
-echo [3/3] Trazabilidad
-echo ===== 3 trazabilidad ===== >> "%LOG%"
-python tools\trazabilidad.py --check >> "%LOG%" 2>&1
-if errorlevel 1 (
-  echo       FALLO. Mira el log.
-) else (
-  echo       ok
 )
 
 echo.
