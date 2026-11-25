@@ -191,9 +191,9 @@
 | REQ-ACC-17 | 06-acceso | Requisito del sistema | 4 | — | — | pendiente |
 | REQ-ACC-18 | 06-acceso | Requisito del sistema | 1 | T-121 | acceso.cambiar-contrasena; acceso.cambiar-contrasena-desde-ajustes; movil.cambiar-contrasena | implementado |
 | REQ-ACC-19 | 06-acceso | Requisito del sistema | 1 | T-122, T-123 | — | pendiente |
-| REQ-AGT-01 | 07-agente | `PROPUESTA-TECNICA.md` §7.4, memoria de conversación; H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6 y §8.1; glosario, «Episodio» y «Nota de continuidad» | 2 | T-032, T-034, T-038, T-040, T-041 | agente.conversacion-con-contexto | en curso |
+| REQ-AGT-01 | 07-agente | `PROPUESTA-TECNICA.md` §7.4, memoria de conversación; H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6 y §8.1; glosario, «Episodio» y «Nota de continuidad» | 2 | T-032, T-034, T-038, T-040, T-041 | agente.conversacion-con-contexto, agente.episodio-caduca, agente.propuesta-caduca, agente.tope-del-grafo | en curso |
 | REQ-AGT-02 | 07-agente | decisión del equipo, 24 de octubre de 2026; REQ-CAP-02, REQ-CAP-23; `09-tareas-personales` §10 (la tarea deja de esperar: REQ-CUN03-01); REQ-CUN03-16 (lo que las tareas personales no hacen) | 2 | T-033, T-034 | agente.tarea-queda-en-espera | implementado |
-| REQ-AGT-03 | 07-agente | H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6.1 y §8.1; `design/ARQUITECTURA-VISUAL-WEB.md` §5 y §6 («lo cerrado no se pierde») | 2 | T-038, T-039, T-041 | agente.transcripcion-persiste, web.asistente-historial | implementado |
+| REQ-AGT-03 | 07-agente | H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6.1 y §8.1; `design/ARQUITECTURA-VISUAL-WEB.md` §5 y §6 («lo cerrado no se pierde») | 2 | T-038, T-039, T-041 | agente.transcripcion-persiste, web.asistente-historial, agente.retencion-puntos-de-control, agente.retencion-transcripcion | implementado |
 | REQ-AGT-04 | 07-agente | H-AGT-17; `INFORME-MEMORIA-AGENTE.md` §6.4.5; decisión 17 de `02-agenda` (las alternativas no pasan por el modelo); P-02, P-03 | 2 | T-042 | — | pendiente |
 | REQ-AGT-05 | 07-agente | H-AGT-17; `INFORME-MEMORIA-AGENTE.md` §6.4.3 y §6.4.4; glosario, «Hilo» | 2 | — | — | pendiente |
 | REQ-ADM-01 | 08-administracion | decisión del equipo del 6 de noviembre de 2026; REQ-ACC-01; glosario, «Organización» | 4 | T-058 | administracion.clases-de-organizacion | implementado |

@@ -14,7 +14,7 @@ import type { ContextoSolicitud } from '../identidad/contexto';
 import { OperacionesService } from '../operaciones/operaciones.service';
 import { errorApi } from '../plataforma/errores';
 import { PrismaService } from '../plataforma/prisma.service';
-import { construirGrafo, turnoPersona, type EstadoAsistente, type Reanudacion } from './grafo/grafo-asistente';
+import { construirGrafo, TOPE_VUELTAS, turnoPersona, type EstadoAsistente, type Reanudacion } from './grafo/grafo-asistente';
 import { PuntoControlConversacion } from './grafo/punto-control-prisma';
 import { EjecutorHerramientas } from './herramientas/ejecutor-herramientas';
 import { LlamadasAuditadas } from './llamadas-auditadas';
@@ -30,7 +30,13 @@ import { accionDeEtiqueta, tipoDe } from './herramientas/herramientas-tareas';
 // transcripción después de cada invocación, y sigue visible cuando el episodio se cierra (REQ-AGT-03).
 
 type Grafo = ReturnType<typeof construirGrafo>;
-type Config = { configurable: { thread_id: string } };
+type Config = { configurable: { thread_id: string }; recursionLimit: number };
+
+// T-041 · plan §14.8: el tope de pasos de LangGraph, explícito y holgado respecto de TOPE_VUELTAS. El grafo
+// corta antes, con el turno de fallo de H-AGT-10; este límite solo evita que se vea el error de LangGraph
+const LIMITE_PASOS = TOPE_VUELTAS * 3 + 6;
+// Decisión 18: un episodio abierto sin actividad en 30 minutos se cierra al llegar el siguiente mensaje
+const INACTIVIDAD_MS = 30 * 60_000;
 
 const sinAccion = () => errorApi(409, 'OPERACION_NO_CONFIRMABLE', 'Esta acción ya no está esperando tu decisión.');
 
@@ -58,7 +64,17 @@ export class AsistenteService {
   }
 
   async enviar(contexto: ContextoSolicitud, texto: string): Promise<RespuestaAsistente> {
-    const conversacion = (await this.abierta(contexto)) ?? (await this.abrir(contexto));
+    let abierta = await this.abierta(contexto);
+    // T-041: si pasó media hora sin actividad y no hay una propuesta esperando, ese episodio se cierra y el
+    // mensaje abre otro
+    if (abierta && (await this.inactivo(contexto, abierta))) {
+      await this.datos(contexto).conversacionAgente.updateMany({
+        where: { id: abierta.id, perfilId: contexto.perfilId, estado: 'abierta' },
+        data: { estado: 'cerrada', cerradaEn: new Date() },
+      });
+      abierta = null;
+    }
+    const conversacion = abierta ?? (await this.abrir(contexto));
     await this.anotarActividad(contexto, conversacion.id);
     const turnos: TurnoAsistente[] = [];
     const { grafo, config } = await this.grafo(contexto, conversacion.id, turnos);
@@ -247,7 +263,41 @@ export class AsistenteService {
     };
   }
 
-  // Plan §14.3: con cada mensaje o decisión. El cierre por inactividad que lo usa es de T-041
+  // T-041 · H-AG-08: el trabajador descarta la propuesta a las 24 horas; en la conversación queda el turno
+  // «Esta propuesta caducó» y el episodio se cierra como descartado. Devuelve si la descartó.
+  async caducarPropuesta(contexto: ContextoSolicitud, operacionId: string, ahora = new Date()): Promise<boolean> {
+    const fila = await this.datos(contexto).operacion.findFirst({ where: { id: operacionId, perfilId: contexto.perfilId, estado: 'propuesta' } });
+    if (!fila) return false;
+    const operacion = await this.operaciones.descartar(contexto, operacionId);
+    const episodio = fila.conversacionId
+      ? await this.datos(contexto).conversacionAgente.findFirst({ where: { id: fila.conversacionId, perfilId: contexto.perfilId, estado: 'abierta' } })
+      : null;
+    if (!episodio) return true;
+    const turnos: TurnoAsistente[] = [];
+    const { grafo, config } = await this.grafo(contexto, episodio.id, turnos);
+    const estado = await grafo.getState(config);
+    if (estado.next.includes('esperar_decision') && (estado.values as EstadoAsistente).pendiente === operacionId) {
+      const resultado = await grafo.invoke(new Command({ resume: { tipo: 'descartada', operacion, caducada: true } satisfies Reanudacion }), config);
+      await this.cerrarSiHaceFalta(contexto, episodio.id, resultado);
+    }
+    // Si el grafo no esperaba esa tarjeta, el aviso queda igual en la transcripción
+    if (turnos.length === 0) turnos.push({ id: randomUUID(), en: ahora.toISOString(), tipo: 'texto', texto: 'Esta propuesta caducó; no se hizo nada.' });
+    await this.datos(contexto).conversacionAgente.updateMany({
+      where: { id: episodio.id, perfilId: contexto.perfilId, estado: 'abierta' },
+      data: { estado: 'cerrada', cerradaEn: ahora },
+    });
+    await this.transcripcion.anotar(contexto, episodio.id, turnos);
+    return true;
+  }
+
+  // Decisión 18 · T-041: inactivo si pasaron 30 minutos sin mensajes ni decisiones y no espera una propuesta
+  private async inactivo(contexto: ContextoSolicitud, episodio: { id: string; ultimaActividadEn: Date }): Promise<boolean> {
+    if (Date.now() - episodio.ultimaActividadEn.getTime() < INACTIVIDAD_MS) return false;
+    const esperando = await this.datos(contexto).operacion.count({ where: { conversacionId: episodio.id, estado: 'propuesta' } });
+    return esperando === 0;
+  }
+
+  // Plan §14.3: con cada mensaje o decisión; el cierre por inactividad lo usa (T-041)
   private async anotarActividad(contexto: ContextoSolicitud, episodioId: string): Promise<void> {
     await this.datos(contexto).conversacionAgente.updateMany({ where: { id: episodioId, perfilId: contexto.perfilId }, data: { ultimaActividadEn: new Date() } });
   }
@@ -267,7 +317,7 @@ export class AsistenteService {
     const punto = await PuntoControlConversacion.cargar(this.datos(contexto), contexto.organizacionId, conversacionId);
     const anotar = (nuevos: TurnoAsistente[]) => void turnos.push(...nuevos);
     const grafo = construirGrafo({ llamadas: this.llamadas, ejecutor: this.ejecutor, operaciones: this.operaciones }, contexto, conversacionId, punto, anotar);
-    return { grafo, config: { configurable: { thread_id: conversacionId } } };
+    return { grafo, config: { configurable: { thread_id: conversacionId }, recursionLimit: LIMITE_PASOS } };
   }
 
   private abierta(contexto: ContextoSolicitud) {

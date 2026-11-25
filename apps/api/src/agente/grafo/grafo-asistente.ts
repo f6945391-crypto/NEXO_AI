@@ -41,7 +41,7 @@ const SIN_CALENDARIO = 'Para eso necesito permiso para ver y editar tu calendari
 
 // Lo que la persona decide sobre una propuesta, o un mensaje nuevo mientras había una
 export type Reanudacion =
-  | { tipo: 'confirmada' | 'descartada' | 'alternativa'; operacion: OperacionRespuesta }
+  | { tipo: 'confirmada' | 'descartada' | 'alternativa'; operacion: OperacionRespuesta; caducada?: boolean }
   | { tipo: 'nuevo_mensaje'; texto: string; referencia: Referencia };
 
 type Referencia = { instante: string; zonaHoraria: string };
@@ -290,7 +290,8 @@ export function construirGrafo(
       });
     }
     if (decision.tipo === 'descartada') {
-      const texto = 'De acuerdo, no hice nada.';
+      // T-041 · H-AG-08: la que descartó el trabajador a las 24 horas lo dice así
+      const texto = decision.caducada ? 'Esta propuesta caducó; no se hizo nada.' : 'De acuerdo, no hice nada.';
       return con([turnoTexto(texto)], { mensajes: [deAsistente(texto)], pendiente: null, decision: null, cerrada: true, siguiente: 'fin' });
     }
     if (op.estado === 'ejecutada') {
