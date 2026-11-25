@@ -162,21 +162,18 @@ test.describe('web.agenda-semana-y-mes', () => {
 
 // Fusión del 25 de noviembre de 2026 · CUN-05 (specs/05-equipos/plan.md §8). «Disponibilidad de equipo» es un
 // corte de Agenda que no es un nivel de período (INC-36): no va en la dirección y, al volver a un nivel, la
-// agenda de la persona reaparece tal cual.
+// agenda de la persona reaparece tal cual. Desde T-120, con una cuenta Empresarial que está en un equipo.
 test.describe('agenda.corte-disponibilidad-de-equipo', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
   test('el corte del equipo abre la disponibilidad y los niveles devuelven la agenda propia', async ({ page }) => {
-    await entrar(page, cuentas.agenda.correo);
+    await entrar(page, cuentas.acmeResponsable.correo);
     const selector = page.getByRole('tablist', { name: 'Niveles' });
-    await expect(page.getByRole('list', { name: 'Compromisos de hoy' })).toBeVisible();
 
     await selector.getByRole('tab', { name: 'Disponibilidad de equipo' }).click();
     await expect(selector.getByRole('tab', { name: 'Disponibilidad de equipo' })).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('heading', { name: 'Disponibilidad del equipo' })).toBeVisible();
     await expect(page.getByText('Encuentra un horario para reunirse')).toBeVisible();
-    // Lo de la agenda propia no se mezcla con el equipo
-    await expect(page.getByRole('list', { name: 'Compromisos de hoy' })).toHaveCount(0);
     await expect(page).not.toHaveURL(/nivel=/);
 
     await selector.getByRole('tab', { name: 'Semana' }).click();
@@ -187,7 +184,26 @@ test.describe('agenda.corte-disponibilidad-de-equipo', () => {
     await selector.getByRole('tab', { name: 'Disponibilidad de equipo' }).click();
     await expect(page.getByRole('heading', { name: 'Disponibilidad del equipo' })).toBeVisible();
     await selector.getByRole('tab', { name: 'Hoy' }).click();
-    await expect(page.getByRole('list', { name: 'Compromisos de hoy' })).toBeVisible();
+    await expect(selector.getByRole('tab', { name: 'Hoy' })).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('heading', { name: 'Disponibilidad del equipo' })).toHaveCount(0);
+  });
+});
+
+// T-120 · REQ-CUN05-18 y 19. Sin plan efectivo Empresarial no hay corte; con él y un equipo, el corte dice
+// quién es el responsable y cuántas personas tiene el equipo (H-EQ-01).
+test.describe('agenda.corte-disponibilidad-por-plan', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('con Plan Personal Agenda tiene solo Hoy, Semana y Mes', async ({ page }) => {
+    await entrar(page, cuentas.agenda.correo);
+    const selector = page.getByRole('tablist', { name: 'Niveles' });
+    await expect(selector.getByRole('tab')).toHaveText(['Hoy', 'Semana', 'Mes']);
+  });
+
+  test('con Plan Empresarial y un equipo, el corte muestra al responsable', async ({ page }) => {
+    await entrar(page, cuentas.acmeResponsable.correo);
+    await page.getByRole('tablist', { name: 'Niveles' }).getByRole('tab', { name: 'Disponibilidad de equipo' }).click();
+    await expect(page.getByLabel('Equipo')).toHaveValue(/.+/);
+    await expect(page.getByText(`Responsable: ${cuentas.acmeResponsable.correo} · 3 integrantes`)).toBeVisible();
   });
 });

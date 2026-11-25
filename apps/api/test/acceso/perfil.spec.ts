@@ -53,6 +53,9 @@ describe('acceso.cuenta-no-autogestionable', () => {
       correo,
       rol: 'gerente',
       plan: 'empresarial',
+      // T-120 · H-ACC-07: el plan efectivo y en cuántos equipos está
+      planEfectivo: 'empresarial',
+      equipos: 0,
       zonaHoraria: 'Europe/Madrid',
       organizacion: { nombre: 'Organización de prueba' },
     });

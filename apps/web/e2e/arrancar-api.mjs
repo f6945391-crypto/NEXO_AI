@@ -74,6 +74,12 @@ if (empresas.Acme && perfiles.acmeResponsable) {
     ],
   });
 }
+// T-120 · REQ-CUN05-18: «Encargadas» y la disponibilidad piden plan efectivo Empresarial y algún equipo; la
+// cuenta del armazón sigue viendo «Encargadas» porque está en uno
+if (perfiles.armazon) {
+  const diseno = await prisma.equipo.create({ data: { organizacionId, nombre: 'Diseño' } });
+  await prisma.miembroDeEquipo.create({ data: { organizacionId, equipoId: diseno.id, perfilId: perfiles.armazon, rolEnEquipo: 'responsable' } });
+}
 
 // T-025: dos cuentas con el primer ingreso hecho, en Lima, y el calendario conectado al calendario
 // simulado de la API. Una con compromisos hoy y otra sin ninguno.

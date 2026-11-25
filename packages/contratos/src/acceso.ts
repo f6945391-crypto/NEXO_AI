@@ -69,6 +69,10 @@ export const Perfil = z.strictObject({
   correo: z.string(),
   rol: Rol,
   plan: Plan,
+  // H-ACC-07 · T-120: el plan que manda en la interfaz (H-ADM-06); `plan` es el propio, para Ajustes
+  planEfectivo: Plan,
+  // REQ-CUN05-18: en cuántos equipos está la cuenta
+  equipos: z.number().int().nonnegative(),
   zonaHoraria: z.string().nullable(),
   organizacion: z.strictObject({ nombre: z.string() }),
 });

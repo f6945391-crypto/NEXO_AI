@@ -14,7 +14,7 @@
 | 02-jornada | 35 | 25 | 0 | 10 | 0 | 0 |
 | 03-tareas | 26 | 26 | 0 | 0 | 0 | 0 |
 | 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
-| 05-equipos | 19 | 3 | 16 | 0 | 0 | 0 |
+| 05-equipos | 19 | 1 | 16 | 2 | 0 | 0 |
 | 06-acceso | 19 | 4 | 0 | 15 | 0 | 0 |
 | 07-agente | 5 | 2 | 1 | 2 | 0 | 0 |
 | 08-administracion | 32 | 15 | 4 | 13 | 0 | 0 |
@@ -170,8 +170,8 @@
 | REQ-CUN05-15 | 05-equipos | REQ-CUN05-12 y 14 | 4 | T-106 | CUN-05 - Disponibilidad parcial; CUN-05 - Contratos compartidos de equipos; CUN-05 - Consentimiento individual mediante Operaciones | en curso |
 | REQ-CUN05-16 | 05-equipos | decisión D-17; RN-OP-02; R-14 | 4 | T-107 | CUN-05 - Disponibilidad parcial; CUN-05 - Consentimiento individual mediante Operaciones; CUN-05 - Disponibilidad individual | en curso |
 | REQ-CUN05-17 | 05-equipos | decisión del equipo del 23 de octubre de 2026 (rango del colaborador, pregunta 1) | 4 | T-104 | CUN-05 - Autorizacion de bandas horarias; CUN-05 - Contratos compartidos de equipos; CUN-05 - Herramientas del agente | en curso |
-| REQ-CUN05-18 | 05-equipos | `REPLANTEO.md` §4 (planes acumulativos), REQ-ADM-17 (nada de empresa aparece sin afiliación), H-ADM-06 (plan efectivo), P-04; revisión de Franco del 25 de noviembre de 2026 | 4 | T-120 | — | pendiente |
-| REQ-CUN05-19 | 05-equipos | `SPEC.md` §8, «lo diferencial del responsable»; REQ-CUN05-17; revisión de Franco del 25 de noviembre de 2026 | 4 | T-120 | — | pendiente |
+| REQ-CUN05-18 | 05-equipos | `REPLANTEO.md` §4 (planes acumulativos), REQ-ADM-17 (nada de empresa aparece sin afiliación), H-ADM-06 (plan efectivo), P-04; revisión de Franco del 25 de noviembre de 2026 | 4 | T-120 | equipos.disponibilidad-sin-plan; equipos.disponibilidad-sin-equipo; equipos.asistente-sin-acceso; acceso.perfil-plan-efectivo; agenda.corte-disponibilidad-por-plan | implementado |
+| REQ-CUN05-19 | 05-equipos | `SPEC.md` §8, «lo diferencial del responsable»; REQ-CUN05-17; revisión de Franco del 25 de noviembre de 2026 | 4 | T-120 | equipos.responsable-visible; agenda.corte-disponibilidad-por-plan | implementado |
 | REQ-ACC-01 | 06-acceso | Requisito del sistema | 1 | T-002 | acceso.sin-registro-abierto | implementado |
 | REQ-ACC-02 | 06-acceso | Requisito del sistema | 1 | T-004, T-011, T-024, T-028 | acceso.recorrido-web | implementado |
 | REQ-ACC-03 | 06-acceso | Requisito del sistema | 1 | T-004, T-011, T-028 | acceso.error-no-revela-correo | implementado |

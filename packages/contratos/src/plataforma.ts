@@ -38,6 +38,9 @@ export const CodigoError = z.enum([
   // 09-tareas-personales · T-048
   'TAREA_NO_ENCONTRADA',
   'TAREA_NO_MODIFICABLE',
+  // 05-equipos · T-120 · REQ-CUN05-18
+  'SIN_PLAN_EMPRESARIAL',
+  'SIN_EQUIPO',
 ]);
 export type CodigoError = z.infer<typeof CodigoError>;
 

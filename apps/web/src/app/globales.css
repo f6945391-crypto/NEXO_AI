@@ -1545,3 +1545,10 @@ body {
   max-width: 100%;
   padding: var(--espaciado-24);
 }
+
+/* T-120 · REQ-CUN05-19: el responsable y cuántas personas tiene el equipo, bajo el selector */
+.disponibilidad-equipo__resumen {
+  margin: calc(-1 * var(--espaciado-8)) 0 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}

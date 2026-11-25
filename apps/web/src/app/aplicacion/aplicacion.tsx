@@ -103,7 +103,9 @@ export function Aplicacion({
   const [cambiando, enTransicion] = useTransition();
   // CUN-05 (specs/05-equipos/plan.md §8): «Disponibilidad de equipo» es un corte de Agenda que no es un nivel
   // de período (INC-36). No va en la dirección: lo recuerda el estado de la página, como los cortes de Tareas.
-  const vistaEquipo = seccion === 'agenda' && actual.cortes[corte] === 'Disponibilidad de equipo';
+  // T-120 · REQ-CUN05-18, H-ACC-07: el corte existe solo con plan efectivo Empresarial y algún equipo
+  const conEquipo = perfil?.planEfectivo === 'empresarial' && perfil.equipos > 0;
+  const vistaEquipo = seccion === 'agenda' && conEquipo && corte === NIVELES.length;
   const vistaAgendaPersonal = seccion === 'agenda' && !vistaEquipo;
   // En Agenda el nivel lo dice la dirección; en las otras secciones, y en el corte del equipo, el estado de la página
   const corteVisible = vistaAgendaPersonal ? NIVELES.indexOf(vista.nivel) : corte;
@@ -150,8 +152,14 @@ export function Aplicacion({
     (lista !== null && (lista.nivel !== 'dia' || lista.compromisos.length > 0)) || conTareasDelDia || conTareas || seccion === 'actividad' || vistaEquipo;
 
   // «Encargadas» es lo que encargaste a otros: el colaborador no asigna tareas (REQ-ACC-15)
-  const encarga = plan === 'empresarial' && rol !== 'colaborador';
-  const cortes = seccion === 'tareas' && encarga ? [...actual.cortes, 'Encargadas'] : actual.cortes;
+  // T-120: con el plan efectivo y algún equipo, como la disponibilidad (H-ACC-07)
+  const encarga = conEquipo && rol !== 'colaborador';
+  const cortes =
+    seccion === 'tareas' && encarga
+      ? [...actual.cortes, 'Encargadas']
+      : seccion === 'agenda' && conEquipo
+        ? [...actual.cortes, 'Disponibilidad de equipo']
+        : actual.cortes;
 
   return (
     <div className={`aplicacion${expandido ? ' aplicacion--expandida' : ''}`}>

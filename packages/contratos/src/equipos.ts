@@ -403,6 +403,10 @@ export const MembresiaEquipoRespuesta = z.strictObject({
   equipoId: z.uuid(),
   rolEnEquipo: RolEnEquipo,
   equipo: EquipoResumen,
+  // T-120 · REQ-CUN05-19: quién es su responsable y cuántas personas tiene, responsable incluido (H-EQ-01).
+  // Opcionales para que las respuestas anteriores sigan siendo válidas
+  responsable: z.strictObject({ correo: z.email() }).nullable().optional(),
+  integrantes: z.number().int().nonnegative().optional(),
 });
 
 export type MembresiaEquipoRespuesta =

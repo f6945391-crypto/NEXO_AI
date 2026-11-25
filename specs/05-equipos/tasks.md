@@ -230,11 +230,17 @@
 ### T-120 · Disponibilidad solo para quien corresponde, con el responsable visible
 
 - **Satisface:** REQ-CUN05-18, REQ-CUN05-19 · H-ACC-07 (`specs/06-acceso/plan.md` §8)
-- **Depende de:** T-104, T-114, T-119 · la respuesta del equipo a H-EQ-01 a 03 (`spec.md` §7)
+- **Depende de:** T-104, T-114, T-119 · H-EQ-01 a 03 (`spec.md` §7), decididos el 25 de noviembre de 2026
 - **Contenido:** `Perfil` gana `planEfectivo` y `equipos` (cuántos equipos integra); `GET /perfil` los calcula con `PertenenciasService.planEfectivo` y `miembro_de_equipo`. El controlador de equipos rechaza con 403 `SIN_PLAN_EMPRESARIAL` o `SIN_EQUIPO`, y conserva `@SobreLoPropio()`. `GET /equipos` lleva por equipo su responsable y cuántos integrantes tiene. En la web, «Disponibilidad de equipo» entra en los cortes de Agenda solo con plan efectivo Empresarial y algún equipo, y la misma condición decide «Encargadas»; bajo el selector, «Responsable: … · n integrantes» o «Sin responsable · n integrantes»
 - **Hecho cuando:** una cuenta Personal y una Empresarial sin equipo no ven el corte y reciben 403; una en un equipo lo ve con su responsable; ninguna prueba de T-099 a T-119 cambia su expectativa (solo su semilla, si hace falta); `pnpm verificar` en verde y `trazabilidad.py --check` en 0; capturas de Agenda con la cuenta personal y con la de empresa
-- **Pruebas:** `equipos.disponibilidad-sin-plan`, `equipos.disponibilidad-sin-equipo`, `equipos.disponibilidad-afiliada` (en `skip` mientras INC-37 lo impida), `acceso.perfil-plan-efectivo` · extremo a extremo web `agenda.corte-disponibilidad-por-plan`
-- **Estado:** pendiente
+- **Pruebas:** `equipos.disponibilidad-sin-plan`, `equipos.disponibilidad-sin-equipo`, `equipos.disponibilidad-afiliada` (en `skip` mientras INC-37 lo impida), `equipos.responsable-visible`, `equipos.asistente-sin-acceso`, `acceso.perfil-plan-efectivo` · extremo a extremo web `agenda.corte-disponibilidad-por-plan`
+- **Estado:** hecha · 25 de noviembre de 2026
+- **Notas de implementación:**
+  - El cierre vive en `EquiposService.comprobarAcceso`, al empezar `misEquipos` y `verificarMembresia`: así lo aplican la API y el asistente sin tocar las pruebas HTTP de CUN-05, que simulan ese servicio. El plan del contexto ya es el efectivo (H-ADM-06); `GET /perfil` lo calcula de nuevo con `PertenenciasRepositorio.planEfectivo`.
+  - Los campos nuevos de `GET /equipos` (`responsable`, `integrantes`) son opcionales en el contrato, para que los ejemplos de las pruebas de contratos de CUN-05 sigan siendo válidos.
+  - `membresia-http.spec.ts` (T-104) cambia solo su semilla: la persona «ajena al equipo» integra otro equipo; sin ninguno, el cierre la para antes con `SIN_EQUIPO`. Su expectativa, 403 `SOLICITUD_INVALIDA`, no cambia.
+  - En la semilla de las pruebas web, la cuenta del armazón entra en un equipo para seguir viendo «Encargadas», que ahora pide lo mismo que el corte.
+  - El consentimiento propio queda fuera del cierre (H-EQ-03): va por `POST /operaciones` y no pasa por `EquiposService`.
 - **Origen:** revisión de las capturas de la fusión por Franco, 25 de noviembre de 2026 (`ENCARGO-CLAUDE-CODE-2026-11-25.md`)
 
 ## Orden sugerido de entregas
