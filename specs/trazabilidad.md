@@ -15,7 +15,7 @@
 | 03-tareas | 26 | 26 | 0 | 0 | 0 | 0 |
 | 04-comunicaciones | 28 | 22 | 0 | 0 | 0 | 6 |
 | 05-equipos | 19 | 1 | 16 | 2 | 0 | 0 |
-| 06-acceso | 19 | 4 | 0 | 15 | 0 | 0 |
+| 06-acceso | 19 | 3 | 0 | 16 | 0 | 0 |
 | 07-agente | 5 | 2 | 1 | 2 | 0 | 0 |
 | 08-administracion | 32 | 15 | 4 | 13 | 0 | 0 |
 | 09-tareas-personales | 20 | 1 | 1 | 18 | 0 | 0 |
@@ -189,7 +189,7 @@
 | REQ-ACC-15 | 06-acceso | Requisito del sistema; D-17 | 1 | T-026 | acceso.solo-el-responsable-asigna-tareas | implementado |
 | REQ-ACC-16 | 06-acceso | Requisito del sistema | 4 | — | — | pendiente |
 | REQ-ACC-17 | 06-acceso | Requisito del sistema | 4 | — | — | pendiente |
-| REQ-ACC-18 | 06-acceso | Requisito del sistema | 1 | T-121 | — | pendiente |
+| REQ-ACC-18 | 06-acceso | Requisito del sistema | 1 | T-121 | acceso.cambiar-contrasena; acceso.cambiar-contrasena-desde-ajustes; movil.cambiar-contrasena | implementado |
 | REQ-ACC-19 | 06-acceso | Requisito del sistema | 1 | T-122, T-123 | — | pendiente |
 | REQ-AGT-01 | 07-agente | `PROPUESTA-TECNICA.md` §7.4, memoria de conversación; H-AGT-16; `INFORME-MEMORIA-AGENTE.md` §6 y §8.1; glosario, «Episodio» y «Nota de continuidad» | 2 | T-032, T-034, T-038, T-040, T-041 | agente.conversacion-con-contexto | en curso |
 | REQ-AGT-02 | 07-agente | decisión del equipo, 24 de octubre de 2026; REQ-CAP-02, REQ-CAP-23; `09-tareas-personales` §10 (la tarea deja de esperar: REQ-CUN03-01); REQ-CUN03-16 (lo que las tareas personales no hacen) | 2 | T-033, T-034 | agente.tarea-queda-en-espera | implementado |

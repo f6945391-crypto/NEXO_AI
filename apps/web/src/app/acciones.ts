@@ -4,6 +4,7 @@ import { refresh } from 'next/cache';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
+  CambioContrasenaSolicitud,
   ClaveAlcanceGoogle,
   ControlTarea,
   ConversacionAsistente,
@@ -136,6 +137,22 @@ export async function confirmarCambioZona(id: string): Promise<{ error?: string 
   }
   // La página se vuelve a pedir: el perfil y la agenda llegan ya en la zona nueva
   refresh();
+  return {};
+}
+
+// REQ-ACC-18 · T-121. La API devuelve tokens nuevos para esta sesión, que se guardan en las cookies: las demás
+// sesiones de la cuenta quedan cerradas
+export async function cambiarContrasena(actual: string, nueva: string): Promise<{ error?: string }> {
+  const datos = CambioContrasenaSolicitud.safeParse({ actual, nueva });
+  if (!datos.success) return { error: 'La contraseña nueva tiene que tener al menos 12 caracteres.' };
+  const token = await tokenDeAcceso();
+  try {
+    const respuesta = await llamarApi('/auth/contrasena', { metodo: 'PATCH', cuerpo: datos.data, token });
+    if (respuesta.estado !== 200) return { error: mensajeDeError(respuesta.cuerpo, 'No se pudo cambiar la contraseña. Inténtalo de nuevo.') };
+    await guardarTokens(IngresoRespuesta.parse(respuesta.cuerpo));
+  } catch {
+    return { error: SIN_CONEXION };
+  }
   return {};
 }
 

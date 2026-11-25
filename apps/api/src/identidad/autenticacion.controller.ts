@@ -1,5 +1,6 @@
-import { Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Patch, Post, UseGuards } from '@nestjs/common';
 import {
+  CambioContrasenaSolicitud,
   IngresoSolicitud,
   PrimerIngresoSolicitud,
   TokenRenovacionSolicitud,
@@ -10,7 +11,7 @@ import { ValidarCon } from '../plataforma/errores';
 import { AutenticacionService } from './autenticacion.service';
 import type { ContextoSolicitud } from './contexto';
 import { Contexto, PermitidoDurantePrimerIngreso, Publico, SobreLoPropio } from './decoradores';
-import { LimiteIngresoGuard } from './guardas';
+import { LimiteContrasenaGuard, LimiteIngresoGuard } from './guardas';
 
 // REQ-ACC-02, REQ-ACC-03, REQ-ACC-12 · T-004
 @SobreLoPropio()
@@ -51,6 +52,18 @@ export class AutenticacionController {
   ): Promise<IngresoRespuesta> {
     return this.autenticacion.completarPrimerIngreso(contexto, cuerpo.contrasenaNueva, cuerpo.zonaHoraria);
   }
+
+  // REQ-ACC-18 · T-121 · plan §5.7. Tokens nuevos para esta sesión; las demás de la cuenta se cierran
+  @UseGuards(LimiteContrasenaGuard)
+  @Patch('contrasena')
+  @HttpCode(200)
+  cambiarContrasena(
+    @Contexto() contexto: ContextoSolicitud,
+    @Body(new ValidarCon(CambioContrasenaSolicitud)) cuerpo: CambioContrasenaSolicitud,
+  ): Promise<IngresoRespuesta> {
+    return this.autenticacion.cambiarContrasena(contexto, cuerpo.actual, cuerpo.nueva);
+  }
+
   @Get('sesion')
   sesion(@Contexto() contexto: ContextoSolicitud): Promise<SesionActual> {
     return this.autenticacion.sesionActual(contexto);

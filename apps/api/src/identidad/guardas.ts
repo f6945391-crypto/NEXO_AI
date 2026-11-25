@@ -144,6 +144,20 @@ export class AlcanceGuard implements CanActivate {
   }
 }
 
+// T-121 · H-ACC-08: probar la contraseña actual tiene el mismo límite que el ingreso, contado por cuenta: la
+// petición no lleva correo. La guarda global de autenticación ya dejó el contexto en la solicitud.
+@Injectable()
+export class LimiteContrasenaGuard extends ThrottlerGuard {
+  protected override async getTracker(solicitud: Record<string, unknown>): Promise<string> {
+    const contexto = (solicitud as { contexto?: ContextoSolicitud }).contexto;
+    return `contrasena|${contexto?.perfilId ?? String(solicitud.ip)}`;
+  }
+
+  protected override async throwThrottlingException(): Promise<void> {
+    throw errorApi(429, 'DEMASIADOS_INTENTOS', 'Demasiados intentos. Espera un minuto y vuelve a probar.');
+  }
+}
+
 // 5 intentos por minuto por correo e IP (specs/06-acceso/plan.md §5.1). En POST /auth/ingreso y en
 // POST /administracion/entrar (T-059).
 @Injectable()

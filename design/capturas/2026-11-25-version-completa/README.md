@@ -1,6 +1,6 @@
 # NexoAI — casos de uso de la versión del 25 de noviembre de 2026
 
-**Rama:** `version_parcial`, después de la fusión con `main` (CUN-05) y de T-120 · **`SPEC.md`:** 2.25.2
+**Rama:** `version_parcial`, después de la fusión con `main` (CUN-05), T-120, T-124 y T-121 · **`SPEC.md`:** 2.25.3
 **Qué es:** cada caso de uso que la versión tiene hoy, con su captura, el requisito que cumple, la prueba automática que lo cubre y lo que se vio al revisarlo a mano (testeo visual). Al final, la lista de lo que se ve mal encajado, para el feedback del equipo antes de reestructurar la interfaz.
 
 **Cómo se tomaron las capturas.** Web: compilada (`next build` y `next start`), 1440 × 900, contra la API de las pruebas de extremo a extremo, con el calendario y el asistente simulados y las cuentas de `apps/web/e2e/cuentas.json`. Móvil: Expo web a 390 × 844, con `apps/movil/e2e/cuentas.json`. Las fechas son las del 25 de noviembre de 2026. Ninguna captura usa Google ni Groq reales.
@@ -63,6 +63,8 @@
 |---|---|---|---|---|---|
 | W23 | Perfil y permisos de Google | ![](web/23-ajustes.png) | REQ-ACC-06, 12 | `acceso.conectar-google-por-permiso` | ⚠️ U-03 |
 | W24 | Cambiar la zona horaria | ![](web/24-ajustes-cambiar-zona.png) | REQ-ACC-10, 11 | `acceso.cambiar-zona-desde-ajustes` | ⚠️ U-01, U-02 |
+| W43 | Cambiar la contraseña: la actual incorrecta da un solo error y nada cambia | ![](web/43-ajustes-cambiar-contrasena-error.png) | REQ-ACC-18 | `acceso.cambiar-contrasena-desde-ajustes` | ✅ |
+| W44 | Contraseña cambiada: la sesión sigue y las demás se cierran | ![](web/44-ajustes-contrasena-cambiada.png) | REQ-ACC-18 | `acceso.cambiar-contrasena-desde-ajustes` | ⚠️ U-02 |
 
 ### 1.7 Por plan: quién ve las reuniones
 
@@ -138,6 +140,8 @@ El móvil no tiene «Disponibilidad de equipo» ni la zona de empresa: en esta v
 | M23 | Ajustes, **Plan Personal** | ![](movil/m23-ajustes-plan-personal.png) | REQ-ACC-12 | — | ⚠️ U-03, U-12 |
 | M24 | Agenda de una cuenta de **Plan Empresarial** | ![](movil/m24-plan-empresarial-agenda.png) | — | — | ✅ |
 | M25 | Ajustes, **Plan Empresarial** | ![](movil/m25-ajustes-plan-empresarial.png) | REQ-ACC-12 | — | ⚠️ U-03, U-12 |
+| M26 | Cambiar la contraseña: la actual incorrecta | ![](movil/m26-ajustes-cambiar-contrasena-error.png) | REQ-ACC-18 | `movil.cambiar-contrasena` | ⚠️ U-12 |
+| M27 | Contraseña cambiada | ![](movil/m27-ajustes-contrasena-cambiada.png) | REQ-ACC-18 | `movil.cambiar-contrasena` | ⚠️ U-12 |
 
 ---
 
@@ -145,10 +149,10 @@ El móvil no tiene «Disponibilidad de equipo» ni la zona de empresa: en esta v
 
 | Conjunto | Resultado | Dónde |
 |---|---|---|
-| API | 480 de 480, más 1 en `skip` por INC-37 | `apps/api/test` |
+| API | 486 de 486, más 1 en `skip` por INC-37 | `apps/api/test` |
 | Contratos | 127 de 127 | `packages/contratos` |
-| Extremo a extremo, web | 53 de 53 | `apps/web/e2e` |
-| Extremo a extremo, móvil | 24 de 24 | `apps/movil/e2e` |
+| Extremo a extremo, web | 54 de 54 | `apps/web/e2e` |
+| Extremo a extremo, móvil | 25 de 25 | `apps/movil/e2e` |
 | Escenario de reuniones (CP-R-01 a 12) | API 11 de 11, web 4 de 4 | `equipos.escenario-reuniones`, `web.escenario-reuniones` |
 
 **Lo que no cubre ninguna prueba automática:** Google y Groq reales, un teléfono real (teclado, zona segura), y el asistente consultando la disponibilidad del equipo (el guion simulado no tiene esa frase).

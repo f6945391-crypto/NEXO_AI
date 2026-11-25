@@ -108,3 +108,10 @@ export const PrimerIngresoSolicitud = z.strictObject({
   zonaHoraria: ZonaHoraria,
 });
 export type PrimerIngresoSolicitud = z.infer<typeof PrimerIngresoSolicitud>;
+
+// PATCH /auth/contrasena · REQ-ACC-18 · T-121. Responde con IngresoRespuesta: tokens nuevos de esta sesión
+export const CambioContrasenaSolicitud = z.strictObject({
+  actual: z.string().min(1).max(200),
+  nueva: z.string().min(12, 'Al menos 12 caracteres').max(200),
+});
+export type CambioContrasenaSolicitud = z.infer<typeof CambioContrasenaSolicitud>;

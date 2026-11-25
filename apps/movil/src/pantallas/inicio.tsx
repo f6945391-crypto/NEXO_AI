@@ -3,6 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { Perfil } from '@nexoai/contratos';
 import { Boton } from '../componentes';
 import type { Nivel } from './agenda';
+import { CambioContrasena } from './cambio-contrasena';
 import { CapaCaptura } from './captura';
 import { FranjaEnEspera } from './en-espera';
 import { conSesion } from '../sesion';
@@ -152,6 +153,8 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
                 <Dato etiqueta="Zona horaria" valor={perfil.zonaHoraria ? etiquetarZona(perfil.zonaHoraria) : '—'} />
               </View>
             )}
+            {/* REQ-ACC-18 · T-121 */}
+            <CambioContrasena />
             <Text style={estilos.pregunta}>Tu correo, tu plan y tu cuenta los gestiona tu organización.</Text>
             <Boton texto="Cerrar sesión" alPulsar={alSalir} />
           </View>

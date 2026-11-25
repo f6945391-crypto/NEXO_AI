@@ -164,6 +164,33 @@ export class AutenticacionService {
     return this.emitir(actualizado, randomUUID(), 'propio');
   }
 
+  // REQ-ACC-18 · T-121 · plan §5.7. La propia cuenta cambia su contraseña: con la actual correcta y una nueva
+  // distinta, se guarda, se cierran todas sus sesiones (también la de la zona de empresa) y esta sigue con
+  // tokens nuevos, como en el primer ingreso.
+  async cambiarContrasena(contexto: ContextoSolicitud, actual: string, nueva: string): Promise<IngresoRespuesta> {
+    const datos = this.prisma.deOrganizacion(contexto.organizacionId);
+    const perfil = await datos.perfilUsuario.findUniqueOrThrow({ where: { id: contexto.perfilId } });
+    if (!(await verificarContrasena(perfil.hashContrasena, actual))) {
+      throw errorApi(400, 'CONTRASENA_NO_VALIDA', 'La contraseña actual no es correcta.');
+    }
+    if (await verificarContrasena(perfil.hashContrasena, nueva)) {
+      throw errorApi(400, 'CONTRASENA_NO_VALIDA', 'La contraseña nueva tiene que ser distinta de la actual.');
+    }
+
+    const actualizado = await datos.perfilUsuario.update({
+      where: { id: perfil.id },
+      data: { hashContrasena: await calcularHash(nueva) },
+    });
+    await this.prisma.sinAislar.sesionRenovacion.updateMany({
+      where: { perfilId: perfil.id, revocadaEn: null },
+      data: { revocadaEn: new Date() },
+    });
+    await datos.eventoAuditoria.create({
+      data: { organizacionId: perfil.organizacionId, perfilId: perfil.id, accion: 'contrasena.cambiada', detalle: {} },
+    });
+    return this.emitir(actualizado, randomUUID(), 'propio');
+  }
+
   async salir(tokenRenovacion: string): Promise<void> {
     const sesion = await this.prisma.sinAislar.sesionRenovacion.findUnique({
       where: { hashToken: hashDeToken(tokenRenovacion) },

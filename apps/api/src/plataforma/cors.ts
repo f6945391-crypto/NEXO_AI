@@ -13,5 +13,6 @@ export function origenesPermitidos(): string[] {
 export function configurarCors(app: INestApplication): void {
   const origenes = origenesPermitidos();
   if (origenes.length === 0) return;
-  app.enableCors({ origin: origenes, methods: ['GET', 'POST'], allowedHeaders: ['Authorization', 'Content-Type'] });
+  // PATCH desde T-121: cambiar la contraseña (PATCH /auth/contrasena) también desde Expo web
+  app.enableCors({ origin: origenes, methods: ['GET', 'POST', 'PATCH'], allowedHeaders: ['Authorization', 'Content-Type'] });
 }

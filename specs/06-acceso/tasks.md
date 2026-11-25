@@ -290,8 +290,15 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
 - **Depende de:** T-004, T-005, T-027
 - **Contenido:** `PATCH /acceso/contrasena { actual, nueva }` con `@SobreLoPropio()`; reutiliza la validación de 12 caracteres y el cierre de sesiones de `autenticacion.service.ts` (lo mismo que REQ-ADM-14, pero lo pide la propia cuenta), y deja el evento de auditoría `contrasena.cambiada`. En Ajustes de la web, debajo de «Cambiar zona horaria», con el mismo patrón de tarjeta; en el móvil, igual. Es un control directo: no pasa por el asistente ni por una Operación, porque no tiene efecto externo
 - **Hecho cuando:** con la actual correcta cambia y cierra las demás sesiones; con la actual incorrecta, la nueva corta o igual a la actual, un solo error y nada cambia
-- **Pruebas:** `acceso.cambiar-contrasena` · una de extremo a extremo en la web
-- **Estado:** pendiente · después del 26 de noviembre de 2026
+- **Pruebas:** `acceso.cambiar-contrasena` · extremo a extremo `acceso.cambiar-contrasena-desde-ajustes` (web) y `movil.cambiar-contrasena` (móvil)
+- **Estado:** hecha · 25 de noviembre de 2026, adelantada a pedido de Franco
+- **Notas de implementación:**
+  - La ruta es `PATCH /auth/contrasena`, no `/acceso/contrasena`: la API no tiene prefijo `/acceso` y lo de la sesión vive en `/auth` (plan §5.7).
+  - Devuelve tokens nuevos para la sesión que lo pidió, como el primer ingreso; las demás sesiones de la cuenta, también la de la zona de empresa, quedan revocadas y fallan en su siguiente renovación.
+  - Límite de 5 intentos por minuto por cuenta (`LimiteContrasenaGuard`, H-ACC-08).
+  - CORS admite ahora `PATCH`: sin él, Expo web no podía llamar a la ruta (`plataforma.cors-solo-origenes-listados` lo comprueba).
+  - Web: `cambio-contrasena.tsx` y la acción `cambiarContrasena`, que guarda los tokens nuevos en las cookies. Móvil: `pantallas/cambio-contrasena.tsx`, que los guarda en el almacenamiento seguro.
+  - Capturas: `design/capturas/2026-11-25-version-completa/web/43`, `44` y `movil/m26`, `m27`.
 
 ### T-122 · Puerto de correo saliente
 

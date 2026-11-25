@@ -192,5 +192,12 @@
     "plan": "personal",
     "organizacion": "Reuniones Demo",
     "lista": true
+  },
+  "contrasena": {
+    "correo": "contrasena-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "organizacion": "personal",
+    "lista": true
   }
 }

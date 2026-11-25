@@ -9,6 +9,7 @@ import type { Tareas } from '../../lib/tareas';
 import { conectarGoogle, salir } from '../acciones';
 import { Actividad } from './actividad';
 import { AgendaMes, AgendaSemana, ListaCompromisos } from './agenda';
+import { CambioContrasena } from './cambio-contrasena';
 import { CambioZona } from './cambio-zona';
 import { DisponibilidadEquipo } from './disponibilidad-equipo';
 import { FranjaEnEspera } from './en-espera';
@@ -330,6 +331,11 @@ export function Aplicacion({
                 <dt>Zona horaria</dt>
                 <dd>
                   <CambioZona zonaActual={perfil.zonaHoraria} />
+                </dd>
+                {/* REQ-ACC-18 · T-121 */}
+                <dt>Contraseña</dt>
+                <dd>
+                  <CambioContrasena />
                 </dd>
               </dl>
             )}
