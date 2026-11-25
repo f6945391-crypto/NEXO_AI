@@ -406,7 +406,6 @@ export function DisponibilidadEquipo({
   return (
     <section className="disponibilidad-equipo">
       <h2>Disponibilidad del equipo</h2>
-      <p>Encuentra horarios libres sin consultar los detalles privados de otros calendarios.</p>
 
       <div style={{ display: 'grid', gap: '16px', marginTop: '24px' }}>
         <label>
@@ -450,7 +449,7 @@ export function DisponibilidadEquipo({
         </label>
 
         <label>
-          Duración de la reunión (opcional)
+          Duración de la reunión
           <select
             value={duracion ?? ''}
             disabled={controlesBloqueados}

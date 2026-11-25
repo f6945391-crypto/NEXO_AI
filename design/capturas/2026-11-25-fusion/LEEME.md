@@ -28,3 +28,12 @@ Tomadas con el entorno de las pruebas de extremo a extremo del móvil (Expo web 
 | `movil-07-actividad.png` | Actividad, Día; la cuenta de prueba está a propósito en Kiritimati (GMT+14) |
 
 El móvil no tiene el corte «Disponibilidad de equipo» ni la zona de empresa: los dos son solo web en esta versión.
+
+## T-120 y pulido de la demo (25 de noviembre de 2026)
+
+Con la web **compilada** (`next build` y `next start`), sin la pastilla del modo de desarrollo, contra la API de las pruebas de extremo a extremo.
+
+| Captura | Qué muestra |
+|---|---|
+| `09-agenda-plan-personal-sin-corte.png` | Una cuenta de Plan Personal: Agenda solo con Hoy, Semana y Mes (REQ-CUN05-18) |
+| `10-disponibilidad-con-responsable.png` | Una cuenta de Plan Empresarial en Ventas: el corte con «Responsable: rosa@acme.test · 3 integrantes» bajo el selector (REQ-CUN05-19, H-EQ-01), una sola frase en el consentimiento y la duración sin «(opcional)» |
