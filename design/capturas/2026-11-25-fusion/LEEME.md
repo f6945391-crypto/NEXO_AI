@@ -12,3 +12,19 @@ Tomadas con el entorno de las pruebas de extremo a extremo de la web (API en 310
 | `06-actividad.png` | Actividad (`02-jornada` §8 bis) |
 | `07-zona-personas.png` | Zona de empresa, Personas |
 | `08-zona-equipos.png` | Zona de empresa, Equipos: se lee de `miembro_de_equipo` (D-F1); Ventas con su responsable y Soporte sin responsable |
+
+## Móvil
+
+Tomadas con el entorno de las pruebas de extremo a extremo del móvil (Expo web en 3201 contra su propia API, con el calendario y el modelo simulados), a 390 × 844, tamaño de teléfono.
+
+| Captura | Qué muestra |
+|---|---|
+| `movil-01-agenda-hoy.png` | Agenda, Hoy, en la zona del perfil, con un evento de otra zona y uno donde se es invitado |
+| `movil-02-agenda-semana.png` | Semana |
+| `movil-03-agenda-mes.png` | Mes |
+| `movil-04-capa-asistente.png` | La capa del asistente abierta desde «Pedir algo» |
+| `movil-05-tarjeta-de-confirmacion.png` | La tarjeta plegada (H-CAP-01) con el fin al día siguiente y su fecha (T-043) |
+| `movil-06-tareas.png` | Tareas, «Con fecha», con una vencida y «Hecho» sin tarjeta |
+| `movil-07-actividad.png` | Actividad, Día; la cuenta de prueba está a propósito en Kiritimati (GMT+14) |
+
+El móvil no tiene el corte «Disponibilidad de equipo» ni la zona de empresa: los dos son solo web en esta versión.
