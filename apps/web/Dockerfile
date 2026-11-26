@@ -29,7 +29,7 @@ COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 COPY apps/movil/package.json apps/movil/
 COPY packages/contratos/package.json packages/contratos/
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+RUN \
     pnpm install --frozen-lockfile --store-dir /pnpm/store --filter "@nexoai/web..."
 
 # ---------------------------------------------------------------------------------------------

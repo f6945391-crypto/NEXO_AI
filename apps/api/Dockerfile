@@ -36,7 +36,7 @@ COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 COPY apps/movil/package.json apps/movil/
 COPY packages/contratos/package.json packages/contratos/
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+RUN \
     pnpm install --frozen-lockfile --store-dir /pnpm/store --filter "@nexoai/api..."
 
 # ---------------------------------------------------------------------------------------------
@@ -52,7 +52,7 @@ RUN pnpm --filter @nexoai/api generar
 RUN pnpm --filter @nexoai/api build
 # Carpeta autónoma con solo las dependencias de producción. contratos entra como copia (con su dist),
 # no como enlace al espacio de trabajo.
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+RUN \
     pnpm --filter @nexoai/api deploy --prod --store-dir /pnpm/store /despliegue
 
 # ---------------------------------------------------------------------------------------------
