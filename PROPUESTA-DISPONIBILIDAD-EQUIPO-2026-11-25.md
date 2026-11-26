@@ -85,6 +85,61 @@ La regla de siempre: **el modelo entiende lo que se pide y el código calcula** 
 
 **Por qué el asistente reduce la pantalla.** Si el asistente ya propone los 3 mejores horarios, la mayoría de las veces la persona elige uno en la conversación y no abre el detalle. El mapa de calor queda para cuando ninguna propuesta sirve o se quiere simular quién falta.
 
+## 4 bis. Cómo se agenda una reunión
+
+Añadido el 25 de noviembre de 2026, a pedido de Franco. Recorre la reunión entera, de que alguien la pide hasta que existe en el calendario de todos, y después.
+
+### 4 bis.1 Estados
+
+```
+                 elegir y confirmar               mover (con aviso)
+ pendiente  ─────────────────────────►  agendada ◄──────────┐
+ (ámbar)                                (verde)  ───────────┘
+    │  pasan los días pedidos              │
+    ├──────────────► vencida (gris)        │ cancelar (con aviso), o el evento
+    │  descartar                           │ se borra en Google
+    └──────────────► cancelada ◄───────────┘
+```
+
+| Estado | Qué significa | Quién la ve en su lista |
+|---|---|---|
+| `pendiente` | Existe, con su grupo, tema, duración y rango de días, pero sin horario | **Solo quien la pidió.** Nadie más se entera hasta que se agenda (D-REU-10) |
+| `agendada` | Tiene horario y un evento en Google Calendar con los invitados | Quien la convocó y cada invitado |
+| `vencida` | Pasó el último día del rango sin elegir horario | Solo quien la pidió; se puede pedir de nuevo con otros días |
+| `cancelada` | Se descartó estando pendiente, o se canceló estando agendada | Se retira de la lista; queda en Actividad |
+
+### 4 bis.2 Paso a paso
+
+| # | Momento | Qué pasa | Regla |
+|---|---|---|---|
+| 1 | **Pedir** | «Busca una hora con Ana y Beto esta semana para el avance». El modelo saca quiénes, qué días, cuánto dura y el tema. Si falta quiénes, lo pregunta; si falta la duración, una hora (como un compromiso, H-AG-01); si faltan los días, los próximos 5 días hábiles | REQ-CUN01-07 (lo que falta se pregunta en orden) |
+| 2 | **Calcular** | La herramienta `reuniones.proponer` comprueba plan y pertenencia, lee libre u ocupado de quienes autorizaron, calcula los rangos comunes en los días hábiles y arma **3 propuestas** | P-02, RN-CAL-01, REQ-CUN05-14 a 18 |
+| 3 | **Queda pendiente** | La misma herramienta crea la reunión `pendiente`, **sin tarjeta**: no tiene efecto fuera de NexoAI y solo la ve quien la pidió. Queda auditada | D-REU-10, P-07 |
+| 4 | **Proponer** | Turno nuevo en la conversación: «Encontré 3 horarios en los que están libres los 3» con las opciones pulsables y «Ver todos los horarios», que abre el detalle. Si no hay ninguno común, lo dice y ofrece ampliar los días, la banda o quitar a alguien; la reunión sigue pendiente | DP-02 (reparto de las propuestas) |
+| 5 | **Elegir** | Pulsar una propuesta, o «Confirmar horario» en el detalle, **propone la Operación `reunion.convocar`** con ese horario, sin pasar por el modelo. Elegir no escribe nada: es como elegir una alternativa en la agenda | AD-09 |
+| 6 | **Tarjeta** | Muestra: título y tema; día, hora y zona; duración; **los invitados con la dirección a la que llega la invitación**; quién no autorizó, con «no se comprobó su disponibilidad»; si un invitado tiene otra zona, su hora («Para Ana, en Madrid: 20:00»); y lo irreversible: «Google enviará la invitación por correo a 3 personas. Deshacerlo es cancelar la reunión, que también les avisa». Botones: Confirmar, Elegir otro horario, Descartar | P-03, P-05 |
+| 7 | **Comprobar de nuevo** | Al confirmar, se sincroniza y se vuelve a calcular. Si alguien se ocupó o el horario ya pasó, **no se escribe nada** y la tarjeta vuelve con «Beto ya no está libre a esa hora» y las siguientes propuestas | Como H-AG-07 en la agenda |
+| 8 | **Agendar** | Se crea el evento en el **Google Calendar de quien convoca**, con los invitados y **con aviso de Google** a cada uno. La reunión pasa a `agendada` con el id del evento. El evento entra en la agenda de quien convoca por la réplica de siempre | AD-10, P-08 (lo envía Google, no `gmail.send`) |
+| 9 | **Lo que ve cada invitado** | La invitación de Google en su correo; en NexoAI, el compromiso en su Agenda con la marca de invitado que ya existe, y la reunión en su lista como «Convocada por Franco · Jue 26, 2:00 PM». Acepta o rechaza **en Google**: NexoAI no responde por él en esta versión | P-09 |
+
+### 4 bis.3 Después de agendada
+
+| Situación | Qué pasa |
+|---|---|
+| **Respuestas de los invitados** | El detalle muestra «Ana aceptó · Beto no asistirá», leído de Google. Es información: una negativa no cancela ni mueve nada (P-09, R-16) (D-REU-13) |
+| **Mover** («pasa la reunión al viernes») | El asistente vuelve a proponer con el mismo grupo; el evento sigue donde está hasta confirmar la Operación `reunion.mover`, que lo cambia **con aviso** a los invitados |
+| **Cancelar** | Operación `reunion.cancelar`, con tarjeta que dice que Google avisará a los invitados. Se puede desde la conversación o como control directo en el detalle (DP-01) |
+| **Quién puede mover o cancelar** | Solo quien la convocó: el evento vive en su calendario (D-REU-15) |
+| **Cambios hechos en Google** | Manda Google (AD-10). Si el evento se borra, la reunión pasa a `cancelada`; si se mueve, su horario se actualiza. Sin preguntar |
+| **La agenda y la reunión** | `agenda.modificar` y `agenda.cancelar` no avisan a los invitados (H-AG-11). Cuando el compromiso es una reunión de NexoAI, el asistente usa `reunion.mover` o `reunion.cancelar`, que sí avisan |
+| **Pendiente que nadie elige** | La tarjeta de la Operación caduca a las 24 horas (H-AG-08), pero **la reunión no**: sigue pendiente en la lista hasta el último día del rango, y entonces pasa a `vencida` (D-REU-14) |
+
+### 4 bis.4 Hallazgo: a qué dirección llega la invitación
+
+NexoAI **no guarda la dirección de la cuenta de Google** que cada persona conectó (`consentimiento_integracion` guarda el token, no el correo), y el correo de la cuenta de NexoAI puede ser otro: en las cuentas de prueba, `personal@nexoai.test` está conectada a un Gmail real. Si la invitación va al correo de NexoAI, puede no llegar a ningún calendario.
+
+**Propuesta (D-REU-11):** al conectar Google se guarda la dirección del calendario principal (en Google, el id del calendario `primary` es esa dirección) y la invitación va ahí. Quien no tiene Google conectado recibe la invitación en su correo de NexoAI, y la tarjeta lo dice.
+
 ## 5. Quién ve qué, por tipo de cuenta
 
 | Cuenta | Lista de reuniones | Detalle | Convocar |
@@ -104,8 +159,9 @@ La regla de siempre: **el modelo entiende lo que se pide y el código calcula** 
 | Intervalos comunes y por participante | Hecho, un día por consulta en la pantalla | **La API ya acepta un rango `desde`/`hasta`**: falta usarlo en varios días y contar libres por franja de 30 minutos |
 | Alternativas | Hecho | Pasa a ser «las 3 propuestas» |
 | Herramientas del asistente `equipo.listar`, `equipo.consultar_disponibilidad` | Hechas, no crean reuniones | Nueva `reuniones.proponer` (crea la reunión pendiente y devuelve las 3 propuestas) y `reuniones.convocar` (propone la Operación) |
-| Reunión | No existe | Tabla nueva `reunion`: equipo, tema, integrantes, duración, rango de días, estado (`pendiente_horario`, `agendada`, `cancelada`), horario elegido, evento de Google creado |
-| Convocar | No existe (CUN-06 sin especificar) | Operación `reunion.convocar`, con Google Calendar y los integrantes como invitados |
+| Reunión | No existe | Tabla nueva `reunion`: equipo, quien convoca, tema, integrantes, duración, rango de días, estado (`pendiente`, `agendada`, `vencida`, `cancelada`), horario elegido, evento de Google creado (§4 bis) |
+| Convocar, mover y cancelar | No existe (CUN-06 sin especificar) | Operaciones `reunion.convocar`, `reunion.mover` y `reunion.cancelar`, con Google Calendar, los integrantes como invitados y **con aviso** de Google (hoy el adaptador escribe siempre con `sendUpdates=none`) |
+| Dirección de Google de cada persona | No se guarda | Se guarda al conectar, para invitar a esa dirección (§4 bis.4) |
 | Formulario actual | Pantalla principal | Se retira de la entrada; el cálculo queda detrás de la lista y el detalle |
 
 ## 7. Decisiones abiertas
@@ -121,6 +177,13 @@ La regla de siempre: **el modelo entiende lo que se pide y el código calcula** 
 | D-REU-07 | ¿El corte se sigue llamando «Disponibilidad de equipo»? | «Reuniones», que dice lo que hay en la lista; sigue como corte de Agenda (R-32) |
 | D-REU-08 | ¿Fichas con color por persona? | Neutras (observación del boceto) |
 | D-REU-09 | ¿Qué pasa con el formulario y la rejilla actuales? | Se retiran de la pantalla; su código se reutiliza detrás |
+| D-REU-10 | ¿Crear la reunión pendiente pide tarjeta? | No: no tiene efecto fuera de NexoAI y solo la ve quien la pidió. La crea el asistente (R-42) y queda auditada. La única tarjeta es la de convocar. **Se aparta del patrón de las tareas**, que se crean con tarjeta (H-TP-08) |
+| D-REU-11 | ¿A qué dirección va la invitación? | A la del Google conectado, que hoy no se guarda; sin Google, al correo de NexoAI (§4 bis.4) |
+| D-REU-12 | ¿Enlace de videollamada? | Solo si se pide («con Meet»); por defecto, sin enlace |
+| D-REU-13 | ¿Se muestran las respuestas de los invitados? | Sí, en el detalle y solo como información (P-09). Si no entra en el plan, queda para después |
+| D-REU-14 | ¿Cuándo vence una reunión pendiente? | Al terminar el último día del rango pedido, no a las 24 horas |
+| D-REU-15 | ¿Quién mueve o cancela una reunión agendada? | Solo quien la convocó |
+| D-REU-16 | ¿Se avisa a los invitados al convocar, mover y cancelar? | Sí, siempre, por Google. Es la excepción a H-AG-11, que vale para los compromisos propios |
 
 ## 8. Plan de trabajo
 
@@ -129,15 +192,15 @@ Cada paso cierra con sus pruebas, la trazabilidad y `SPEC.md` al día (método d
 | # | Paso | Qué incluye | Depende de | Sesiones |
 |---|---|---|---|---|
 | 0 | **Rama `franco-vasco`** | Franco sube `version_parcial` como `franco-vasco` y abre la fusión hacia `main` (script aparte) | — | — |
-| 1 | **Aval y especificación** | Vasco y el equipo revisan esta propuesta. Con el aval: enmiendas a `05-equipos` (lista, detalle, varios días, propuestas) y **área nueva de CUN-06, coordinar reunión** (REQ-CUN06-01…), con hallazgos D-REU-01 a 09 resueltos; `SPEC.md` §5, §6 y §11 | 0 | 1 |
+| 1 | **Aval y especificación** | Vasco y el equipo revisan esta propuesta. Con el aval: enmiendas a `05-equipos` (lista, detalle, varios días, propuestas) y **área nueva de CUN-06, coordinar reunión** (REQ-CUN06-01…), con el recorrido de §4 bis y las decisiones D-REU-01 a 16 resueltas; `SPEC.md` §5, §6 y §11 | 0 | 1 |
 | 2 | **T-131 · Disponibilidad en varios días y mapa de calor (API)** | Consulta de lunes a viernes con el rango que ya acepta la API; conteo de libres por franja de 30 minutos; horario sugerido calculado en código; contratos | 1 | 1 |
-| 3 | **T-132 · La reunión y convocar (API)** | Tabla `reunion` y su migración; Operaciones `reunion.crear` (solo el asistente), `reunion.elegir_horario` y `reunion.convocar` (Google Calendar con invitados); rutas de lista y detalle | 2 | 2 |
-| 4 | **T-133 · El asistente propone (agente)** | `reuniones.proponer` (3 propuestas armadas por el código) y `reuniones.convocar`; turno nuevo con opciones pulsables; elegir sin pasar por el modelo; instrucciones; guion; evaluación con Groq | 3 | 2 |
+| 3 | **T-132 · La reunión y convocar (API)** | Tabla `reunion` y su migración; la dirección de Google guardada al conectar; Operaciones `reunion.convocar`, `reunion.mover` y `reunion.cancelar` con invitados y aviso de Google, y la comprobación al confirmar; la réplica actualiza la reunión si el evento cambia en Google; vencimiento en el trabajador; rutas de lista y detalle | 2 | 3 |
+| 4 | **T-133 · El asistente propone (agente)** | `reuniones.proponer` (crea la reunión pendiente y arma 3 propuestas en código), `reuniones.mover` y `reuniones.cancelar`; turno nuevo con opciones pulsables; elegir sin pasar por el modelo; una reunión de NexoAI no se toca con `agenda.*`; instrucciones; guion; evaluación con Groq | 3 | 2 |
 | 5 | **T-134 · Lista y detalle en la web** | Lista de reuniones con estados; detalle con mapa de calor, fichas con interruptor, tooltip, sugerido, duración y «Confirmar horario»; retiro del formulario | 3, 4 | 2 |
 | 6 | **T-135 · Lista y propuestas en el móvil** | Lista y las 3 propuestas con «Confirmar», sin mapa de calor | 3, 4 | 1 |
 | 7 | **Cierre** | Pruebas de extremo a extremo, capturas por tipo de cuenta, informe y zip | 5, 6 | 1 |
 
-**Total:** unas 10 sesiones después del aval. Los pasos 5 y 6 pueden ir en paralelo.
+**Total:** unas 11 sesiones después del aval (una más que la primera versión, por mover, cancelar y la dirección de Google). Los pasos 5 y 6 pueden ir en paralelo.
 
 **Fuera de este plan:** el panorama del responsable en «Mi equipo» (D-F4, INC-36), los participantes externos (D-8), el reporte del equipo (CUN-08, que espera a delegar, CUN-07) y avisar a los invitados si la reunión cambia.
 
