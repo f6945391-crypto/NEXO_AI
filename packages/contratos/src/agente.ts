@@ -1,18 +1,12 @@
 import { z } from 'zod';
+import { Fecha, Hora } from './comunes';
 import { OperacionRespuesta } from './operaciones';
+import { BitacoraTarea, CandidatasDeReferente, ListaTareas } from './tareas';
 
 // Herramientas del agente (specs/07-agente/plan.md §5) · T-031. Los argumentos que da el modelo: fechas y
 // horas **en la zona de la persona y sin desfase**. El código las convierte (P-05, decisión 16 de
 // 02-agenda), así el modelo nunca escribe un desfase equivocado. De estos esquemas sale lo que ve el modelo.
 
-const Fecha = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/)
-  .describe('Fecha en la zona de la persona, AAAA-MM-DD');
-const Hora = z
-  .string()
-  .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
-  .describe('Hora en la zona de la persona, HH:mm de 24 horas');
 const Titulo = z.string().trim().min(1).max(200);
 
 export const ArgsConsultarAgenda = z
@@ -48,19 +42,13 @@ export const ArgsCancelarEvento = z.strictObject({
 });
 export type ArgsCancelarEvento = z.infer<typeof ArgsCancelarEvento>;
 
-// specs/07-agente/plan.md §7 · H-AGT-09: por qué espera algo que se pidió
+// specs/07-agente/plan.md §7 · H-AGT-09: por qué espera algo que se pidió. `funcion_por_llegar` se conserva
+// para las filas que ya lo tienen, pero desde T-050 ninguna herramienta lo escribe (09-tareas-personales §3.2)
 export const MotivoEspera = z.enum(['asistente_no_disponible', 'permiso_faltante', 'funcion_por_llegar']);
 export type MotivoEspera = z.infer<typeof MotivoEspera>;
 
-// REQ-AGT-02: una tarea se reconoce y queda en espera hasta que existan las tareas personales
-export const ClaseTarea = z.enum(['tarea', 'pendiente_sin_fecha', 'esperando_de_alguien']);
-export type ClaseTarea = z.infer<typeof ClaseTarea>;
-
-export const ArgsGuardarTarea = z.strictObject({
-  texto: z.string().trim().min(1).max(500).describe('Lo que hay que hacer, con las palabras de la persona'),
-  clase: ClaseTarea,
-});
-export type ArgsGuardarTarea = z.infer<typeof ArgsGuardarTarea>;
+// T-050: `ArgsGuardarTarea` y `ClaseTarea` se retiraron con `captura.guardar_tarea`; las tareas tienen sus
+// herramientas en tareas.ts
 
 // REQ-CUN01-13: la lista de compromisos la arma el código con los datos de la réplica, no el modelo.
 export const CompromisoListado = z.strictObject({
@@ -92,5 +80,11 @@ export const TurnoDeHerramienta = z.discriminatedUnion('tipo', [
   z.strictObject({ tipo: z.literal('propuesta'), operacion: OperacionRespuesta }),
   // T-033: lo pedido quedó guardado sin crear nada (REQ-AGT-02, REQ-CAP-23)
   z.strictObject({ tipo: z.literal('en_espera'), texto: z.string(), motivo: MotivoEspera, operacionId: z.uuid() }),
+  // T-050 · REQ-CUN03-14: las tareas pendientes armadas por el código, tal como están
+  z.strictObject({ tipo: z.literal('tareas'), lista: ListaTareas }),
+  // T-051 · REQ-CUN03-15, REQ-AGT-04: varias tareas encajan con lo dicho; la persona elige
+  z.strictObject({ tipo: z.literal('alternativas_de_referente'), lista: CandidatasDeReferente }),
+  // T-126 · REQ-CUN03-23: la bitácora de una tarea, armada por el código
+  z.strictObject({ tipo: z.literal('bitacora'), bitacora: BitacoraTarea }),
 ]);
 export type TurnoDeHerramienta = z.infer<typeof TurnoDeHerramienta>;

@@ -55,7 +55,7 @@ describe('CUN-05 - Autorizacion real por membresia HTTP', () => {
 
     const correo = `usuario-ajeno-${rol}-${bandaHoraria}@nexoai.test`;
 
-    await crearCuentaLista(
+    const { perfilId } = await crearCuentaLista(
       prisma,
       {
         organizacionId,
@@ -74,6 +74,14 @@ describe('CUN-05 - Autorizacion real por membresia HTTP', () => {
     });
 
     // No se crea una membresia para el usuario.
+    // T-120 · REQ-CUN05-18: sin ningún equipo, el servidor lo rechaza antes con SIN_EQUIPO. El usuario
+    // integra otro equipo para que la prueba siga comprobando lo que comprobaba: un equipo ajeno.
+    const propio = await prisma.equipo.create({
+      data: { organizacionId, nombre: 'Equipo propio del usuario' },
+    });
+    await prisma.miembroDeEquipo.create({
+      data: { organizacionId, equipoId: propio.id, perfilId, rolEnEquipo: 'integrante' },
+    });
 
     const ingreso = await request(app.getHttpServer())
       .post('/auth/ingreso')

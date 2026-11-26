@@ -29,6 +29,18 @@ export const CodigoError = z.enum([
   'EVENTO_NO_MODIFICABLE',
   'DATOS_FALTANTES',
   'ORIGEN_NO_PERMITIDO',
+  // specs/08-administracion/plan.md §4.2, §6 y §7.3 · T-059
+  'ADMINISTRACION_NO_PERMITIDA',
+  'SIN_ORGANIZACION',
+  'CUENTA_SUSPENDIDA',
+  'CUENTA_CERRADA',
+  'AMBITO_INCORRECTO',
+  // 09-tareas-personales · T-048
+  'TAREA_NO_ENCONTRADA',
+  'TAREA_NO_MODIFICABLE',
+  // 05-equipos · T-120 · REQ-CUN05-18
+  'SIN_PLAN_EMPRESARIAL',
+  'SIN_EQUIPO',
 ]);
 export type CodigoError = z.infer<typeof CodigoError>;
 

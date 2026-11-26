@@ -41,6 +41,16 @@ describe('plataforma.cors-solo-origenes-listados', () => {
     expect(previa.headers['access-control-allow-origin']).toBe(EXPO_WEB);
   });
 
+  it('T-121: cambiar la contraseña (PATCH) también se admite desde Expo web', async () => {
+    const previa = await request(app.getHttpServer())
+      .options('/auth/contrasena')
+      .set('Origin', EXPO_WEB)
+      .set('Access-Control-Request-Method', 'PATCH')
+      .set('Access-Control-Request-Headers', 'authorization,content-type');
+    expect(previa.status).toBeLessThan(300);
+    expect(previa.headers['access-control-allow-methods']).toContain('PATCH');
+  });
+
   it('un origen que no está en la lista no recibe permiso, y «*» nunca cuenta', async () => {
     const r = await request(app.getHttpServer()).get('/salud').set('Origin', 'https://otro-sitio.example').expect(200);
     expect(r.headers['access-control-allow-origin']).toBeUndefined();

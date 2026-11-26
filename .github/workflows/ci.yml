@@ -47,3 +47,36 @@ jobs:
         env:
           CI: "true"
           NEXT_TELEMETRY_DISABLED: "1"
+
+  # Construye las imágenes de apps/api/Dockerfile y apps/web/Dockerfile sin publicarlas: comprueba que
+  # siguen construyendo. Corre en paralelo a verificar y no lo bloquea. Sin registros ni secretos.
+  imagenes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Imagen de la API y del trabajador
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          target: final
+          push: false
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+      - name: Imagen de las migraciones
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          target: migraciones
+          push: false
+          cache-from: type=gha,scope=api
+      - name: Imagen de la web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: false
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web

@@ -32,9 +32,11 @@ enum Plan {
 
 // Cliente que crea las cuentas (R-45). Tabla de sistema.
 model Organizacion {
-  id       String   @id @default(uuid()) @db.Uuid
+  id       String           @id @default(uuid()) @db.Uuid
   nombre   String
-  creadaEn DateTime @default(now()) @map("creada_en") @db.Timestamptz(3)
+  // REQ-ADM-01 · specs/08-administracion/plan.md §3.2. Una personal tiene exactamente una cuenta
+  tipo     TipoOrganizacion @default(empresa)
+  creadaEn DateTime         @default(now()) @map("creada_en") @db.Timestamptz(3)
 
   perfiles         PerfilUsuario[]
   eventosAuditoria EventoAuditoria[]
@@ -46,24 +48,33 @@ model Organizacion {
   llamadasModelo   LlamadaModelo[]
   invocaciones     InvocacionHerramienta[]
   puntosControl    PuntoControlAgente[]
+  turnos           TurnoTranscripcion[]
+  miembros         MiembroOrganizacion[]
+  // 05-equipos (CUN-05); desde el 25 de noviembre de 2026 los lee también 08-administracion (D-F1)
   equipos          Equipo[]
   miembrosDeEquipo MiembroDeEquipo[]
+  // 09-tareas-personales
+  tareas           TareaPersonal[]
+  avancesTarea     AvanceTarea[]
 
   @@map("organizacion")
 }
 
 // EN-01 Perfil de Usuario. Rol y plan los fija la organización (REQ-ACC-12).
 model PerfilUsuario {
-  id                    String   @id @default(uuid()) @db.Uuid
-  organizacionId        String   @map("organizacion_id") @db.Uuid
-  correo                String   @unique
-  hashContrasena        String   @map("hash_contrasena")
+  id                    String       @id @default(uuid()) @db.Uuid
+  organizacionId        String       @map("organizacion_id") @db.Uuid
+  correo                String       @unique
+  hashContrasena        String       @map("hash_contrasena")
   rol                   Rol
   plan                  Plan
   // IANA; nula hasta el primer ingreso (REQ-ACC-04)
-  zonaHoraria           String?  @map("zona_horaria")
-  debeCambiarContrasena Boolean  @default(true) @map("debe_cambiar_contrasena")
-  creadoEn              DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
+  zonaHoraria           String?      @map("zona_horaria")
+  debeCambiarContrasena Boolean      @default(true) @map("debe_cambiar_contrasena")
+  // REQ-ADM-12, 13 · specs/08-administracion/plan.md §3.2
+  estado                EstadoCuenta @default(activa)
+  estadoCambiadoEn      DateTime?    @map("estado_cambiado_en") @db.Timestamptz(3)
+  creadoEn              DateTime     @default(now()) @map("creado_en") @db.Timestamptz(3)
 
   organizacion       Organizacion                @relation(fields: [organizacionId], references: [id])
   eventosAuditoria   EventoAuditoria[]
@@ -75,7 +86,12 @@ model PerfilUsuario {
   conversaciones     ConversacionAgente[]
   llamadasModelo     LlamadaModelo[]
   invocaciones       InvocacionHerramienta[]
-  membresiasEquipo MiembroDeEquipo[]
+  turnos             TurnoTranscripcion[]
+  pertenencias       MiembroOrganizacion[]
+  membresiasEquipo   MiembroDeEquipo[]
+  // 09-tareas-personales
+  tareas             TareaPersonal[]
+  avancesTarea       AvanceTarea[]
 
   @@unique([id, organizacionId])
   @@index([organizacionId])
@@ -86,15 +102,17 @@ model PerfilUsuario {
 // Todas las rotaciones de un mismo ingreso comparten `familia`: reutilizar un token ya rotado revoca la familia.
 // No lleva organizacion_id: se consulta antes de conocer la organización, al renovar.
 model SesionRenovacion {
-  id         String    @id @default(uuid()) @db.Uuid
-  perfilId   String    @map("perfil_id") @db.Uuid
-  hashToken  String    @unique @map("hash_token")
-  familia    String    @db.Uuid
-  expiraEn   DateTime  @map("expira_en") @db.Timestamptz(3)
-  revocadaEn DateTime? @map("revocada_en") @db.Timestamptz(3)
+  id         String       @id @default(uuid()) @db.Uuid
+  perfilId   String       @map("perfil_id") @db.Uuid
+  hashToken  String       @unique @map("hash_token")
+  familia    String       @db.Uuid
+  expiraEn   DateTime     @map("expira_en") @db.Timestamptz(3)
+  revocadaEn DateTime?    @map("revocada_en") @db.Timestamptz(3)
   // T-024: solo se rellena cuando se revoca por rotación; habilita el margen de gracia (DP-04)
-  rotadaEn   DateTime? @map("rotada_en") @db.Timestamptz(3)
-  creadaEn   DateTime  @default(now()) @map("creada_en") @db.Timestamptz(3)
+  rotadaEn   DateTime?    @map("rotada_en") @db.Timestamptz(3)
+  // T-059 · specs/08-administracion/plan.md §7.1: la zona de empresa tiene su propia sesión y su propia renovación
+  ambito     AmbitoSesion @default(propio)
+  creadaEn   DateTime     @default(now()) @map("creada_en") @db.Timestamptz(3)
 
   perfil PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)
 
@@ -143,12 +161,23 @@ model Operacion {
   motivoEspera      MotivoEspera?   @map("motivo_espera")
   // Conversación de la que salió; nula para los controles directos
   conversacionId    String?         @map("conversacion_id") @db.Uuid
+  // T-060 · specs/08-administracion/plan.md §5.2 y §7.3: las de la zona de empresa viven en la organización de
+  // la empresa y no aparecen en lo del usuario
+  ambito            AmbitoOperacion @default(propio)
+  // 09-tareas-personales plan §3.2 · T-047: cuándo una tarea en espera pasó a propuesta «Por confirmar» (T-056).
+  // La caducidad de las propuestas (T-041) no la toca (H-TP-11)
+  convertidaEn      DateTime?       @map("convertida_en") @db.Timestamptz(3)
 
   organizacion Organizacion        @relation(fields: [organizacionId], references: [id])
   perfil       PerfilUsuario       @relation(fields: [perfilId], references: [id])
   conversacion ConversacionAgente? @relation(fields: [conversacionId], references: [id])
+  // 09-tareas-personales: la tarea que creó esta Operación `tareas.registrar`
+  tareaCreada  TareaPersonal?
+  // 09-tareas-personales plan §13 · T-125: el avance que anotó esta Operación `tareas.anotar_avance`
+  avanceCreado AvanceTarea?
 
   @@index([organizacionId, perfilId, estado])
+  @@index([organizacionId, ambito, creadaEn])
   @@map("operacion")
 }
 
@@ -156,7 +185,8 @@ model Operacion {
 enum MotivoEspera {
   asistente_no_disponible
   permiso_faltante
-  // Una tarea, hasta que existan las tareas personales (REQ-AGT-02)
+  // Una tarea, hasta que existan las tareas personales (REQ-AGT-02). Desde T-050 ninguna herramienta lo
+  // escribe; se conserva por las filas que ya lo tienen, hasta que T-056 las convierta (09-tareas-personales §3.2)
   funcion_por_llegar
 
   @@map("motivo_espera")
@@ -172,12 +202,14 @@ enum EstadoConversacion {
 }
 
 model ConversacionAgente {
-  id             String             @id @default(uuid()) @db.Uuid
-  organizacionId String             @map("organizacion_id") @db.Uuid
-  perfilId       String             @map("perfil_id") @db.Uuid
-  estado         EstadoConversacion
-  abiertaEn      DateTime           @default(now()) @map("abierta_en") @db.Timestamptz(3)
-  cerradaEn      DateTime?          @map("cerrada_en") @db.Timestamptz(3)
+  id                String             @id @default(uuid()) @db.Uuid
+  organizacionId    String             @map("organizacion_id") @db.Uuid
+  perfilId          String             @map("perfil_id") @db.Uuid
+  estado            EstadoConversacion
+  abiertaEn         DateTime           @default(now()) @map("abierta_en") @db.Timestamptz(3)
+  cerradaEn         DateTime?          @map("cerrada_en") @db.Timestamptz(3)
+  // T-038 · plan §14.3: con cada mensaje. El cierre por inactividad lo usa desde T-041
+  ultimaActividadEn DateTime           @default(now()) @map("ultima_actividad_en") @db.Timestamptz(3)
 
   organizacion Organizacion            @relation(fields: [organizacionId], references: [id])
   perfil       PerfilUsuario           @relation(fields: [perfilId], references: [id], onDelete: Cascade)
@@ -185,6 +217,7 @@ model ConversacionAgente {
   llamadas     LlamadaModelo[]
   invocaciones InvocacionHerramienta[]
   puntoControl PuntoControlAgente?
+  turnos       TurnoTranscripcion[]
 
   @@index([perfilId, estado])
   @@index([organizacionId])
@@ -376,19 +409,139 @@ model EventoAuditoria {
   @@map("evento_auditoria")
 }
 
+// Transcripción del asistente (specs/07-agente/plan.md §14.4) · T-038 · REQ-AGT-03. Lo que la persona vio,
+// turno a turno, en cada episodio (`conversacion_agente`). Vive fuera del punto de control: no se pierde al
+// cerrarse el episodio, y lo que lee el modelo no crece con ella. Se lee por perfil, nunca por equipo (P-10).
+model TurnoTranscripcion {
+  // Lo genera el grafo: un reintento no duplica el turno
+  id             String   @id @db.Uuid
+  organizacionId String   @map("organizacion_id") @db.Uuid
+  perfilId       String   @map("perfil_id") @db.Uuid
+  conversacionId String   @map("conversacion_id") @db.Uuid
+  // Orden estable: varios turnos de una misma vuelta pueden tener el mismo instante
+  secuencia      Int      @default(autoincrement())
+  en             DateTime @db.Timestamptz(3)
+  tipo           String
+  // El TurnoAsistente de packages/contratos, validado con zod
+  datos          Json
+  // T-042: la actividad que resolvió este turno
+  actividadTipo  String?  @map("actividad_tipo")
+  actividadId    String?  @map("actividad_id")
 
-// EN-05 Equipo de Trabajo — CUN-05.
-// Cada equipo pertenece a una organización.
+  organizacion Organizacion       @relation(fields: [organizacionId], references: [id])
+  perfil       PerfilUsuario      @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  conversacion ConversacionAgente @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+
+  @@index([perfilId, secuencia])
+  @@index([conversacionId])
+  @@index([organizacionId])
+  @@map("turno_asistente")
+}
+
+// ---- 08-administracion ----
+// specs/08-administracion/plan.md §3 (opción B) · T-058. La cuenta y lo suyo se quedan en su organización;
+// la pertenencia a una empresa es una fila en la organización de la empresa (H-ADM-16).
+
+enum TipoOrganizacion {
+  personal
+  empresa
+
+  @@map("tipo_organizacion")
+}
+
+enum EstadoCuenta {
+  activa
+  suspendida
+  cerrada
+
+  @@map("estado_cuenta")
+}
+
+enum OrigenPertenencia {
+  // Cuenta propia: la dio de alta la organización
+  alta
+  // Cuenta personal que aceptó sumarse (REQ-ADM-21)
+  afiliacion
+
+  @@map("origen_pertenencia")
+}
+
+enum EstadoPertenencia {
+  invitada
+  vigente
+  rechazada
+  caducada
+  retirada
+
+  @@map("estado_pertenencia")
+}
+
+// T-060 · plan §5.2
+enum AmbitoOperacion {
+  propio
+  empresa
+
+  @@map("ambito_operacion")
+}
+
+// T-059 · plan §7.1: la sesión de la aplicación y la de la zona de empresa no se mezclan
+enum AmbitoSesion {
+  propio
+  empresa
+
+  @@map("ambito_sesion")
+}
+
+enum MotivoRetiro {
+  administrador
+  persona
+  baja
+
+  @@map("motivo_retiro")
+}
+
+// Pertenencia de una cuenta a una organización de empresa. Índices únicos parciales en el SQL de la
+// migración: un `vigente` por perfil en todo el sistema (H-ADM-04) y un `invitada` o `vigente` por
+// organización y perfil.
+model MiembroOrganizacion {
+  id                String            @id @default(uuid()) @db.Uuid
+  organizacionId    String            @map("organizacion_id") @db.Uuid
+  perfilId          String            @map("perfil_id") @db.Uuid
+  origen            OrigenPertenencia
+  estado            EstadoPertenencia
+  // H-ADM-01: el administrador es una condición de la pertenencia, no un rol de la cuenta
+  administrador     Boolean           @default(false)
+  equiposPropuestos String[]          @default([]) @map("equipos_propuestos") @db.Uuid
+  invitadaPor       String?           @map("invitada_por") @db.Uuid
+  invitadaEn        DateTime?         @map("invitada_en") @db.Timestamptz(3)
+  respondidaEn      DateTime?         @map("respondida_en") @db.Timestamptz(3)
+  retiradaEn        DateTime?         @map("retirada_en") @db.Timestamptz(3)
+  motivoRetiro      MotivoRetiro?     @map("motivo_retiro")
+  creadaEn          DateTime          @default(now()) @map("creada_en") @db.Timestamptz(3)
+
+  organizacion Organizacion  @relation(fields: [organizacionId], references: [id])
+  perfil       PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+
+  @@index([organizacionId])
+  @@index([perfilId])
+  @@map("miembro_organizacion")
+}
+
+// EN-05 Equipo de Trabajo — CUN-05 (specs/05-equipos/plan.md). Cada equipo pertenece a una organización.
+// Desde la fusión del 25 de noviembre de 2026 es el único modelo de equipo: lo lee y lo administrará
+// 08-administracion (REQ-ADM-28), que retiró el suyo (D-F1).
 model Equipo {
   id             String   @id @default(uuid()) @db.Uuid
   organizacionId String   @map("organizacion_id") @db.Uuid
   nombre         String
   creadoEn       DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
 
-  organizacion Organizacion     @relation(fields: [organizacionId], references: [id])
+  organizacion Organizacion      @relation(fields: [organizacionId], references: [id])
   miembros     MiembroDeEquipo[]
 
   @@unique([id, organizacionId])
+  // REQ-ADM-28 (migración 20261125000000). El responsable único (REQ-ADM-30) es un índice parcial del SQL
+  @@unique([organizacionId, nombre])
   @@index([organizacionId])
   @@map("equipo")
 }
@@ -419,9 +572,9 @@ model MiembroDeEquipo {
   rolEnEquipo    RolEnEquipo @map("rol_en_equipo")
   incorporadoEn  DateTime    @default(now()) @map("incorporado_en") @db.Timestamptz(3)
 
-// Autorización concedida por el propio integrante, nunca por el responsable.
-estadoConsentimiento EstadoConsentimientoEquipo @default(pendiente) @map("estado_consentimiento")
-consentimientoCambiadoEn DateTime? @map("consentimiento_cambiado_en") @db.Timestamptz(3)
+  // Autorización concedida por el propio integrante, nunca por el responsable.
+  estadoConsentimiento     EstadoConsentimientoEquipo @default(pendiente) @map("estado_consentimiento")
+  consentimientoCambiadoEn DateTime?                  @map("consentimiento_cambiado_en") @db.Timestamptz(3)
 
   organizacion Organizacion  @relation(fields: [organizacionId], references: [id])
   equipo       Equipo        @relation(fields: [equipoId, organizacionId], references: [id, organizacionId])
@@ -432,4 +585,82 @@ consentimientoCambiadoEn DateTime? @map("consentimiento_cambiado_en") @db.Timest
   @@index([organizacionId])
   @@index([perfilId])
   @@map("miembro_de_equipo")
+}
+
+// ---- 09-tareas-personales ----
+
+// EN-04 Tarea, solo lo personal (specs/09-tareas-personales/plan.md §3.1) · T-047. H-TP-19: se llama
+// `TareaPersonal` / `tarea_personal` porque las tareas del equipo (CUN-07) irán en otro modelo. Tres estados (H-TP-01); la
+// franja no se guarda: la calcula el código (tareas/dominio/franja.ts).
+enum EstadoTarea {
+  pendiente
+  hecha
+  descartada
+
+  @@map("estado_tarea")
+}
+
+model TareaPersonal {
+  id                  String      @id @default(uuid()) @db.Uuid
+  organizacionId      String      @map("organizacion_id") @db.Uuid
+  // RN-EST-01: la tarea personal es de un perfil, y solo ese perfil la ve (REQ-CUN03-19)
+  perfilId            String      @map("perfil_id") @db.Uuid
+  texto               String      @db.VarChar(200)
+  // H-TP-03: día del calendario de la persona; nula = sin fecha
+  fecha               DateTime?   @db.Date
+  // Hora límite opcional, «HH:mm» en `zonaHoraria`; solo con fecha
+  horaLimite          String?     @map("hora_limite") @db.VarChar(5)
+  // IANA en que se dijo la fecha (P-05): la del perfil al registrar o al cambiar la fecha
+  zonaHoraria         String      @map("zona_horaria")
+  // Esperando de alguien (REQ-CUN03-04, R-12): solo el nombre, sin contacto
+  deQuien             String?     @map("de_quien") @db.VarChar(80)
+  esperadaDesde       DateTime?   @map("esperada_desde") @db.Date
+  estado              EstadoTarea @default(pendiente)
+  hechaEn             DateTime?   @map("hecha_en") @db.Timestamptz(3)
+  descartadaEn        DateTime?   @map("descartada_en") @db.Timestamptz(3)
+  // La Operación tareas.registrar que la creó (AD-09); única: confirmar dos veces crea una
+  operacionOrigenId   String      @unique @map("operacion_origen_id") @db.Uuid
+  // REQ-CUN03-26 · T-125: con quién o para qué es, tal como lo dijo la persona; forma parte de la ficha
+  contexto            String?     @db.VarChar(200)
+  // REQ-CUN03-27 · H-TP-31: la fecha para la que la persona eligió «Mantener abierta»; el aviso vuelve con otra
+  vencimientoAtendido DateTime?   @map("vencimiento_atendido") @db.Date
+  // REQ-CUN03-28 · T-129 · H-TP-33 a 35: el resumen de la bitácora que redactó el asistente, y cuándo. Lo
+  // escribe solo el trabajo diario; nunca se genera al leer. Nulos hasta el primer resumen
+  resumen             String?     @db.VarChar(280)
+  resumenEn           DateTime?   @map("resumen_en") @db.Timestamptz(3)
+  creadaEn            DateTime    @default(now()) @map("creada_en") @db.Timestamptz(3)
+  actualizadaEn       DateTime    @updatedAt @map("actualizada_en") @db.Timestamptz(3)
+
+  organizacion    Organizacion  @relation(fields: [organizacionId], references: [id])
+  perfil          PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  operacionOrigen Operacion     @relation(fields: [operacionOrigenId], references: [id])
+  avances         AvanceTarea[]
+
+  @@index([perfilId, estado, fecha])
+  @@index([organizacionId])
+  @@map("tarea_personal")
+}
+
+// 09-tareas-personales plan §13.1 · T-125 · REQ-CUN03-22. La bitácora de una tarea: cada avance que la persona
+// confirmó, con su momento y su zona (P-05). Es un dato de la tarea, no de la conversación: no lo toca la
+// retención de la transcripción. No se corrige ni se borra uno a uno (H-TP-27); se borra con la tarea.
+model AvanceTarea {
+  id                String   @id @default(uuid()) @db.Uuid
+  organizacionId    String   @map("organizacion_id") @db.Uuid
+  perfilId          String   @map("perfil_id") @db.Uuid
+  tareaId           String   @map("tarea_id") @db.Uuid
+  texto             String   @db.VarChar(500)
+  anotadoEn         DateTime @default(now()) @map("anotado_en") @db.Timestamptz(3)
+  zonaHoraria       String   @map("zona_horaria")
+  // La Operación tareas.anotar_avance que lo anotó (AD-09); única: confirmar dos veces anota uno
+  operacionOrigenId String   @unique @map("operacion_origen_id") @db.Uuid
+
+  organizacion    Organizacion  @relation(fields: [organizacionId], references: [id])
+  perfil          PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  tarea           TareaPersonal @relation(fields: [tareaId], references: [id], onDelete: Cascade)
+  operacionOrigen Operacion     @relation(fields: [operacionOrigenId], references: [id])
+
+  @@index([tareaId, anotadoEn])
+  @@index([organizacionId])
+  @@map("avance_tarea")
 }

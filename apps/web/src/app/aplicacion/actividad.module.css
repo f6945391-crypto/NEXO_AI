@@ -1,0 +1,123 @@
+/* T-070 · REQ-CUN02-33 · design/ARQUITECTURA-VISUAL-MOVIL.md §3 ter. Lo propio de Actividad; el período, la
+   lista y el vacío reutilizan las clases de Agenda en globales.css. Solo tokens. */
+
+.actividad {
+  display: grid;
+  gap: var(--espaciado-24);
+}
+
+.hastaAhora {
+  margin: var(--espaciado-8) 0 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.bloque {
+  display: grid;
+  gap: var(--espaciado-12);
+}
+
+.bloque h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-8);
+  margin: 0;
+  font-size: var(--tam-cuerpo);
+}
+
+.dia h4 {
+  margin: 0 0 var(--espaciado-8);
+  font-size: var(--tam-etiqueta);
+}
+
+.dia {
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-md);
+}
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.duracion {
+  margin: var(--espaciado-8) 0 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+/* La hora de una acción del asistente va en su tinte, como un apunte (§3 ter) */
+.horaAgente {
+  font-variant-numeric: tabular-nums;
+  color: var(--agente-base);
+  font-weight: 600;
+}
+
+.datos {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: var(--espaciado-12);
+  row-gap: var(--espaciado-8);
+  margin: var(--espaciado-8) 0 0;
+  font-size: var(--tam-etiqueta);
+}
+
+.par {
+  display: contents;
+}
+
+.datos dt {
+  color: var(--texto-suave);
+}
+
+.datos dd {
+  margin: 0;
+  color: var(--texto-fuerte);
+  font-weight: 600;
+}
+
+.desde {
+  margin: var(--espaciado-8) 0 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.vacioBloque {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.sinCalendario {
+  display: grid;
+  justify-items: start;
+  gap: var(--espaciado-12);
+}
+
+.sinCalendario p {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+/* Todo el período vacío: centrado en el lienzo, como el vacío de Agenda */
+.vacioPeriodo {
+  display: grid;
+  place-items: center;
+  min-height: 320px;
+  border: 1px dashed var(--borde-base);
+  border-radius: var(--radio-lg);
+  background: var(--superficie-elevada);
+}
+
+.vacioPeriodo .vacio > * + * {
+  margin-top: var(--espaciado-12);
+}
+
+/* Siguiente, en el período actual: lo que viene está en Agenda (H-JOR-08) */
+.actividad :global(.periodo__paso:disabled) {
+  cursor: default;
+  opacity: var(--estado-cargando-opacidad);
+}

@@ -1,0 +1,348 @@
+/* T-062 · specs/08-administracion/plan.md §7.2. La zona de empresa: navegación propia a la izquierda y un lienzo.
+   Solo variables de globales.css (tokens de design/tokens.json). */
+
+.empresa {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--superficie-base);
+}
+
+.empresa__navegacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaciado-24);
+  padding: var(--espaciado-24) var(--espaciado-16);
+  border-right: 1px solid var(--borde-base);
+  background: var(--superficie-elevada);
+}
+
+.empresa__marca {
+  display: grid;
+  gap: var(--espaciado-8);
+  padding: 0 var(--espaciado-8);
+}
+
+.empresa__organizacion {
+  margin: 0;
+  font-size: var(--tam-subtitulo);
+  font-weight: 600;
+}
+
+.empresa__apartados {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.empresa__apartado {
+  display: block;
+  padding: var(--espaciado-12);
+  border-radius: var(--radio-sm);
+  color: var(--texto-suave);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.empresa__apartado:hover {
+  background: var(--superficie-hundida);
+}
+
+.empresa__apartado[aria-current='page'] {
+  background: var(--marca-suave);
+  color: var(--marca-base);
+}
+
+.empresa__apartado:focus-visible,
+.empresa__menu-lista button:focus-visible,
+.empresa__plan select:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+.empresa__pie {
+  margin-top: auto;
+  display: grid;
+  gap: var(--espaciado-8);
+  padding: var(--espaciado-16) var(--espaciado-8) 0;
+  border-top: 1px solid var(--borde-base);
+}
+
+.empresa__cuenta {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+  overflow-wrap: anywhere;
+}
+
+.empresa__lienzo {
+  min-width: 0;
+  padding: var(--espaciado-32) var(--espaciado-40);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaciado-24);
+}
+
+.empresa__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--espaciado-16);
+}
+
+.empresa__cabecera h1 {
+  margin: 0;
+  font-size: var(--tam-titulo);
+}
+
+.empresa__subtitulo,
+.empresa__suave {
+  margin: var(--espaciado-8) 0 0;
+  color: var(--texto-suave);
+  line-height: 1.5;
+}
+
+.empresa__suave {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+}
+
+/* Personas */
+.empresa__tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--tam-etiqueta);
+}
+
+.empresa__tabla th,
+.empresa__tabla td {
+  padding: var(--espaciado-12);
+  border-bottom: 1px solid var(--borde-base);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.empresa__tabla thead th {
+  color: var(--texto-suave);
+  font-weight: 600;
+  background: var(--superficie-elevada);
+}
+
+.empresa__tabla tbody th {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.empresa__etiqueta {
+  display: inline-block;
+  padding: 2px var(--espaciado-8);
+  border-radius: 999px;
+  font-size: var(--tam-micro);
+  font-weight: 600;
+  background: var(--superficie-hundida);
+  color: var(--texto-suave);
+}
+
+.empresa__etiqueta--aviso {
+  background: var(--estado-advertencia-suave);
+  color: var(--estado-advertencia);
+}
+
+.empresa__entrada-accion .empresa__etiqueta {
+  margin-left: var(--espaciado-8);
+}
+
+.empresa__plan select {
+  font: inherit;
+  min-height: 36px;
+  padding: 0 var(--espaciado-8);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  color: var(--texto-fuerte);
+}
+
+.empresa__acciones {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.empresa__menu {
+  position: relative;
+}
+
+.empresa__menu-lista {
+  position: absolute;
+  right: 0;
+  z-index: 2;
+  min-width: 220px;
+  margin: var(--espaciado-8) 0 0;
+  padding: var(--espaciado-8);
+  list-style: none;
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-md);
+  background: var(--superficie-base);
+}
+
+.empresa__menu-lista button {
+  width: 100%;
+  padding: var(--espaciado-8) var(--espaciado-12);
+  border: none;
+  border-radius: var(--radio-sm);
+  background: none;
+  color: var(--texto-fuerte);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.empresa__menu-lista button:hover {
+  background: var(--superficie-hundida);
+}
+
+.empresa__panel {
+  display: grid;
+  gap: var(--espaciado-12);
+  max-width: 560px;
+  padding: var(--espaciado-24);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-md);
+  background: var(--superficie-elevada);
+}
+
+.empresa__panel h2 {
+  margin: 0;
+  font-size: var(--tam-cuerpo);
+}
+
+.empresa__formulario {
+  display: grid;
+  gap: var(--espaciado-16);
+}
+
+.empresa__casilla {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-8);
+  font-size: var(--tam-etiqueta);
+}
+
+/* La tarjeta de confirmación y la contraseña temporal, sobre el lienzo */
+.empresa__capa {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: var(--espaciado-24);
+  background: color-mix(in srgb, var(--texto-fuerte) 32%, transparent);
+}
+
+.empresa__confirmacion {
+  width: 100%;
+  max-width: 480px;
+  background: var(--superficie-base);
+}
+
+.empresa__temporal {
+  margin: 0;
+  padding: var(--espaciado-16);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-hundida);
+  font-size: var(--tam-subtitulo);
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+/* Equipos */
+.empresa__equipos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--espaciado-16);
+}
+
+.empresa__equipo article {
+  display: grid;
+  gap: var(--espaciado-12);
+  padding: var(--espaciado-24);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-md);
+  background: var(--superficie-base);
+}
+
+.empresa__equipo h2 {
+  margin: 0;
+  font-size: var(--tam-subtitulo);
+}
+
+.empresa__equipo dl {
+  margin: 0;
+  display: grid;
+  gap: var(--espaciado-12);
+}
+
+.empresa__equipo dt {
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.empresa__equipo dd {
+  margin: var(--espaciado-8) 0 0;
+}
+
+.empresa__miembros {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.empresa__sin-responsable {
+  display: inline-block;
+  padding: var(--espaciado-8) var(--espaciado-12);
+  border-radius: var(--radio-sm);
+  background: var(--estado-advertencia-suave);
+  color: var(--estado-advertencia);
+  font-weight: 600;
+}
+
+.empresa__vacio h2 {
+  margin: 0;
+  font-size: var(--tam-subtitulo);
+  color: var(--texto-suave);
+}
+
+/* Registro */
+.empresa__registro {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.empresa__entrada {
+  display: grid;
+  gap: var(--espaciado-8);
+  padding: var(--espaciado-16) 0;
+  border-bottom: 1px solid var(--borde-base);
+}
+
+.empresa__entrada p {
+  margin: 0;
+}
+
+.empresa__entrada-accion {
+  font-weight: 600;
+}
+
+.empresa__entrada-datos,
+.empresa__entrada-pie {
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}

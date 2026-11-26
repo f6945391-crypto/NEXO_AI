@@ -315,7 +315,7 @@ Pendiente de integracion mediante nuevo PR.
 - Contratos Zod y errores estandarizados: avance local registrado en la seccion 13.11.
 - Completar consentimiento individual y auditoria.
 - Completar rejilla, alternativas y estados visuales.
-- Resolver INC-16 e INC-17 con el equipo.
+- Resolver INC-33 e INC-34 con el equipo.
 - Resolver D-8.
 - Ejecutar la verificacion integral y preparar el PR.
 
@@ -412,7 +412,7 @@ Satisface REQ-CUN05-14, REQ-CUN05-15 y REQ-CUN05-16.
 - El endpoint PATCH de escritura directa fue eliminado.
   Los cambios se realizan mediante POST /operaciones,
   confirmacion y descarte de Operaciones.
-- No se modifica el modelo Prisma hasta resolver INC-16.
+- No se modifica el modelo Prisma hasta resolver INC-33.
 
 Estado: implementado localmente y probado.
 Pendiente de revision e integracion con el equipo.
@@ -462,8 +462,8 @@ aislamiento organizacional y rollback de auditoria.
 - Verificacion de escenarios excepcionales de navegacion
   y errores de conexion en el frontend.
 - Compilacion de produccion y verificacion integral.
-- Unificacion del modelo de equipos (INC-16).
-- Integracion de la interfaz en Agenda (INC-17).
+- Unificacion del modelo de equipos (INC-33).
+- Integracion de la interfaz en Agenda (INC-34).
 - Revision del equipo y nuevo Pull Request.
 
 A-4 queda implementada localmente.
@@ -558,7 +558,7 @@ autorizados y con consentimiento vigente.
 - Validar la interfaz mediante TypeScript y pruebas manuales.
 
 No se modifican modelos Prisma ni migraciones.
-No se cierran INC-16 ni INC-17.
+No se cierran INC-33 ni INC-34.
 El diseno permanece pendiente de revision del equipo.
 
 
@@ -586,7 +586,7 @@ El diseno permanece pendiente de revision del equipo.
 
 T-105, T-108, T-111 y T-116 permanecen en curso.
 No se modifican requisitos funcionales ni migraciones.
-INC-16 e INC-17 permanecen abiertas.
+INC-33 e INC-34 permanecen abiertas.
 
 
 ### 13.14 Disponibilidad individual para la rejilla
@@ -680,7 +680,7 @@ ausencia de datos y exclusion de informacion privada.
 T-105, T-108 y T-115.
 
 No modifica los requisitos funcionales aprobados.
-No resuelve INC-16 ni INC-17.
+No resuelve INC-33 ni INC-34.
 No introduce cambios en el modelo persistente.
 
 #### Resultados de implementacion (24/11/2026)
@@ -716,7 +716,7 @@ del total de API; no se contabilizan dos veces.
 - Verificar accesibilidad, bandas y presentacion horaria.
 - Incorporar alternativas y recalculo.
 - Ejecutar la verificacion integral del repositorio.
-- Resolver INC-16 e INC-17 con el equipo.
+- Resolver INC-33 e INC-34 con el equipo.
 - Revisar e integrar mediante Pull Request.
 
 ### 13.15 Rejilla visual de disponibilidad
@@ -776,9 +776,9 @@ REQ-CUN05-05, REQ-CUN05-07, REQ-CUN05-08, REQ-CUN05-13.
 #### Limites
 
 La integracion definitiva en Agenda permanece pendiente
-de coordinacion con el equipo (INC-17).
+de coordinacion con el equipo (INC-34).
 La unificacion del modelo de equipos permanece pendiente
-(INC-16).
+(INC-33).
 
 ### 13.16 Cierre funcional de interfaz y agente
 
@@ -842,7 +842,7 @@ No sustituyen la verificacion integral final.
 
 #### Limitaciones pendientes
 
-- INC-16: compatibilidad con el modelo de equipos de Franco.
+- INC-33: compatibilidad con el modelo de equipos de Franco.
 - D-8: participantes externos e invitaciones.
 - Pruebas web automatizadas y extremo a extremo.
 - Verificacion con un proveedor real de IA.
@@ -890,3 +890,36 @@ pendientes de CUN-05.
 
 Estado: verificacion integral aprobada; pendiente revision
 e integracion mediante Pull Request.
+
+---
+
+## 14. Dónde vive cada cosa desde el 7 de noviembre de 2026 (línea de la zona de empresa)
+
+**Añadida en la fusión del 25 de noviembre de 2026** (rama `version_parcial`). Viene del esbozo que la tanda 4 escribió para este archivo antes de conocer el plan de CUN-05. **El modelo de datos es el de este plan (§4 y §12), no el de `08-administracion`:** las tablas son `equipo` y `miembro_de_equipo`, con el consentimiento en sus columnas (D-F1). Donde esta sección habla de `consentimiento_disponibilidad` o de `miembro_equipo`, se lee `miembro_de_equipo.estado_consentimiento`. Lo que sigue vale como propuesta para pasar el panorama del responsable a «Mi equipo» de la zona de empresa, **tarea posterior al 26 de noviembre de 2026** (D-F4): hoy la disponibilidad es un corte de Agenda (INC-36).
+
+**Decisión del equipo del 6 de noviembre de 2026** (`specs/08-administracion/plan.md` §7, H-ADM-22): la disponibilidad que el responsable consulta de su equipo vive en la **zona de empresa**, en «Mi equipo». REQ-CUN05-17 da además a **cualquier miembro** libre/ocupado para convocar, y el colaborador no entra en la zona. De ahí salen **dos usos de la misma lectura** (H-EMP-05; reparto completo en `ESTRUCTURA-PERFIL-EMPRESARIAL.md` §3):
+
+| Uso | Dónde | Quién | Cómo se pide | Requisitos |
+|---|---|---|---|---|
+| **Panorama del equipo** | Zona de empresa, «Mi equipo», solo web | Responsable | Al abrir el apartado; rango y navegación por decidir (§6.3 del documento de la raíz) | REQ-CUN05-07, 08, 11, 13, 15; REQ-ACC-17 |
+| **Para convocar** | Aplicación: rejilla en el lienzo (web); alternativas en la tarjeta (móvil, por decidir) | Responsable y colaborador | Por el asistente, con participantes, rango y duración | REQ-CUN05-01 a 10, 13, 17 |
+| **Compartir mi libre/ocupado** | Aplicación, Ajustes, fila «Organización», por equipo (propuesta, H-EMP-12) | Cada miembro, sobre sí | Aceptar o retirar; retirar es inmediato | REQ-CUN05-14, 16; REQ-ENC-12 |
+
+### 14.1 Lo que esta área espera de `08-administracion`
+
+| Necesita | Qué es en `08-administracion` | Para | Estado en su plan |
+|---|---|---|---|
+| Miembros de un equipo | La misma lectura exportada que pide `03-tareas` (`EquiposLectura`: `miembros(equipoId)`, `esMiembro(perfilId, equipoId)`), fuera de `AdministracionModule` | Resolver participantes por nombre (REQ-CUN05-01); filas del panorama | **Pedido nuevo** (H-EMP-20; `specs/03-tareas/plan.md` §1.1) |
+| Autoridad del responsable en su equipo | `@SoloResponsable(resolverEquipo)` | El panorama de la zona (REQ-CUN05-11) | Previsto, T-066 |
+| Ser miembro del equipo | `@MiembroDelEquipo(resolverEquipo)` | La consulta para convocar de un colaborador (REQ-CUN05-17) | **Pedido nuevo** (H-EMP-21) |
+| Lectura entre organizaciones, justificada | `PertenenciasRepositorio`, el único sitio con `sinAislar` del área (§4.3) | Libre/ocupado de una cuenta afiliada: su `evento_agenda` está en su organización personal (H-ADM-16) | **Fila nueva en `08-administracion/plan.md` §4.3**: «Libre/ocupado de un miembro que lo compartió: solo `inicio`, `fin` y si ocupa, de `evento_agenda`, por `perfil_id` y rango; nunca título, lugar ni asistentes (REQ-CUN05-13)». La pide esta área |
+| Al salir alguien de un equipo | Oyente de `SalidaDeEquipo` | Retirar su consentimiento y dejar de leer su libre/ocupado de inmediato (REQ-ADM-25, REQ-CUN05-14) | Evento previsto, T-063 (§5.4). El oyente es T-103 |
+| Rutas de la zona | Prefijo `/administracion/*` con `ambito: 'empresa'` | `GET /administracion/mi-equipo/:equipoId/disponibilidad?desde&hasta`, con `@SoloResponsable`; página bajo `app/(empresa)/administracion/mi-equipo/` | Prefijo previsto (§7.3). La ruta es propuesta de esta área |
+| Pertenencia en el contexto | `ContextoSolicitud.empresa` y `@EnEmpresa()` | La consulta para convocar desde la aplicación (`ambito: 'propio'`): `GET /disponibilidad?equipoId&participantes&desde&hasta&duracion` y la herramienta del asistente `disponibilidad.consultar` | Previsto, T-059 |
+
+### 14.2 Notas para el plan completo
+
+- **No se guarda la disponibilidad de nadie.** Se calcula al consultar desde `evento_agenda`, que ya es una réplica (AD-10). Así REQ-ENC-12 («borra los datos de disponibilidad que hubiera guardado») se cumple por construcción. El consentimiento sí se guarda: `consentimiento_disponibilidad` (`perfil_id`, `equipo_id`, `estado` pendiente · concedido · rechazado · revocado, `cambiado_en`) en la organización de la empresa, en `MODELOS_CON_ORGANIZACION`. REQ-CUN05-15 lo lee.
+- **El cálculo es una función pura**, `calcularDisponibilidadComun()`, con el criterio de RN-CAL-01 (`spec.md` §1) y la banda como parámetro de la plataforma (R-44). No reutiliza `generarAlternativas()` de `02-agenda`: aquella aplica DP-02 (alternativas ante un conflicto propio), con otras reglas.
+- **Quien no compartió, o no tiene el calendario conectado, figura sin datos**, nunca libre (R-15, REQ-CUN05-08).
+- **CUN-06 (convocar)** no se planifica hasta que se especifique. T-107 queda reservada.

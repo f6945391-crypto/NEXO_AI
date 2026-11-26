@@ -4,7 +4,10 @@ import { refresh } from 'next/cache';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import {
+  CambioContrasenaSolicitud,
   ClaveAlcanceGoogle,
+  ControlTarea,
+  ConversacionAsistente,
   DecisionAsistente,
   EnlaceGoogleRespuesta,
   IngresoRespuesta,
@@ -14,6 +17,7 @@ import {
   PrimerIngresoSolicitud,
   RespuestaAsistente,
   ZonaHoraria,
+  type TareaPersonal,
 } from '@nexoai/contratos';
 import {
   borrarTokens,
@@ -136,6 +140,22 @@ export async function confirmarCambioZona(id: string): Promise<{ error?: string 
   return {};
 }
 
+// REQ-ACC-18 · T-121. La API devuelve tokens nuevos para esta sesión, que se guardan en las cookies: las demás
+// sesiones de la cuenta quedan cerradas
+export async function cambiarContrasena(actual: string, nueva: string): Promise<{ error?: string }> {
+  const datos = CambioContrasenaSolicitud.safeParse({ actual, nueva });
+  if (!datos.success) return { error: 'La contraseña nueva tiene que tener al menos 12 caracteres.' };
+  const token = await tokenDeAcceso();
+  try {
+    const respuesta = await llamarApi('/auth/contrasena', { metodo: 'PATCH', cuerpo: datos.data, token });
+    if (respuesta.estado !== 200) return { error: mensajeDeError(respuesta.cuerpo, 'No se pudo cambiar la contraseña. Inténtalo de nuevo.') };
+    await guardarTokens(IngresoRespuesta.parse(respuesta.cuerpo));
+  } catch {
+    return { error: SIN_CONEXION };
+  }
+  return {};
+}
+
 export async function descartarOperacion(id: string): Promise<void> {
   const token = await tokenDeAcceso();
   try {
@@ -155,8 +175,9 @@ async function hablarConAsistente(ruta: string, cuerpo: unknown): Promise<Result
     const respuesta = await llamarApi(ruta, { metodo: 'POST', cuerpo, token });
     const leida = RespuestaAsistente.safeParse(respuesta.cuerpo);
     if (respuesta.estado !== 200 || !leida.success) return { error: mensajeDeError(respuesta.cuerpo, 'El asistente no pudo responder. Inténtalo de nuevo.') };
-    // Si algo quedó hecho, la agenda de la página se vuelve a pedir
-    if (leida.data.turnos.some((turno) => turno.tipo === 'resultado')) refresh();
+    // Si algo quedó hecho, la agenda de la página se vuelve a pedir; si algo quedó en espera, la franja
+    // del lienzo también (T-045, REQ-CAP-25)
+    if (leida.data.turnos.some((turno) => turno.tipo === 'resultado' || turno.tipo === 'en_espera')) refresh();
     return { respuesta: leida.data };
   } catch {
     return { error: SIN_CONEXION };
@@ -175,6 +196,19 @@ export async function decidirEnAsistente(decision: DecisionAsistente): Promise<R
   return hablarConAsistente('/asistente/decisiones', valida.data);
 }
 
+// T-039 · REQ-AGT-03: «Ver anteriores» trae la página anterior de la conversación
+export async function verAnteriores(cursor: string): Promise<{ conversacion?: ConversacionAsistente; error?: string }> {
+  const token = await tokenDeAcceso();
+  try {
+    const respuesta = await llamarApi(`/asistente/conversacion?antes=${encodeURIComponent(cursor)}&limite=3`, { token });
+    const leida = ConversacionAsistente.safeParse(respuesta.cuerpo);
+    if (respuesta.estado !== 200 || !leida.success) return { error: mensajeDeError(respuesta.cuerpo, 'No se pudo traer lo anterior.') };
+    return { conversacion: leida.data };
+  } catch {
+    return { error: SIN_CONEXION };
+  }
+}
+
 // REQ-ACC-12: lo único que el usuario hace con su cuenta.
 export async function salir(): Promise<void> {
   const renovacion = (await cookies()).get(COOKIE_RENOVACION)?.value;
@@ -187,4 +221,61 @@ export async function salir(): Promise<void> {
   }
   await borrarTokens();
   redirect('/entrar');
+}
+
+// T-052, T-053 · REQ-CUN03-09, 10, 11 · H-TP-07. Los controles de una tarea. «Hecho», «Recibido» y «Reabrir»
+// no llevan tarjeta: la API propone y confirma en un paso, por Operaciones. Descartar sí: se propone, la web
+// pinta la tarjeta tal como llega y se confirma o se deja. Crear y cambiar no tienen camino aquí (R-42).
+export type ResultadoControl = { tarea?: TareaPersonal; error?: string };
+
+async function controlDeTarea(id: string, accion: 'hecha' | 'reabrir' | 'mantener-abierta'): Promise<ResultadoControl> {
+  const token = await tokenDeAcceso();
+  try {
+    const respuesta = await llamarApi(`/tareas/${encodeURIComponent(id)}/${accion}`, { metodo: 'POST', token });
+    const control = ControlTarea.safeParse(respuesta.cuerpo);
+    if (respuesta.estado !== 200 || !control.success) return { error: mensajeDeError(respuesta.cuerpo, 'No se pudo cambiar la tarea. Inténtalo de nuevo.') };
+    refresh();
+    return { tarea: control.data.tarea };
+  } catch {
+    return { error: SIN_CONEXION };
+  }
+}
+
+export async function marcarHecha(id: string): Promise<ResultadoControl> {
+  return controlDeTarea(id, 'hecha');
+}
+
+export async function reabrirTarea(id: string): Promise<ResultadoControl> {
+  return controlDeTarea(id, 'reabrir');
+}
+
+// T-127 · REQ-CUN03-27 · H-TP-31: «Mantener abierta» sobre el aviso de una tarea vencida. Sin tarjeta, como
+// «Hecho»: la API propone y confirma en un paso, y la página se vuelve a pedir sin el aviso
+export async function mantenerAbierta(id: string): Promise<ResultadoControl> {
+  return controlDeTarea(id, 'mantener-abierta');
+}
+
+export async function proponerDescartarTarea(id: string): Promise<ResultadoPropuesta> {
+  const token = await tokenDeAcceso();
+  try {
+    const respuesta = await llamarApi('/operaciones', { metodo: 'POST', cuerpo: { tipo: 'tareas.descartar', carga: { tareaId: id }, origen: 'control_directo' }, token });
+    if (respuesta.estado !== 201) return { error: mensajeDeError(respuesta.cuerpo) };
+    return { propuesta: OperacionRespuesta.parse(respuesta.cuerpo) };
+  } catch {
+    return { error: SIN_CONEXION };
+  }
+}
+
+export async function confirmarDescartarTarea(operacionId: string): Promise<{ error?: string }> {
+  const token = await tokenDeAcceso();
+  try {
+    const respuesta = await llamarApi(`/operaciones/${encodeURIComponent(operacionId)}/confirmar`, { metodo: 'POST', token });
+    if (respuesta.estado !== 200 || OperacionRespuesta.parse(respuesta.cuerpo).estado !== 'ejecutada') {
+      return { error: mensajeDeError(respuesta.cuerpo, 'No se pudo descartar la tarea. Inténtalo de nuevo.') };
+    }
+  } catch {
+    return { error: SIN_CONEXION };
+  }
+  refresh();
+  return {};
 }

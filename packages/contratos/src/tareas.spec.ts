@@ -1,0 +1,108 @@
+import { describe, expect, it } from 'vitest';
+import { ArgsRegistrarEvento, TurnoDeHerramienta } from './agente';
+import { DecisionAsistente, DesenlaceEpisodio } from './asistente';
+import {
+  ArgsAnotarAvance,
+  CargaAnotarAvance,
+  ArgsTareaExistente,
+  CargaCambiarTarea,
+  CargaRegistrarTarea,
+  CargaTareaExistente,
+  ConsultaTareas,
+  TareaPersonal,
+} from './tareas';
+
+// T-046 · specs/09-tareas-personales/tasks.md
+const ID = '0b6e7d1c-3a52-4c1f-9a7e-2f0c5d9e8b11';
+
+describe('contratos.tareas', () => {
+  it('registrar: solo el texto es obligatorio', () => {
+    expect(CargaRegistrarTarea.parse({ texto: 'Llamar al dentista' })).toEqual({ texto: 'Llamar al dentista' });
+    expect(CargaRegistrarTarea.safeParse({}).success).toBe(false);
+    expect(CargaRegistrarTarea.safeParse({ texto: '   ' }).success).toBe(false);
+  });
+
+  it('registrar: la hora límite sin fecha y el «desde» sin persona no validan', () => {
+    expect(CargaRegistrarTarea.safeParse({ texto: 'Pagar', horaLimite: '18:00' }).success).toBe(false);
+    expect(CargaRegistrarTarea.safeParse({ texto: 'Pagar', fecha: '2026-11-14', horaLimite: '18:00' }).success).toBe(true);
+    expect(CargaRegistrarTarea.safeParse({ texto: 'Presupuesto', esperadaDesde: '2026-11-03' }).success).toBe(false);
+    expect(CargaRegistrarTarea.safeParse({ texto: 'Presupuesto', deQuien: 'Juan', esperadaDesde: '2026-11-03' }).success).toBe(true);
+  });
+
+  it('registrar: no admite campos de contacto (R-12)', () => {
+    expect(CargaRegistrarTarea.safeParse({ texto: 'Presupuesto', deQuien: 'Juan', correo: 'juan@x.pe' }).success).toBe(false);
+  });
+
+  it('cambiar: sin ningún campo no valida; null en fecha sí, y significa quitarla', () => {
+    expect(CargaCambiarTarea.safeParse({ tareaId: ID }).success).toBe(false);
+    expect(CargaCambiarTarea.parse({ tareaId: ID, fecha: null })).toEqual({ tareaId: ID, fecha: null });
+    expect(CargaCambiarTarea.safeParse({ tareaId: ID, texto: 'Pagar la luz' }).success).toBe(true);
+  });
+
+  it('tarea existente: por id, y el agente también por texto', () => {
+    expect(CargaTareaExistente.safeParse({ tareaId: ID }).success).toBe(true);
+    expect(CargaTareaExistente.safeParse({ tareaId: 'no' }).success).toBe(false);
+    expect(ArgsTareaExistente.safeParse({ texto: 'el recibo' }).success).toBe(true);
+    expect(ArgsTareaExistente.safeParse({}).success).toBe(false);
+  });
+
+  it('consulta: franja conocida y fecha AAAA-MM-DD', () => {
+    expect(ConsultaTareas.parse({ franja: 'esperando', hasta: '2026-11-15' })).toEqual({ franja: 'esperando', hasta: '2026-11-15' });
+    expect(ConsultaTareas.safeParse({ franja: 'encargadas' }).success).toBe(false);
+    expect(ConsultaTareas.safeParse({ hasta: '15/11/2026' }).success).toBe(false);
+  });
+
+  it('la tarea que sale de la API lleva franja, vencida y sus textos', () => {
+    const tarea = {
+      id: ID,
+      texto: 'Renovar el DNI',
+      estado: 'pendiente',
+      franja: 'con_fecha',
+      fecha: '2026-11-06',
+      horaLimite: null,
+      zonaHoraria: 'America/Lima',
+      deQuien: null,
+      esperadaDesde: null,
+      vencida: true,
+      hechaEn: null,
+      creadaEn: '2026-11-01T10:00:00-05:00',
+      cuando: 'Vencía el viernes 6 de noviembre',
+      espera: null,
+      cierre: null,
+      // T-125 · REQ-CUN03-24, 26, 27
+      contexto: 'Lo saco en la oficina de Miraflores',
+      bitacora: [{ id: ID, texto: 'Pedí la cita', anotadoEn: '2026-11-05T09:30:00-05:00', cuando: 'Jueves 5 de noviembre, 09:30' }],
+      // T-129 · REQ-CUN03-28
+      resumen: { texto: 'Ya pediste la cita; falta ir a la oficina.', en: '2026-11-06T03:00:00-05:00', cuando: 'Resumen al viernes 6 de noviembre' },
+      avisoVencida: true,
+    };
+    expect(TareaPersonal.parse(tarea)).toEqual(tarea);
+    expect(TareaPersonal.safeParse({ ...tarea, franja: 'vencida' }).success).toBe(false);
+    // Una tarea sin bitácora la trae vacía, no ausente
+    const { bitacora: _, ...sinBitacora } = tarea;
+    expect(TareaPersonal.safeParse(sinBitacora).success).toBe(false);
+    // T-129: sin resumen, nulo; un resumen de más de 280 caracteres no vale
+    expect(TareaPersonal.safeParse({ ...tarea, resumen: null }).success).toBe(true);
+    expect(TareaPersonal.safeParse({ ...tarea, resumen: { ...tarea.resumen, texto: 'x'.repeat(281) } }).success).toBe(false);
+  });
+
+  it('T-125, T-126: el avance, la bitácora del asistente y el desenlace «anotado»', () => {
+    expect(CargaAnotarAvance.safeParse({ tareaId: ID, texto: 'Ya hablé con Juan' }).success).toBe(true);
+    expect(CargaAnotarAvance.safeParse({ tareaId: ID, texto: '' }).success).toBe(false);
+    expect(CargaAnotarAvance.safeParse({ tareaId: ID, texto: 'x'.repeat(501) }).success).toBe(false);
+    expect(ArgsAnotarAvance.safeParse({ avance: 'Ya hablé con Juan' }).success).toBe(false);
+    expect(ArgsAnotarAvance.safeParse({ tarea: 'presupuesto', avance: 'Ya hablé con Juan' }).success).toBe(true);
+    expect(DesenlaceEpisodio.safeParse('anotado').success).toBe(true);
+    const bitacora = { tareaId: ID, tarea: 'Presupuesto', contexto: null, avances: [], resumen: null, vacia: 'Esta tarea no tiene avances anotados.' };
+    expect(TurnoDeHerramienta.safeParse({ tipo: 'bitacora', bitacora }).success).toBe(true);
+  });
+
+  it('los contratos existentes siguen validando lo mismo', () => {
+    expect(ArgsRegistrarEvento.safeParse({ titulo: 'Dentista', fecha: '2026-11-14', horaInicio: '10:00' }).success).toBe(true);
+    expect(ArgsRegistrarEvento.safeParse({ fecha: '14-11-2026' }).success).toBe(false);
+    expect(DecisionAsistente.safeParse({ operacionId: ID, decision: 'confirmar' }).success).toBe(true);
+    expect(DesenlaceEpisodio.safeParse('guardado').success).toBe(true);
+    expect(DesenlaceEpisodio.safeParse('hecho').success).toBe(true);
+    expect(TurnoDeHerramienta.safeParse({ tipo: 'tareas', lista: { alcance: 'Pendientes', zona: 'Hora de Lima (GMT-5)', grupos: [] } }).success).toBe(true);
+  });
+});

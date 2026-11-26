@@ -2,13 +2,17 @@ import { Module } from '@nestjs/common';
 import { AgendaModule } from '../agenda/agenda.module';
 import { EquiposModule } from '../equipos/equipos.module';
 import { IntegracionesModule } from '../integraciones/integraciones.module';
+import { TareasModule } from '../tareas/tareas.module';
 import { AsistenteController } from './asistente.controller';
 import { AsistenteService } from './asistente.service';
+import { TranscripcionService } from './transcripcion';
+import { NotaDeContinuidad } from './nota-de-continuidad';
+import { CicloDeVidaAsistente } from './ciclo-de-vida';
 import { ProcesadorEnEspera } from './en-espera';
 import { EjecutorHerramientas } from './herramientas/ejecutor-herramientas';
 import { HerramientasAgenda } from './herramientas/herramientas-agenda';
 import { HerramientasEquipos } from './herramientas/herramientas-equipos';
-import { HerramientasCaptura } from './herramientas/herramientas-captura';
+import { HerramientasTareas } from './herramientas/herramientas-tareas';
 import { LlamadasAuditadas } from './llamadas-auditadas';
 import { GUION_DEMOSTRACION } from './modelo/guion-demostracion';
 import { LlamadorModelo, OPCIONES_LLAMADOR, OPCIONES_POR_DEFECTO } from './modelo/llamador-modelo';
@@ -43,7 +47,7 @@ export function crearProveedorModelo(entorno: NodeJS.ProcessEnv = process.env): 
 }
 
 @Module({
-  imports: [AgendaModule, IntegracionesModule, EquiposModule],
+  imports: [AgendaModule, IntegracionesModule, TareasModule, EquiposModule],
   controllers: [AsistenteController],
   providers: [
     { provide: PROVEEDOR_MODELO, useFactory: () => crearProveedorModelo() },
@@ -52,11 +56,14 @@ export function crearProveedorModelo(entorno: NodeJS.ProcessEnv = process.env): 
     LlamadasAuditadas,
     EjecutorHerramientas,
     HerramientasAgenda,
+    HerramientasTareas,
     HerramientasEquipos,
-    HerramientasCaptura,
     AsistenteService,
+    TranscripcionService,
+    NotaDeContinuidad,
     ProcesadorEnEspera,
+    CicloDeVidaAsistente,
   ],
-  exports: [PROVEEDOR_MODELO, LlamadorModelo, LlamadasAuditadas, EjecutorHerramientas, AsistenteService, ProcesadorEnEspera],
+  exports: [PROVEEDOR_MODELO, LlamadorModelo, LlamadasAuditadas, EjecutorHerramientas, AsistenteService, ProcesadorEnEspera, CicloDeVidaAsistente],
 })
 export class AgenteModule {}

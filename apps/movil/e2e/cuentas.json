@@ -31,5 +31,57 @@
     "correo": "captura-espera-movil@nexoai.test",
     "rol": "colaborador",
     "plan": "empresarial"
+  },
+  "asistente": {
+    "correo": "semana-mes-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "asistenteEspera": {
+    "correo": "en-espera-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "semanaLlena": {
+    "correo": "semana-llena-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "actividad": {
+    "correo": "actividad-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "actividadVacia": {
+    "correo": "actividad-vacia-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "actividadSinCalendario": {
+    "correo": "actividad-sin-calendario-movil@nexoai.test",
+    "rol": "colaborador",
+    "plan": "empresarial"
+  },
+  "tareas": {
+    "correo": "movil-tareas-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "tareasVacio": {
+    "correo": "movil-tareas-vacio-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "tareasBitacora": {
+    "correo": "movil-tareas-bitacora-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "contrasena": {
+    "correo": "contrasena-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "organizacion": "personal",
+    "lista": true
   }
 }

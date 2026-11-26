@@ -284,6 +284,40 @@ Habilita todo lo demás. Sin requisito propio: cada tarea cita la decisión que 
   - Las pruebas del móvil arrancan su propia API sobre `nexoai_e2e_movil_prueba`, en el puerto 3103, con `apps/movil/e2e/cuentas.json`. El script de la web acepta ahora esas tres variables.
   - **Cómo probarlo en el teléfono:** `EXPO_PUBLIC_API_URL=http://<IP del equipo>:3000`, `npx pnpm@12.10.1 --filter @nexoai/movil start` y abrir el código QR con Expo Go. El firewall de Windows puede pedir permitir el puerto 3000.
 
+### T-121 · Cambiar la contraseña desde Ajustes
+
+- **Satisface:** REQ-ACC-18 · H-ACC-02
+- **Depende de:** T-004, T-005, T-027
+- **Contenido:** `PATCH /acceso/contrasena { actual, nueva }` con `@SobreLoPropio()`; reutiliza la validación de 12 caracteres y el cierre de sesiones de `autenticacion.service.ts` (lo mismo que REQ-ADM-14, pero lo pide la propia cuenta), y deja el evento de auditoría `contrasena.cambiada`. En Ajustes de la web, debajo de «Cambiar zona horaria», con el mismo patrón de tarjeta; en el móvil, igual. Es un control directo: no pasa por el asistente ni por una Operación, porque no tiene efecto externo
+- **Hecho cuando:** con la actual correcta cambia y cierra las demás sesiones; con la actual incorrecta, la nueva corta o igual a la actual, un solo error y nada cambia
+- **Pruebas:** `acceso.cambiar-contrasena` · extremo a extremo `acceso.cambiar-contrasena-desde-ajustes` (web) y `movil.cambiar-contrasena` (móvil)
+- **Estado:** hecha · 25 de noviembre de 2026, adelantada a pedido de Franco
+- **Notas de implementación:**
+  - La ruta es `PATCH /auth/contrasena`, no `/acceso/contrasena`: la API no tiene prefijo `/acceso` y lo de la sesión vive en `/auth` (plan §5.7).
+  - Devuelve tokens nuevos para la sesión que lo pidió, como el primer ingreso; las demás sesiones de la cuenta, también la de la zona de empresa, quedan revocadas y fallan en su siguiente renovación.
+  - Límite de 5 intentos por minuto por cuenta (`LimiteContrasenaGuard`, H-ACC-08).
+  - CORS admite ahora `PATCH`: sin él, Expo web no podía llamar a la ruta (`plataforma.cors-solo-origenes-listados` lo comprueba).
+  - Web: `cambio-contrasena.tsx` y la acción `cambiarContrasena`, que guarda los tokens nuevos en las cookies. Móvil: `pantallas/cambio-contrasena.tsx`, que los guarda en el almacenamiento seguro.
+  - Capturas: `design/capturas/2026-11-25-version-completa/web/43`, `44` y `movil/m26`, `m27`.
+
+### T-122 · Puerto de correo saliente
+
+- **Satisface:** PT-3 (propuesta del 25 de noviembre de 2026, pendiente de aval) · P-06 por analogía. Tarea de infraestructura (`SPEC.md` §2.2)
+- **Depende de:** el aval de PT-3
+- **Contenido:** `apps/api/src/plataforma/correo/`: puerto `EnviadorCorreo` con `CorreoSimulado` (en memoria, cuenta los envíos) y `CorreoSmtp` (sirve para Mailpit y para producción, sin SDK de proveedor), elegido con `CORREO_PROVEEDOR`; `CORREO_SMTP_URL` y `CORREO_REMITENTE` en `.env`. Mailpit en `docker-compose.yml`, puertos 1025 y 8025. Una prueba impide usar un cliente de correo fuera de esa carpeta, como la de P-06 para el modelo
+- **Hecho cuando:** un envío de prueba llega al buzón de Mailpit en desarrollo y al simulado en las pruebas, y ninguna prueba sale a internet
+- **Pruebas:** `plataforma.correo-solo-por-el-puerto`, `plataforma.correo-simulado`
+- **Estado:** pendiente · bloqueada por PT-3
+
+### T-123 · Restablecer la contraseña por enlace
+
+- **Satisface:** REQ-ACC-19
+- **Depende de:** T-122
+- **Contenido:** migración nueva con `restablecimiento_contrasena` (perfil, hash del token, vence en, usado en), en `MODELOS_CON_ORGANIZACION`. `POST /acceso/restablecer { correo }`, público, con el mismo limitador que el ingreso y siempre 200; `POST /acceso/restablecer/confirmar { token, nueva }`. Token de 32 bytes aleatorios del que solo se guarda el hash; un pedido nuevo invalida los anteriores; usarlo cierra todas las sesiones. Pantallas `/restablecer` en la web y el móvil, y «¿Olvidaste tu contraseña?» en Entrar
+- **Hecho cuando:** un correo inexistente recibe la misma respuesta y no se envía nada; un enlace válido cambia la contraseña y cierra las sesiones; uno vencido o usado falla con el mismo mensaje; el correo simulado recibió exactamente uno
+- **Pruebas:** `acceso.restablecer`
+- **Estado:** pendiente · bloqueada por PT-3 (espera a T-122)
+
 ---
 
-**Fuera de este desglose:** la contraseña olvidada (no tiene requisito). La variante móvil de Acceso pasó a T-028.
+**Fuera de este desglose:** ~~la contraseña olvidada (no tiene requisito)~~ desde el 25 de noviembre de 2026 es REQ-ACC-19 (T-123). La variante móvil de Acceso pasó a T-028.

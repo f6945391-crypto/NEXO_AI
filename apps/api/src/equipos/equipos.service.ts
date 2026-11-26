@@ -8,11 +8,28 @@ import { errorApi } from '../plataforma/errores';
 export class EquiposService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Devuelve los equipos a los que pertenece el usuario autenticado.
+  // REQ-CUN05-18 · T-120. Sin plan efectivo Empresarial, o sin ningún equipo, no hay consulta de
+  // disponibilidad. El plan del contexto ya es el efectivo (H-ADM-06). No alcanza al consentimiento
+  // propio, que va por su Operación (H-EQ-03).
+  async comprobarAcceso(contexto: ContextoSolicitud): Promise<void> {
+    if (contexto.plan !== 'empresarial') {
+      throw errorApi(403, 'SIN_PLAN_EMPRESARIAL', 'La disponibilidad de equipo es del Plan Empresarial.');
+    }
+    const equipos = await this.prisma.deOrganizacion(contexto.organizacionId).miembroDeEquipo.count({
+      where: { perfilId: contexto.perfilId },
+    });
+    if (equipos === 0) {
+      throw errorApi(403, 'SIN_EQUIPO', 'La disponibilidad de equipo requiere pertenecer a un equipo.');
+    }
+  }
+
+  // Devuelve los equipos a los que pertenece el usuario autenticado, con su responsable y cuántas personas
+  // tiene cada uno, responsable incluido (REQ-CUN05-19, H-EQ-01).
   async misEquipos(contexto: ContextoSolicitud) {
+    await this.comprobarAcceso(contexto);
     const db = this.prisma.deOrganizacion(contexto.organizacionId);
 
-    return db.miembroDeEquipo.findMany({
+    const membresias = await db.miembroDeEquipo.findMany({
       where: { perfilId: contexto.perfilId },
       select: {
         equipoId: true,
@@ -22,9 +39,22 @@ export class EquiposService {
             id: true,
             nombre: true,
             creadoEn: true,
+            miembros: {
+              select: { rolEnEquipo: true, perfil: { select: { correo: true } } },
+            },
           },
         },
       },
+    });
+
+    return membresias.map(({ equipo: { miembros, ...equipo }, ...membresia }) => {
+      const responsable = miembros.find((m) => m.rolEnEquipo === 'responsable');
+      return {
+        ...membresia,
+        equipo,
+        responsable: responsable ? { correo: responsable.perfil.correo } : null,
+        integrantes: miembros.length,
+      };
     });
   }
 
@@ -33,6 +63,7 @@ export class EquiposService {
     contexto: ContextoSolicitud,
     equipoId: string,
   ) {
+    await this.comprobarAcceso(contexto);
     const db = this.prisma.deOrganizacion(contexto.organizacionId);
 
     const membresia = await db.miembroDeEquipo.findFirst({

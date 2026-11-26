@@ -32,10 +32,20 @@ En 1440x900 eso desperdicia la pantalla y, sobre todo, contradice el trabajo del
 | Columna | Ancho | Papel | Duración de su contenido |
 |---|---|---|---|
 | Navegación | 72 | Cambiar de sujeto — tres secciones y Ajustes al pie | Permanente |
-| Conversación | 528 | Área de trabajo | Efímera: se vacía al cerrar |
+| Conversación | 528 | Área de trabajo | ~~Efímera: se vacía al cerrar~~ **Desde el 5 de noviembre de 2026 (avalada, REQ-AGT-03):** conserva la transcripción, con separadores entre episodios |
 | Lienzo | 840 | Contexto y memoria | Persistente |
 
 72 + 528 + 840 = 1440. El 528 mantiene la columna de tarjetas en ancho legible; el 840 es el mínimo donde la rejilla de disponibilidad sigue cabiendo.
+
+### Anchos menores de 1440
+
+*Añadido el 5 de noviembre de 2026, con el valor por defecto de `TRASPASO-CLAUDE-CODE.md` §7, decisión 10. Avalado por el equipo el 5 de noviembre de 2026. Responde a H-WEB-01 (`SPEC.md` §8).*
+
+| Ancho | Qué hace |
+|---|---|
+| 1440 o más | 72 · 528 · resto |
+| De 1024 a 1440 | **Cede primero la conversación**, hasta 400 px; después, el lienzo, que no baja de 500 px |
+| Menos de 1024 | Una sola columna: el lienzo, con la conversación como capa encima, igual que en el móvil (R-36) |
 
 ### La regla que lo sostiene todo
 
@@ -83,6 +93,23 @@ El modelo de lenguaje no puede cargar contexto indefinido, así que la conversac
 
 Lo cerrado no se pierde al vaciar: queda en el registro.
 
+> **Anterior.** Los tres párrafos de arriba son la versión del 26 de septiembre de 2026. Se conservan como registro.
+
+### Revisión del 5 de noviembre de 2026 — la conversación conserva la transcripción
+
+*Avalada por el equipo el 5 de noviembre de 2026. Sale de `INFORME-ESTRUCTURA-Y-REESTRUCTURACION-AGENTE.md` §4: el requisito tomó la mitad «desechable» de esta sección y perdió la otra mitad (quién vacía y a dónde va lo cerrado), y el código vaciaba solo, sin advertencia. Inconsistencia INC-16.*
+
+| Qué | Cómo |
+|---|---|
+| Lo que ve la persona | La **transcripción**: todo lo que pidió y lo que pasó, también tras recargar (REQ-AGT-03) |
+| Lo que lee el modelo | Solo el **episodio** abierto y la **nota de continuidad** (REQ-AGT-01 v2). Por eso la columna puede crecer sin que el modelo cargue más |
+| Separador entre episodios | Línea fina, texto pequeño centrado y color secundario: «Jueves 29, 16:12 · Se registró «Dentista»». El verbo va primero para que concuerde con cualquier título (*cambiado en T-039, el 6 de noviembre de 2026; antes decía «Dentista registrado»*). Lo arma el código con el desenlace que manda el servidor: se registró, se movió, se canceló, se descartó, «Tarea guardada». Si el episodio se cerró sin acción, solo la fecha y la hora. No es un turno: se deduce del cambio de episodio |
+| «Ver anteriores» | Botón secundario al inicio de la lista. Trae la página anterior, la pone arriba y **conserva la posición de lectura**. Desaparece cuando no hay más |
+| Al abrir | Los últimos episodios con sus separadores. El blanco inicial con ejemplos solo aparece si la transcripción está vacía de verdad |
+| Vaciado | No hay vaciado manual en esta fase (decisión 23 de `specs/07-agente/spec.md` §5) |
+| Modo Registro del lienzo (§4) | Sigue siendo el destino de la historia completa, con filtros. Llega con la sección Actividad; no se construye en esta revisión |
+| Textos | Sin vocabulario interno (R-40): en pantalla nunca aparecen «episodio», «turno» ni «transcripción» |
+
 ---
 
 ## 6. El registro
@@ -123,6 +150,8 @@ El mapeo sale sin forzar nada:
 **Equipo y permisos sale de la barra de trabajo.** Es configuración que se toca una vez y se revisa rara vez, no un sitio donde se trabaja a diario. Vive en **Ajustes**, al pie y separado por una línea.
 
 Eso no lo esconde: el estado del permiso **aparece donde estorba**, al intentar encargar algo a quien todavía no ha aceptado. Es R-20 — el agente pide solo lo que falta, cuando falta.
+
+> **Remisión del 7 de noviembre de 2026.** La administración de la organización y lo que el responsable tiene sobre su equipo **ya no viven en Ajustes**: van a la **zona de empresa**, aparte de la aplicación, con entrada propia (decisión del equipo del 6 de noviembre de 2026; §15). En Ajustes queda solo lo que es de la persona: la fila «Organización» (a qué empresa pertenece, sus equipos, salir si se sumó con su cuenta) y si comparte su libre/ocupado con cada equipo. La entrada a la zona va al pie de la navegación, encima de Ajustes, solo para quien administra o es responsable de un equipo, y abre otra pestaña. El párrafo de arriba se conserva como registro.
 
 **La sección activa tiene que ser la del sujeto en pantalla.** Si el lienzo muestra un encargo, la activa es Tareas. Se incumplía en cuatro de doce cuadros y está corregido; el validador web tiene que comprobarlo.
 
@@ -298,7 +327,7 @@ Ordenado por lo que más pesa.
 
 1. **La disposición de lienzo expandido se quedó sin cuadro.** El que había explicaba el diseño dentro de la pantalla y se eliminó. Hay que volver a dibujarla cumpliendo R-40, y llenando el lienzo con lo que de verdad se vería.
 2. **Ninguna de las tres secciones tiene portada.** Agenda, Tareas y Actividad existen en la navegación y no hay un cuadro que enseñe cada una al entrar. En la página está declarado como la fila 3, vacía a propósito para que se vea. Dentro de Tareas falta además la franja de **encargadas**, que es la lista de lo que delegaste.
-2. **Los niveles de período no están dibujados en web.** En móvil Agenda y Actividad tienen selector Hoy · Semana · Mes; en web no hay ni un cuadro con él.
+2. **Los niveles de período no están dibujados en web.** En móvil Agenda y Actividad tienen selector Hoy · Semana · Mes; en web no hay ni un cuadro con él. *6 de noviembre de 2026: Semana y Mes de Agenda quedan especificados (REQ-CUN01-14 y 15) y se construyen en T-044 con la misma forma que el móvil (§5.1 de `ARQUITECTURA-VISUAL-MOVIL.md`); el cuadro de Figma se regenera después con los scripts de `design/figma/`.*
 3. **Rehacer los 20 cuadros de `05 Flujos · Web`**, que siguen en la jerarquía vieja —navegación de 240 con texto, una columna de 1200—. Mientras sigan ahí, el archivo cuenta dos productos web distintos, y eso pesa más que cualquier detalle visual.
 4. **Estados del bucle sin cuadro**: encargo vencido, recordatorio, enlace caducado a los 7 días, colaborador que revoca a mitad. Están en `specs/04-comunicaciones` §7 sin forma.
 5. **Caminos alternos del acceso sin cuadro**: credenciales incorrectas, permiso revocado, y cómo se ve la aplicación cuando alguien elige «ahora no». Están en `specs/06-acceso` sin forma.
@@ -306,3 +335,94 @@ Ordenado por lo que más pesa.
 7. **Juego de iconos real.** Lo de hoy son marcadores de posición, y el de Encargos además está prestado del de Tareas.
 8. **Cifras de los límites del Plan Gratuito**, sin las cuales el blanco «fuera del plan» no puede decir qué se agotó.
 9. **Extraer `Fundamentos` como biblioteca publicada.**
+10. **La zona de empresa no tiene ningún cuadro** (§15.5). *Añadido el 7 de noviembre de 2026.*
+
+---
+
+## 15. La zona de empresa
+
+*Añadido el 7 de noviembre de 2026. Sale de la decisión del equipo del 6 de noviembre de 2026 (`specs/08-administracion/plan.md` §7, H-ADM-22) y de `ESTRUCTURA-PERFIL-EMPRESARIAL.md`. Pendiente de aval del equipo.*
+
+### 15.1 Qué es y qué no es
+
+Un **sitio aparte de la aplicación**, con su propia entrada, para **mirar el estado del equipo y administrar la organización**. No es una cuarta sección (R-32) ni una página de Ajustes (§7). Se entra con las mismas credenciales, en otra pestaña y con otra sesión; cerrar una no cierra la otra.
+
+| | La aplicación | La zona de empresa |
+|---|---|---|
+| Para qué | Actuar: pedir, delegar, responder, confirmar | Mirar el estado del equipo; administrar cuentas y equipos |
+| Quién entra | Toda cuenta | Quien administra o es responsable de al menos un equipo |
+| Plataforma | Web y móvil | Solo web (REQ-ADM-05) |
+| Asistente | Sí: la conversación es el área de trabajo | **No.** Sin conversación ni barra de entrada (REQ-ADM-07) |
+| Columnas | 72 · 528 · 840 | 72 · 1368 |
+
+**La regla que la sostiene:** en la aplicación se actúa; en la zona se mira. Lo que crea o cambia trabajo del equipo pasa por el asistente, así que vive en la aplicación. En esta versión, «Mi equipo» es de lectura; las únicas acciones de la zona son las de administrar, que el asistente no hace (H-ADM-11).
+
+### 15.2 Disposición
+
+```
+┌────────┬──────────────────────────────────────────────────┐
+│  Nav   │   Lienzo                                         │
+│ 72 px  │      1368 px                                     │
+│        │                                                  │
+│ Apar-  │   Cabecera: organización · apartado · (equipo)   │
+│ tados  │   ──────────────────────────────────────────     │
+│ de la  │   Tabla, tablero, panorama o documento           │
+│ zona   │                                                  │
+│        │                                                  │
+│ ─────  │                                                  │
+│ Ir a la│                                                  │
+│ aplica-│                                                  │
+│ ción   │                                                  │
+│ Salir  │                                                  │
+└────────┴──────────────────────────────────────────────────┘
+```
+
+| Elemento | Cómo |
+|---|---|
+| **Navegación propia** | Mismo ancho que la de la aplicación (72) para reutilizar la colección `Disposición` sin variables nuevas, pero **otros destinos**: los apartados de §15.3 que la cuenta puede ver. Como son destinos nuevos y poco frecuentes, cada icono lleva debajo su nombre corto. Al pie, separado por una línea: «Ir a la aplicación» (abre la aplicación, no comparte sesión) y «Salir» (cierra solo la sesión de la zona) |
+| **Lienzo** | 1368, el ancho del modo «Lienzo expandido» (§3). Es el único modo de la zona: no hay conversación que mostrar |
+| **Cabecera del lienzo** | Nombre de la organización y del apartado. En «Mi equipo», si la cuenta es responsable de varios equipos, un selector de equipo; con uno solo, su nombre sin selector |
+| **Tarjeta de confirmación** | La misma `Web / Tarjeta` de tipo Confirmación (§9), como capa centrada sobre el lienzo, con lo que va a hacer, sobre quién y qué no se deshace (REQ-ADM-16). Solo en «Personas» y «Equipos» |
+| **Anchos menores de 1440** | De 1024 a 1440, el lienzo ocupa lo que quede. Por debajo de 1024, **por decidir**: la zona trabaja con tablas y la rejilla, que no caben en una columna de teléfono |
+| **Dirección** | Hoy, `/administracion` en la misma dirección que la aplicación. Publicarla en una dirección propia más adelante no cambia nada de esta disposición |
+
+### 15.3 Los apartados
+
+| Apartado | Quién lo ve | Qué hay | Acciones | Requisitos |
+|---|---|---|---|---|
+| **Mi equipo** | Responsable, por cada equipo del que lo es. Un administrador que no es responsable no lo ve | Tres cortes con el mismo selector que los niveles de una sección: **Tareas** (tablero por persona, lo atrasado primero, lo que espera su decisión marcado), **Disponibilidad** (panorama de la semana: libre, ocupado, sin datos, fuera de banda; nunca un título) y **Reporte** (el documento completo de un período, para leer y descargar). Encima de Tareas, por decidir, los mismos cinco puntos del resumen | Ninguna sobre el trabajo en esta versión. Abrir una tarea lleva a la aplicación | REQ-ACC-17, REQ-CUN08-01, 04, 05, REQ-CUN05-07, 08, 11, 13, 15; H-ADM-22 |
+| **Personas** | Administrador | Tabla de cuentas e invitaciones, con estado, plan, equipos y si administra | Dar de alta, invitar y, por fila, solo lo que vale para su clase | REQ-ADM-08 a 19, 24, 25 |
+| **Equipos** | Administrador: todos, con acciones. Responsable: los suyos, sin acciones | Una tarjeta por equipo con su responsable y sus miembros; «Sin responsable» destacado | Crear, añadir, quitar, nombrar responsable (solo el administrador) | REQ-ADM-28 a 32 |
+| **Registro** | Administrador | Las acciones administrativas, de la más reciente a la más antigua, sin contenido de nadie | Ninguna | REQ-ADM-16 |
+
+**Orden en la navegación:** Mi equipo · Personas · Equipos · Registro. Quien solo es responsable ve Mi equipo y Equipos; quien solo administra, Personas, Equipos y Registro. La zona abre en el primero que la cuenta pueda ver.
+
+**Lo que cambia de §6.** El alcance de equipo del registro ya no se añade a la Actividad de la aplicación: lo del equipo no vuelve a la aplicación. Si llega, será un corte de «Mi equipo», con el mismo límite de privacidad de §6. No entra en esta versión.
+
+### 15.4 Textos (R-40)
+
+| Dónde | Texto |
+|---|---|
+| Entrada al pie de la navegación de la aplicación y nombre de la zona | **Por decidir** (H-EMP-11). «Administración» no vale para un responsable que no administra. Propuesta: «Empresa», o el nombre de la organización («Acme») |
+| Apartados | «Mi equipo», «Personas», «Equipos», «Registro» |
+| Cortes de Mi equipo | «Tareas», «Disponibilidad», «Reporte» |
+| Estado vacío de Mi equipo | «Todavía no hay tareas en Ventas. Cuando le encargues algo a alguien desde la aplicación, aparecerá aquí.» Sin formulario (R-42) |
+| Fila sin datos del panorama | «No comparte cuándo está libre», nunca «sin datos» ni «no hay datos» |
+| Nunca | «afiliación», «cuenta propia», «pertenencia», «zona», «lienzo», «ámbito» |
+
+### 15.5 Cuadros que faltan
+
+Ninguno existe. La lista completa, con los del móvil del colaborador y el aviso de invitación, está en `ESTRUCTURA-PERFIL-EMPRESARIAL.md` §6.6. Los de esta sección, con un grupo nuevo `Empresa` en la convención de §11:
+
+| Cuadro | Qué muestra |
+|---|---|
+| `WEB-v2 / Empresa / 01 Entrada` | La entrada propia, con el mismo formulario que la de la aplicación |
+| `WEB-v2 / Empresa / 02 Mi equipo · Todavía sin tareas` | Lo que ve un responsable recién nombrado |
+| `WEB-v2 / Empresa / 03 Mi equipo · Tareas` | El tablero por persona, con una tarea atrasada y una respuesta por decidir |
+| `WEB-v2 / Empresa / 04 Mi equipo · Reporte` | El reporte completo; la referencia es `design/reporte-equipo-muestra.html` |
+| `WEB-v2 / Empresa / 05 Mi equipo · Disponibilidad` | La semana de cinco personas, una sin datos y una franja fuera de banda |
+| `WEB-v2 / Empresa / 06 Personas` | La tabla, con una invitación pendiente arriba y una cuenta que se sumó con la suya |
+| `WEB-v2 / Empresa / 07 Dar de alta` · `08 Invitar` · `09 Equipos` · `10 Confirmación` | Los que pide `specs/08-administracion/spec.md` §5 como `Administración / 02` a `05` |
+| `WEB-v2 / Empresa / 11 Registro` | Las acciones administrativas |
+
+El grupo `Empresa` se suma a los de §11 (`Armazón`, `Blancos`, `Lienzo`, `Registro`, `Diálogos`). Los cuadros de `Administración / 01` a `05` que pide `08-administracion` §5 pasan a este grupo con su número nuevo; si el equipo prefiere conservar el nombre `Administración`, basta con cambiar el prefijo.

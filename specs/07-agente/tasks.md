@@ -8,6 +8,8 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
 
 **Orden:** T-029 → T-030 → T-031 → T-032 → T-036 → T-033 → T-034 → T-035. *Cambiado el 29 de octubre de 2026: el equipo eligió Groq para probar, y T-036 se adelanta para poder conversar con el agente apenas esté T-032.*
 
+**Revisión del 5 de noviembre de 2026** (§5, plan §14): T-038 → T-039 → **T-043** → T-040 → pulido visual (sin tarea, un commit) → T-041 → T-042, solo si sobra tiempo. *Orden ajustado el 5 de noviembre de 2026 con `PLAN-PRUEBAS-VISUAL-Y-AGENTE.md`, y el 6 de noviembre de 2026 con `PLAN-VALOR-USUARIO.md` (hito 1).* T-039 y T-040 dependen de T-038; T-042, de T-038 y T-040. Las dos decisiones previas quedaron tomadas el 6 de noviembre de 2026 (decisiones 27 y 28 del spec). Rama `modificacion/vision-nexoai`, solo en local: commits sin push. Tras cada tarea se para y se muestra el resultado.
+
 ---
 
 ## 1. Base del agente
@@ -165,3 +167,118 @@ Estados: `pendiente` · `en curso` · `hecha` · `bloqueada`.
   - `MODELO_PRECIOS` registra el precio del modelo configurado; sin ella el costo queda desconocido. El `.env` del equipo todavía no la tiene: con el nivel gratuito conviene `MODELO_PRECIOS=0,0`.
   - **Evaluación:** `npx pnpm@12.10.1 --filter @nexoai/api evaluar-asistente` (`src/cli/evaluar-asistente.ts`). Ocho frases fijas, sin datos personales, contra el proveedor del `.env`; solo mira qué herramienta elige el modelo y con qué argumentos, sin tocar base ni calendario. Deja 8 segundos entre frases por el límite por minuto de Groq (H-AGT-13). Gasta cuota: nunca en la integración continua.
   - **La primera evaluación dio 4 de 8:** el modelo pedía confirmación en texto en vez de llamar a la herramienta, porque las instrucciones decían que nada se hace sin confirmar. Se ajustaron (plan §6.1): llamar a la herramienta enseguida, que la tarjeta la muestra la aplicación, y no preguntar lo que falta. Con eso, 8 de 8. Las fechas relativas («el viernes», «pasado mañana») salieron bien en las dos.
+
+## 5. Revisión de la memoria (5 de noviembre de 2026)
+
+Escritas en la pasada de documentos de la rama (P0), con su «Hecho cuando» y sus pruebas, para que cada tarea después sea código y prueba (`TRASPASO-CLAUDE-CODE.md` §9). **Avaladas por el equipo el 5 de noviembre de 2026**, con los requisitos que implementan.
+
+El pulido visual que no cambia comportamiento (tarjeta en conflicto, lienzo en modo Objeto, atajos de pregunta, «Pensando», asa, anchos menores de 1440) **no es una tarea**: va en `design/` y con una línea en `SPEC.md` §11 (`TRASPASO-CLAUDE-CODE.md` §9 y §10.2).
+
+**Prueba intermitente conocida** (5 de noviembre de 2026, `verificar` de P0): `movil.acceso-recorrido`, de T-028, agotó los 30 s en `page.goto` la primera vez, con Expo web compilando en frío mientras corrían a la vez las pruebas de la API y de la web. Repetidas solas, las 8 pruebas del móvil pasan (1,0 min). No viene de esta revisión. Si vuelve a pasar, se mira el arranque en frío de Expo web en `apps/movil/playwright.config.ts`, sin subir el tiempo a ciegas.
+
+### T-038 · Transcripción propia, fuera del estado del grafo
+
+- **Requisitos:** REQ-AGT-03, REQ-AGT-01 v2 (el episodio) · plan §14.2, §14.3, §14.4, §14.6
+- **Depende de:** T-037
+- **Contenido:** migración nueva con `turno_asistente` y `conversacion_agente.ultima_actividad_en`; `TranscripcionService`; `turnos` fuera del estado y `turnosNuevos` con reductor que reemplaza; el servicio anota tras cada `invoke` y en `atenderEnEspera`; `GET /asistente/conversacion` paginado con `episodios` y su `cierre`; `episodioCerrado` y `episodioId` en `RespuestaAsistente`; `ultima_actividad_en` se actualiza con cada mensaje, sin cerrar nada todavía (el cierre por inactividad es T-041); la tabla nueva en `MODELOS_CON_ORGANIZACION`
+- **Hecho cuando:** un episodio cerrado sigue apareciendo al pedir la conversación, con su `cierre`; la página anterior llega con el cursor; el punto de control ya no contiene turnos; un reintento no duplica turnos; otra organización y otro perfil no ven la transcripción
+- **Pruebas:** `agente.transcripcion-persiste` (nueva), `agente.interrumpe-hasta-decidir` y `agente.conversacion-con-contexto` (ajustadas), `plataforma.aislamiento-entre-organizaciones` (ampliada)
+- **Estado:** hecha · 5 de noviembre de 2026. 7 pruebas nuevas; las 70 del agente en verde
+- **«Hecho cuando», punto por punto:**
+  - ✔ Un episodio cerrado sigue al pedir la conversación, con su `cierre` (`agente.transcripcion-persiste`: «un episodio cerrado sigue…» y «descartar deja el episodio…»)
+  - ✔ La página anterior llega con el cursor (`agente.transcripcion-persiste`: «ver anteriores…»)
+  - ✔ El punto de control ya no contiene turnos (`agente.transcripcion-persiste`: «el punto de control ya no guarda…»; se decodifica y no lleva `turnos`)
+  - ✔ Un reintento no duplica turnos (`agente.transcripcion-persiste`: «un reintento no duplica turnos»)
+  - ✔ Otra organización y otro perfil no ven la transcripción (`agente.transcripcion-persiste`: «otra persona…»; `plataforma.aislamiento-entre-organizaciones`, ampliada con una fila de `turno_asistente`)
+  - ✔ La interrupción sobrevive sin turnos en el estado (`agente.interrumpe-hasta-decidir`, ajustada)
+- **Medido (B2 de `PLAN-PRUEBAS-VISUAL-Y-AGENTE.md`):** el punto de control de un episodio con una propuesta, con sus 2 puntos, ocupa **5 546 bytes** (unos 8 KB antes). **No llega a la meta de menos de 2 KB**: lo que queda son los mensajes para el modelo, con el resultado de cada herramienta, y la codificación en base64 de los bytes de LangGraph. La prueba fija el límite en 6 000 bytes para que no vuelva a crecer. Reducirlo más es una decisión aparte, no de T-038
+- **Notas de implementación (ajustes al plan §14, anotados en plan §14.13):**
+  - **Sin canal `turnosNuevos`.** Un reductor que reemplaza pierde los turnos de los nodos anteriores de la misma vuelta, y uno que acumula los guarda en el punto de control. Los nodos entregan sus turnos a `anotar`, un recolector de cada invocación que pasa `construirGrafo`; el servicio los guarda con `TranscripcionService.anotar` después de `invoke`. Ningún nodo anota antes de `interrupt()`. La prueba decodifica el punto de control y comprueba que no lleva turnos.
+  - **Cada episodio trae sus turnos** (`episodios[].turnos`) en vez de turnos sueltos con `episodioId`: el cliente no tiene que agruparlos. La página es de episodios (3 por defecto, de 1 a 20); `cursor` es el id del episodio más antiguo de la página y `antes` lo recibe.
+  - Tabla `turno_asistente` (novena migración), modelo `TurnoTranscripcion` en Prisma para no confundirlo con el `TurnoAsistente` de los contratos. `secuencia` da un orden estable a turnos con el mismo instante. Entra en `MODELOS_CON_ORGANIZACION`, y `plataforma.aislamiento-entre-organizaciones` se amplió con una fila sembrada de la tabla nueva.
+  - `cierre` del episodio: la Operación ejecutada si la hay, si no la última descartada; el título sale de lo que devolvió Google o de la carga. Un fallo o un episodio sin Operación es `sin_accion`.
+  - `RespuestaAsistente` cambia `conversacionId` por `episodioId` y `cerrada` por `episodioCerrado`. La web y el móvil solo cambian de nombre y siguen mostrando el episodio abierto: **lo que se ve no cambia hasta T-039**.
+  - `ultima_actividad_en` se actualiza con cada mensaje y cada decisión; nada lo lee todavía (T-041).
+  - La transcripción empieza vacía: las conversaciones de desarrollo anteriores no se migran (plan §14.4).
+
+### T-039 · Web y móvil que no se vacían
+
+- **Requisitos:** REQ-AGT-03 · plan §14.7 · `design/ARQUITECTURA-VISUAL-WEB.md` §5, revisión del 5 de noviembre
+- **Depende de:** T-038
+- **Contenido:** quitar el vaciado de `conversacion.tsx` y `captura.tsx`; separador entre episodios con el `cierre` del servidor; «Ver anteriores» con el cursor, conservando la posición; blanco inicial solo con la transcripción vacía; el móvil abre con el episodio en curso y el anterior; capturas nuevas en una carpeta con fecha, sin tocar `design/capturas/2026-11-04/`; la prueba de B2 pasa a medir el punto de control **tras confirmar**, no con la propuesta abierta
+- **Decisión 27, tomada:** guardar una tarea en espera cierra el episodio con el desenlace `guardado` y el separador «Tarea guardada». Entra aquí: el nodo `herramientas` marca el cierre, y `DesenlaceEpisodio` suma `guardado`
+- **Hecho cuando:** tras confirmar y escribir otra cosa, la petición, la tarjeta y el «Listo» siguen visibles, con un separador y el mensaje nuevo debajo; al recargar la web o reabrir la capa se ve lo mismo; «Ver anteriores» trae un episodio más y desaparece cuando no hay más; en pantalla no aparecen «episodio», «turno» ni «transcripción» (R-40)
+- **Pruebas:** `web.asistente-agenda-y-confirma` (ampliada), `web.asistente-historial` (nueva), `movil.captura-propone-y-confirma` (ampliada)
+- **Estado:** hecha · 6 de noviembre de 2026
+- **«Hecho cuando», punto por punto:**
+  - ✔ Tras confirmar y escribir otra cosa, la petición, la tarjeta y el «Listo» siguen, con un separador y el mensaje nuevo debajo (`web.asistente-agenda-y-confirma`, `movil.captura-propone-y-confirma`)
+  - ✔ Al recargar la web o reabrir la capa se ve lo mismo (`web.asistente-historial`, `movil.captura-propone-y-confirma`)
+  - ✔ «Ver anteriores» trae un episodio más y desaparece cuando no hay más (`web.asistente-historial`)
+  - ✔ En pantalla no aparecen «episodio», «turno» ni «transcripción» (`web.asistente-historial`)
+  - ✔ Guardar una tarea cierra el episodio como `guardado`, con la línea «Tarea guardada» (`agente.transcripcion-persiste`, `web.asistente-historial`)
+  - ✔ B2 medido tras confirmar (`agente.transcripcion-persiste`)
+- **Notas de implementación:**
+  - **La respuesta trae `cierre`** (`RespuestaAsistente.cierre`), para pintar el separador sin recargar. Lo arma el servidor (`TranscripcionService.cierre`), como pide el plan §14.6.
+  - **Texto del separador: el verbo va primero** («Viernes 6, 20:42 · Se registró «Reunión»»), no «Reunión registrado». Así concuerda con cualquier título, sea masculino o femenino. Se cambió el ejemplo en `design/ARQUITECTURA-VISUAL-WEB.md` §5. Para descartado: «Se descartó «…»»; tarea en espera: «Tarea guardada»; sin acción: solo la fecha y la hora.
+  - El separador es un `li` con `role="separator"` y un `aria-label` con su texto; «Ver anteriores» es un botón con ese nombre. La web trae 3 tramos por página; el móvil abre con 2 (el que está en curso y el anterior) y trae 3 más con cada «Ver anteriores».
+  - Al poner arriba lo anterior, la web compensa la altura añadida para no mover lo que se leía; el móvil usa `maintainVisibleContentPosition` y no baja al final.
+  - El móvil pide `/perfil` al abrir la capa, para escribir la hora de los separadores en la zona del perfil (P-05).
+  - El texto del separador vive en `apps/web/src/lib/separador.ts` y, copiado tal cual, en `apps/movil/src/separador.ts`: mismos textos en las dos plataformas.
+  - Cuenta nueva de pruebas `historial` en `apps/web/e2e/cuentas.json`. Ninguna otra cambia de nombre.
+  - Las capturas antes y después (A1 a A6) las hace el equipo con `design/capturas/2026-11-04/herramientas/`; esta tarea no las genera.
+  - **B2:** tras confirmar, el punto de control ocupa **7 777 bytes**; con la propuesta abierta eran 5 546. La meta de menos de 2 KB sigue sin alcanzarse; la prueba fija el límite en 8 000 bytes
+- **Para las pruebas del equipo (A1 a A6):** las cuentas de `e2e/cuentas.json` no cambian de nombre; los nombres accesibles se conservan (`Para confirmar`, `Pídele algo al asistente`, `Enviar`, `Confirmar`, `Descartar`, `Asistente`, `Pedir algo al asistente`, `Cerrar`); el botón nuevo se llama `Ver anteriores` y el separador tiene `role="separator"` y un `aria-label` que dice qué es
+
+### T-040 · Nota de continuidad y evaluación por trayectoria
+
+- **Requisitos:** REQ-AGT-01 v2 · plan §14.2, §14.5, §14.10 · decisión 19
+- **Depende de:** T-038
+- **Contenido:** `NotaDeContinuidad` con las 5 últimas acciones confirmadas o las de 7 días, lo menor, y lo que está en espera, marcada como datos; `interpretar` la recibe del servicio; las instrucciones permiten responder «¿qué hicimos?» con la nota; un guion del simulado que la usa; la evaluación mira la trayectoria y suma dos casos
+- **Hecho cuando:** con el simulado, tras confirmar «Dentista», «mejor a las 5» consulta y propone `agenda.modificar` con el id del evento, y nada se ejecuta sin la tarjeta; la nota no pasa de 5 acciones ni de 7 días y lleva el aviso de contenido externo; contra Groq, en **una sola corrida avisada antes**, los dos casos nuevos pasan y los nueve anteriores siguen pasando
+- **Pruebas:** `agente.nota-de-continuidad` (nueva, con guion), `agente.conversacion-con-contexto` (ajustada al criterio 2 de la v2), `agente.evaluacion` (a mano)
+- **Para las pruebas del equipo (B5 a B10):** un guion del simulado que use la nota, con al menos «mejor a las 5» tras un resultado (consulta y luego modificar con el id), «¿qué hicimos?» (solo texto, sin herramientas) y «hola» con acciones en la nota (solo el saludo); `NotaDeContinuidad.armar` público, y el `sistema` completo guardado en `llamada_modelo`; los casos B6 a B9 y B15 escritos en `evaluar-asistente`
+- **Estado:** hecha · 25 de noviembre de 2026, salvo la corrida contra Groq, que hace la sesión principal avisando antes **Evaluación contra Groq (`openai/gpt-oss-120b`), 25 de noviembre de 2026:** B6 a B9 y B15 pasan, y también los tres casos de la bitácora y el resumen diario. Corridas completas: 21 y 22 de 24, con 30 segundos entre llamadas por el límite por minuto del nivel gratuito; con 8 segundos, 13 casos recibían 429. Ajustes: B6 acepta proponer directamente con el id de la nota (H-AGT-18); `tareas_consultar` admite `null` en sus filtros, porque el modelo los manda y Groq rechazaba la llamada (400 `tool_use_failed`); «Ya pagué el recibo» admite consultar antes; el adaptador incluye en el error el código y el mensaje del proveedor; la evaluación admite `EVALUACION_SOLO` para repetir casos sueltos. Sigue fallando «recuérdame pagar el recibo antes del sábado», que sale para el viernes (H-TP-36)
+- **«Hecho cuando», punto por punto:**
+  - ✔ Con el simulado, tras confirmar «Dentista», «mejor a las 5» en un episodio nuevo consulta y propone `agenda.modificar` con el id del evento; nada se escribe en el calendario hasta confirmar la tarjeta (`agente.nota-de-continuidad`)
+  - ✔ La nota no pasa de 5 acciones ni de 7 días y lleva el aviso de contenido externo (`agente.nota-de-continuidad`, con 20 acciones en 10 días)
+  - ✔ «¿Qué hicimos?» responde con la nota y sin herramientas; «hola» con acciones en la nota solo saluda; la nota de una persona no lleva nada de otra ni de la zona de empresa (`agente.nota-de-continuidad`)
+  - Pendiente: la corrida única contra Groq con los casos nuevos
+- **Notas de implementación:**
+  - `NotaDeContinuidad` (`src/agente/nota-de-continuidad.ts`): `leer(contexto)` da el contenido y `armar(contexto)` el texto, o `null` si no hay nada que contar. Lee con `prismaService.deOrganizacion(...)`, por perfil y solo el ámbito `propio` (P-10, RT-01), y no escribe nada. Cada acción: desenlace (el de `DESENLACE_POR_TIPO`, ahora exportado de `transcripcion.ts`, con «recibido» y «descartado» para las tareas), clase, título, fecha y hora en la zona del perfil, la fecha AAAA-MM-DD, `eventoId` o `tareaId`, el avance si se anotó uno, y hace cuánto. Lo en espera, con su solicitud y su motivo
+  - **Dónde se inyecta:** campo nuevo `PeticionModelo.nota`, aparte de `sistema`. El adaptador compatible con OpenAI la envía como un mensaje `user` antes de la conversación, no en el de sistema, para que los títulos de terceros no tengan la autoridad de las instrucciones (H-AGT-15). El servicio la arma una vez por invocación y solo si `interpretar` llama al modelo; no entra en el estado del grafo, así que no pesa en el punto de control
+  - Las instrucciones suman tres reglas: la nota son datos y solo se usa si la persona se refiere a ella; «¿qué hicimos?» se responde solo con la nota y sin herramientas; una referencia a algo de la nota se resuelve consultando la agenda y proponiendo con su id
+  - El simulado lee la nota solo con las marcas `{nota:eventoId}`, `{nota:fecha}`, `{nota:tareaId}` y `{nota:resumen}`, documentadas en `modelo-simulado.ts`, y suma `{tarde:5}` (17:00). El guion de demostración gana «mejor a las N», «¿qué hicimos?» y «hola»
+  - `evaluar-asistente` mira la trayectoria (caso con `luego`: si la primera llamada es la esperada, le da su resultado y juzga la segunda) y suma B6, B7, B8 (dos casos), B9, B15 y tres de la bitácora de tareas (registrar con contexto, anotar el avance por la ficha, «¿cómo va…?»): 23 casos
+  - **Peso medido:** con el simulado (cuatro caracteres por ficha), la nota con cinco acciones de agenda suma unas **350 fichas** de entrada, más que las 150 que estimaba el plan §14.5 y que el «+200 como mucho» de B10. Los ids pesan. Se decide con la corrida contra Groq; si pesa, se baja a 3 acciones (`ACCIONES_EN_NOTA`)
+
+### T-041 · Ciclo de vida: inactividad, retención y tope del grafo
+
+- **Requisitos:** REQ-AGT-01 v2, REQ-AGT-03 · plan §14.8 · decisiones 18, 20 y 21 · H-AGT-14
+- **Depende de:** T-038
+- **Contenido:** cierre del episodio por inactividad, **al recibir un mensaje y en el trabajador** (*movido aquí desde T-038 el 5 de noviembre de 2026*); en el trabajador, además, borrar los puntos de control de episodios cerrados hace más de 7 días y la transcripción de más de 90; `recursionLimit` explícito desde `TOPE_VUELTAS`
+- **Hecho cuando:** un episodio sin propuesta pendiente y con 30 minutos sin actividad se cierra al llegar el siguiente mensaje y en la pasada del trabajador, y el mensaje nuevo abre otro; un episodio **con** propuesta pendiente no se cierra por inactividad mientras siga abierta H-AG-08 (ver la nota de abajo); un punto de control de un episodio cerrado hace 8 días desaparece y su transcripción y su auditoría siguen; un turno de hace 91 días desaparece y uno de hace 89 sigue; superar el tope del grafo termina en el turno de fallo de H-AGT-10, sin el error de LangGraph
+- **Pruebas:** `agente.episodio-caduca` (nueva), `agente.retencion-puntos-de-control` (nueva), `agente.retencion-transcripcion` (nueva), `agente.tope-del-grafo` (nueva)
+- **Para las pruebas del equipo (B11 a B13):** cada trabajo del trabajador invocable sin esperar al cron, con un método como `repasar()` de la cola en espera, y el reloj inyectable para simular 30 minutos, 7 días y 90 días
+- **Caducidad (H-AG-08, decidida el 6 de noviembre de 2026):** una propuesta de más de 24 horas la caduca el trabajador: Operación a `descartada`, turno visible «Esta propuesta caducó; no se hizo nada», episodio cerrado como `descartado`. Nunca al siguiente mensaje ni en silencio. **Hecho cuando**, además: una propuesta de hace 25 horas queda descartada en la pasada del trabajador, con su turno en la transcripción, y una de hace 23 horas sigue. Prueba: `agente.propuesta-caduca` (nueva)
+- **Estado:** hecha · 25 de noviembre de 2026. `CicloDeVidaAsistente.repasar(ahora)` (`src/agente/ciclo-de-vida.ts`) hace los cuatro trabajos de §14.8 en una pasada, con el reloj inyectable; `TrabajadorCicloDeVida` lo programa cada minuto en la cola `asistente-ciclo-de-vida` del proceso trabajador. `AsistenteService.enviar` cierra el episodio inactivo antes de abrir otro, y `caducarPropuesta` reanuda el grafo como descartado con `caducada: true`, que cambia el texto del turno. `recursionLimit = TOPE_VUELTAS * 3 + 6`. Ajustes en §14.13. Las 9 pruebas en `test/agente/ciclo-de-vida.spec.ts`
+
+### T-042 · Alternativas de referente y enlace con la actividad (si el equipo lo acepta)
+
+- **Requisitos:** REQ-AGT-04 · plan §14.9 · H-AGT-17 · decisión 26
+- **Depende de:** T-038, T-040
+- **Contenido:** `agenda.modificar_evento` y `agenda.cancelar_evento` aceptan lo que la persona dijo en lugar del id; la búsqueda y la decisión de si hay ambigüedad son código; nodo `alternativas` sin modelo y turno `alternativas_de_referente`; decisión `referente` en `POST /asistente/decisiones`; `actividad_tipo` y `actividad_id` en cada turno que resolvió una actividad; herramienta `actividad.contexto(id)`; un caso de evaluación
+- **Hecho cuando:** con dos «Dentista», «mueve el dentista a las 5» muestra las dos y no propone nada; elegir una lleva a su tarjeta; con uno solo, se propone directo y la tarjeta dice cuál; escribir otra cosa descarta la lista; los turnos de una acción quedan ligados a su compromiso
+- **Pruebas:** `agente.alternativas-de-referente` (nueva), `web.asistente-alternativas-de-referente` (nueva), `agente.evaluacion` (a mano, un caso)
+- **Para las pruebas del equipo (B14 a B17):** el turno `alternativas_de_referente` y la decisión `referente` en `packages/contratos/src/asistente.ts`, y un guion del simulado con dos «Dentista»
+- **Estado:** pendiente
+
+### T-043 · La agenda del asistente al día y el fin a medianoche
+
+- **Requisitos:** REQ-CUN01-13 y REQ-CUN01-01, precisados el 6 de noviembre de 2026 · `02-agenda`, decisiones 18 y 19
+- **Origen:** prueba del equipo del 6 de noviembre de 2026 con su calendario real: «¿qué tengo hoy?» respondió con una copia de casi 2 minutos y no vio un compromiso recién creado en Google; «de 11 pm a 12» se rechazó por la hora de fin y la tarjeta dijo que no se había indicado
+- **Depende de:** T-039
+- **Contenido:** `agenda.consultar`, y la búsqueda del compromiso al modificar o cancelar, actualizan la copia antes de leer, sin margen; las pantallas conservan el margen de 2 minutos. Al volver de conectar Google, la copia se actualiza en seguida. En `agenda.registrar_evento` y `agenda.modificar_evento`, una hora de fin igual o anterior a la de inicio se lleva al día siguiente. La tarjeta muestra la fecha de fin cuando es otro día
+- **Hecho cuando:** un compromiso que aparece en Google entre dos consultas seguidas del asistente sale en la segunda; tras conectar Google, la copia tiene fecha de sincronización posterior a la conexión sin esperar al trabajador; «de 11 pm a 12» propone de 23:00 a 00:00 del día siguiente y «de 11 pm a 1 am», de 23:00 a 01:00, sin «no indicaste la hora de fin»; `GET /agenda/eventos` sigue sin volver a leer Google antes de 2 minutos
+- **Pruebas:** `agente.agenda.consulta-tal-cual` (ampliada), `agente.agenda.fin-al-dia-siguiente` (nueva), `acceso.google-conectar-sincroniza` (nueva)
+- **Estado:** hecha · 7 de noviembre de 2026. `ConsultaAgendaService` admite `{ alDia: true }` (sin margen), que usan `agenda.consultar` y la búsqueda al modificar; las pantallas conservan los 2 minutos, salvo que el permiso de calendario se haya concedido después de la última copia (`conectadoDespuesDe`), lo que cubre la vuelta de Google sin acoplar `integraciones` con `agenda`. `horario()` añade la fecha del fin cuando cae en otro día. Las tres pruebas en `test/agente/herramientas-agenda.spec.ts`
+

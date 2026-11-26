@@ -53,3 +53,157 @@ test.describe('agenda.estado-vacio-abre-captura', () => {
     await expect(page.locator('main input')).toHaveCount(0);
   });
 });
+
+// T-044 · REQ-CUN01-14, REQ-CUN01-15. La cuenta agendaSemana tiene compromisos sembrados desde el lunes de
+// esta semana en Lima (e2e/arrancar-api.mjs): uno el lunes, tres el miércoles, cinco el jueves, uno
+// cancelado el viernes y uno el martes de la semana siguiente.
+const hoyEnLima = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
+const enDias = (dia: string, n: number) => new Date(Date.parse(`${dia}T12:00:00Z`) + n * 24 * 3600_000).toISOString().slice(0, 10);
+const lunes = enDias(hoyEnLima, -((new Date(`${hoyEnLima}T12:00:00Z`).getUTCDay() + 6) % 7));
+const nombreDe = (dia: string) =>
+  new Intl.DateTimeFormat('es', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(`${dia}T12:00:00Z`));
+const mayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
+const nombreDeMes = (dia: string) => mayuscula(new Intl.DateTimeFormat('es', { timeZone: 'UTC', month: 'long', year: 'numeric' }).format(new Date(`${dia}T12:00:00Z`)));
+const escapar = (texto: string) => texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+test.describe('web.agenda-semana-y-mes', () => {
+  // Tokio a propósito: los días se cortan en la zona del perfil (Lima), no en la del navegador
+  test.use({ viewport: { width: 1440, height: 900 }, timezoneId: 'Asia/Tokyo' });
+
+  test('Semana muestra los siete días de lunes a domingo con sus compromisos, hoy destacado, y pasa de semana (REQ-CUN01-14)', async ({ page }) => {
+    await entrar(page, cuentas.agendaSemana.correo);
+    await page.getByRole('tab', { name: 'Semana' }).click();
+    await expect(page.getByRole('tab', { name: 'Semana' })).toHaveAttribute('aria-selected', 'true');
+
+    const semana = page.getByRole('region', { name: /^Semana del / });
+    const dias = semana.locator('.semana__dia');
+    await expect(dias).toHaveCount(7);
+    await expect(semana.getByRole('heading', { level: 3 })).toHaveText(Array.from({ length: 7 }, (_, i) => new RegExp(`^${escapar(mayuscula(nombreDe(enDias(lunes, i))))}`)));
+    await expect(semana.getByText(/^Hora de Lima \(GMT-5\)$/)).toBeVisible();
+
+    // Hoy destacado
+    const hoy = semana.locator('[aria-current="date"]');
+    await expect(hoy).toHaveCount(1);
+    await expect(hoy.getByRole('heading')).toHaveText(`${mayuscula(nombreDe(hoyEnLima))}Hoy`);
+
+    await expect(dias.nth(0).locator('.compromiso__titulo')).toHaveText(['Planificación semanal']);
+    await expect(dias.nth(1).getByText('Sin compromisos')).toBeVisible();
+    await expect(dias.nth(2).locator('.compromiso__titulo')).toHaveText(['Revisión de diseño', 'Almuerzo con Vasco', 'Clase de finanzas']);
+    await expect(dias.nth(2).locator('.compromiso__horario')).toHaveText(['09:00 – 10:00', '11:00 – 12:00', '16:00 – 17:00']);
+    await expect(dias.nth(3).locator('.compromiso')).toHaveCount(5);
+    // Lo cancelado se marca como en Hoy
+    await expect(dias.nth(4).locator('.compromiso--cancelado .compromiso__titulo')).toHaveText('Demo con el clienteCancelado');
+    await expect(dias.nth(6).getByText('Sin compromisos')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Semana siguiente' }).click();
+    await expect(dias.nth(0).getByRole('heading')).toHaveText(mayuscula(nombreDe(enDias(lunes, 7))));
+    await expect(dias.nth(1).locator('.compromiso__titulo')).toHaveText(['Revisión trimestral']);
+    await expect(semana.locator('[aria-current="date"]')).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Semana anterior' }).click();
+    await expect(dias.nth(0).locator('.compromiso__titulo')).toHaveText(['Planificación semanal']);
+    await page.getByRole('button', { name: 'Semana anterior' }).click();
+    await expect(dias.nth(0).getByRole('heading')).toHaveText(mayuscula(nombreDe(enDias(lunes, -7))));
+    await page.getByRole('button', { name: 'Esta semana' }).click();
+    await expect(semana.locator('[aria-current="date"]')).toHaveCount(1);
+    await expect(page.getByRole('button', { name: 'Esta semana' })).toHaveCount(0);
+  });
+
+  // Pulido · la cuenta semanaLlena tiene seis compromisos cada día de esta semana (e2e/arrancar-api.mjs). Sin
+  // desplazar nada, el día de hoy tiene que estar a la vista. Si hoy es lunes, ya lo está de entrada.
+  test('al entrar en Semana, el día de hoy se ve sin desplazarse aunque haya muchos compromisos antes (REQ-CUN01-14)', async ({ page }) => {
+    await entrar(page, cuentas.semanaLlena.correo);
+    await page.getByRole('tab', { name: 'Semana' }).click();
+    const semana = page.getByRole('region', { name: /^Semana del / });
+    await expect(semana.locator('.semana__dia')).toHaveCount(7);
+    const hoy = semana.locator('[aria-current="date"]');
+    await expect(hoy.locator('.compromiso')).toHaveCount(6);
+    await expect(hoy.getByRole('heading')).toBeInViewport();
+    await expect(hoy.locator('.compromiso').first()).toBeInViewport();
+  });
+
+  test('Mes muestra la rejilla con un punto por cada dos compromisos, pasa de mes y un día abre ese día en Hoy (REQ-CUN01-15)', async ({ page }) => {
+    await entrar(page, cuentas.agendaSemana.correo);
+    await page.getByRole('tab', { name: 'Mes' }).click();
+    const rejilla = page.getByRole('table', { name: nombreDeMes(hoyEnLima) });
+    await expect(rejilla).toBeVisible();
+    await expect(rejilla.getByRole('columnheader')).toHaveText(['L', 'M', 'X', 'J', 'V', 'S', 'D']);
+    // Semanas en filas, siempre completas de lunes a domingo
+    const celdas = await rejilla.getByRole('cell').count();
+    expect(celdas % 7).toBe(0);
+
+    const dia = (n: number, cuantos: string) => rejilla.getByRole('button', { name: `${mayuscula(nombreDe(enDias(lunes, n)))}: ${cuantos}` });
+    await expect(dia(0, '1 compromiso').locator('.mes__punto')).toHaveCount(1);
+    await expect(dia(2, '3 compromisos').locator('.mes__punto')).toHaveCount(2);
+    await expect(dia(3, '5 compromisos').locator('.mes__punto')).toHaveCount(3);
+    // El cancelado no ocupa el día
+    await expect(dia(4, 'sin compromisos').locator('.mes__punto')).toHaveCount(0);
+    await expect(rejilla.locator('[aria-current="date"]')).toHaveCount(1);
+
+    await page.getByRole('button', { name: 'Mes siguiente' }).click();
+    const siguiente = new Date(Date.parse(`${hoyEnLima.slice(0, 7)}-01T12:00:00Z`));
+    siguiente.setUTCMonth(siguiente.getUTCMonth() + 1);
+    await expect(page.getByRole('table', { name: nombreDeMes(siguiente.toISOString().slice(0, 10)) })).toBeVisible();
+    await page.getByRole('button', { name: 'Este mes' }).click();
+    await expect(rejilla).toBeVisible();
+
+    // Tocar un día lo muestra en Hoy, con la vuelta a hoy. Se elige uno que no sea hoy.
+    const elegido = enDias(lunes, 2) === hoyEnLima ? 3 : 2;
+    const fecha = enDias(lunes, elegido);
+    await rejilla.getByRole('button', { name: new RegExp(`^${escapar(mayuscula(nombreDe(fecha)))}:`) }).click();
+    await expect(page.getByRole('tab', { name: 'Hoy' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('heading', { level: 2, name: nombreDe(fecha) })).toBeVisible();
+    await expect(page.getByRole('list', { name: `Compromisos del ${nombreDe(fecha)}` }).getByRole('listitem')).toHaveCount(elegido === 2 ? 3 : 5);
+    await page.getByRole('button', { name: 'Volver a hoy' }).click();
+    await expect(page.getByRole('button', { name: 'Volver a hoy' })).toHaveCount(0);
+    await expect(page).toHaveURL(/\/$/);
+  });
+});
+
+// Fusión del 25 de noviembre de 2026 · CUN-05 (specs/05-equipos/plan.md §8). «Disponibilidad de equipo» es un
+// corte de Agenda que no es un nivel de período (INC-36): no va en la dirección y, al volver a un nivel, la
+// agenda de la persona reaparece tal cual. Desde T-120, con una cuenta Empresarial que está en un equipo.
+test.describe('agenda.corte-disponibilidad-de-equipo', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('el corte del equipo abre la disponibilidad y los niveles devuelven la agenda propia', async ({ page }) => {
+    await entrar(page, cuentas.acmeResponsable.correo);
+    const selector = page.getByRole('tablist', { name: 'Niveles' });
+
+    await selector.getByRole('tab', { name: 'Disponibilidad de equipo' }).click();
+    await expect(selector.getByRole('tab', { name: 'Disponibilidad de equipo' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('heading', { name: 'Disponibilidad del equipo' })).toBeVisible();
+    await expect(page.getByText('Encuentra un horario para reunirse')).toBeVisible();
+    await expect(page).not.toHaveURL(/nivel=/);
+
+    await selector.getByRole('tab', { name: 'Semana' }).click();
+    await expect(page).toHaveURL(/nivel=semana/);
+    await expect(selector.getByRole('tab', { name: 'Semana' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('heading', { name: 'Disponibilidad del equipo' })).toHaveCount(0);
+
+    await selector.getByRole('tab', { name: 'Disponibilidad de equipo' }).click();
+    await expect(page.getByRole('heading', { name: 'Disponibilidad del equipo' })).toBeVisible();
+    await selector.getByRole('tab', { name: 'Hoy' }).click();
+    await expect(selector.getByRole('tab', { name: 'Hoy' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('heading', { name: 'Disponibilidad del equipo' })).toHaveCount(0);
+  });
+});
+
+// T-120 · REQ-CUN05-18 y 19. Sin plan efectivo Empresarial no hay corte; con él y un equipo, el corte dice
+// quién es el responsable y cuántas personas tiene el equipo (H-EQ-01).
+test.describe('agenda.corte-disponibilidad-por-plan', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('con Plan Personal Agenda tiene solo Hoy, Semana y Mes', async ({ page }) => {
+    await entrar(page, cuentas.agenda.correo);
+    const selector = page.getByRole('tablist', { name: 'Niveles' });
+    await expect(selector.getByRole('tab')).toHaveText(['Hoy', 'Semana', 'Mes']);
+  });
+
+  test('con Plan Empresarial y un equipo, el corte muestra al responsable', async ({ page }) => {
+    await entrar(page, cuentas.acmeResponsable.correo);
+    await page.getByRole('tablist', { name: 'Niveles' }).getByRole('tab', { name: 'Disponibilidad de equipo' }).click();
+    await expect(page.getByLabel('Equipo')).toHaveValue(/.+/);
+    await expect(page.getByText(`Responsable: ${cuentas.acmeResponsable.correo} · 3 integrantes`)).toBeVisible();
+  });
+});

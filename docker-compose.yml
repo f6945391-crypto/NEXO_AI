@@ -21,5 +21,84 @@ services:
     ports:
       - "6379:6379"
 
+  # -------------------------------------------------------------------------------------------
+  # Perfil «aplicacion»: la API, el trabajador y la web en contenedores (README.md, «Ejecutar con
+  # contenedores»). Solo se levantan con: docker compose --profile aplicacion up --build
+  # Sin el perfil, docker compose up -d sigue levantando solo PostgreSQL y Redis.
+  #
+  # Las variables salen de .env (env_file). Dentro de la red de compose la base es postgres:5432 y
+  # Redis es redis:6379, no localhost: environment sobreescribe esas dos, y se pueden cambiar con
+  # DATABASE_URL_CONTENEDOR y REDIS_URL_CONTENEDOR en .env sin tocar las de desarrollo.
+
+  migrar:
+    profiles: ["aplicacion"]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: migraciones
+    image: nexoai-migrar:local
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL_CONTENEDOR:-postgresql://nexoai:nexoai@postgres:5432/nexoai}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    profiles: ["aplicacion"]
+    build: &imagen-api
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: final
+    image: nexoai-api:local
+    env_file: .env
+    environment: &entorno-api
+      PUERTO: "3000"
+      DATABASE_URL: ${DATABASE_URL_CONTENEDOR:-postgresql://nexoai:nexoai@postgres:5432/nexoai}
+      REDIS_URL: ${REDIS_URL_CONTENEDOR:-redis://redis:6379}
+    ports:
+      - "3000:3000"
+    depends_on: &dependencias-api
+      migrar:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      # Redis no tiene comprobación de salud en el servicio de desarrollo y se deja como está;
+      # ioredis reintenta la conexión si tarda en aceptar.
+      redis:
+        condition: service_started
+
+  # Misma imagen que la API, con otro comando (AD-01).
+  trabajador:
+    profiles: ["aplicacion"]
+    build: *imagen-api
+    image: nexoai-api:local
+    command: ["node", "dist/trabajador.js"]
+    env_file: .env
+    environment: *entorno-api
+    depends_on: *dependencias-api
+    # El trabajador no abre puerto: la comprobación de la imagen (GET /salud) no aplica.
+    healthcheck:
+      disable: true
+
+  web:
+    profiles: ["aplicacion"]
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    image: nexoai-web:local
+    env_file: .env
+    environment:
+      PORT: "3001"
+      # El servidor de la web habla con la API por la red de compose. El navegador nunca llama a la API
+      # directamente (src/lib/sesion.ts).
+      API_URL: ${API_URL_CONTENEDOR:-http://api:3000}
+    ports:
+      - "3001:3001"
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
   postgres:

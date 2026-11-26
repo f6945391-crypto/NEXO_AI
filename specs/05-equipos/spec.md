@@ -322,6 +322,39 @@ Y puede convocar una reunión con ellos, porque convocar no es asignar trabajo (
 
 ---
 
+### REQ-CUN05-18
+
+**Requisito:** MIENTRAS el plan efectivo de una cuenta no sea el Empresarial, o la cuenta no pertenezca a ningún equipo, EL SISTEMA no mostrará la consulta de disponibilidad de equipo en ningún cliente y rechazará sus consultas en el servidor.
+
+**Origen:** `REPLANTEO.md` §4 (planes acumulativos), REQ-ADM-17 (nada de empresa aparece sin afiliación), H-ADM-06 (plan efectivo), P-04; revisión de Franco del 25 de noviembre de 2026
+**Tipo:** dirigido por estado
+
+**Criterio de aceptación**
+DADO una cuenta con Plan Personal, o una con Plan Empresarial que no está en ningún equipo
+CUANDO abra Agenda en la web
+ENTONCES ve solo Hoy, Semana y Mes, y `GET /equipos` y la consulta de disponibilidad responden 403
+Y DADO una cuenta afiliada a una empresa (plan efectivo Empresarial) que pertenece a un equipo
+CUANDO abra Agenda
+ENTONCES ve también «Disponibilidad de equipo»
+
+---
+
+### REQ-CUN05-19
+
+**Requisito:** CUANDO la persona elija un equipo para consultar su disponibilidad, EL SISTEMA mostrará quién es su responsable y cuántos integrantes tiene antes de consultar.
+
+**Origen:** `SPEC.md` §8, «lo diferencial del responsable»; REQ-CUN05-17; revisión de Franco del 25 de noviembre de 2026
+**Tipo:** dirigido por evento
+
+**Criterio de aceptación**
+DADO el equipo Ventas con responsable rosa@acme.test y tres integrantes
+CUANDO la persona lo elija en el selector
+ENTONCES bajo el selector se lee «Responsable: rosa@acme.test · 3 integrantes»
+Y DADO un equipo sin responsable
+ENTONCES se lee «Sin responsable · n integrantes»
+
+---
+
 **Lo que ya estaba previsto sin saberlo.** La excepción EX-01 de CUN-05 —«algún participante no tiene información de disponibilidad»— describe exactamente el estado de quien aún no ha aceptado. `REQ-CUN05-08` ya lo exige y el cuadro `EX-01 Disponibilidad parcial` ya está diseñado. Lo único nuevo es el flujo de invitación que lleva hasta ahí.
 
 ---
@@ -360,3 +393,15 @@ CUN-06 Coordinar reunión **incluye** a CUN-05: la consulta de disponibilidad no
 2. **Forma del Participante externo** (D-8): la sección 3 necesita guardar estado de consentimiento, así que ya no basta un campo de texto. Mientras no se haga, el criterio vive solo en esta especificación.
 3. **Zona horaria en el Perfil de Usuario.** Es el único dato nuevo que el criterio introduce. El sistema ya la recoge (REQ-ACC-04); falta declararla en EN-01 del Entregable 1.
 4. **Deriva entre esta especificación y el diseño.** Los ocho cuadros de CUN-05 en Figma se generaron con la versión anterior del criterio: no representan la consulta sin duración indicada ni el estado «hay horarios comunes pero ninguno admite la duración». Hasta regenerarlos, el diseño va por detrás de la especificación en esos dos puntos.
+
+---
+
+## 7. Decisiones tomadas durante el diseño
+
+Hallazgos de la revisión del 25 de noviembre de 2026 (T-120). **Decididos por Franco el mismo día**, con la propuesta de cada uno.
+
+| # | Hallazgo | Propuesta |
+|---|---|---|
+| H-EQ-01 | **Qué cuenta «n integrantes» en REQ-CUN05-19.** El criterio dice «Ventas con responsable rosa@acme.test y tres integrantes». En el modelo de CUN-05, `rol_en_equipo` distingue `responsable` de `integrante`, y el Ventas de las pruebas web tiene a rosa como responsable y a dos integrantes (tres personas en total). «3 integrantes» puede ser el total de personas o solo los de rol `integrante` | **Decidido:** contar a todas las personas del equipo, responsable incluido: «Responsable: rosa@acme.test · 3 integrantes» con el Ventas de las pruebas, que es el ejemplo del criterio |
+| H-EQ-02 | **El asistente y REQ-CUN05-18.** El requisito dice que el servidor rechaza las consultas, pero el asistente también consulta con `equipo_listar` y `equipo_consultar_disponibilidad` (T-119), sin pasar por el controlador. No se dice si esas herramientas se cierran ni qué contesta el asistente | **Decidido:** las dos herramientas aplican la misma regla y devuelven al modelo un resultado fijo, escrito por el código: «La disponibilidad de equipo es del Plan Empresarial y requiere pertenecer a un equipo» |
+| H-EQ-03 | **El consentimiento propio y REQ-CUN05-18.** Una cuenta en un equipo sin plan efectivo Empresarial ya no ve el corte, pero su autorización sigue en `miembro_de_equipo` y la Operación `equipo.cambiar_consentimiento` va por `POST /operaciones`, no por el controlador de equipos | **Decidido:** no cerrar el consentimiento: es sobre los datos propios (P-10) y retirarlo debe poder hacerse siempre. Solo se cierran `GET /equipos`, los integrantes y la consulta |

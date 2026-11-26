@@ -7,7 +7,8 @@ import type { ContextoSolicitud } from '../identidad/contexto';
 // Los módulos de dominio registran sus ejecutores al iniciarse (onModuleInit).
 
 export type ResultadoEjecucion =
-  | { tipo: 'ejecutada'; resultado: unknown }
+  // T-060: `efimero` viaja en la respuesta de la confirmación y nunca se guarda (plan de 08-administracion §5.2)
+  | { tipo: 'ejecutada'; resultado: unknown; efimero?: { contrasenaTemporal: string } }
   // H-AG-07: algo cambió desde la propuesta (por ejemplo, un conflicto nuevo); no se ejecuta y se propone de nuevo.
   | { tipo: 'reproponer'; vistaConfirmacion: VistaConfirmacion };
 
@@ -22,11 +23,19 @@ export interface EjecutorOperacion<C = unknown> {
   readonly origenes?: readonly OrigenOperacion[];
   // Asigna trabajo a otros: el colaborador no puede proponerla ni confirmarla (REQ-ACC-15, T-026)
   readonly soloResponsable?: boolean;
+  // T-060 · specs/08-administracion/plan.md §5.2. `empresa`: se propone desde la zona de empresa y se guarda en
+  // la organización de la empresa, fuera de lo del usuario. Sin declarar, `propio`.
+  readonly ambito?: 'propio' | 'empresa';
+  // Solo quien administra la organización, comprobado contra la base al proponer y al confirmar (REQ-ADM-06)
+  readonly soloAdministrador?: boolean;
+  // Qué se le dice a la persona si pide este tipo por un origen que no admite
+  readonly textoOrigenNoPermitido?: string;
   // Cómo nombrar a la persona cada campo obligatorio cuando falta (REQ-CUN01-07)
   readonly nombresDeCampos?: Readonly<Record<string, string>>;
   proponer(contexto: ContextoSolicitud, carga: C): Promise<Propuesta<C>>;
-  // Único lugar donde una operación produce su efecto (AD-09).
-  ejecutar(contexto: ContextoSolicitud, carga: C): Promise<ResultadoEjecucion>;
+  // Único lugar donde una operación produce su efecto (AD-09). `operacion.id` sirve de clave de idempotencia
+  // a lo que crea algo nuevo (T-048: la tarea guarda la Operación que la creó)
+  ejecutar(contexto: ContextoSolicitud, carga: C, operacion: { id: string }): Promise<ResultadoEjecucion>;
 }
 
 @Injectable()

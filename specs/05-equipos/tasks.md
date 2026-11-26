@@ -55,7 +55,7 @@
 - **Pruebas:** `CUN-05 - Consentimiento individual mediante Operaciones`; `CUN-05 - Contratos compartidos de equipos`; `CUN-05 - Revocacion de consentimiento`.
 - **Estado:** en curso
 
-- **Notas de implementacion:** Consentimiento individual independiente de OAuth. Operacion propia, auditoria transaccional y control de concurrencia implementados. Pendiente de unificacion del modelo INC-16.
+- **Notas de implementacion:** Consentimiento individual independiente de OAuth. Operacion propia, auditoria transaccional y control de concurrencia implementados. Pendiente de unificacion del modelo INC-33.
 
 ### T-104 · Implementar autorización contextual por equipo
 
@@ -226,6 +226,33 @@
 - **Estado:** en curso
 
 - **Avance 25/11/2026:** Dos herramientas registradas. 6/6 pruebas especificas y 69/69 del agente aprobadas. Pendiente IA real e integracion.
+
+### T-120 · Disponibilidad solo para quien corresponde, con el responsable visible
+
+- **Satisface:** REQ-CUN05-18, REQ-CUN05-19 · H-ACC-07 (`specs/06-acceso/plan.md` §8)
+- **Depende de:** T-104, T-114, T-119 · H-EQ-01 a 03 (`spec.md` §7), decididos el 25 de noviembre de 2026
+- **Contenido:** `Perfil` gana `planEfectivo` y `equipos` (cuántos equipos integra); `GET /perfil` los calcula con `PertenenciasService.planEfectivo` y `miembro_de_equipo`. El controlador de equipos rechaza con 403 `SIN_PLAN_EMPRESARIAL` o `SIN_EQUIPO`, y conserva `@SobreLoPropio()`. `GET /equipos` lleva por equipo su responsable y cuántos integrantes tiene. En la web, «Disponibilidad de equipo» entra en los cortes de Agenda solo con plan efectivo Empresarial y algún equipo, y la misma condición decide «Encargadas»; bajo el selector, «Responsable: … · n integrantes» o «Sin responsable · n integrantes»
+- **Hecho cuando:** una cuenta Personal y una Empresarial sin equipo no ven el corte y reciben 403; una en un equipo lo ve con su responsable; ninguna prueba de T-099 a T-119 cambia su expectativa (solo su semilla, si hace falta); `pnpm verificar` en verde y `trazabilidad.py --check` en 0; capturas de Agenda con la cuenta personal y con la de empresa
+- **Pruebas:** `equipos.disponibilidad-sin-plan`, `equipos.disponibilidad-sin-equipo`, `equipos.disponibilidad-afiliada` (en `skip` mientras INC-37 lo impida), `equipos.responsable-visible`, `equipos.asistente-sin-acceso`, `acceso.perfil-plan-efectivo` · extremo a extremo web `agenda.corte-disponibilidad-por-plan`
+- **Estado:** hecha · 25 de noviembre de 2026
+- **Notas de implementación:**
+  - El cierre vive en `EquiposService.comprobarAcceso`, al empezar `misEquipos` y `verificarMembresia`: así lo aplican la API y el asistente sin tocar las pruebas HTTP de CUN-05, que simulan ese servicio. El plan del contexto ya es el efectivo (H-ADM-06); `GET /perfil` lo calcula de nuevo con `PertenenciasRepositorio.planEfectivo`.
+  - Los campos nuevos de `GET /equipos` (`responsable`, `integrantes`) son opcionales en el contrato, para que los ejemplos de las pruebas de contratos de CUN-05 sigan siendo válidos.
+  - `membresia-http.spec.ts` (T-104) cambia solo su semilla: la persona «ajena al equipo» integra otro equipo; sin ninguno, el cierre la para antes con `SIN_EQUIPO`. Su expectativa, 403 `SOLICITUD_INVALIDA`, no cambia.
+  - En la semilla de las pruebas web, la cuenta del armazón entra en un equipo para seguir viendo «Encargadas», que ahora pide lo mismo que el corte.
+  - El consentimiento propio queda fuera del cierre (H-EQ-03): va por `POST /operaciones` y no pasa por `EquiposService`.
+- **Origen:** revisión de las capturas de la fusión por Franco, 25 de noviembre de 2026 (`ENCARGO-CLAUDE-CODE-2026-11-25.md`)
+
+### T-124 · Escenario de prueba de reuniones: administrador, líder e integrantes
+
+- **Satisface:** REQ-CUN05-01, 02, 03, 04, 08, 13, 14, 15, 17, 18, 19 (prueba de conjunto; no añade comportamiento)
+- **Depende de:** T-120
+- **Contenido:** `casos-de-prueba.md`: los datos que hacen falta (organización «Reuniones Demo», equipo «Proyecto Alfa», siete cuentas con su papel, autorización, calendario y eventos), doce casos CP-R-01 a 12 y cómo se ejecutan. Prueba de la API con el calendario simulado; las mismas cuentas sembradas en las pruebas web para probar el corte en pantalla y tomar las capturas
+- **Hecho cuando:** los casos automáticos pasan; el documento dice qué hace falta para la prueba manual con Gmail reales
+- **Pruebas:** `equipos.escenario-reuniones` · extremo a extremo web `web.escenario-reuniones`
+- **Estado:** hecha · 25 de noviembre de 2026. Los 12 casos pasan (11 en la API, 4 en pantalla). La prueba manual con Gmail reales queda para el equipo (`INFORME-PRUEBAS-REUNIONES-2026-11-25.md` §6)
+- **Notas de implementación:** las cuentas del escenario van en `apps/web/e2e/cuentas.json` con el prefijo `reuniones`, y `e2e/arrancar-api.mjs` siembra el equipo, las autorizaciones, los calendarios conectados y los eventos de mañana. Al tomar las capturas apareció un defecto de la fusión en `globales.css`: a `.candidatas__detalle` le faltaba su llave de cierre y la rejilla de CUN-05 se veía sin estilos. Corregido
+- **Origen:** pedido de Franco del 25 de noviembre de 2026, tras revisar las capturas
 
 ## Orden sugerido de entregas
 

@@ -169,6 +169,8 @@ describe('T-019 · modificar y cancelar un compromiso', () => {
     expect(choca.vistaConfirmacion.confirmable).toBe(false);
     expect(choca.vistaConfirmacion.conflicto?.eventos.map((e) => e.titulo)).toEqual(['Almuerzo']);
     expect(choca.vistaConfirmacion.conflicto?.alternativas.length).toBeGreaterThan(0);
+    // Decisión 28 de 02-agenda: no se repiten en texto en los datos de la tarjeta
+    expect(choca.vistaConfirmacion.datos.map((d) => d.etiqueta)).not.toContain('Alternativas');
     await confirmar(autorizacion, choca.id).expect(409);
     expect(calendario.llamadas.escrituras).toBe(0);
   });

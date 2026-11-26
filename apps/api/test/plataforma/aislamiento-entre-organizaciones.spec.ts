@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -54,7 +55,7 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
     perfilB = (await crearCuenta(base, { organizacionId: orgB, correo: 'b@nexoai.test', rol: 'gerente', plan: 'empresarial' })).perfilId;
     // Una operación por organización, para cubrir también esa tabla (T-012).
     for (const [organizacionId, perfilId] of [[orgA, perfilA], [orgB, perfilB]] as const) {
-      await base.operacion.create({
+      const operacion = await base.operacion.create({
         data: {
           organizacionId,
           perfilId,
@@ -128,6 +129,19 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
       });
       // Y el estado de su grafo (T-032)
       await base.puntoControlAgente.create({ data: { organizacionId, conversacionId: conversacion.id, datos: {} } });
+      // El equipo con su responsable ya está arriba (CUN-05): desde el 25 de noviembre de 2026 es el mismo
+      // modelo que usa la administración (T-058, D-F1). La pertenencia a la organización la crea el alta de la cuenta.
+      // Y una tarea personal, creada por esa Operación (T-047)
+      const tarea = await base.tareaPersonal.create({ data: { organizacionId, perfilId, texto: 'Pagar el recibo', zonaHoraria: 'America/Lima', operacionOrigenId: operacion.id } });
+      // Y un avance en su bitácora, con su propia Operación (T-125)
+      const anotar = await base.operacion.create({
+        data: { organizacionId, perfilId, tipo: 'tareas.anotar_avance', origen: 'agente', carga: {}, vistaConfirmacion: {}, estado: 'ejecutada' },
+      });
+      await base.avanceTarea.create({ data: { organizacionId, perfilId, tareaId: tarea.id, texto: 'Pagué en el banco', zonaHoraria: 'America/Lima', operacionOrigenId: anotar.id } });
+      // Y su transcripción (T-038)
+      await base.turnoTranscripcion.create({
+        data: { id: randomUUID(), organizacionId, perfilId, conversacionId: conversacion.id, en: new Date(), tipo: 'texto', datos: {} },
+      });
     }
     deA = aislarPorOrganizacion(base, orgA);
   });

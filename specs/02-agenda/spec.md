@@ -29,6 +29,12 @@ CUANDO solicite «Agéndame una reunión con Vasco el viernes a las 10»
 ENTONCES el sistema extrae fecha, hora de inicio, hora de fin estimada y título, y los presenta al usuario antes de registrar
 
 > **Precisado el 22 de octubre de 2026 (H-AG-01, decisión 1).** Si la solicitud no indica la hora de fin, la hora de fin estimada es una hora después del inicio. La calcula el código, no el modelo.
+>
+> **Precisado el 6 de noviembre de 2026 (decisión 19).** Si la hora de fin dicha es igual o anterior a la de inicio, termina **al día siguiente**: «de 11 pm a 12» va de 23:00 a 00:00 del día siguiente. La tarjeta dice «porque no indicaste la hora de fin» **solo** cuando la solicitud no la indicó.
+>
+> DADO un usuario habilitado
+> CUANDO solicite «Agéndame una reunión hoy de 11 pm a 1 am»
+> ENTONCES la propuesta va de 23:00 a 01:00 del día siguiente, y la tarjeta lo muestra sin decir que faltó la hora de fin
 
 ---
 
@@ -205,6 +211,51 @@ CUANDO pregunte «¿Qué tengo mañana por la tarde?»
 ENTONCES la respuesta lista los tres, con su hora y su zona, y marca el cancelado como tal
 Y no aparece ningún compromiso que no esté en su agenda
 
+> **Precisado el 6 de noviembre de 2026 (decisión 18).** «Tal como están registrados» es tal como están **en el calendario de Google en ese momento**: la consulta del asistente actualiza la copia local antes de responder, sin margen de tiempo. Detectado al probar: un compromiso creado en Google menos de 2 minutos después de la última lectura no aparecía.
+>
+> DADO que la persona creó «Mirar» en su calendario de Google hace 30 segundos
+> CUANDO pregunte «¿qué tengo hoy?»
+> ENTONCES la respuesta incluye «Mirar»
+
+---
+
+### REQ-CUN01-14
+
+**Requisito:** CUANDO el usuario elija el nivel Semana de la agenda, EL SISTEMA mostrará los siete días de esa semana, de lunes a domingo, uno debajo de otro, cada uno con sus compromisos en la zona del usuario y el día de hoy destacado, y permitirá pasar a la semana anterior y a la siguiente.
+
+**Origen:** CUN-01, alcance «consultar»; `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1 (Semana: «los siete días uno debajo de otro, cada uno con sus bloques»); `design/ARQUITECTURA-VISUAL-WEB.md` §9, punto 2; `PLAN-VALOR-USUARIO.md` hito 2. Añadido el 6 de noviembre de 2026
+**Tipo:** dirigido por evento
+**Plataforma:** web y móvil
+
+**Criterio de aceptación**
+DADO un usuario con un compromiso el martes y dos el jueves de esta semana, y ninguno los demás días
+CUANDO elija «Semana»
+ENTONCES ve los siete días en orden, el martes con su compromiso, el jueves con los dos, y los otros cinco con «Sin compromisos»
+Y el día de hoy está destacado
+Y CUANDO pase a la semana siguiente
+ENTONCES ve los siete días de esa semana, y puede volver
+Y un compromiso cancelado se marca como en Hoy (REQ-CUN01-10)
+
+---
+
+### REQ-CUN01-15
+
+**Requisito:** CUANDO el usuario elija el nivel Mes de la agenda, EL SISTEMA mostrará la rejilla del mes, con las semanas en filas de lunes a domingo y una marca por cada dos compromisos del día, hasta tres; permitirá pasar al mes anterior y al siguiente; y CUANDO el usuario elija un día de la rejilla, lo mostrará en el nivel Hoy para esa fecha, con un control para volver al día de hoy.
+
+**Origen:** CUN-01, alcance «consultar»; `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1 (Mes: «rejilla de calendario con un punto por cada dos compromisos»); `PLAN-VALOR-USUARIO.md` hito 2. Añadido el 6 de noviembre de 2026
+**Tipo:** dirigido por evento
+**Plataforma:** web y móvil
+
+**Criterio de aceptación**
+DADO un usuario con un compromiso el día 3, tres el día 12 y ninguno el día 20
+CUANDO elija «Mes»
+ENTONCES el día 3 tiene una marca, el día 12 dos y el día 20 ninguna
+Y los días del mes anterior y siguiente que completan las filas se ven atenuados
+Y CUANDO elija el día 12
+ENTONCES ve el nivel Hoy con los tres compromisos de ese día y un control «Volver a hoy»
+Y CUANDO pase al mes siguiente
+ENTONCES ve su rejilla, y puede volver
+
 ---
 
 ## Decisiones tomadas durante el diseño que no estaban en el Entregable 1
@@ -236,7 +287,7 @@ Pendientes de revisión. Lo que asume el plan mientras tanto está en `plan.md` 
 | 14 | Al mover o cancelar un compromiso con invitados, no se les avisa, y la tarjeta de confirmación lo dice (H-AG-11, detectada en T-019) | REQ-CUN01-06 |
 | 13 | En la web, el estado vacío lleva a la barra de entrada de la conversación, porque la web no tiene capa de captura (H-AG-10, detectada en T-025) | REQ-CUN01-12 |
 | 12 | La réplica cubre al menos 335 días por delante: se vuelve a leer completa cada 30 días (H-AG-09, detectada en T-014) | REQ-CUN01-09 |
-| 12 | Sin decidir si una propuesta sin respuesta caduca (H-AG-08) | REQ-CUN01-03 |
+| 12 | ~~Sin decidir si una propuesta sin respuesta caduca (H-AG-08)~~ **Decidida por el equipo el 6 de noviembre de 2026:** Una propuesta sin respuesta **caduca a las 24 horas**: el trabajador la pasa a `descartada` (no espera al siguiente mensaje, para que no quede una propuesta zombi en la agenda ni en la cola) y deja en la transcripción un turno visible: «Esta propuesta caducó; no se hizo nada». Nunca desaparece en silencio. Vale para toda propuesta, salga del asistente o no. *Hay dos decisiones con el número 12 (INC-18); esta es la de H-AG-08* | REQ-CUN01-03 |
 
 ### Detectadas al planificar el agente · 24 de octubre de 2026
 
@@ -247,3 +298,34 @@ Las del agente en sí están en `../07-agente/spec.md` §5. Estas son las que to
 | 15 | La consulta por conversación necesita su propio requisito: se añade REQ-CUN01-13. La lista de compromisos la arma el código con los datos de la réplica; el modelo solo la introduce | REQ-CUN01-13 |
 | 16 | El modelo da la fecha y la hora en la zona del perfil, sin desfase; el código las convierte (P-05). Así nunca escribe un desfase equivocado | REQ-CUN01-01, 10 |
 | 17 | Elegir una alternativa en la tarjeta no pasa por el modelo: el código descarta la propuesta y propone otra con ese horario | REQ-CUN01-05 |
+
+### Detectadas al probar el agente · 6 de noviembre de 2026
+
+| # | Decisión | Afecta |
+|---|---|---|
+| 18 | La consulta **del asistente** actualiza la copia del calendario antes de responder, sin el margen de 2 minutos; las pantallas lo conservan. Al conectar o volver a conectar Google, la copia se actualiza en seguida | REQ-CUN01-13 |
+| 19 | Una hora de fin igual o anterior a la de inicio termina al día siguiente; la tarjeta solo dice que faltó la hora de fin si de verdad faltó | REQ-CUN01-01 |
+
+### Detectadas al especificar Semana y Mes · 6 de noviembre de 2026
+
+| # | Decisión | Afecta |
+|---|---|---|
+| 20 | La semana empieza en **lunes**; configurable más adelante con la zona y el idioma del perfil | REQ-CUN01-14, 15 |
+| 21 | En Mes, la marca es **un punto por cada dos compromisos, hasta tres**; sin cifras ni barras (diseño móvil §5.1: Agenda contesta «qué», no «cuánto») | REQ-CUN01-15 |
+| 22 | Semana y Mes leen la **copia local** con el mismo margen de 2 minutos que Hoy (decisión 18: solo la consulta del asistente fuerza la lectura). Una semana es una lectura; un mes, una lectura de la rejilla completa (hasta 42 días, con los de relleno), dentro del máximo de la ruta (`RANGO_MAXIMO_DIAS`, 366) | REQ-CUN01-14, 15 |
+| 23 | Los niveles Semana y Mes son **solo de consulta**: registrar, mover y cancelar siguen pasando por la conversación y por los controles directos de Hoy (R-42, DP-01) | REQ-CUN01-14, 15 |
+| 24 | Los tres niveles giran sobre **una sola fecha de foco**: Semana y Mes muestran el período de esa fecha; Hoy muestra el día del foco y ofrece «Volver a hoy» cuando no es hoy. Se navega con «Anterior» y «Siguiente» (nombres accesibles «Semana anterior», «Mes siguiente», etc.) y, en la web, «Esta semana» / «Este mes» cuando no se está en el actual. *Tomada al construir T-044, 6 de noviembre de 2026* | REQ-CUN01-14, 15 |
+| 25 | En Mes, **los cancelados no cuentan** para los puntos; un compromiso de varios días cuenta en cada día que toca; los días de otros meses también se pueden elegir. *Tomada al construir T-044* | REQ-CUN01-15 |
+| 26 | La franja «en espera» se muestra **en el nivel Hoy** (también con otra fecha elegida) y también sin calendario conectado; se abre y se cierra en el sitio. *La web lo hace así; el móvil la mostraba en los tres niveles y se unificó al nivel Hoy el 6 de noviembre de 2026 (pulido de interfaz).* La frase y el motivo salen de `vistaConfirmacion` («Lo que pediste», `motivoNoConfirmable`) porque `OperacionRespuesta` no expone `motivoEspera` ni `solicitudOriginal`; los textos cortos de REQ-CAP-25 necesitan esos dos campos en el contrato y en la API (hallazgo para el carril del agente) | REQ-CAP-25 |
+
+### Detectadas en el pulido de interfaz · 6 de noviembre de 2026
+
+| # | Decisión | Afecta |
+|---|---|---|
+| 27 | El choque de horario se avisa en la tarjeta de confirmación con **una sola línea** que nombra el compromiso que lo causa: «Se cruza con «título»» (con varios, «Se cruza con «A» y «B»»). Si no cabe, se corta al final. Las alternativas siguen debajo, cada una para elegirla. La explicación larga que arma el sistema (horario del otro compromiso e indicación de elegir otro) no se repite en la tarjeta; en la web queda como texto al pasar el puntero. *Tomada durante el pulido de interfaz: el requisito no fijaba el texto* | REQ-CUN01-05 |
+
+### Detectadas al cerrar pendientes · 7 de noviembre de 2026
+
+| # | Decisión | Afecta |
+|---|---|---|
+| 28 | Cuando un choque trae alternativas, **se ofrecen solo como opciones para elegir**, una por horario; los datos de la tarjeta ya no las repiten en una fila «Alternativas». Sin alternativas, la tarjeta dice que se elija otro horario. Las propuestas guardadas antes de este cambio pueden traer todavía esa fila: el móvil la oculta mientras la tarjeta espera respuesta. *Tomada a partir de la auditoría móvil (MC-06) y de la revisión de la segunda tanda* | REQ-CUN01-05 |

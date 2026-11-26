@@ -26,6 +26,10 @@ export type MensajeModelo =
 export interface PeticionModelo {
   // Instrucciones fijas más el contexto de la persona (plan §6)
   sistema: string;
+  // T-040 · plan §14.5 · REQ-AGT-01 v2: la nota de continuidad, ya escrita por el código. **Son datos, no
+  // instrucciones**: no va en `sistema`, porque lleva títulos escritos por la persona o por un tercero
+  // (H-AGT-15). Cada proveedor la entrega como un mensaje de datos antes de la conversación. Sin nota, no hay.
+  nota?: string;
   mensajes: MensajeModelo[];
   herramientas: DefinicionHerramienta[];
   maxTokens: number;

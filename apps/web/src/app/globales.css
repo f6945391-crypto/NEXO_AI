@@ -13,6 +13,8 @@
   --borde-fuerte: #b8c9d4;
   --estado-error: #b3261e;
   --estado-error-suave: #fbeae9;
+  /* Lo que se está recargando se atenúa; no es un color de design/tokens.json, es una opacidad */
+  --estado-cargando-opacidad: 0.6;
 
   --espaciado-8: 8px;
   --espaciado-12: 12px;
@@ -229,9 +231,10 @@ body {
   color: var(--marca-base);
 }
 
-.navegacion__ajustes {
+.navegacion__pie {
+  display: grid;
+  gap: var(--espaciado-8);
   border-top: 1px solid var(--borde-base);
-  border-radius: 0 0 var(--radio-md) var(--radio-md);
   padding-top: var(--espaciado-8);
 }
 
@@ -309,6 +312,49 @@ body {
   font-size: var(--tam-etiqueta);
   line-height: 1.5;
   margin-bottom: var(--espaciado-24);
+}
+
+/* T-039 · REQ-AGT-03: línea entre lo que se pidió antes y lo nuevo; texto pequeño, centrado y secundario */
+.separador {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-12);
+  color: var(--texto-suave);
+  font-size: 12px;
+}
+
+.separador::before,
+.separador::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--borde-base);
+}
+
+/* Pulido: se queda visible al inicio de la zona de mensajes aunque se haya desplazado (pegajoso) */
+.ver-anteriores {
+  position: sticky;
+  top: calc(-1 * var(--espaciado-24));
+  z-index: 1;
+  display: block;
+  margin: 0 auto var(--espaciado-16);
+  padding: var(--espaciado-8) var(--espaciado-16);
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-md);
+  background: var(--superficie-base);
+  color: var(--marca-base);
+  cursor: pointer;
+}
+
+.ver-anteriores:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+.ver-anteriores:disabled {
+  color: var(--texto-suave);
+  cursor: default;
 }
 
 .mensajes {
@@ -465,6 +511,12 @@ body {
   color: var(--estado-advertencia);
 }
 
+.tarjeta__motivo--choque {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .tarjeta__alternativas {
   list-style: none;
   margin: 0;
@@ -476,6 +528,18 @@ body {
 .tarjeta__acciones {
   display: flex;
   gap: var(--espaciado-8);
+}
+
+/* Paridad con H-CAP-01 del móvil: una tarjeta que ya no espera dice cómo terminó */
+.tarjeta--decidida {
+  border-color: var(--borde-base);
+}
+
+.tarjeta__decidido {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  color: var(--texto-suave);
 }
 
 .turno-agenda {
@@ -593,6 +657,10 @@ body {
 }
 
 .agenda-dia__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--espaciado-16);
   margin-bottom: var(--espaciado-16);
 }
 
@@ -810,6 +878,10 @@ body {
   margin-top: var(--espaciado-16);
 }
 
+.vacio .vacio__volver {
+  margin-left: var(--espaciado-8);
+}
+
 .aviso {
   display: flex;
   justify-content: space-between;
@@ -907,6 +979,504 @@ body {
 
 .tarjeta-confirmacion__dato dd {
   margin: 0;
+}
+
+/* T-044 · REQ-CUN01-14, REQ-CUN01-15: Semana y Mes en el lienzo */
+.lienzo__cuerpo[aria-busy='true'] {
+  opacity: var(--estado-cargando-opacidad);
+}
+
+.periodo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--espaciado-16);
+  margin-bottom: var(--espaciado-16);
+}
+
+.periodo h2 {
+  margin: 0;
+  font-size: var(--tam-cuerpo);
+}
+
+.periodo__pasos {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-8);
+}
+
+.periodo__paso {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.periodo__paso:focus-visible,
+.mes__dia:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+.semana__dias {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-12);
+}
+
+/* Cada día, con sus bloques; el de hoy lleva borde/fuerte */
+.semana__dia {
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-md);
+}
+
+.semana__dia--hoy {
+  border-color: var(--borde-fuerte);
+  background: var(--superficie-elevada);
+  /* Al abrir la semana con hoy más abajo, queda este aire por encima */
+  scroll-margin-top: var(--espaciado-16);
+}
+
+.semana__nombre {
+  margin: 0 0 var(--espaciado-8);
+  font-size: var(--tam-etiqueta);
+}
+
+.semana__vacio {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.semana__dia .compromiso {
+  padding: var(--espaciado-8) 0;
+}
+
+/* Rejilla del mes: semanas en filas, de lunes a domingo */
+.mes__rejilla {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: var(--espaciado-4, 4px);
+  table-layout: fixed;
+}
+
+.mes__rejilla th {
+  padding-bottom: var(--espaciado-8);
+  font-size: var(--tam-micro);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.mes__rejilla abbr {
+  text-decoration: none;
+}
+
+.mes__dia {
+  width: 100%;
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--espaciado-8);
+  padding: var(--espaciado-8);
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  color: var(--texto-fuerte);
+  cursor: pointer;
+}
+
+.mes__dia:hover {
+  background: var(--superficie-elevada);
+}
+
+.mes__dia--fuera {
+  background: var(--superficie-elevada);
+  color: var(--texto-suave);
+}
+
+.mes__dia--hoy {
+  border-color: var(--borde-fuerte);
+}
+
+.mes__dia--hoy .mes__numero {
+  font-weight: 600;
+}
+
+.mes__numero {
+  font-variant-numeric: tabular-nums;
+}
+
+.mes__puntos {
+  display: flex;
+  gap: var(--espaciado-4, 4px);
+  min-height: 8px;
+}
+
+.mes__punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--marca-base);
+}
+
+.mes__dia--fuera .mes__punto {
+  background: var(--borde-fuerte);
+}
+
+/* T-045 · REQ-CAP-25: franja «en espera» encima de la agenda de hoy. El tinte de advertencia, completo solo aquí */
+.en-espera {
+  margin-bottom: var(--espaciado-16);
+  border-radius: var(--radio-md);
+  background: var(--estado-advertencia-suave);
+  color: var(--estado-advertencia);
+}
+
+.en-espera__resumen {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-12);
+  padding: var(--espaciado-12) var(--espaciado-16);
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  border: none;
+  border-radius: var(--radio-md);
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.en-espera__resumen:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+.en-espera__marca {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--estado-advertencia);
+}
+
+.en-espera__cuantas {
+  flex: 1;
+  font-weight: 600;
+}
+
+.en-espera__accion {
+  text-decoration: underline;
+}
+
+.en-espera__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--espaciado-16) var(--espaciado-12);
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.en-espera__lista li {
+  padding: var(--espaciado-8) var(--espaciado-12);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+}
+
+.en-espera__lista p {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  line-height: 1.4;
+}
+
+.en-espera__pedido {
+  color: var(--texto-fuerte);
+}
+
+.en-espera__motivo {
+  color: var(--texto-suave);
+}
+
+/* T-052, T-053 · 09-tareas-personales: la sección Tareas y el grupo «Tareas para este día» de Hoy */
+.lienzo__cuerpo--lista > .vacio,
+.tareas__vacio .vacio {
+  margin: 0 auto;
+}
+
+.tareas__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tarea {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaciado-16);
+  padding: var(--espaciado-12) 0;
+  border-top: 1px solid var(--borde-base);
+}
+
+.tarea__cuerpo {
+  min-width: 0;
+}
+
+.tarea p {
+  margin: 0;
+}
+
+.tarea__texto {
+  font-weight: 600;
+}
+
+.tarea__detalle {
+  margin-top: 2px;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.tarea__detalle--vencida {
+  color: var(--estado-error);
+}
+
+.etiqueta--vencida {
+  background: var(--estado-error-suave);
+  color: var(--estado-error);
+}
+
+.tarea__acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-16);
+  flex-shrink: 0;
+}
+
+.tarea__acciones .boton {
+  min-height: 36px;
+  padding: var(--espaciado-8) var(--espaciado-16);
+}
+
+/* T-127 · REQ-CUN03-24, 26, 27: contexto, bitácora y el aviso al vencer, dentro de la misma tarea */
+.tarea:has(> .tarea__aviso) {
+  flex-wrap: wrap;
+}
+
+.tarea__aviso {
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  margin-bottom: 0;
+}
+
+.tarea .tarea__aviso-texto {
+  flex: 1 1 280px;
+  line-height: 1.5;
+}
+
+.tarea__aviso-acciones {
+  display: flex;
+  gap: var(--espaciado-8);
+  flex-shrink: 0;
+}
+
+.tarea__aviso-acciones .boton {
+  min-height: 36px;
+}
+
+.tarea__aviso .turno__fallo {
+  flex-basis: 100%;
+}
+
+.tarea__cuerpo {
+  flex: 1 1 0;
+}
+
+.tarea__contexto {
+  margin-top: 2px;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.tarea__bitacora {
+  margin-top: var(--espaciado-8);
+  padding-left: var(--espaciado-12);
+  border-left: 2px solid var(--borde-base);
+  font-size: var(--tam-etiqueta);
+}
+
+/* T-130 · REQ-CUN03-28 · H-TP-35: el resumen del asistente, con el tinte del asistente y su etiqueta, para que
+   no se lea como un avance */
+.resumen-bitacora {
+  margin: 0 0 var(--espaciado-8);
+  padding: var(--espaciado-8) var(--espaciado-12);
+  border-radius: var(--radio-sm);
+  background: var(--agente-suave);
+  font-size: var(--tam-etiqueta);
+  line-height: 1.4;
+}
+
+.resumen-bitacora p {
+  margin: 0;
+}
+
+.resumen-bitacora .resumen-bitacora__etiqueta {
+  font-size: var(--tam-micro);
+  font-weight: 600;
+  color: var(--agente-base);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.resumen-bitacora .resumen-bitacora__texto {
+  color: var(--texto-fuerte);
+}
+
+.resumen-bitacora__cuando {
+  color: var(--texto-suave);
+}
+
+.tarea .tarea__avance {
+  color: var(--texto-fuerte);
+  line-height: 1.4;
+}
+
+.tarea__avance-cuando,
+.bitacora__cuando {
+  color: var(--texto-suave);
+}
+
+.tarea__ver-bitacora {
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  padding: var(--espaciado-8) 0 0;
+  border: none;
+  background: none;
+  color: var(--marca-base);
+  cursor: pointer;
+}
+
+.tarea__ver-bitacora:focus-visible,
+.tareas__ver-hechas:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+.bitacora {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.bitacora__avance {
+  display: grid;
+  gap: 2px;
+  line-height: 1.4;
+}
+
+.tarea--hecha .tarea__texto {
+  color: var(--texto-suave);
+  text-decoration: line-through;
+}
+
+.tareas__hechas {
+  margin-top: var(--espaciado-24);
+}
+
+.tareas__ver-hechas {
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  padding: var(--espaciado-8) 0;
+  border: none;
+  background: none;
+  color: var(--marca-base);
+  cursor: pointer;
+}
+
+.tareas__deshacer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--espaciado-12);
+}
+
+.tareas-del-dia {
+  margin-top: var(--espaciado-32);
+}
+
+.tareas-del-dia__titulo {
+  margin: 0 0 var(--espaciado-8);
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* La lista de tareas y las candidatas en la conversación (T-050, T-051) */
+.turno-tareas__grupo {
+  margin: var(--espaciado-8) 0 0;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.turno-tareas__vencida {
+  color: var(--estado-error);
+}
+
+/* T-127 · REQ-CUN03-23: la bitácora de una tarea en la conversación */
+.turno-bitacora__tarea {
+  margin: 0 0 var(--espaciado-8);
+  font-size: var(--tam-cuerpo);
+  font-weight: 600;
+}
+
+.turno-bitacora__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.turno-bitacora__lista li {
+  display: grid;
+  gap: 2px;
+  line-height: 1.4;
+}
+
+.candidatas {
+  list-style: none;
+  margin: var(--espaciado-8) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.candidatas .boton {
+  width: 100%;
+  text-align: left;
+}
+
+.candidatas__detalle {
+  display: block;
+  font-weight: 400;
+  font-size: var(--tam-etiqueta);
 }
 
 /* CUN-05: rejilla de disponibilidad reutilizable */
@@ -1116,4 +1686,11 @@ body {
   min-width: 0;
   max-width: 100%;
   padding: var(--espaciado-24);
+}
+
+/* T-120 · REQ-CUN05-19: el responsable y cuántas personas tiene el equipo, bajo el selector */
+.disponibilidad-equipo__resumen {
+  margin: calc(-1 * var(--espaciado-8)) 0 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
 }

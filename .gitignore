@@ -15,3 +15,14 @@ playwright-report/
 test-results/
 .expo/
 apps/movil/dist/
+# Salidas locales de Claude y archivos temporales: no van al repositorio
+Claude outputs/
+.nexoai-src.tgz
+# Paquetes de npm, configuraciones locales de Playwright con puertos propios y la copia de Redis
+*.tgz
+apps/*/playwright.local.config.ts
+dump.rdb
+
+# Copia de prueba de las tandas y respaldos de la base (7 de noviembre de 2026)
+entregas/nexoai-prueba-tanda4/
+respaldo-*.sql

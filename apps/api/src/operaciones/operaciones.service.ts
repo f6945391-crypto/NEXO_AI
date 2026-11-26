@@ -7,11 +7,12 @@ import {
   type OperacionSolicitud,
 } from '@nexoai/contratos';
 import type { Operacion } from '../generado/prisma/client';
-import type { ContextoSolicitud } from '../identidad/contexto';
-import { SOLO_EL_RESPONSABLE } from '../identidad/guardas';
+import type { AmbitoSesion, ContextoSolicitud } from '../identidad/contexto';
+import { SIN_ORGANIZACION, SOLO_EL_ADMINISTRADOR, SOLO_EL_RESPONSABLE, TEXTO_AMBITO } from '../identidad/guardas';
+import { PertenenciasRepositorio } from '../identidad/pertenencias';
 import { errorApi } from '../plataforma/errores';
 import { PrismaService } from '../plataforma/prisma.service';
-import { RegistroOperaciones } from './registro';
+import { RegistroOperaciones, type EjecutorOperacion } from './registro';
 
 // AD-09 · specs/02-agenda/plan.md §3 · T-012.
 //
@@ -21,6 +22,9 @@ import { RegistroOperaciones } from './registro';
 //   actualización condicional atómica (`confirmadaEn` de nulo a ahora). Ajuste del plan: en lugar de
 //   `SELECT … FOR UPDATE`, que exigiría SQL escrito a mano, prohibido por AGENTS.md.
 // - Una operación solo la ve y la confirma quien la creó, dentro de su organización (P-04).
+// - T-060 · specs/08-administracion/plan.md §5.2: las de ámbito `empresa` se proponen y se confirman solo con la
+//   sesión de la zona de empresa, se guardan en la organización de la empresa y nunca se listan con las del
+//   usuario. Su resultado efímero llega en la primera confirmación y no se guarda.
 
 const aRespuesta = (op: Operacion): OperacionRespuesta =>
   OperacionRespuesta.parse({
@@ -49,17 +53,24 @@ const unirConY = (partes: string[]) => (partes.length > 1 ? `${partes.slice(0, -
 const MOTIVOS_DE_ESPERA: Readonly<Record<MotivoEspera, string>> = {
   asistente_no_disponible: 'El asistente no respondía. Lo retoma en cuanto vuelva.',
   permiso_faltante: 'Falta el permiso de tu calendario de Google. Se retoma cuando lo conectes.',
-  funcion_por_llegar: 'Las tareas llegan en una próxima versión. Queda guardado hasta entonces.',
+  // H-TP-16: mientras T-056 no las convierte, ya no es cierto que «llegan en una próxima versión»
+  funcion_por_llegar: 'Se está preparando para que la confirmes en Tareas.',
 };
 
 const noEncontrada = () => errorApi(404, 'OPERACION_NO_ENCONTRADA', 'No existe esa operación.');
 
+const ambitoDe = (contexto: ContextoSolicitud): AmbitoSesion => contexto.ambito ?? 'propio';
+
 @Injectable()
 export class OperacionesService {
+  private readonly pertenencias: PertenenciasRepositorio;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly registro: RegistroOperaciones,
-  ) {}
+  ) {
+    this.pertenencias = new PertenenciasRepositorio(prisma);
+  }
 
   // `conversacionId`: la conversación del asistente de la que sale la propuesta (T-031); no viene del cliente.
   // `desdeEnEspera`: lo pedido estaba en espera y el asistente lo interpretó al volver: la misma fila pasa a
@@ -71,9 +82,11 @@ export class OperacionesService {
   ): Promise<OperacionRespuesta> {
     const ejecutor = this.registro.obtener(solicitud.tipo);
     if (!ejecutor) throw errorApi(400, 'OPERACION_DESCONOCIDA', 'Esa acción no existe.');
-    this.comprobarAutoridad(contexto, ejecutor);
+    const ambito = ejecutor.ambito ?? 'propio';
+    if (ambito !== ambitoDe(contexto)) throw errorApi(403, 'AMBITO_INCORRECTO', TEXTO_AMBITO[ambito]);
+    await this.comprobarAutoridad(contexto, ejecutor);
     if (ejecutor.origenes && !ejecutor.origenes.includes(solicitud.origen)) {
-      throw errorApi(403, 'ORIGEN_NO_PERMITIDO', 'Esto se le pide al asistente: no hay un camino aparte para hacerlo.');
+      throw errorApi(403, 'ORIGEN_NO_PERMITIDO', ejecutor.textoOrigenNoPermitido ?? 'Esto se le pide al asistente: no hay un camino aparte para hacerlo.');
     }
 
     const carga = ejecutor.esquema.safeParse(solicitud.carga);
@@ -99,8 +112,9 @@ export class OperacionesService {
     }
     const op = await this.datos(contexto).operacion.create({
       data: {
-        organizacionId: contexto.organizacionId,
+        organizacionId: this.organizacionDe(contexto),
         perfilId: contexto.perfilId,
+        ambito: ambitoDe(contexto),
         tipo: solicitud.tipo,
         origen: solicitud.origen,
         solicitudOriginal: solicitud.solicitudOriginal ?? null,
@@ -119,9 +133,9 @@ export class OperacionesService {
     if (op.estado !== 'propuesta') {
       throw errorApi(409, 'OPERACION_NO_CONFIRMABLE', 'Esta acción ya no se puede confirmar.');
     }
-    // Por si el rol cambió desde que se propuso
+    // Por si el rol o la condición de administrador cambiaron desde que se propuso
     const tipo = this.registro.obtener(op.tipo);
-    if (tipo) this.comprobarAutoridad(contexto, tipo);
+    if (tipo) await this.comprobarAutoridad(contexto, tipo);
     if (!VistaConfirmacion.parse(op.vistaConfirmacion).confirmable) {
       throw errorApi(409, 'OPERACION_NO_CONFIRMABLE', 'Hay que resolver lo que impide esta acción antes de confirmarla.');
     }
@@ -136,8 +150,10 @@ export class OperacionesService {
     if (!ejecutor) throw errorApi(400, 'OPERACION_DESCONOCIDA', 'Esa acción no existe.');
 
     let actualizada: Operacion;
+    let efimero: OperacionRespuesta['efimero'];
     try {
-      const resultado = await ejecutor.ejecutar(contexto, ejecutor.esquema.parse(op.carga));
+      const resultado = await ejecutor.ejecutar(contexto, ejecutor.esquema.parse(op.carga), { id });
+      if (resultado.tipo === 'ejecutada') efimero = resultado.efimero;
       actualizada = await this.datos(contexto).operacion.update({
         where: { id },
         data:
@@ -151,7 +167,7 @@ export class OperacionesService {
         data: { estado: 'fallida', error: error instanceof Error ? error.message : 'Error al ejecutar la acción.' },
       });
     }
-    return aRespuesta(actualizada);
+    return efimero ? { ...aRespuesta(actualizada), efimero } : aRespuesta(actualizada);
   }
 
   // P-11 · T-033 · plan §7: guarda lo pedido sin crear ni enviar nada. No se puede confirmar: no tiene
@@ -212,7 +228,7 @@ export class OperacionesService {
 
   async listar(contexto: ContextoSolicitud, estados?: EstadoOperacion[]): Promise<OperacionRespuesta[]> {
     const ops = await this.datos(contexto).operacion.findMany({
-      where: { perfilId: contexto.perfilId, ...(estados ? { estado: { in: estados } } : {}) },
+      where: { perfilId: contexto.perfilId, ambito: ambitoDe(contexto), ...(estados ? { estado: { in: estados } } : {}) },
       orderBy: { creadaEn: 'desc' },
       take: 100,
     });
@@ -220,8 +236,20 @@ export class OperacionesService {
   }
 
   // REQ-ACC-15: solo el responsable del equipo asigna trabajo a otros, aunque el colaborador tenga el plan.
-  private comprobarAutoridad(contexto: ContextoSolicitud, ejecutor: { soloResponsable?: boolean }): void {
+  // T-060 · REQ-ADM-06, REQ-ADM-16: solo el administrador administra, y el rechazo queda registrado.
+  private async comprobarAutoridad(contexto: ContextoSolicitud, ejecutor: Pick<EjecutorOperacion, 'tipo' | 'soloResponsable' | 'soloAdministrador'>): Promise<void> {
     if (ejecutor.soloResponsable && contexto.rol === 'colaborador') throw errorApi(403, 'ROL_NO_PERMITIDO', SOLO_EL_RESPONSABLE);
+    if (ejecutor.soloAdministrador && !(await this.pertenencias.esAdministrador(contexto))) {
+      await this.pertenencias.registrarRechazo(contexto, { tipo: ejecutor.tipo });
+      throw errorApi(403, 'ADMINISTRACION_NO_PERMITIDA', SOLO_EL_ADMINISTRADOR);
+    }
+  }
+
+  // La organización donde viven las Operaciones del ámbito de la sesión (plan §5.2, H-ADM-18)
+  private organizacionDe(contexto: ContextoSolicitud): string {
+    if (ambitoDe(contexto) === 'propio') return contexto.organizacionId;
+    if (!contexto.empresa) throw errorApi(403, 'SIN_ORGANIZACION', SIN_ORGANIZACION);
+    return contexto.empresa.organizacionId;
   }
 
   // Otra confirmación ganó la carrera: si ya terminó, mismo resultado; si sigue en curso, se dice.
@@ -235,12 +263,12 @@ export class OperacionesService {
   }
 
   private async buscar(contexto: ContextoSolicitud, id: string): Promise<Operacion> {
-    const op = await this.datos(contexto).operacion.findFirst({ where: { id, perfilId: contexto.perfilId } });
+    const op = await this.datos(contexto).operacion.findFirst({ where: { id, perfilId: contexto.perfilId, ambito: ambitoDe(contexto) } });
     if (!op) throw noEncontrada();
     return op;
   }
 
   private datos(contexto: ContextoSolicitud) {
-    return this.prisma.deOrganizacion(contexto.organizacionId);
+    return this.prisma.deOrganizacion(this.organizacionDe(contexto));
   }
 }

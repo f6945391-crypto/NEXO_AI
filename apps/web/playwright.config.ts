@@ -2,6 +2,9 @@ import { defineConfig } from '@playwright/test';
 
 const PUERTO_WEB = 3101;
 const PUERTO_API = 3102;
+// Las pruebas que hablan con la API leen su puerto de aquí: la configuración se carga también en cada
+// proceso de pruebas, y así no hace falta exportarlo a mano ni puede apuntar a otra API.
+process.env.PUERTO_API_E2E = String(PUERTO_API);
 
 // Dos servidores: la API real sobre su base de extremo a extremo, y la web apuntando a ella.
 // En local usa el Chrome instalado; en la integración continua, el Chromium que instala Playwright.

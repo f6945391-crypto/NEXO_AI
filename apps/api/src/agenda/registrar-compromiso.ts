@@ -82,7 +82,7 @@ export class RegistrarCompromiso implements EjecutorOperacion<PropuestaEvento>, 
     const zonaHoraria = carga.zonaHoraria ?? 'UTC';
     const inicio = new Date(carga.inicio);
     const fin = new Date(carga.fin ?? carga.inicio);
-    const { datos: alternativas, ...revision } = await this.revisionHorario.revisar(contexto, { inicio, fin }, zonaHoraria);
+    const revision = await this.revisionHorario.revisar(contexto, { inicio, fin }, zonaHoraria);
     return {
       accion: 'Registrar este compromiso en tu calendario de Google',
       datos: [
@@ -91,7 +91,6 @@ export class RegistrarCompromiso implements EjecutorOperacion<PropuestaEvento>, 
         { etiqueta: 'Hora', valor: horario(inicio, fin, zonaHoraria) },
         { etiqueta: 'Zona horaria', valor: nombreDeZona(zonaHoraria, inicio) },
         ...(finPorDefecto ? [{ etiqueta: 'Duración', valor: '1 hora, porque no indicaste la hora de fin' }] : []),
-        ...alternativas,
       ],
       // Se puede cancelar después y no se avisa a nadie: no hay nada irreversible
       irreversible: null,

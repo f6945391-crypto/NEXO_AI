@@ -1,0 +1,219 @@
+From c6e91cff5b597e33a6baf1e17e50d4019befbca2 Mon Sep 17 00:00:00 2001
+From: "Claude (carril B)" <claude@nexoai.local>
+Date: Fri, 6 Nov 2026 22:29:22 -0500
+Subject: [PATCH 2/3] =?UTF-8?q?T-045=20=C2=B7=20Franja=20=C2=ABen=20espera?=
+ =?UTF-8?q?=C2=BB=20en=20el=20m=C3=B3vil?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+REQ-CAP-25. Encima de la agenda, en Inicio, una franja con el número de cosas
+en espera («1 cosa en espera», «2 cosas en espera») que lee
+GET /operaciones?estado=en_espera. Al abrirla, cada una con lo que se pidió y
+el motivo, tal como los arma la API en vistaConfirmacion. Sin botón de
+retirar. Sin nada en espera, la franja no aparece. Se vuelve a pedir al cerrar
+la capa y cuando el asistente deja algo hecho.
+
+Prueba: movil.en-espera-visible (e2e/en-espera.spec.ts).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_017P4pWjdkAXxnUi83Ee7Yva
+---
+ apps/movil/e2e/en-espera.spec.ts       | 45 +++++++++++++++
+ apps/movil/src/pantallas/en-espera.tsx | 76 ++++++++++++++++++++++++++
+ apps/movil/src/pantallas/inicio.tsx    | 19 ++++++-
+ 3 files changed, 138 insertions(+), 2 deletions(-)
+ create mode 100644 apps/movil/e2e/en-espera.spec.ts
+ create mode 100644 apps/movil/src/pantallas/en-espera.tsx
+
+diff --git a/apps/movil/e2e/en-espera.spec.ts b/apps/movil/e2e/en-espera.spec.ts
+new file mode 100644
+index 0000000..64f7bb8
+--- /dev/null
++++ b/apps/movil/e2e/en-espera.spec.ts
+@@ -0,0 +1,45 @@
++import { expect, test, type Page } from '@playwright/test';
++import cuentas from './cuentas.json';
++
++// T-045 · REQ-CAP-25 en el móvil. La cuenta es la clave `asistenteEspera` de cuentas.json: arrancar-api.mjs
++// le deja hecho el primer ingreso, en Lima, con el calendario simulado. Con el guion de demostración,
++// «Recuérdame pagar el recibo» queda en espera porque las tareas llegan en una próxima versión.
++
++async function entrar(page: Page) {
++  await page.goto('/');
++  await page.getByLabel('Correo').fill(cuentas.asistenteEspera.correo);
++  await page.getByLabel('Contraseña', { exact: true }).fill(cuentas.contrasenaTemporal);
++  await page.getByRole('button', { name: 'Entrar' }).click();
++  await expect(page.getByRole('heading', { name: 'Agenda' })).toBeVisible();
++}
++
++async function pedirYCerrar(page: Page, texto: string) {
++  await page.getByRole('button', { name: 'Pedir algo al asistente' }).click();
++  await page.getByLabel('Pídele algo al asistente').fill(texto);
++  await page.getByRole('button', { name: 'Enviar' }).click();
++  await expect(page.getByText(/^En espera\./).last()).toBeVisible();
++  await page.getByRole('button', { name: 'Cerrar' }).click();
++}
++
++test.describe('movil.en-espera-visible', () => {
++  test('sin nada en espera no hay franja; con algo, la franja encima de la agenda dice cuántas y, al abrirla, qué se pidió y por qué espera, sin retirar', async ({ page }) => {
++    await entrar(page);
++    await expect(page.getByText('Hoy no tienes compromisos')).toBeVisible();
++    await expect(page.getByRole('button', { name: /en espera$/ })).toHaveCount(0);
++
++    await pedirYCerrar(page, 'Recuérdame pagar el recibo');
++    const franja = page.getByRole('button', { name: '1 cosa en espera' });
++    await expect(franja).toBeVisible();
++
++    await franja.click();
++    const lista = page.getByRole('list', { name: 'Lo que está en espera' });
++    await expect(lista.getByRole('listitem')).toHaveCount(1);
++    await expect(lista).toContainText('«Recuérdame pagar el recibo»');
++    await expect(lista).toContainText('Las tareas llegan en una próxima versión.');
++    // La retirada sigue siendo una decisión abierta: no hay botón para hacerlo
++    await expect(page.getByRole('button', { name: /Retirar|Descartar|Quitar/ })).toHaveCount(0);
++
++    await pedirYCerrar(page, 'Recuérdame llamar a Lucía');
++    await expect(page.getByRole('button', { name: '2 cosas en espera' })).toBeVisible();
++  });
++});
+diff --git a/apps/movil/src/pantallas/en-espera.tsx b/apps/movil/src/pantallas/en-espera.tsx
+new file mode 100644
+index 0000000..341e38f
+--- /dev/null
++++ b/apps/movil/src/pantallas/en-espera.tsx
+@@ -0,0 +1,76 @@
++import { useEffect, useState } from 'react';
++import { Pressable, StyleSheet, Text, View } from 'react-native';
++import { OperacionRespuesta } from '@nexoai/contratos';
++import { conSesion } from '../sesion';
++import { color, espaciado, tipografia } from '../tokens';
++
++// T-045 · REQ-CAP-25. Lo que está en espera se ve fuera de la capa: una franja encima de la agenda con
++// cuántas cosas hay. Al abrirla, cada una con lo que se pidió y por qué espera, en palabras llanas. No hay
++// botón de retirar: esa decisión sigue abierta. Sin nada en espera, la franja no aparece.
++// La frase y el motivo vienen en la vista que arma la API (`vistaConfirmacion`), como en la tarjeta.
++
++type Elemento = { id: string; frase: string; motivo: string | null };
++
++const cuantas = (n: number) => (n === 1 ? '1 cosa en espera' : `${n} cosas en espera`);
++
++function elementoDe(op: OperacionRespuesta): Elemento {
++  const vista = op.vistaConfirmacion;
++  const pedido = vista.datos.find((d) => d.etiqueta === 'Lo que pediste')?.valor;
++  return { id: op.id, frase: pedido ?? vista.accion, motivo: vista.motivoNoConfirmable };
++}
++
++// `version` sube al cerrar la capa o cuando el asistente deja algo hecho: la franja vuelve a pedir la lista
++export function FranjaEnEspera({ version, alSalir }: { version: number; alSalir: () => void }) {
++  const [elementos, setElementos] = useState<Elemento[]>([]);
++  const [abierta, setAbierta] = useState(false);
++
++  useEffect(() => {
++    let vigente = true;
++    void conSesion('/operaciones?estado=en_espera')
++      .then((r) => {
++        if (!r) return alSalir();
++        const lista = OperacionRespuesta.array().safeParse(r.cuerpo);
++        // Si no se puede leer, la franja no aparece: la agenda sigue funcionando
++        if (vigente && r.estado === 200 && lista.success) setElementos(lista.data.map(elementoDe));
++      })
++      .catch(() => undefined);
++    return () => {
++      vigente = false;
++    };
++  }, [version, alSalir]);
++
++  if (elementos.length === 0) return null;
++  const titulo = cuantas(elementos.length);
++  return (
++    <View style={estilos.franja}>
++      <Pressable accessibilityRole="button" accessibilityLabel={titulo} accessibilityState={{ expanded: abierta }} onPress={() => setAbierta((a) => !a)} style={estilos.cabecera}>
++        <View style={estilos.marca} />
++        <Text style={estilos.titulo}>{titulo}</Text>
++        <Text style={estilos.accion}>{abierta ? 'Ocultar' : 'Ver'}</Text>
++      </Pressable>
++      {abierta && (
++        <View accessibilityRole="list" accessibilityLabel="Lo que está en espera" style={estilos.lista}>
++          {elementos.map((e) => (
++            <View key={e.id} role="listitem" style={estilos.elemento}>
++              <Text style={estilos.frase}>«{e.frase}»</Text>
++              {e.motivo && <Text style={estilos.motivo}>{e.motivo}</Text>}
++            </View>
++          ))}
++        </View>
++      )}
++    </View>
++  );
++}
++
++const estilos = StyleSheet.create({
++  franja: { borderRadius: 12, borderWidth: 1, borderColor: color.borde.base, backgroundColor: color.superficie.elevada },
++  cabecera: { flexDirection: 'row', alignItems: 'center', gap: espaciado[8], minHeight: 48, paddingHorizontal: espaciado[12] },
++  // Marcador geométrico del estado en espera
++  marca: { width: 8, height: 8, borderRadius: 4, backgroundColor: color.estado.advertencia },
++  titulo: { flex: 1, fontSize: tipografia.etiqueta, fontWeight: '600', color: color.texto.fuerte },
++  accion: { fontSize: tipografia.etiqueta, fontWeight: '600', color: color.marca.base },
++  lista: { paddingHorizontal: espaciado[12], paddingBottom: espaciado[12] },
++  elemento: { gap: 2, paddingVertical: espaciado[8], borderTopWidth: 1, borderTopColor: color.borde.base },
++  frase: { fontSize: tipografia.cuerpo, color: color.texto.fuerte },
++  motivo: { fontSize: tipografia.etiqueta, lineHeight: 20, color: color.texto.suave },
++});
+diff --git a/apps/movil/src/pantallas/inicio.tsx b/apps/movil/src/pantallas/inicio.tsx
+index b01b64b..ea32560 100644
+--- a/apps/movil/src/pantallas/inicio.tsx
++++ b/apps/movil/src/pantallas/inicio.tsx
+@@ -3,12 +3,15 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
+ import { Perfil } from '@nexoai/contratos';
+ import { Boton } from '../componentes';
+ import { CapaCaptura } from './captura';
++import { FranjaEnEspera } from './en-espera';
+ import { conSesion } from '../sesion';
+ import { color, espaciado, tipografia } from '../tokens';
+ import { etiquetarZona } from '../zonas';
+ 
+ // T-028 · design/ARQUITECTURA-VISUAL-MOVIL.md §2. Tres secciones con pestañas abajo (R-32) y Ajustes en la
+ // cabecera, encima y con «Cerrar» (R-34, R-43). El asa abre la capa de captura sobre la sección (R-36, T-021).
++// T-045 · REQ-CAP-25: encima de la agenda, la franja con lo que está en espera. Se vuelve a pedir al cerrar la
++// capa, que es donde algo puede quedar en espera.
+ 
+ export type Seccion = 'agenda' | 'tareas' | 'actividad';
+ 
+@@ -26,6 +29,7 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
+   const [ajustes, setAjustes] = useState(false);
+   const [captura, setCaptura] = useState(false);
+   const [version, setVersion] = useState(0);
++  const [esperas, setEsperas] = useState(0);
+   const [perfil, setPerfil] = useState<Perfil | null>(null);
+ 
+   useEffect(() => {
+@@ -52,13 +56,24 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
+         </Pressable>
+       </View>
+ 
+-      <ScrollView contentContainerStyle={estilos.cuerpo}>{contenido(seccion, () => setCaptura(true), version)}</ScrollView>
++      <ScrollView contentContainerStyle={estilos.cuerpo}>
++        {seccion === 'agenda' && <FranjaEnEspera version={version + esperas} alSalir={alSalir} />}
++        {contenido(seccion, () => setCaptura(true), version)}
++      </ScrollView>
+ 
+       {/* El asa: abre la capa de captura sin salir de la sección (glosario, «Asa») */}
+       <Pressable accessibilityRole="button" accessibilityLabel="Pedir algo al asistente" onPress={() => setCaptura(true)} style={estilos.asa}>
+         <Text style={estilos.asaTexto}>Pedir algo</Text>
+       </Pressable>
+-      <CapaCaptura visible={captura} alCerrar={() => setCaptura(false)} alCambiarAgenda={() => setVersion((v) => v + 1)} alSalir={alSalir} />
++      <CapaCaptura
++        visible={captura}
++        alCerrar={() => {
++          setCaptura(false);
++          setEsperas((e) => e + 1);
++        }}
++        alCambiarAgenda={() => setVersion((v) => v + 1)}
++        alSalir={alSalir}
++      />
+ 
+       <View accessibilityRole="tablist" style={estilos.pestanas}>
+         {(Object.keys(SECCIONES) as Seccion[]).map((clave) => (
+-- 
+2.43.0
+

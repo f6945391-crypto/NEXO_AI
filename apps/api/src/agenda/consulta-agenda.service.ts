@@ -11,6 +11,10 @@ import { SincronizadorCalendario } from './sincronizador-calendario';
 
 export const MARGEN_SINCRONIZACION_MS = 2 * 60_000;
 
+export interface OpcionesConsulta {
+  alDia?: boolean;
+}
+
 type Fila = Awaited<ReturnType<ReplicaEventosRepositorio['enRango']>>[number];
 
 const codigoDe = (error: unknown) =>
@@ -40,21 +44,25 @@ export class ConsultaAgendaService {
     private readonly sincronizador: SincronizadorCalendario,
   ) {}
 
-  async enRango(quien: Quien, desde: Date, hasta: Date): Promise<EventoAgenda[]> {
-    await this.actualizarSiHaceFalta(quien);
+  // T-043 · REQ-CUN01-13 (decisión 18 de 02-agenda): con `alDia`, la copia se actualiza antes de leer, sin
+  // margen. Lo usa el asistente; las pantallas conservan el margen de 2 minutos.
+  async enRango(quien: Quien, desde: Date, hasta: Date, opciones: OpcionesConsulta = {}): Promise<EventoAgenda[]> {
+    await this.actualizarSiHaceFalta(quien, opciones.alDia === true);
     return (await this.replica.enRango(quien, desde, hasta)).map(aContrato);
   }
 
-  async porId(quien: Quien, id: string): Promise<EventoAgenda> {
-    await this.actualizarSiHaceFalta(quien);
+  async porId(quien: Quien, id: string, opciones: OpcionesConsulta = {}): Promise<EventoAgenda> {
+    await this.actualizarSiHaceFalta(quien, opciones.alDia === true);
     const fila = await this.replica.porId(quien, id);
     if (!fila) throw errorApi(404, 'EVENTO_NO_ENCONTRADO', 'No existe ese compromiso en tu agenda.');
     return aContrato(fila);
   }
 
-  private async actualizarSiHaceFalta(quien: Quien): Promise<void> {
+  private async actualizarSiHaceFalta(quien: Quien, alDia: boolean): Promise<void> {
     const ultima = await this.sincronizador.ultimaSincronizacion(quien);
-    if (ultima && Date.now() - ultima.getTime() <= MARGEN_SINCRONIZACION_MS) return;
+    // T-043: al volver de conectar Google, la copia se actualiza en seguida aunque la anterior sea reciente
+    const dentroDelMargen = ultima !== null && Date.now() - ultima.getTime() <= MARGEN_SINCRONIZACION_MS;
+    if (!alDia && dentroDelMargen && !(await this.sincronizador.conectadoDespuesDe(quien, ultima))) return;
     try {
       await this.sincronizador.sincronizar(quien);
     } catch (error) {

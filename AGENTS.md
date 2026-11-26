@@ -50,14 +50,15 @@ Requisitos: Node.js 22.12 o posterior (`.nvmrc`), Python 3.12 y Docker. pnpm no 
 | `npx pnpm@12.10.1 install` | Instala todo el monorepo |
 | `copy .env.example .env` | Configuración local. PostgreSQL en el puerto **5433**, porque el 5432 lo ocupa un PostgreSQL instalado en el equipo |
 | `docker compose up -d` | Levanta PostgreSQL (con pgvector) y Redis, y crea `nexoai` y `nexoai_prueba` |
+| `docker compose --profile aplicacion up --build` | Construye y levanta en contenedores las migraciones, la API, el trabajador y la web (puertos 3000 y 3001), con las variables de `.env`. Detalle en `README.md`, «Ejecutar con contenedores» |
 | `npx pnpm@12.10.1 --filter @nexoai/api migrar` | Aplica las migraciones a la base de desarrollo |
 | `npx pnpm@12.10.1 --filter @nexoai/api semilla` | Organización y dos cuentas de desarrollo; es idempotente |
-| `npx pnpm@12.10.1 --filter @nexoai/api crear-cuenta -- --nueva-organizacion "<nombre>" --correo <correo> --rol <rol> --plan <plan>` | Alta de una cuenta (REQ-ACC-01). La contraseña temporal se muestra una sola vez |
+| `npx pnpm@12.10.1 --filter @nexoai/api crear-cuenta --nueva-organizacion "<nombre>" [--tipo personal\|empresa] --correo <correo> --rol <rol> --plan <plan> [--administrador]` | Alta de arranque de una cuenta (REQ-ACC-01, REQ-ADM-04). La contraseña temporal se muestra una sola vez. Rol: `usuario_personal`, `gerente` o `colaborador`; plan: `gratuito`, `personal` o `empresarial`. Sin `--tipo`, la organización nueva es de empresa con el plan `empresarial` y personal con los demás; la primera cuenta de una empresa nueva es su administradora. Con `--organizacion <uuid>` en lugar de `--nueva-organizacion`, se suma a una que existe; `--administrador` solo vale en una de empresa. **Sin `--` antes de las opciones:** pnpm 12 lo pasa tal cual y el script lo rechaza |
 | `npx pnpm@12.10.1 verificar` | Comprobación de tipos, compilación, pruebas y trazabilidad. **Una tarea no está hecha si esto falla** |
 | `npx pnpm@12.10.1 test` | Solo las pruebas |
 | `node apps/api/dist/main.js` | Arranca la API compilada (`PUERTO`, 3000 por defecto) |
 | `node apps/api/dist/trabajador.js` | Arranca el proceso trabajador: sincroniza el calendario de cada perfil conectado cada 5 minutos, con BullMQ sobre el Redis de Docker |
-| `npx pnpm@12.10.1 --filter @nexoai/api probar-calendario -- --correo <correo> [--solo-lectura]` | Prueba el proveedor real de Google Calendar con el contrato de T-013, sobre la base de desarrollo |
+| `npx pnpm@12.10.1 --filter @nexoai/api probar-calendario --correo <correo> [--solo-lectura]` | Prueba el proveedor real de Google Calendar con el contrato de T-013, sobre la base de desarrollo |
 | `npx pnpm@12.10.1 --filter @nexoai/api evaluar-asistente` | Evalúa el proveedor del modelo del `.env` con ocho frases fijas (T-036). **Gasta cuota del proveedor**: se ejecuta a mano, nunca en la integración continua. Las pruebas automáticas nunca llaman al proveedor real |
 | `npx pnpm@12.10.1 --filter @nexoai/web dev` | Arranca la web en http://localhost:3001 (`API_URL` apunta a la API) |
 | `npx pnpm@12.10.1 --filter @nexoai/web test` | Pruebas de extremo a extremo: arrancan la API real sobre `nexoai_e2e_prueba` (puerto 3102) y la web (puerto 3101). **Antes, cierra cualquier `next dev` de `apps/web`**: Next.js no admite dos a la vez |

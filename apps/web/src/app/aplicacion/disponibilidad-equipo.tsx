@@ -186,6 +186,8 @@ export function DisponibilidadEquipo({
   perfilId: string;
 }) {
   const [equipos, setEquipos] = useState<Equipo[]>([]);
+  // T-120 · REQ-CUN05-19: el responsable y cuántas personas tiene cada equipo
+  const [resumenes, setResumenes] = useState<Record<string, { responsable: string | null; integrantes: number }>>({});
   const [equipoId, setEquipoId] = useState('');
   const [integrantes, setIntegrantes] = useState<Integrante[]>([]);
   const [seleccionados, setSeleccionados] = useState<string[]>([]);
@@ -234,6 +236,10 @@ export function DisponibilidadEquipo({
         .map((registro) => registro.equipo);
 
       setEquipos(encontrados);
+      setResumenes(Object.fromEntries((respuesta.datos ?? []).map((registro) => [
+        registro.equipo.id,
+        { responsable: registro.responsable?.correo ?? null, integrantes: registro.integrantes ?? 0 },
+      ])));
 
       if (encontrados.length > 0) {
         setEquipoId(encontrados[0]?.id ?? '');
@@ -400,7 +406,6 @@ export function DisponibilidadEquipo({
   return (
     <section className="disponibilidad-equipo">
       <h2>Disponibilidad del equipo</h2>
-      <p>Encuentra horarios libres sin consultar los detalles privados de otros calendarios.</p>
 
       <div style={{ display: 'grid', gap: '16px', marginTop: '24px' }}>
         <label>
@@ -422,6 +427,12 @@ export function DisponibilidadEquipo({
             ))}
           </select>
         </label>
+        {resumenes[equipoId] && (
+          <p className="disponibilidad-equipo__resumen">
+            {resumenes[equipoId].responsable ? `Responsable: ${resumenes[equipoId].responsable}` : 'Sin responsable'}
+            {` · ${resumenes[equipoId].integrantes} ${resumenes[equipoId].integrantes === 1 ? 'integrante' : 'integrantes'}`}
+          </p>
+        )}
 
         <label>
           Fecha
@@ -438,7 +449,7 @@ export function DisponibilidadEquipo({
         </label>
 
         <label>
-          Duración de la reunión (opcional)
+          Duración de la reunión
           <select
             value={duracion ?? ''}
             disabled={controlesBloqueados}

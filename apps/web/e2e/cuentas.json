@@ -1,5 +1,5 @@
 {
-  "_nota": "Cuentas de prueba de extremo a extremo. Las crea e2e/arrancar-api.mjs en una base que se vacía en cada ejecución.",
+  "_nota": "Cuentas de prueba de extremo a extremo. Las crea e2e/arrancar-api.mjs en una base que se vacía en cada ejecución. T-062: las que llevan «organizacion» van en otra organización («personal», una propia para cada una, o el nombre de una empresa); las que llevan «lista» tienen el primer ingreso hecho, en Lima.",
   "contrasenaTemporal": "temporal-de-prueba-e2e",
   "contrasenaNueva": "contrasena-nueva-e2e",
   "sinElegirZona": {
@@ -56,5 +56,148 @@
     "correo": "asistente-espera-e2e@nexoai.test",
     "rol": "gerente",
     "plan": "empresarial"
+  },
+  "historial": {
+    "correo": "historial-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "agendaSemana": {
+    "correo": "agenda-semana-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "enEspera": {
+    "correo": "en-espera-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "historialLargo": {
+    "correo": "historial-largo-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "semanaLlena": {
+    "correo": "semana-llena-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "actividad": {
+    "correo": "actividad-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "actividadVacia": {
+    "correo": "actividad-vacia-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "actividadSinCalendario": {
+    "correo": "actividad-sin-calendario-e2e@nexoai.test",
+    "rol": "colaborador",
+    "plan": "empresarial"
+  },
+  "administradora": {
+    "correo": "admin-e2e@acme.test",
+    "rol": "gerente",
+    "plan": "empresarial",
+    "administrador": true,
+    "organizacion": "Acme",
+    "lista": true
+  },
+  "acmeSuspender": {
+    "correo": "lucia@acme.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Acme",
+    "lista": true
+  },
+  "acmeRestablecer": {
+    "correo": "mateo@acme.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Acme",
+    "lista": true
+  },
+  "acmeResponsable": {
+    "correo": "rosa@acme.test",
+    "rol": "gerente",
+    "plan": "empresarial",
+    "organizacion": "Acme",
+    "lista": true
+  },
+  "personalSinEmpresa": {
+    "correo": "vasco@correo.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "organizacion": "personal",
+    "lista": true
+  },
+  "tareas": {
+    "correo": "tareas-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "tareasVacio": {
+    "correo": "tareas-vacio-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "reunionesAdmin": {
+    "correo": "admin@reuniones.test",
+    "rol": "gerente",
+    "plan": "empresarial",
+    "administrador": true,
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesLider": {
+    "correo": "lider@reuniones.test",
+    "rol": "gerente",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesAna": {
+    "correo": "ana@reuniones.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesBeto": {
+    "correo": "beto@reuniones.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesCarla": {
+    "correo": "carla@reuniones.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesDiego": {
+    "correo": "diego@reuniones.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesPablo": {
+    "correo": "pablo@reuniones.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "contrasena": {
+    "correo": "contrasena-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "organizacion": "personal",
+    "lista": true
   }
 }

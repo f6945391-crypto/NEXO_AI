@@ -150,11 +150,15 @@ R-17 dice que el hilo vive en el lienzo, y el lienzo es web. En móvil no hay li
 
 La bandeja de lo que ha vuelto es un filtro dentro de Tareas —la franja *esperando de alguien*, que ya existía—, no una sección nueva. Y el motivo de fondo sigue siendo el mismo que en web, dicho con precisión: **el hilo mantiene al agente con poco contexto y un propósito claro, y eso es lo que evita que alucine.** No es solo ahorro de coste, es fiabilidad. El asistente lee el hilo solo si se lo pides. En móvil se cumple solo, porque la conversación es la capa de captura y se descarta al confirmar.
 
+> **Revisión del 5 de noviembre de 2026 (avalada, REQ-AGT-03).** La capa de captura ya no se descarta al confirmar: abre con el episodio en curso y el anterior, separados por una línea con la hora y lo que se hizo, «Ver anteriores» arriba y la lista abajo del todo. Lo que el asistente lee sigue siendo poco: el episodio abierto y la nota de continuidad (REQ-AGT-01 v2). Detalle en `ARQUITECTURA-VISUAL-WEB.md` §5, revisión del 5 de noviembre.
+
 ### La barra de entrada no era una barra de entrada
 
 Nunca se escribe dentro: al tocarla sube la capa de captura, que es donde pasa todo. O sea que **es un asa, no un campo**, y estaba dibujada como lo que no es, ocupando 65 px de ancho completo en todas las pantallas.
 
 Pasa a ser `Móvil / Asa de captura`: un botón redondo de 56 px flotando abajo a la derecha. Gana los 57 px que la barra robaba al contenido, deja de empujar la lista hacia abajo cuando el día está cargado, y queda más honesta sobre lo que hace.
+
+> **Remisión, 7 de noviembre de 2026.** Esto sigue valiendo para la sección: fuera de la capa no se escribe. **Dentro de la capa sí hay un campo**, y su forma —una sola fila con el envío dentro— está en §8, «Revisión del 7 de noviembre de 2026». §8.6 añade al asa un indicador cuando algo espera tu decisión, y anota que el asa construida no es la de este párrafo (hallazgo MC-13).
 
 ### Las tres capas de «Hoy»
 
@@ -167,6 +171,8 @@ La sección Hoy no es una lista, son tres cosas distintas que comparten el día 
 | **Apunte** | Algo que pensaste o que ocurrió, y que no pide nada | `superficie/hundida`, **sin borde** |
 
 El apunte va sin borde a propósito: el borde en este lenguaje anuncia que hay algo que decidir (§3), y un apunte no lo tiene. Es el mismo criterio que deja la fila de extracción con `borde/fuerte` mientras espera confirmación.
+
+> **Remisión, 7 de noviembre de 2026.** Estas tres «capas» son formas de los bloques del día, no la capa de captura. Cuando §8 dice «la capa», habla siempre de la capa de captura. El criterio del borde de este párrafo es el mismo que §8.4 aplica a la tarjeta ya decidida, que pasa de `borde/fuerte` a `borde/base`.
 
 ### La regla que separa tarea de apunte
 
@@ -350,3 +356,202 @@ Sustituye a la rama `CAP-v2`, que se abandona: era un catálogo de funciones, no
 7. **Sin revisar en modo oscuro.**
 
 El inventario completo está en `VALIDACION-MOVIL-v2.md`.
+
+---
+
+## 8. Revisión del 7 de noviembre de 2026: la conversación dentro de la capa
+
+*Propuesta del 7 de noviembre de 2026, pendiente de aval del equipo. Sale de la prueba del equipo de ese día —una sola petición de guardado llenaba la pantalla— y de la auditoría `design/capturas/2026-11-07-movil-auditoria/INFORME-AUDITORIA-MOVIL.md` (hallazgos MC-01 a MC-19). No cambia ninguna regla anterior salvo la de los datos estructurados de §3, que §8.4 precisa para la tarjeta plegada, y lo dice allí.*
+
+La capa nació para una cosa breve: pedir, confirmar y volver. Desde el 5 de noviembre conserva lo hablado (REQ-AGT-03), así que ya es una conversación, y se estaba dibujando como un formulario que sube. Medido en 390 × 844: la tarjeta con cruce ocupaba 659 px, el 78 % del alto; la barra de escritura, 160 px; y la capa, al crecer, cortaba la cabecera de la sección por la mitad.
+
+> **La capa es una conversación: la lista manda, la cabecera y la barra se encogen, y lo que pide decisión cabe entero en la lista sin taparla.**
+
+### 8.1 Estructura de la capa
+
+| Parte | Cómo es | Por qué |
+|---|---|---|
+| **Cabecera fina** | Una fila: título a la izquierda, «Cerrar» a la derecha. Debajo, si hace falta, una línea de apoyo (§8.5). Línea `borde/base` abajo | Una sola acción en la cabecera: la capa no tiene menú. La línea es la frontera con la lista, que hoy pasa por debajo sin límite (MC-16) |
+| **Lista de mensajes** | Todo el alto entre la cabecera y la barra. «Ver anteriores» fijo arriba mientras quede algo; los separadores de T-039, sin cambios | Es lo que se lee. Todo lo demás le quita sitio |
+| **«Pensando…»** | Último elemento de la lista, alineado como una respuesta del asistente | Entre la lista y la barra empujaba la barra dos veces por mensaje (MC-15) |
+| **Barra de composición** | Una fila fija abajo (§8.3). Sube con el teclado; al subir se acorta la lista, nunca la cabecera | El campo es la puerta: tiene que estar siempre en el mismo sitio |
+
+**Dos altos, y ninguno corta una cabecera.**
+
+| Alto | Cuándo | Qué se ve detrás |
+|---|---|---|
+| **Baja** | Mientras lo que hay en la lista cabe sin que el borde de la capa suba por encima del final de la cabecera de la sección | La sección entera, bajo el velo: es el antecedente de §2 y se lee sin competir, porque las dos cabeceras están separadas |
+| **Completa** | En cuanto no cabe, o con el teclado abierto | Una franja de **12 px** del antecedente bajo el velo, arriba: basta para saber que la sección sigue ahí, no para leer nada |
+
+> **La capa nunca corta una cabecera: o la deja entera a la vista, o la tapa entera.** Lo que se vio el 7 de noviembre —«Agenda» y «Ajustes» legibles a través del velo, «Lo que va a pasar» partido— es el alto intermedio que esta regla prohíbe (MC-02). Y la capa no cambia de alto en cada turno: salta de baja a completa una vez y se queda (MC-19).
+
+**El velo pasa a ser un token**, `superficie/velo`, con su opacidad. Hoy hay tres valores: 0,16 en §2, medido de `Estados / 02`; 0,4 en el código; y ninguno en los tokens (MC-14). Con la regla de los dos altos, el velo solo tiene que hacer una cosa: que la franja de 12 px se lea como fondo. El valor lo decide el equipo; lo que no puede pasar es que vuelva a escribirse a mano.
+
+**Colocación al llegar algo.** Al enviar, la lista baja hasta el final. Si lo que llega es una tarjeta y cabe entera, se ve entera con la petición encima. Si no cabe —solo puede pasar desplegada—, la lista se coloca en el **principio de la tarjeta**, no en su final: lo primero que se lee es la acción (P-03, MC-07).
+
+### 8.2 Referencia de estructura, y lo que no se toma de ella
+
+La estructura sigue el **patrón común de las aplicaciones de conversación móviles** maduras: cabecera fina con título y una acción, mensajes a todo el alto, una barra de composición de una sola fila con el envío dentro del mismo contorno, que crece unas líneas y sube con el teclado, y las acciones que piden decisión como tarjetas compactas dentro del flujo, con lo esencial a la vista y el detalle plegado. Se adopta porque la persona ya sabe usarlo: no hay que enseñárselo.
+
+> **De ninguna de esas aplicaciones se toma el color, la tipografía ni la iconografía.** Los colores, tamaños, radios y espaciados son los tokens de NexoAI (`tokens.json`, §3 de este documento). Si un cuadro o una pantalla se parece a otra aplicación en algo más que la disposición, está mal.
+
+| Se toma | No se toma |
+|---|---|
+| Dónde va cada parte y cuánto ocupa | Colores, fondos de burbuja, degradados |
+| Que el envío esté dentro del contorno del campo | La forma o el dibujo del icono de envío |
+| Que el campo crezca hasta cuatro líneas y suba con el teclado | Tipografías, pesos y tamaños |
+| Que lo que pide decisión sea compacto y se despliegue | Animaciones propias, sombras, radios |
+
+### 8.3 La barra de composición
+
+| Elemento | Valor |
+|---|---|
+| Contorno | Uno solo, `radio/md`, que contiene el campo y el envío. El contorno de un control necesita 3:1 frente al fondo: `borde/fuerte` da 1,7:1 (MC-10), así que la barra pide un token de contorno de campo, que decide el equipo |
+| Campo | Empieza en **una línea** y crece hasta **cuatro**; desde ahí, se desplaza por dentro. Texto `tam/cuerpo`; indicación «Pídele algo al asistente» en `texto/suave` |
+| Envío | Dentro del contorno, a la derecha, alineado con la última línea. Área táctil de **44 × 44**. Nombre accesible **«Enviar»**, siempre el mismo |
+| Campo vacío | El envío se atenúa; la barra **no cambia de tamaño** ni de forma. Nunca un botón gris a ancho completo, que se leía como deshabilitado para siempre (MC-04) |
+| Alto | Con una línea, unos 56 px más el margen inferior y la zona segura. Hoy son 160 px (MC-03) |
+| Teclado | La barra sube con él; la lista se acorta por arriba de la barra |
+| Sitio reservado | A la izquierda del envío, dentro del contorno, cabe una puerta más (Hablar, §3 ter). Hoy no se dibuja: la voz está fuera (PT-2). Dónde va y qué pasa mientras se transcribe queda como pregunta abierta en el informe del carril |
+
+### 8.4 La tarjeta de confirmación en el móvil
+
+> **Plegada por defecto: se ve lo que hace falta para decidir. El detalle, en la misma tarjeta y a demanda.**
+
+**Lo que no se pliega nunca.** Es lo que P-03 obliga a mostrar antes de ejecutar y lo que otras reglas exigen ver:
+
+| Qué | Ejemplo | Por qué no se pliega |
+|---|---|---|
+| La acción | «Registrar este compromiso en tu calendario de Google» | P-03: la acción exacta |
+| **El qué** | «Reunión» | La acción no dice cuál: el nombre solo está en un dato (MC-17) |
+| **El cuándo, con su zona** | «sábado, 7 de noviembre de 2026 · 10:00 – 11:00 · Hora de Lima (GMT-5)» | P-05: toda fecha se muestra con zona (MC-18) |
+| **Lo que puso el sistema por su cuenta** | «1 hora, porque no indicaste la hora de fin» | REQ-CUN01-01 y su decisión 19: la tarjeta lo dice (MC-18) |
+| Lo irreversible y las consecuencias | «No se avisa a nadie de este cambio», «Solo esta vez: el resto de la serie queda igual» | P-03 |
+| El cruce | «Se cruza con «Llamada con proveedores»» | Decisión 27 de `02-agenda` |
+| Las decisiones | Alternativas, «Confirmar», «Descartar» | Son la tarjeta |
+
+**Lo que se pliega** es la forma en pares etiqueta / valor apilados y los datos que la línea esencial ya dice. Nada más.
+
+**La línea esencial** son dos renglones como mucho: el qué, y el cuándo con la zona. Se arma **con los valores de los datos tal como vienen**, sin abreviar ni reescribir en la pantalla: si algún día se quiere «sáb 7 nov», esa forma corta la tiene que dar el sistema junto con los datos, igual que da el texto del cruce. Según la acción:
+
+| Acción | Primer renglón | Segundo renglón |
+|---|---|---|
+| Registrar | El título | Fecha · hora · zona |
+| Mover | El compromiso | «Antes» → «Ahora» · zona |
+| Cancelar | El compromiso | Cuándo · zona |
+
+**Las decisiones** siguen §3: **«Confirmar» primario a ancho completo y «Descartar» secundario a ancho completo debajo**. Las alternativas, si las hay, van debajo de la línea de cruce y antes de «Confirmar», cada una como botón secundario, y **la fila «Alternativas» en texto no se pinta** (MC-06). En un cruce no hay «Confirmar»: las alternativas son las decisiones.
+
+**«Ver detalles» es un control de texto, no un botón de decisión.** Va a la derecha del qué, sin borde, en `marca/base`, con 44 px de área táctil, y pasa a «Ocultar detalles». No va en una fila junto a «Descartar»: ponerlo al lado da el mismo peso a decidir y a mirar, y §3 no admite dos botones pequeños uno al lado del otro.
+
+**Desplegada**, la línea esencial se sustituye por los pares de siempre (Título, Fecha, Hora, Zona horaria, Duración…), dentro de la misma tarjeta. Lo supuesto, lo irreversible, el cruce y las decisiones se quedan donde estaban.
+
+**Tope de alto.** Plegada, con el cruce y **una** alternativa, la tarjeta no pasa del **40 % del alto** de la pantalla (338 px en 390 × 844). Cada alternativa más añade una fila de 52 px; con tres, sigue cabiendo con la petición a la vista. Desplegada no tiene tope: es la persona quien lo pidió.
+
+**La tarjeta ya decidida** se queda plegada, sin decisiones y con `borde/base` en lugar de `borde/fuerte`: ya no pide nada (§3, el borde graduado). «Ver detalles» sigue ahí. Hoy conserva todos los datos y no dice que ya se decidió (MC-08).
+
+**Por qué no contradice REQ-CAP-01.** El requisito pide que las tres puertas terminen en «la misma tarjeta, con los mismos datos y las mismas salidas». Plegar no quita ningún dato: los pone a un toque, dentro de la misma tarjeta; y las salidas —confirmar, descartar, elegir alternativa— son las mismas, en el mismo orden. Lo que se confirma es idéntico plegado o desplegado. Y lo que P-03 obliga a ver antes de ejecutar está siempre en la parte que no se pliega.
+
+**Lo que esto precisa de §3.** «Datos estructurados» dice que los datos que se revisan antes de confirmar van en pares, nunca en una línea corrida con puntos. Esa regla sigue valiendo para la tarjeta desplegada y para cualquier pantalla donde se revisan datos completos. **En la tarjeta plegada del móvil se admite la línea esencial** con tres condiciones: cada valor se entiende solo (el día lleva el día de la semana, la hora es un intervalo, la zona va nombrada); nunca mezcla el tipo de cosa con sus datos («Compromiso · jueves 2, 16:00» era el error 6 de §4); y los pares están a un toque. El error del v2 era no tener dónde revisar; aquí está en la misma tarjeta.
+
+### 8.5 El título de la capa
+
+El título dice **en qué estamos**, sin vocabulario interno (R-40: nunca «episodio» ni «turno»).
+
+| Estado | Título | Línea de apoyo |
+|---|---|---|
+| No hay nada en la conversación | «¿Qué hacemos?» | — (debajo, el blanco con ejemplos) |
+| Hay conversación anterior y nada abierto | «¿Qué hacemos?» | — |
+| Hay algo abierto: se está pidiendo o decidiendo algo | «Asistente» | La primera petición de lo que está abierto, en una línea, recortada al final |
+
+«¿Qué hacemos?» es una invitación, y solo vale cuando no hay nada a medias (MC-05). Con algo abierto, el título nombra a quien habla —el asa dice «Pedir algo al asistente»— y la línea de apoyo dice de qué va, que es lo que se pierde de vista cuando la petición sube con el desplazamiento.
+
+### 8.6 El asa, con indicador
+
+El asa sigue donde está y sigue haciendo lo mismo: sube la capa. Lo que cambia es que **dice cuándo hay algo esperando tu decisión**: si hay una propuesta abierta, lleva un **punto** pequeño en `texto/inverso` en su esquina, y su nombre accesible pasa a «Pedir algo al asistente. Tienes algo por confirmar». Al confirmar, descartar o caducar la propuesta (decisión 28 de `07-agente`, 24 horas), el punto desaparece.
+
+| Por qué así | |
+|---|---|
+| Punto y no número | Hay como mucho una propuesta pendiente a la vez (decisión 24 de `07-agente`, en secuencia) |
+| No ámbar | El ámbar es la franja «en espera» (decisión 26 de `02-agenda`): lo que espera a que el sistema pueda hacerlo. Esperar **tu** decisión es otra cosa, y REQ-CAP-23 pide que no se parezcan |
+| No rojo | No es un error |
+
+**El asa construida no es la de §2.** §2 y §3 dicen botón redondo de 56 px con un signo; la aplicación tiene una píldora «Pedir algo» de 48 px en `agente/base` (MC-13). Este documento no lo resuelve: queda para el equipo. El indicador vale para las dos formas.
+
+### 8.7 Relación con lo ya decidido
+
+| Lo decidido | Qué cambia con esta revisión |
+|---|---|
+| Revisión del 5 de noviembre (REQ-AGT-03), T-039: la capa no se vacía, separadores con hora y desenlace, «Ver anteriores» arriba | Nada en su comportamiento. Pasan a vivir dentro de la lista a todo el alto, con la cabecera fina encima |
+| Franja «en espera» (REQ-CAP-25, decisión 26 de `02-agenda`): en el nivel Hoy, fuera de la capa | Nada. La franja es lo que espera al sistema; el punto del asa es lo que espera a la persona. Viven en sitios distintos y con colores distintos |
+| Cruce en una línea (decisión 27 de `02-agenda`) | Se conserva tal cual: es la forma que la línea esencial imita |
+| Alternativas de referente (REQ-AGT-04) | Se pintan como las alternativas de horario: botones dentro de la tarjeta, sin repetirlas en texto |
+| Anchos menores de 1024 en la web (H-WEB-01) | La conversación es allí una capa: le valen las mismas reglas |
+| §2, el fondo de la capa es el antecedente | Se precisa: el antecedente se ve entero con la capa baja, o como franja con la capa completa; nunca cortado |
+
+### 8.8 Esquemas
+
+Tarjeta **plegada**, con cruce y una alternativa, en la capa completa:
+
+```
+┌──────────────────────────────────────┐
+│░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│ ← 12 px del antecedente, bajo el velo
+├──────────────────────────────────────┤
+│ Asistente                     Cerrar │ ← cabecera fina: título + una acción
+│ Agéndame una reunión mañana a las…   │ ← apoyo: la petición abierta, una línea
+├──────────────────────────────────────┤
+│          ( Ver anteriores )          │ ← fijo arriba mientras haya más
+│ ─── Viernes 6, 22:22 · Tarea guard… ─│ ← separador de T-039
+│                                      │
+│              Agéndame una reunión ▐  │ ← la petición, visible
+│              mañana a las 10      ▐  │
+│ ┌──────────────────────────────────┐ │
+│ │ Registrar este compromiso en tu  │ │ ← la acción
+│ │ calendario de Google             │ │
+│ │ Reunión             Ver detalles │ │ ← el qué · control de texto
+│ │ sábado, 7 de noviembre de 2026 · │ │ ← el cuándo, con la zona
+│ │ 10:00 – 11:00 · Hora de Lima (…) │ │
+│ │ 1 hora, porque no indicaste la h…│ │ ← lo que puso el sistema
+│ │ Se cruza con «Llamada con prove… │ │ ← el cruce, una línea
+│ │ [ lunes, 9 de noviembre, 12:00 ] │ │ ← alternativa
+│ │ [          Descartar           ] │ │
+│ └──────────────────────────────────┘ │ ← como mucho el 40 % del alto
+├──────────────────────────────────────┤
+│ ( Pídele algo al asistente      ↑ )  │ ← una fila; el envío, dentro
+└──────────────────────────────────────┘
+```
+
+La misma tarjeta **desplegada** (la lista se coloca en su principio):
+
+```
+┌──────────────────────────────────────┐
+│░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│
+├──────────────────────────────────────┤
+│ Asistente                     Cerrar │
+│ Agéndame una reunión mañana a las…   │
+├──────────────────────────────────────┤
+│ ┌──────────────────────────────────┐ │
+│ │ Registrar este compromiso en tu  │ │ ← la acción, arriba de la vista
+│ │ calendario de Google             │ │
+│ │                Ocultar detalles  │ │
+│ │ Título         Reunión           │ │ ← los pares de §3, como hoy
+│ │ Fecha          sábado, 7 de nov… │ │
+│ │ Hora           10:00 – 11:00     │ │
+│ │ Zona horaria   Hora de Lima (G…) │ │
+│ │ Duración       1 hora, porque no │ │
+│ │                indicaste la hora │ │
+│ │                de fin            │ │
+│ │ Se cruza con «Llamada con prove… │ │ ← lo que no se pliega, donde estaba
+│ │ [ lunes, 9 de noviembre, 12:00 ] │ │
+│ │ [          Descartar           ] │ │
+│ └──────────────────────────────────┘ │
+├──────────────────────────────────────┤
+│ ( Pídele algo al asistente      ↑ )  │
+└──────────────────────────────────────┘
+```
+
+Sin cruce, en el lugar de la alternativa va «Confirmar», primario, y «Descartar» sigue debajo. Desplegada, sin «Alternativas» en texto: los botones ya lo dicen.
+
+### 8.9 Lo que esta revisión deja abierto
+
+Va en `entregas/INFORME-CARRIL-MOVIL-DISENO.md`: el requisito nuevo que convendría escribir (la tarjeta plegada), si la web también pliega, el valor del velo y el token de contorno, la forma del asa, el dictado en la barra de una fila, la foto, y si la capa completa debe ocupar la pantalla entera cuando lo abierto es largo.

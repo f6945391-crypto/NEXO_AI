@@ -3,9 +3,11 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SesionActual } from '@nexoai/contratos';
 import { Entrar } from './pantallas/entrar';
+import { ActividadPantalla } from './pantallas/actividad';
 import { AgendaHoy } from './pantallas/agenda';
 import { Inicio, type Seccion } from './pantallas/inicio';
 import { PrimerIngreso } from './pantallas/primer-ingreso';
+import { SeccionTareas } from './pantallas/tareas';
 import { conSesion, salir } from './sesion';
 import { color, espaciado, tipografia } from './tokens';
 
@@ -13,11 +15,6 @@ import { color, espaciado, tipografia } from './tokens';
 // son estados de una sola pantalla. Al abrir se mira si hay una sesión guardada en el teléfono.
 
 type Estado = 'cargando' | 'entrar' | 'primer-ingreso' | 'aplicacion';
-
-const VACIOS: Record<Exclude<Seccion, 'agenda'>, { titulo: string; texto: string }> = {
-  tareas: { titulo: 'Nada en tus tareas', texto: 'Cuando le pidas algo al asistente, tus tareas aparecerán aquí, ordenadas por franja.' },
-  actividad: { titulo: 'Todavía no hay actividad', texto: 'Aquí verás cuánto tiempo dedicaste a cada cosa y todo lo que el asistente hizo por ti.' },
-};
 
 export function Aplicacion() {
   const [estado, setEstado] = useState<Estado>('cargando');
@@ -49,14 +46,15 @@ export function Aplicacion() {
       {estado === 'aplicacion' && (
         <Inicio
           alSalir={cerrarSesion}
-          contenido={(seccion, abrirCaptura, version) =>
+          contenido={(seccion, abrirCaptura, version, lienzo) =>
             seccion === 'agenda' ? (
-              <AgendaHoy alSalir={cerrarSesion} alAbrirCaptura={abrirCaptura} version={version} />
+              <AgendaHoy alSalir={cerrarSesion} alAbrirCaptura={abrirCaptura} alCambiarNivel={lienzo.alCambiarNivel} mostrar={lienzo.mostrar} version={version} />
+            ) : seccion === 'actividad' ? (
+              // T-071 · REQ-CUN02-25
+              <ActividadPantalla alSalir={cerrarSesion} version={version} />
             ) : (
-              <View style={estilos.vacio}>
-                <Text style={estilos.vacioTitulo}>{VACIOS[seccion].titulo}</Text>
-                <Text style={estilos.vacioTexto}>{VACIOS[seccion].texto}</Text>
-              </View>
+              // T-054: la sección Tareas
+              <SeccionTareas alAbrirCaptura={abrirCaptura} alSalir={cerrarSesion} version={version} />
             )
           }
         />
@@ -69,7 +67,4 @@ export function Aplicacion() {
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: color.superficie.base },
   centro: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  vacio: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: espaciado[8], padding: espaciado[24], borderRadius: 16, backgroundColor: color.superficie.elevada },
-  vacioTitulo: { fontSize: tipografia.cuerpo, fontWeight: '700', color: color.texto.fuerte, textAlign: 'center' },
-  vacioTexto: { fontSize: tipografia.etiqueta, lineHeight: 20, color: color.texto.suave, textAlign: 'center' },
 });

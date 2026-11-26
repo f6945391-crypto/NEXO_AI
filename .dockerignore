@@ -1,0 +1,27 @@
+# Lo que no entra en el contexto de construcción de apps/api/Dockerfile ni de apps/web/Dockerfile.
+# Las dependencias y las salidas se generan dentro de la imagen; copiarlas desde el equipo mezclaría
+# binarios de Windows o macOS con los de Linux.
+.git
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/.expo
+**/coverage
+**/*.tsbuildinfo
+**/next-env.d.ts
+apps/api/src/generado
+
+# Configuración local y secretos: las variables llegan en la ejecución (env_file de docker-compose.yml)
+.env
+.env.*
+!.env.example
+
+# Material que no es código de las aplicaciones
+design/capturas
+entregas
+**/*.tgz
+**/playwright-report
+**/test-results
+Claude outputs
+.claude

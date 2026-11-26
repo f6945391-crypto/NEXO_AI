@@ -68,5 +68,14 @@ test.describe('agenda.estado-vacio-abre-captura', () => {
     // T-035: el asistente lo propone, y nada se registra hasta confirmar (antes quedaba en espera, R-42)
     await expect(page.getByLabel('Para confirmar')).toContainText('Registrar este compromiso en tu calendario de Google');
     await expect(page.getByRole('button', { name: 'Confirmar' })).toBeVisible();
+
+    // H-CAP-04: con algo dicho, la capa se titula «Asistente» y recuerda la primera petición
+    await expect(page.getByRole('heading', { name: 'Asistente' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '¿Qué hacemos?' })).toHaveCount(0);
+    await expect(page.getByText('Agéndame una reunión mañana a las 10', { exact: true })).toHaveCount(2);
+    // Al cerrar, el asa avisa de que algo espera decisión; al volver, el título sigue
+    await page.getByRole('button', { name: 'Cerrar' }).click();
+    await page.getByRole('button', { name: 'Pedir algo al asistente, hay algo esperando tu decisión' }).click();
+    await expect(page.getByRole('heading', { name: 'Asistente' })).toBeVisible();
   });
 });

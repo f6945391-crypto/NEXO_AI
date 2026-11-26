@@ -1,0 +1,222 @@
+{
+  "episodios": [
+    {
+      "id": "894d6246-b23a-4421-9640-afef445202a1",
+      "abiertoEn": "2026-11-05T23:46:23.643Z",
+      "cierre": {
+        "en": "2026-11-05T23:46:23.758Z",
+        "desenlace": "descartado",
+        "titulo": "Llamada"
+      },
+      "turnos": [
+        {
+          "id": "aebe3395-7c02-4474-9a69-3e1d4174d855",
+          "en": "2026-11-05T23:46:23.648Z",
+          "tipo": "persona",
+          "texto": "Agéndame una llamada hoy a las 22"
+        },
+        {
+          "id": "2ead5a12-ce22-41ec-9afa-ff7f56bad4c6",
+          "en": "2026-11-05T23:46:23.686Z",
+          "tipo": "propuesta",
+          "operacion": {
+            "id": "48d305a0-4dcb-4da2-8d51-f7aa8f97f6cb",
+            "tipo": "agenda.registrar",
+            "origen": "agente",
+            "estado": "propuesta",
+            "vistaConfirmacion": {
+              "accion": "Registrar este compromiso en tu calendario de Google",
+              "datos": [
+                {
+                  "etiqueta": "Título",
+                  "valor": "Llamada"
+                },
+                {
+                  "etiqueta": "Fecha",
+                  "valor": "jueves, 5 de noviembre de 2026"
+                },
+                {
+                  "etiqueta": "Hora",
+                  "valor": "22:00 – 23:00"
+                },
+                {
+                  "etiqueta": "Zona horaria",
+                  "valor": "Hora de Lima (GMT-5)"
+                },
+                {
+                  "etiqueta": "Duración",
+                  "valor": "1 hora, porque no indicaste la hora de fin"
+                }
+              ],
+              "irreversible": null,
+              "confirmable": true,
+              "motivoNoConfirmable": null,
+              "conflicto": null
+            },
+            "resultado": null,
+            "error": null,
+            "creadaEn": "2026-11-05T23:46:23.678Z"
+          }
+        },
+        {
+          "id": "a5ff94eb-772d-4e08-a392-71364825ac79",
+          "en": "2026-11-05T23:46:23.739Z",
+          "tipo": "texto",
+          "texto": "De acuerdo, no hice nada."
+        }
+      ]
+    },
+    {
+      "id": "b7708539-b61f-4cc1-8405-7d870dde4a3a",
+      "abiertoEn": "2026-11-05T23:46:23.767Z",
+      "cierre": {
+        "en": "2026-11-05T23:46:23.864Z",
+        "desenlace": "registrado",
+        "titulo": "Reunión"
+      },
+      "turnos": [
+        {
+          "id": "b93589eb-e33b-435a-b897-583ffab52007",
+          "en": "2026-11-05T23:46:23.771Z",
+          "tipo": "persona",
+          "texto": "Agéndame una reunión mañana a las 10"
+        },
+        {
+          "id": "f9ff748f-4dc7-473e-84d4-498afcf030fb",
+          "en": "2026-11-05T23:46:23.802Z",
+          "tipo": "propuesta",
+          "operacion": {
+            "id": "221de447-d61c-4a46-b1ba-80d56ae66d10",
+            "tipo": "agenda.registrar",
+            "origen": "agente",
+            "estado": "propuesta",
+            "vistaConfirmacion": {
+              "accion": "Registrar este compromiso en tu calendario de Google",
+              "datos": [
+                {
+                  "etiqueta": "Título",
+                  "valor": "Reunión"
+                },
+                {
+                  "etiqueta": "Fecha",
+                  "valor": "viernes, 6 de noviembre de 2026"
+                },
+                {
+                  "etiqueta": "Hora",
+                  "valor": "10:00 – 11:00"
+                },
+                {
+                  "etiqueta": "Zona horaria",
+                  "valor": "Hora de Lima (GMT-5)"
+                },
+                {
+                  "etiqueta": "Duración",
+                  "valor": "1 hora, porque no indicaste la hora de fin"
+                }
+              ],
+              "irreversible": null,
+              "confirmable": true,
+              "motivoNoConfirmable": null,
+              "conflicto": null
+            },
+            "resultado": null,
+            "error": null,
+            "creadaEn": "2026-11-05T23:46:23.796Z"
+          }
+        },
+        {
+          "id": "7c255437-abd0-46c1-b0c3-27c121a76637",
+          "en": "2026-11-05T23:46:23.844Z",
+          "tipo": "resultado",
+          "texto": "Listo: «Reunión» quedó en tu calendario el viernes, 6 de noviembre de 2026, de 10:00 – 11:00 (hora de Lima (GMT-5)).",
+          "operacion": {
+            "id": "221de447-d61c-4a46-b1ba-80d56ae66d10",
+            "tipo": "agenda.registrar",
+            "origen": "agente",
+            "estado": "ejecutada",
+            "vistaConfirmacion": {
+              "accion": "Registrar este compromiso en tu calendario de Google",
+              "datos": [
+                {
+                  "etiqueta": "Título",
+                  "valor": "Reunión"
+                },
+                {
+                  "etiqueta": "Fecha",
+                  "valor": "viernes, 6 de noviembre de 2026"
+                },
+                {
+                  "etiqueta": "Hora",
+                  "valor": "10:00 – 11:00"
+                },
+                {
+                  "etiqueta": "Zona horaria",
+                  "valor": "Hora de Lima (GMT-5)"
+                },
+                {
+                  "etiqueta": "Duración",
+                  "valor": "1 hora, porque no indicaste la hora de fin"
+                }
+              ],
+              "irreversible": null,
+              "confirmable": true,
+              "motivoNoConfirmable": null,
+              "conflicto": null
+            },
+            "resultado": {
+              "id": "3f196057-7ad1-444d-a77a-afa52d8c5942",
+              "fin": "2026-11-06T11:00:00-05:00",
+              "estado": "confirmado",
+              "inicio": "2026-11-06T10:00:00-05:00",
+              "titulo": "Reunión",
+              "serieId": null,
+              "todoElDia": false,
+              "zonaHoraria": "America/Lima",
+              "esOrganizador": true
+            },
+            "error": null,
+            "creadaEn": "2026-11-05T23:46:23.796Z"
+          }
+        }
+      ]
+    },
+    {
+      "id": "4a0d9f42-3986-4778-b27c-d4984e2574dd",
+      "abiertoEn": "2026-11-05T23:46:23.872Z",
+      "cierre": null,
+      "turnos": [
+        {
+          "id": "242ef2e8-a496-4163-839c-bf7bbc4d5c40",
+          "en": "2026-11-05T23:46:23.876Z",
+          "tipo": "persona",
+          "texto": "Recuérdame pagar el recibo"
+        },
+        {
+          "id": "a5aa06d6-f75b-433b-920f-5d33d68b9ad0",
+          "en": "2026-11-05T23:46:23.895Z",
+          "tipo": "en_espera",
+          "texto": "Lo guardé como tarea: «pagar el recibo». Las tareas llegan en una próxima versión, así que por ahora no se ha creado nada.",
+          "motivo": "funcion_por_llegar",
+          "operacionId": "522d652e-eb58-4899-abe0-7b71a7b16852"
+        },
+        {
+          "id": "c207312d-6772-497f-a457-ce487d6f21c4",
+          "en": "2026-11-05T23:46:23.929Z",
+          "tipo": "persona",
+          "texto": "Agéndame algo con Vasco"
+        },
+        {
+          "id": "01a6395d-c61a-4cc8-ade0-b952c22740b6",
+          "en": "2026-11-05T23:46:23.950Z",
+          "tipo": "pregunta",
+          "texto": "¿Qué día?",
+          "campo": "fecha"
+        }
+      ]
+    }
+  ],
+  "hayAnteriores": true,
+  "cursor": "894d6246-b23a-4421-9640-afef445202a1",
+  "episodioAbierto": "4a0d9f42-3986-4778-b27c-d4984e2574dd",
+  "pendiente": null
+}

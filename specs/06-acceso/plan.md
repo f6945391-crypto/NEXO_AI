@@ -132,6 +132,16 @@ Es una **Operación** (AD-09):
 - **Pruebas del móvil con su propia API**: el mismo script que usa la web (`apps/web/e2e/arrancar-api.mjs`) lee de variables de entorno la base, el puerto y el archivo de cuentas. El móvil usa `nexoai_e2e_movil_prueba`, el puerto 3103 y `apps/movil/e2e/cuentas.json`, para que en `verificar` las dos no se pisen.
 - **Zona horaria en el primer ingreso**: un buscador sobre las zonas que conoce el dispositivo, con una lista corta de respaldo si el motor de JavaScript del teléfono no las da, y un botón para usar la del teléfono. Empieza sin elegir (REQ-ACC-05).
 
+### 5.7 Cambiar la contraseña desde Ajustes (ACC-18, T-121) · añadido el 25 de noviembre de 2026
+
+- **Ruta:** `PATCH /auth/contrasena { actual, nueva }`, con `@SobreLoPropio()`, junto a las demás de la sesión. *Ajuste de la tarea, que decía `/acceso/contrasena`: la API no tiene prefijo `/acceso` y todo lo de la sesión vive en `/auth`.*
+- **Validación:** `nueva` con al menos 12 caracteres (H-ACC-02), en el contrato. En el servicio, la actual tiene que ser la correcta y la nueva distinta de ella; si no, 400 `CONTRASENA_NO_VALIDA` con un solo mensaje y nada cambia.
+- **Efecto:** guarda el hash nuevo (argon2id), **revoca todas las sesiones de renovación** de la cuenta, también la de la zona de empresa, deja `contrasena.cambiada` en la auditoría y **devuelve tokens nuevos** para la sesión que lo pidió, como el primer ingreso (§5.2). Así la web y el móvil que cambian la contraseña siguen dentro, y las demás sesiones fallan en su siguiente renovación. Un token de acceso ya emitido en otra sesión vale hasta que caduca, como mucho 15 minutos (H-ACC-03; es lo que señala RT-03 para el restablecimiento).
+- **Límite de intentos:** 5 por minuto **por cuenta** (H-ACC-08), con el mismo `ThrottlerModule` del ingreso. Protege la contraseña actual si alguien usa una sesión ajena abierta.
+- **Interfaz:** en Ajustes, debajo de la zona horaria, «Cambiar contraseña» abre un formulario con la actual y la nueva, y «Cambiar» o «Cancelar». Es un control directo sobre la propia cuenta, sin asistente ni Operación (no tiene efecto externo, P-03). En la web, la acción de servidor guarda los tokens nuevos en las cookies; en el móvil, en el almacenamiento seguro.
+- **Pruebas:** `acceso.cambiar-contrasena` (API), `acceso.cambiar-contrasena-desde-ajustes` (web) y `movil.cambiar-contrasena` (móvil).
+
+
 ## 6. Seguridad
 
 | Aspecto | Tratamiento |
@@ -175,3 +185,5 @@ Decisiones que este plan tuvo que tomar porque la especificación no las cubre. 
 | H-ACC-04 | ACC-11 no dice si cambiar de zona horaria mueve los compromisos o solo cambia cómo se muestran | Solo cambia cómo se muestran; los instantes se conservan |
 | H-ACC-05 | ACC-02 habla de «la vista que corresponde a su rol» sin nombrarla | La API devuelve rol y plan, y el cliente decide la vista según el diseño de Acceso |
 | ~~H-ACC-06~~ | ~~ACC-13 dice «solo en la aplicación móvil», pero el servidor no distingue plataformas de forma fiable~~ | **Retirado el 23 de octubre de 2026**: ACC-13 ya no restringe la plataforma. El aviso `/solo-movil` queda como provisional hasta la vista web del colaborador (fase 4) |
+| H-ACC-07 | `GET /perfil` devuelve `perfil.plan` (el propio), pero el plan que manda en la interfaz es el **efectivo** (`PertenenciasService.planEfectivo`, H-ADM-06). La web decide «Encargadas» y, con REQ-CUN05-18, el corte de disponibilidad con el plan propio: una cuenta afiliada no vería lo de empresa. *(25 de noviembre de 2026)* | `Perfil` gana `planEfectivo`; la web y el móvil deciden con ese campo. `plan` se conserva para Ajustes («Plan: Personal, afiliada a Acme») |
+| H-ACC-08 | REQ-ACC-18 no dice cuántas veces se puede probar la contraseña actual. *(25 de noviembre de 2026, T-121)* | El mismo límite del ingreso, 5 intentos por minuto, contado por cuenta y no por correo, porque la petición no lleva correo |

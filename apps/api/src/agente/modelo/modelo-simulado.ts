@@ -16,7 +16,16 @@ import {
 // referencia de la petición y en su zona:
 //   {hoy} {mañana} {pasado mañana} {lunes} … {domingo}  → AAAA-MM-DD (el día de la semana, el próximo)
 //   {hora:10} {hora:9:30}                              → HH:mm
+//   {tarde:5}                                          → 17:00 (de 1 a 11, por la tarde)
 //   {titulo:una reunión con Vasco}                     → «Reunión con Vasco»
+//
+// T-040 · plan §14.5: el simulado **lee la nota de continuidad** (`peticion.nota`) solo con estas marcas, de
+// forma explícita, para probar que el contexto llega sin que el simulado «entienda» nada:
+//   {nota:eventoId} {nota:fecha}                       → el id y la fecha (AAAA-MM-DD) del compromiso más
+//                                                        reciente de la nota
+//   {nota:tareaId}                                     → el id de la tarea más reciente de la nota
+//   {nota:resumen}                                     → las acciones de la nota en una frase, sin ids
+// Sin nota, o sin lo que se busca en ella, la marca queda sin resolver y la herramienta lo rechaza.
 
 export type PasoGuion = { texto: string } | { llamadas: { nombre: string; argumentos: Record<string, unknown> }[] };
 
@@ -42,10 +51,41 @@ const sinAcentos = (texto: string) => texto.normalize('NFD').replace(/\p{Diacrit
 
 const iso = (f: FechaLocal) => `${f.anio}-${String(f.mes).padStart(2, '0')}-${String(f.dia).padStart(2, '0')}`;
 
-function resolver(marca: string, referencia: PeticionModelo['referencia']): string | undefined {
+type Entorno = Pick<PeticionModelo, 'referencia' | 'nota'>;
+
+// Las líneas de acción de la nota («- registrado · compromiso «Dentista» · … · eventoId … · hace 2 minutos»),
+// sin lo que está en espera
+function accionesDeNota(nota: string | undefined): string[] {
+  if (!nota) return [];
+  const lineas = nota.split('\n');
+  const fin = lineas.findIndex((l) => l.startsWith('En espera'));
+  return (fin === -1 ? lineas : lineas.slice(0, fin)).filter((l) => l.startsWith('- '));
+}
+
+function deNota(campo: string, nota: string | undefined): string | undefined {
+  const acciones = accionesDeNota(nota);
+  if (campo === 'resumen') {
+    if (acciones.length === 0) return 'Todavía no tengo acciones tuyas de estos días.';
+    const sinIds = acciones.map((l) =>
+      l
+        .slice(2)
+        .split(' · ')
+        .filter((p) => !/^(fecha|eventoId|tareaId) /.test(p))
+        .join(', '),
+    );
+    return `Esto es lo último que hicimos: ${sinIds.join('; ')}.`;
+  }
+  // La fecha es la del mismo compromiso que da el id
+  const linea = acciones.find((l) => l.includes(` · ${campo === 'fecha' ? 'eventoId' : campo} `));
+  const parte = linea?.split(' · ').find((p) => p.startsWith(`${campo} `));
+  return parte?.slice(campo.length + 1);
+}
+
+function resolver(marca: string, { referencia, nota }: Entorno): string | undefined {
   const hoy = enZona(referencia.instante, referencia.zonaHoraria);
   const [clave, valor = ''] = marca.split(/:(.*)/s);
   const nombre = sinAcentos(clave!.trim().toLowerCase());
+  if (nombre === 'nota') return deNota(valor.trim(), nota);
   if (nombre === 'hoy') return iso(hoy);
   if (nombre === 'manana') return iso(sumarDias(hoy, 1));
   if (nombre === 'pasado manana') return iso(sumarDias(hoy, 2));
@@ -53,9 +93,12 @@ function resolver(marca: string, referencia: PeticionModelo['referencia']): stri
     const faltan = (DIAS[nombre]! - diaDeLaSemana(hoy) + 7) % 7 || 7;
     return iso(sumarDias(hoy, faltan));
   }
-  if (nombre === 'hora') {
+  if (nombre === 'hora' || nombre === 'tarde') {
     const m = /^(\d{1,2})(?::(\d{2}))?$/.exec(valor.trim());
-    return m ? `${m[1]!.padStart(2, '0')}:${m[2] ?? '00'}` : undefined;
+    if (!m) return undefined;
+    // {tarde:5} → 17:00: de 1 a 11, por la tarde
+    const h = Number(m[1]) + (nombre === 'tarde' && Number(m[1]) >= 1 && Number(m[1]) <= 11 ? 12 : 0);
+    return `${String(h).padStart(2, '0')}:${m[2] ?? '00'}`;
   }
   if (nombre === 'titulo') {
     const limpio = valor.trim().replace(/^(un|una|el|la|los|las)\s+/i, '');
@@ -64,7 +107,7 @@ function resolver(marca: string, referencia: PeticionModelo['referencia']): stri
   return undefined;
 }
 
-function sustituir(valor: unknown, grupos: string[], referencia: PeticionModelo['referencia']): unknown {
+function sustituir(valor: unknown, grupos: string[], referencia: Entorno): unknown {
   if (typeof valor === 'string') {
     const conGrupos = valor.replace(/\$(\d)/g, (_, n: string) => grupos[Number(n)] ?? '');
     return conGrupos.replace(/\{([^{}]+)\}/g, (todo, marca: string) => resolver(marca, referencia) ?? todo);
@@ -134,16 +177,16 @@ export class ModeloSimulado implements ProveedorModelo {
       texto = vuelta === 0 ? SIN_REGLA : '';
     } else {
       const paso = encaje.regla.pasos[vuelta] ?? { texto: '' };
-      if ('texto' in paso) texto = String(sustituir(paso.texto, encaje.grupos, peticion.referencia));
+      if ('texto' in paso) texto = String(sustituir(paso.texto, encaje.grupos, peticion));
       else
         llamadas = paso.llamadas.map((l) => ({
           id: `simulado-${++this.contador}`,
           nombre: l.nombre,
-          argumentos: sustituir(l.argumentos, encaje.grupos, peticion.referencia),
+          argumentos: sustituir(l.argumentos, encaje.grupos, peticion),
         }));
     }
 
-    const entrada = peticion.sistema + JSON.stringify(peticion.mensajes) + JSON.stringify(peticion.herramientas);
+    const entrada = peticion.sistema + (peticion.nota ?? '') + JSON.stringify(peticion.mensajes) + JSON.stringify(peticion.herramientas);
     return {
       texto,
       llamadas,

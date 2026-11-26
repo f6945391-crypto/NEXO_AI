@@ -1,0 +1,140 @@
+[
+  {
+    "id": "B1.a",
+    "nombre": "proponer devuelve una propuesta pendiente",
+    "ok": true,
+    "detalle": "estado 200"
+  },
+  {
+    "id": "B1.b",
+    "nombre": "confirmar tras \"reconstruir\" el grafo reanuda y el resultado sale de la Operación",
+    "ok": true,
+    "detalle": "[\"resultado\"]"
+  },
+  {
+    "id": "B2.a",
+    "nombre": "el punto de control no contiene \"turnos\"",
+    "ok": true,
+    "detalle": "2 puntos"
+  },
+  {
+    "id": "B2.b",
+    "nombre": "tamaño del punto de control (episodio de 3 mensajes, cerrado)",
+    "ok": true,
+    "detalle": "7805 bytes en la fila (base64); 4958 bytes de estado real; 2 puntos; con propuesta pendiente: 5588"
+  },
+  {
+    "id": "B2.c",
+    "nombre": "meta del plan: < 2 000 bytes",
+    "ok": false,
+    "detalle": "7805 ≥ 2000 → NO se alcanza (Claude Code lo anotó: 5 546)"
+  },
+  {
+    "id": "B2.d",
+    "nombre": "límite fijado por T-038: < 6 000 bytes",
+    "ok": false,
+    "detalle": "7805"
+  },
+  {
+    "id": "B3.a",
+    "nombre": "descartar cierra el episodio",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "B3.b",
+    "nombre": "una pregunta por dato que falta no cierra el episodio",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "B3.c",
+    "nombre": "forma del contrato",
+    "ok": true,
+    "detalle": "episodios,hayAnteriores,cursor,episodioAbierto,pendiente"
+  },
+  {
+    "id": "B3.d",
+    "nombre": "cada episodio trae sus turnos y su cierre",
+    "ok": true,
+    "detalle": "3 episodios en la página"
+  },
+  {
+    "id": "B3.e",
+    "nombre": "el episodio abierto va último y con cierre nulo",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "B3.f",
+    "nombre": "los cerrados llevan desenlace y título",
+    "ok": true,
+    "detalle": "descartado:Llamada | registrado:Reunión"
+  },
+  {
+    "id": "B3.g",
+    "nombre": "turnos en orden cronológico dentro del episodio",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "B3.h",
+    "nombre": "página por defecto: 3 episodios y hayAnteriores",
+    "ok": true,
+    "detalle": "cursor=894d6246"
+  },
+  {
+    "id": "B3.i",
+    "nombre": "la página anterior trae episodios más antiguos, sin repetir",
+    "ok": true,
+    "detalle": "1 episodios; hayAnteriores=false"
+  },
+  {
+    "id": "B3.j",
+    "nombre": "la última página dice que no hay más",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "B3.k",
+    "nombre": "limite se respeta (limite=1)",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "B3.l",
+    "nombre": "limite fuera de rango se rechaza (0 y 21)",
+    "ok": true,
+    "detalle": ""
+  },
+  {
+    "id": "B3.m",
+    "nombre": "todos los turnos guardados son visibles por páginas",
+    "ok": true,
+    "detalle": "13 en tabla, 13 en páginas"
+  },
+  {
+    "id": "B3.n",
+    "nombre": "episodio de tarea en espera: ¿se cerró?",
+    "ok": true,
+    "detalle": "episodioCerrado=false (informativo: una tarea guardada no es una acción confirmada)"
+  },
+  {
+    "id": "B4",
+    "nombre": "asistenteEspera (mismo plan/organización de prueba) no ve la transcripción de asistente",
+    "ok": true,
+    "detalle": "0 episodios propios"
+  },
+  {
+    "id": "B4",
+    "nombre": "armazon: no se pudo entrar (Cannot read properties of undefined (reading 'every'))",
+    "ok": true,
+    "detalle": "cuenta con primer ingreso pendiente; se omite"
+  },
+  {
+    "id": "B4.b",
+    "nombre": "la tabla guarda organización y perfil en cada turno",
+    "ok": true,
+    "detalle": "1 perfiles con turnos"
+  }
+]

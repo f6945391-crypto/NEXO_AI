@@ -4,7 +4,7 @@
 **Fase:** 1 para el dominio, la API y las Operaciones; 2 para las herramientas del agente
 **Decisiones que aplica:** AD-04, AD-05, AD-06, AD-08, AD-09, AD-10 · P-01, P-02, P-03, P-05, P-07, P-11 · DP-01, DP-02
 **Depende de:** `specs/06-acceso/plan.md`, por la sesión, el contexto de organización y `@RequiereGoogle`
-**Estado:** **aprobado** por el equipo el 22 de octubre de 2026, con sus hallazgos tal como están (DP-02 sigue siendo provisional; H-AG-08 sigue abierto; H-AG-01 se decidió el 22 de octubre de 2026: una hora)
+**Estado:** **aprobado** por el equipo el 22 de octubre de 2026, con sus hallazgos tal como están (DP-02 sigue siendo provisional; H-AG-08 decidido el 6 de noviembre de 2026: la propuesta caduca a las 24 horas; H-AG-01 se decidió el 22 de octubre de 2026: una hora)
 
 Este plan dice **dónde y cómo** se cumple cada requisito. Lo que la especificación no decide está en §9 como hallazgo.
 
@@ -74,7 +74,7 @@ Reglas, cada una con su prueba:
 - **Ninguna escritura sobre `evento_agenda` ni sobre Google ocurre fuera de la transición `propuesta → ejecutada`** (REQ-CUN01-03). Ningún otro servicio llama a `ProveedorCalendario` para escribir.
 - La transición se hace con un bloqueo de fila (`SELECT … FOR UPDATE`). Una segunda confirmación de una operación ya `ejecutada` devuelve el mismo resultado sin volver a ejecutar. *Ajuste de T-012: en lugar de `SELECT … FOR UPDATE`, que exigiría SQL escrito a mano (prohibido en `AGENTS.md`), la primera confirmación «reclama» la operación con una actualización condicional atómica de `confirmada_en`, de nulo a ahora. Solo una la consigue; las demás reciben el resultado si ya terminó, o `OPERACION_EN_CURSO`.*
 - **Al confirmar se vuelven a consultar los solapes** (REQ-CUN01-02). Si apareció un conflicto desde que se propuso, la operación no se ejecuta: vuelve a `propuesta` con el conflicto y las alternativas nuevas (hallazgo H-AG-07).
-- Cuánto tiempo puede estar una propuesta sin respuesta queda sin resolver (hallazgo H-AG-08).
+- Una propuesta sin respuesta caduca a las 24 horas (H-AG-08, decidido el 6 de noviembre de 2026): la descarta el trabajador y queda un aviso visible. Se implementa en T-041 (`specs/07-agente/tasks.md`).
 
 ### 3.3 Rutas
 
@@ -113,7 +113,7 @@ Reglas, cada una con su prueba:
 ### Sincronización
 
 - **Inicial**, al conectar Google: los eventos desde 30 días atrás hasta 365 días adelante, con `singleEvents=true` para que cada repetición de una serie llegue como evento propio.
-- **Incremental**: con `syncToken`, en un trabajo de BullMQ cada 5 minutos por perfil conectado, y también bajo demanda al consultar un rango si la última sincronización tiene más de 2 minutos.
+- **Incremental**: con `syncToken`, en un trabajo de BullMQ cada 5 minutos por perfil conectado, y también bajo demanda al consultar un rango si la última sincronización tiene más de 2 minutos. *Desde el 6 de noviembre de 2026 (decisión 18 del spec, T-043): la consulta del asistente sincroniza siempre, y conectar Google sincroniza en seguida.*
 - Si Google responde `410 Gone`, se repite la sincronización inicial.
 - Si el consentimiento está revocado, no se sincroniza y se aplica REQ-ACC-09.
 - **El asistente nunca borra de la réplica por su cuenta.** Lo que se borra en Google se marca `cancelado` y queda a la vista como tal (R-25).
@@ -206,7 +206,7 @@ Registrados en `SPEC.md` §8 y en la tabla de decisiones de `spec.md`. **No son 
 | H-AG-05 | Un evento al que el usuario fue invitado, sin ser su organizador | Se muestra; modificarlo o cancelarlo se rechaza con explicación. No se declina la invitación por él |
 | H-AG-06 | Varios calendarios de Google | Solo el principal |
 | H-AG-07 | La agenda puede cambiar entre proponer y confirmar | Se vuelve a comprobar al confirmar; si hay conflicto, no se ejecuta y se propone de nuevo |
-| H-AG-08 | Una propuesta que nadie confirma ni descarta | Queda en `propuesta`, sin caducar. Falta decidir si caduca |
+| H-AG-08 | Una propuesta que nadie confirma ni descarta | **Decidido por el equipo el 6 de noviembre de 2026:** caduca a las 24 horas, la pasa a `descartada` el trabajador y deja el turno «Esta propuesta caducó; no se hizo nada». T-041 |
 | H-AG-11 | Mover o cancelar un compromiso que tiene invitados: ¿se les avisa? La especificación no lo dice (detectado en T-019) | **No se avisa a nadie**, igual que al registrar (T-013 usa `sendUpdates=none`), y la tarjeta de confirmación lo dice. Hay que decidirlo antes de que existan reuniones con invitados (CUN-06) |
 | H-AG-10 | REQ-CUN01-12 dice que el estado vacío «abre la capa de captura» (R-36), pero la web no tiene capa de captura: se pide en la barra de entrada de la conversación (detectado en T-025) | En la web, la acción del estado vacío muestra la conversación si el lienzo está ampliado y pone el foco en su barra de entrada. En el móvil sigue siendo la capa (T-021) |
 | H-AG-09 | La lectura incremental solo trae lo que cambia: un evento que ya existía más allá de los 365 días no entra en la réplica aunque la ventana avance (detectado en T-014) | Se vuelve a leer completo cuando la ventana ha avanzado 30 días, así siempre cubre al menos 335 días por delante. Parámetro `RENOVAR_VENTANA_DIAS` |
@@ -224,3 +224,19 @@ Se generan con `generarAlternativas(eventos, rangoPedido, banda, zonaHoraria)`:
 7. **Añadido al implementarla (T-016):** los horarios candidatos van **cada 15 minutos**, las alternativas **no se solapan entre sí** y **nunca se propone un horario que ya pasó**.
 
 **Para revertirla o cambiarla:** es una función pura con sus parámetros. Cambiar el criterio es cambiar esta lista y sus pruebas unitarias, sin tocar ninguna otra pieza.
+
+## 10. Revisión del 6 de noviembre de 2026 — Semana y Mes, y lo en espera visible
+
+**Origen:** `PLAN-VALOR-USUARIO.md` hitos 1 y 2; REQ-CUN01-14, REQ-CUN01-15 (esta área) y REQ-CAP-25 (`01-captura`); decisiones 20 a 23 de `spec.md`. **Propuesta, pendiente de aval.** Rama `modificacion/vision-nexoai`.
+
+| Pieza | Cambia | No cambia |
+|---|---|---|
+| API | **Nada.** `GET /agenda/eventos?desde&hasta` (§5) ya devuelve hasta 31 días; `GET /operaciones?estado=en_espera` ya lista lo en espera | Rutas, contratos, réplica, sincronización, Operaciones |
+| Web (`apps/web`) | `lib/agenda.ts` suma la lectura por semana y por mes reutilizando `medianoche` y `desfase`; el lienzo pinta Semana (siete días con sus bloques, hoy destacado) y Mes (rejilla, puntos, atenuados de otros meses) con navegación anterior/siguiente y «Volver a hoy»; elegir un día de la rejilla abre Hoy en esa fecha. Franja «en espera» sobre la lista de hoy, con la cantidad y el detalle al abrir | La conversación, la tarjeta, Ajustes |
+| Móvil (`apps/movil`) | `pantallas/agenda.tsx` y `agenda/dia.ts`: los mismos dos niveles con la forma de `design/ARQUITECTURA-VISUAL-MOVIL.md` §5.1; franja «en espera» en Inicio | La capa de captura, salvo el pulido de «Ver anteriores» |
+| Lectura | Semana: una lectura de lunes 00:00 a lunes 00:00 en la zona del perfil. Mes: una lectura del 1 al 1 del siguiente (hasta 31 días). Ambas con el margen de 2 minutos de la copia local (decisión 22) | — |
+| Textos | Sin vocabulario interno (R-40). Motivos de la espera en palabras llanas: «el asistente no respondía», «falta conectar el calendario», «las tareas llegan en una próxima versión» | — |
+
+**Verificación:** `web.agenda-semana-y-mes`, `movil.agenda-semana-y-mes`, `web.en-espera-visible`, `movil.en-espera-visible` (extremo a extremo, con el calendario simulado y compromisos registrados por la conversación o por Operaciones).
+
+**Lo que queda fuera:** retirar algo de la cola desde la franja (`SPEC.md` §8, abierto); el modo Registro del lienzo (con Actividad); Semana y Mes en la sección Actividad.

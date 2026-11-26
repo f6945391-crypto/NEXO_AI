@@ -13,6 +13,7 @@ import { crearOrganizacion } from '../../src/identidad/alta-cuentas';
 import { ProveedorCalendarioSimulado } from '../../src/integraciones/calendario/calendario-simulado';
 import { PROVEEDOR_CALENDARIO } from '../../src/integraciones/calendario/proveedor-calendario';
 import type { PrismaClient } from '../../src/plataforma/prisma';
+import { OperacionesService } from '../../src/operaciones/operaciones.service';
 import { clientePrueba, crearCuentaLista, vaciarTablas } from '../utilidades/base-prueba';
 
 // T-033 · P-11 · REQ-CUN01-11, REQ-CAP-23, REQ-CAP-24, REQ-AGT-02, REQ-ACC-08 · specs/07-agente/plan.md §7
@@ -22,7 +23,7 @@ const calendario = new ProveedorCalendarioSimulado();
 const GUION: ReglaGuion[] = [
   // «mañana» lo resuelve el simulado respecto de la referencia de la petición, como lo haría un modelo
   { si: '^dentista mañana a las 9$', pasos: [{ llamadas: [{ nombre: 'agenda_registrar_evento', argumentos: { titulo: 'Dentista', fecha: '{mañana}', horaInicio: '09:00' } }] }, { texto: '' }] },
-  { si: '^recuérdame (.+)$', pasos: [{ llamadas: [{ nombre: 'captura_guardar_tarea', argumentos: { texto: '$1', clase: 'tarea' } }] }, { texto: '' }] },
+  { si: '^recuérdame (.+)$', pasos: [{ llamadas: [{ nombre: 'tareas_registrar', argumentos: { texto: '{titulo:$1}' } }] }, { texto: '' }] },
   { si: '^hola$', pasos: [{ texto: 'Hola' }] },
 ];
 const simulado = new ModeloSimulado(GUION);
@@ -134,19 +135,28 @@ describe('T-033 · lo pedido en espera', () => {
     });
   });
 
+  // T-050 · REQ-AGT-02 v2 (09-tareas-personales §10): una tarea ya no queda en espera, se propone. Lo que ya
+  // estaba en espera por `funcion_por_llegar` sigue ahí, con el texto de H-TP-16, hasta que T-056 lo convierta
   describe('agente.tarea-queda-en-espera', () => {
-    it('una tarea se reconoce, se dice y queda en espera; no se crea ninguna tarea ni compromiso, y el trabajador no la toca (REQ-AGT-02)', async () => {
+    it('una tarea se propone, sin calendario y sin quedar en espera; lo antiguo en espera no lo toca el trabajador y dice que se está preparando', async () => {
       const r = await enviar('Recuérdame pagar el recibo antes del sábado');
-      expect(tipos(r.turnos)).toEqual(['persona', 'en_espera']);
-      expect(r.turnos[1]).toMatchObject({ motivo: 'funcion_por_llegar' });
-      expect((r.turnos[1] as { texto: string }).texto).toBe(
-        'Lo guardé como tarea: «pagar el recibo antes del sábado». Las tareas llegan en una próxima versión, así que por ahora no se ha creado nada.',
-      );
-      expect(await prisma.operacion.findFirstOrThrow()).toMatchObject({ estado: 'en_espera', motivoEspera: 'funcion_por_llegar', tipo: 'tareas.registrar' });
-      // No hace falta otra vuelta del modelo
-      expect(simulado.peticiones.at(-1)!.mensajes.filter((m) => m.rol === 'herramienta')).toHaveLength(0);
+      expect(tipos(r.turnos)).toEqual(['persona', 'propuesta']);
+      expect(await prisma.operacion.findFirstOrThrow()).toMatchObject({ estado: 'propuesta', tipo: 'tareas.registrar', motivoEspera: null });
+      expect(await prisma.operacion.count({ where: { motivoEspera: 'funcion_por_llegar' } })).toBe(0);
+
+      const operaciones = app.get(OperacionesService);
+      const contexto = { perfilId, organizacionId, rol: 'usuario_personal', plan: 'personal', primerIngresoPendiente: false } as const;
+      const antigua = await operaciones.encolar(contexto, {
+        tipo: 'tareas.registrar',
+        carga: { texto: 'llamar al banco', clase: 'tarea' },
+        motivo: 'funcion_por_llegar',
+        solicitudOriginal: 'recuérdame llamar al banco',
+        capturadaEn: new Date(),
+        conversacionId: null,
+      });
+      expect(antigua.vistaConfirmacion.motivoNoConfirmable).toBe('Se está preparando para que la confirmes en Tareas.');
       expect(await procesador.repasar()).toMatchObject({ atendidas: 0 });
-      expect(await prisma.operacion.findFirstOrThrow()).toMatchObject({ estado: 'en_espera' });
+      expect(await prisma.operacion.findUniqueOrThrow({ where: { id: antigua.id } })).toMatchObject({ estado: 'en_espera' });
     });
   });
 

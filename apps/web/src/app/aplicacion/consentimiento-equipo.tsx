@@ -172,7 +172,7 @@ export function ConsentimientoEquipo({
       <p className="ayuda">
         Permite que los integrantes de este equipo consulten
         tus horarios libres y ocupados. No se comparten
-        títulos, descripciones ni otros detalles de tus eventos.
+        títulos ni detalles.
       </p>
 
       {!propuesta && (

@@ -29,13 +29,13 @@ test.describe('web.armazon', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Tareas' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Encargadas' })).toBeVisible();
 
-    // Un ejemplo pulsable llena la entrada. T-034: el asistente reconoce la tarea y la deja en espera, sin
-    // crear nada (REQ-AGT-02); antes de T-034 todo quedaba en espera (R-42).
+    // Un ejemplo pulsable llena la entrada. T-050: el asistente propone la tarea en una tarjeta, sin crear
+    // nada hasta confirmar (REQ-CUN03-01); antes quedaba en espera (REQ-AGT-02, versión 1).
     await page.getByRole('button', { name: 'Recuérdame llamar al dentista' }).click();
     await expect(page.getByLabel('Pídele algo al asistente')).toHaveValue('Recuérdame llamar al dentista');
     await page.getByRole('button', { name: 'Enviar' }).click();
     await expect(page.getByText('Recuérdame llamar al dentista')).toBeVisible();
-    await expect(page.getByText(/^En espera\. Lo guardé como tarea: «llamar al dentista»/)).toBeVisible();
+    await expect(page.getByRole('article', { name: 'Para confirmar' })).toContainText('Nueva tarea');
 
     // Lienzo expandido: la conversación desaparece y vuelve (72 · 0 · 1368).
     await page.getByRole('button', { name: 'Ampliar' }).click();

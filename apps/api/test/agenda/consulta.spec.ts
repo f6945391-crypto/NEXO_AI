@@ -19,6 +19,18 @@ const calendario = new ProveedorCalendarioSimulado();
 const Lista = z.array(EventoAgenda);
 const DIA = 24 * 3600_000;
 
+// El primer lunes de enero que todavía no pasó (en UTC)
+function lunesDeEnero(): string {
+  const hoy = new Date();
+  for (const anio of [hoy.getUTCFullYear(), hoy.getUTCFullYear() + 1]) {
+    for (let dia = 1; dia <= 7; dia++) {
+      const fecha = new Date(Date.UTC(anio, 0, dia));
+      if (fecha.getUTCDay() === 1 && fecha.getTime() > hoy.getTime()) return fecha.toISOString().slice(0, 10);
+    }
+  }
+  throw new Error('sin lunes de enero');
+}
+
 describe('T-015 · consulta de la agenda', () => {
   let app: INestApplication;
   let prisma: PrismaClient;
@@ -145,15 +157,19 @@ describe('T-015 · consulta de la agenda', () => {
   describe('agenda.horas-con-zona-horaria', () => {
     it('cada hora sale con el desfase de su zona y con la zona IANA aparte', async () => {
       const { autorizacion, perfilId } = await persona();
-      // El lunes siguiente al cambio de hora de Madrid: 09:00 UTC son las 10:00 en Madrid (+01:00)
-      calendario.sembrar(perfilId, { titulo: 'Madrid', inicio: new Date('2026-10-26T09:00:00Z'), fin: new Date('2026-10-26T10:00:00Z'), zonaHoraria: 'Europe/Madrid' });
-      calendario.sembrar(perfilId, { titulo: 'Lima', inicio: new Date('2026-10-26T15:00:00Z'), fin: new Date('2026-10-26T16:00:00Z'), zonaHoraria: 'America/Lima' });
+      // Un lunes de enero, con Madrid en horario de invierno: 09:00 UTC son las 10:00 en Madrid (+01:00). Era el
+      // 26 de octubre de 2026, que el 25 de noviembre quedó fuera de la ventana de la copia (−30 días). El primer
+      // lunes de enero que aún no pasó siempre cae dentro de ella (como mucho, unos 363 días adelante)
+      const d = lunesDeEnero();
+      const siguiente = new Date(Date.parse(`${d}T12:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+      calendario.sembrar(perfilId, { titulo: 'Madrid', inicio: new Date(`${d}T09:00:00Z`), fin: new Date(`${d}T10:00:00Z`), zonaHoraria: 'Europe/Madrid' });
+      calendario.sembrar(perfilId, { titulo: 'Lima', inicio: new Date(`${d}T15:00:00Z`), fin: new Date(`${d}T16:00:00Z`), zonaHoraria: 'America/Lima' });
       const eventos = Lista.parse(
-        (await consultar(autorizacion, { desde: '2026-10-26T00:00:00-05:00', hasta: '2026-10-27T00:00:00-05:00' }).expect(200)).body,
+        (await consultar(autorizacion, { desde: `${d}T00:00:00-05:00`, hasta: `${siguiente}T00:00:00-05:00` }).expect(200)).body,
       );
       expect(eventos.map((e) => [e.titulo, e.inicio, e.fin, e.zonaHoraria])).toEqual([
-        ['Madrid', '2026-10-26T10:00:00+01:00', '2026-10-26T11:00:00+01:00', 'Europe/Madrid'],
-        ['Lima', '2026-10-26T10:00:00-05:00', '2026-10-26T11:00:00-05:00', 'America/Lima'],
+        ['Madrid', `${d}T10:00:00+01:00`, `${d}T11:00:00+01:00`, 'Europe/Madrid'],
+        ['Lima', `${d}T10:00:00-05:00`, `${d}T11:00:00-05:00`, 'America/Lima'],
       ]);
     });
   });

@@ -8,14 +8,21 @@ export type Rol = z.infer<typeof Rol>;
 export const Plan = z.enum(['gratuito', 'personal', 'empresarial']);
 export type Plan = z.infer<typeof Plan>;
 
+// T-058 · REQ-ADM-01 · specs/08-administracion/plan.md §3.2
+export const TipoOrganizacion = z.enum(['personal', 'empresa']);
+export type TipoOrganizacion = z.infer<typeof TipoOrganizacion>;
+
 // Alta de cuentas por script, no por una ruta pública (REQ-ACC-01, H-ACC-01). T-002
 export const AltaCuenta = z.strictObject({
   organizacionId: z.uuid(),
   correo: z.email().transform((correo) => correo.toLowerCase()),
   rol: Rol,
   plan: Plan,
+  // T-058 · REQ-ADM-04: solo en una organización de empresa (H-ADM-01)
+  administrador: z.boolean().optional(),
 });
 export type AltaCuenta = z.input<typeof AltaCuenta>;
+
 
 // POST /auth/ingreso — REQ-ACC-02, REQ-ACC-03 · T-004
 export const IngresoSolicitud = z.strictObject({
@@ -41,13 +48,17 @@ export const TokenRenovacionSolicitud = z.strictObject({
 });
 export type TokenRenovacionSolicitud = z.infer<typeof TokenRenovacionSolicitud>;
 
-// GET /auth/sesion — quién soy, según el token de acceso
+// GET /auth/sesion — quién soy, según el token de acceso. `plan` es el plan efectivo: el Empresarial
+// mientras dure una afiliación (H-ADM-06). T-059: `administrador` y `organizacion` (la empresa a la que
+// pertenece, o nulo) se leen de la base en cada petición; solo sirven para pintar, decide la guarda (P-04).
 export const SesionActual = z.strictObject({
   perfilId: z.uuid(),
   organizacionId: z.uuid(),
   rol: Rol,
   plan: Plan,
   primerIngresoPendiente: z.boolean(),
+  administrador: z.boolean(),
+  organizacion: z.strictObject({ nombre: z.string(), tipo: TipoOrganizacion }).nullable(),
 });
 export type SesionActual = z.infer<typeof SesionActual>;
 
@@ -58,6 +69,10 @@ export const Perfil = z.strictObject({
   correo: z.string(),
   rol: Rol,
   plan: Plan,
+  // H-ACC-07 · T-120: el plan que manda en la interfaz (H-ADM-06); `plan` es el propio, para Ajustes
+  planEfectivo: Plan,
+  // REQ-CUN05-18: en cuántos equipos está la cuenta
+  equipos: z.number().int().nonnegative(),
   zonaHoraria: z.string().nullable(),
   organizacion: z.strictObject({ nombre: z.string() }),
 });
@@ -93,3 +108,10 @@ export const PrimerIngresoSolicitud = z.strictObject({
   zonaHoraria: ZonaHoraria,
 });
 export type PrimerIngresoSolicitud = z.infer<typeof PrimerIngresoSolicitud>;
+
+// PATCH /auth/contrasena · REQ-ACC-18 · T-121. Responde con IngresoRespuesta: tokens nuevos de esta sesión
+export const CambioContrasenaSolicitud = z.strictObject({
+  actual: z.string().min(1).max(200),
+  nueva: z.string().min(12, 'Al menos 12 caracteres').max(200),
+});
+export type CambioContrasenaSolicitud = z.infer<typeof CambioContrasenaSolicitud>;

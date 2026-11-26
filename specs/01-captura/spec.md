@@ -390,6 +390,31 @@ Y «mañana» se resuelve respecto del momento en que se capturó, no del moment
 
 ---
 
+### REQ-CAP-25
+
+**Requisito:** MIENTRAS el usuario tenga capturas en espera, EL SISTEMA las mostrará fuera de la conversación, como una franja sobre la agenda de hoy con la cantidad; CUANDO el usuario abra la franja, verá cada captura con lo que pidió y el motivo de la espera en palabras llanas; y CUANDO no quede nada en espera, la franja no se mostrará.
+
+**Origen:** P-11 («lo pedido queda en cola, visible como en espera»); REQ-CAP-23; `design/ARQUITECTURA-VISUAL-WEB.md` §6 (lo en espera va al registro); hallazgo 4.1-d de `design/capturas/2026-11-04/INFORME-VISUAL-AGENTE.md` (hoy lo en espera solo vive en la conversación); `PLAN-VALOR-USUARIO.md` hito 1. Añadido el 6 de noviembre de 2026
+**Tipo:** dirigido por estado
+**Plataforma:** web (lienzo) y móvil (Inicio)
+
+**Criterio de aceptación**
+DADO un usuario con una tarea que quedó en espera antes del 7 de noviembre de 2026, cuando las tareas todavía no se registraban, y una solicitud encolada porque el asistente no respondía
+CUANDO abra la agenda
+ENTONCES ve «2 cosas en espera» sobre la lista de hoy
+Y CUANDO abra la franja
+ENTONCES ve las dos, cada una con la frase que escribió y su motivo: «se está preparando para que la confirmes en Tareas» y «el asistente no respondía»
+Y no hay ningún control para retirarlas (sigue abierto en `SPEC.md` §8)
+Y CUANDO el trabajador atienda la solicitud encolada
+ENTONCES la franja dice «1 cosa en espera»
+Y DADO que no queda nada en espera
+CUANDO abra la agenda
+ENTONCES la franja no aparece
+
+**Nota del 7 de noviembre de 2026.** El ejemplo decía «las tareas llegan en una próxima versión». Desde esa fecha una tarea capturada no queda en espera: se propone (REQ-AGT-02 v2, REQ-CUN03-01 de `09-tareas-personales`). El motivo «función por llegar» solo lo conservan las capturas anteriores, y su texto es el de H-TP-16, hasta que REQ-CUN03-17 las convierta en propuestas (T-056, pendiente). Los dos motivos que siguen produciéndose son «el asistente no respondía» y «falta el permiso de tu calendario».
+
+---
+
 ## 9. Trazabilidad
 
 | Sección | Caso de uso | Nivel de venta |
@@ -402,6 +427,7 @@ Y «mañana» se resuelve respecto del momento en que se capturó, no del moment
 | 6, memo por lugar | CUN-01 | Personal |
 | 7, sensores | Transversal | Según la función |
 | 8, sin conexión | Transversal | Gratuito |
+| 8, REQ-CAP-25, lo en espera fuera de la conversación | Transversal | Gratuito |
 
 ---
 
@@ -421,6 +447,21 @@ Decididas por el equipo antes de escribir `../07-agente/plan.md`.
 | # | Decisión | Afecta |
 |---|---|---|
 | 1 | **Sin voz en la primera versión (PT-2 resuelta).** Solo la puerta de texto; la de voz y la de cámara quedan para después | REQ-CAP-01, REQ-CAP-09 a 13, REQ-CAP-22 (la parte de voz) |
-| 2 | **Solo agenda.** Una captura que es tarea, pendiente sin fecha o algo que se espera de alguien se reconoce y se dice, pero queda **en espera** sin registrarse, hasta que existan las tareas personales (CUN-03). Es REQ-AGT-02 | REQ-CAP-02, REQ-CAP-07, REQ-CAP-08 |
+| 2 | **Solo agenda.** Una captura que es tarea, pendiente sin fecha o algo que se espera de alguien se reconoce y se dice, pero queda **en espera** sin registrarse, hasta que existan las tareas personales (CUN-03). Es REQ-AGT-02. *Superada el 7 de noviembre de 2026: con `09-tareas-personales` (T-050) la captura se propone como tarea personal (REQ-AGT-02 v2, REQ-CUN03-01)* | REQ-CAP-02, REQ-CAP-07, REQ-CAP-08 |
 | 3 | REQ-CAP-23 suma un caso: lo que espera a una función que llega en una próxima versión. Se ve como en espera, con su motivo, y no como un error ni como algo fuera del plan (H-AGT-09) | REQ-CAP-23 |
 | 4 | La paleta de comandos (REQ-CAP-05) y la captura sin conexión del móvil (REQ-CAP-22) no entran en la primera versión del agente | REQ-CAP-05, REQ-CAP-22 |
+
+---
+
+## 12. Decisiones tomadas durante el diseño
+
+### Detectadas al rehacer la conversación del móvil · 7 de noviembre de 2026
+
+En el móvil, una sola tarjeta de confirmación llenaba la capa y tapaba la conversación; la cabecera de la sección se leía a través del velo y la barra de escritura gastaba dos filas. Se adopta la estructura común de las aplicaciones de conversación: cabecera fina, mensajes a todo el alto, barra de una fila abajo y tarjetas compactas. **No son definitivas** hasta que el equipo las acepte; van también para `SPEC.md` §8.
+
+| # | Decisión | Afecta |
+|---|---|---|
+| H-CAP-01 | **La tarjeta de confirmación abre plegada.** A la vista quedan siempre: la acción; el compromiso del que se habla, si la acción no lo nombra; cuándo, con su zona horaria (P-05), en una línea con los datos tal como llegan; todo dato que el sistema puso por su cuenta, entero y con su explicación (decisión 19 de `02-agenda`: «1 hora, porque no indicaste la hora de fin»); lo irreversible; la línea de cruce y las salidas: «Confirmar» a ancho completo y debajo, en una fila, «Descartar» y «Ver detalles». Se pliegan las etiquetas y lo que la persona ya dijo y no añade nada. «Ver detalles» despliega todos los datos, apilados, en la misma tarjeta. Cuando hay botones de alternativa, el dato «Alternativas» no se repite en texto. Al llegar una propuesta, la lista se desplaza hasta que la tarjeta entera, con sus botones, queda a la vista; si no cabe, se alinea su parte de arriba. Una tarjeta ya decidida queda plegada, sin botones, con el borde de un bloque pasivo y una línea que dice qué se decidió. Sigue siendo la misma tarjeta con los mismos datos: lo que cambia es qué se ve primero. Revisada el 7 de noviembre de 2026 con la auditoría MC-17 y MC-18 del carril de diseño. Contradice dos reglas de `design/ARQUITECTURA-VISUAL-MOVIL.md` §3: los botones siempre apilados y los datos nunca en una línea corrida con puntos; los pares etiqueta y valor siguen bajo «Ver detalles» | REQ-CAP-01, P-03, P-05 |
+| H-CAP-02 | **La barra de escritura es una sola fila**: el campo y el botón de enviar dentro del mismo contorno. El campo empieza en una línea y crece hasta cuatro; con el campo vacío el botón se atenúa sin cambiar el alto. La barra queda fija abajo, sube con el teclado y la lista de mensajes ocupa el resto | REQ-CAP-01 |
+| H-CAP-03 | **El velo tapa la cabecera de la sección.** La capa arranca justo debajo de la zona de estado y el velo es más opaco, para que nunca se lean dos cabeceras a la vez. La sección sigue detrás como antecedente. Contradice la opacidad de 0,16 de `design/ARQUITECTURA-VISUAL-MOVIL.md` §2 | REQ-CAP-01, R-36 |
+| H-CAP-04 | **El título de la capa depende de la conversación en curso.** Sin nada dicho en lo que se está pidiendo ahora, «¿Qué hacemos?». Con algo dicho, «Asistente» y debajo la primera petición, recortada a una línea. Cuando hay una propuesta esperando decisión y la capa ya se abrió una vez, el asa lo señala con un punto | REQ-CAP-01, REQ-AGT-03 |

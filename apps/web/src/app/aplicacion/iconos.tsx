@@ -30,6 +30,14 @@ export const IconoAjustes = () => (
   </svg>
 );
 
+// T-062 · REQ-ADM-05: la zona de empresa, al pie de la navegación
+export const IconoAdministracion = () => (
+  <svg {...comunes}>
+    <rect x="4" y="3" width="16" height="18" rx="1" />
+    <path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4" />
+  </svg>
+);
+
 export const IconoExpandir = () => (
   <svg {...comunes}>
     <path d="M15 4h5v5M9 20H4v-5M20 4l-7 7M4 20l7-7" />
@@ -51,6 +59,19 @@ export const IconoEnviar = () => (
 export const IconoCerrar = () => (
   <svg {...comunes}>
     <path d="M6 6l12 12M18 6L6 18" />
+  </svg>
+);
+
+// T-044: pasar al período anterior o al siguiente en Semana y Mes
+export const IconoAnterior = () => (
+  <svg {...comunes}>
+    <path d="M15 5l-7 7 7 7" />
+  </svg>
+);
+
+export const IconoSiguiente = () => (
+  <svg {...comunes}>
+    <path d="M9 5l7 7-7 7" />
   </svg>
 );
 

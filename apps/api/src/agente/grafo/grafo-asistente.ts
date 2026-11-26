@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Annotation, END, interrupt, START, StateGraph } from '@langchain/langgraph';
-import { EventoAgenda, TurnoDeHerramienta, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
+import { EventoAgenda, TareaPersonal, TurnoDeHerramienta, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
 import { fechaLarga, horario, nombreDeZona } from '../../agenda/formato';
 import type { ContextoSolicitud } from '../../identidad/contexto';
 import type { OperacionesService } from '../../operaciones/operaciones.service';
@@ -13,6 +13,9 @@ import type { PuntoControlConversacion } from './punto-control-prisma';
 // specs/07-agente/plan.md §4 · T-032. El grafo del asistente: interpreta con el modelo, ejecuta las
 // herramientas y, cuando una propone una Operación, **se interrumpe** hasta que la persona decide (P-03).
 // La confirmación sigue siendo una sola, la de Operaciones (AD-09): el grafo no ejecuta nada por su cuenta.
+// T-038 · plan §14.2: lo que ve la persona **no vive en el estado**. Cada nodo entrega sus turnos a `anotar`,
+// un recolector de esta invocación que el servicio guarda en la transcripción; así el punto de control solo
+// lleva lo que necesita el modelo. Ningún nodo anota antes de `interrupt()`, que al reanudar vuelve a ejecutarse.
 // Preguntar lo que falta, comunicar el resultado y elegir una alternativa no pasan por el modelo (P-02).
 
 // H-AGT-10: como mucho cuatro llamadas al modelo por mensaje
@@ -26,6 +29,9 @@ export const PREGUNTAS: Readonly<Record<string, string>> = {
   horaInicio: '¿A qué hora empieza?',
   titulo: '¿Cómo lo llamo?',
   cambio: '¿Qué quieres cambiar: el día, la hora o el título?',
+  // REQ-CUN03-02: de una tarea solo se pregunta qué hay que hacer, nunca para cuándo (H-TP-02)
+  texto: '¿Qué hay que hacer?',
+  cambio_tarea: '¿Qué quieres cambiar de la tarea: el texto, la fecha o de quién la esperas?',
 };
 
 // P-11, REQ-CUN01-11, REQ-CAP-24 · T-033: el aviso de lo que queda en espera lo escribe el código
@@ -35,7 +41,7 @@ const SIN_CALENDARIO = 'Para eso necesito permiso para ver y editar tu calendari
 
 // Lo que la persona decide sobre una propuesta, o un mensaje nuevo mientras había una
 export type Reanudacion =
-  | { tipo: 'confirmada' | 'descartada' | 'alternativa'; operacion: OperacionRespuesta }
+  | { tipo: 'confirmada' | 'descartada' | 'alternativa'; operacion: OperacionRespuesta; caducada?: boolean }
   | { tipo: 'nuevo_mensaje'; texto: string; referencia: Referencia };
 
 type Referencia = { instante: string; zonaHoraria: string };
@@ -46,8 +52,6 @@ const acumular = <T>() => Annotation<T[]>({ reducer: (actual: T[], nuevos: T[]) 
 
 export const EstadoAsistente = Annotation.Root({
   mensajes: acumular<MensajeModelo>(),
-  // Todo lo que vio la persona en esta conversación
-  turnos: acumular<TurnoAsistente>(),
   referencia: reemplazar<Referencia | null>(null),
   pendiente: reemplazar<string | null>(null),
   llamadas: reemplazar<{ lista: LlamadaHerramienta[]; llamadaModeloId: string | null } | null>(null),
@@ -59,8 +63,11 @@ export const EstadoAsistente = Annotation.Root({
   noDisponible: reemplazar<boolean>(false),
   // T-033: la Operación en espera que se está atendiendo al volver el asistente
   enEspera: reemplazar<string | null>(null),
-  // REQ-AGT-01: la acción se cerró y la conversación termina
+  // REQ-AGT-01: la acción se cerró y el episodio termina; la transcripción sigue (REQ-AGT-03)
   cerrada: reemplazar<boolean>(false),
+  // T-051 · REQ-CUN03-15: las tareas candidatas que se ofrecieron y qué se haría con la elegida. Escribir otra
+  // cosa las descarta (plan §14.9)
+  candidatas: reemplazar<{ accion: string; ids: string[]; avance?: string } | null>(null),
 });
 export type EstadoAsistente = typeof EstadoAsistente.State;
 
@@ -90,6 +97,8 @@ function recortar(mensajes: MensajeModelo[]): MensajeModelo[] {
 
 // REQ-CUN01-04: el resultado sale de lo que devolvió la Operación, no de lo propuesto
 function textoDelResultado(op: OperacionRespuesta, zona: string): string {
+  const tarea = op.tipo.startsWith('tareas.') ? TareaPersonal.safeParse(op.resultado) : null;
+  if (tarea?.success) return textoDeTarea(op.tipo, tarea.data);
   const evento = EventoAgenda.safeParse(op.resultado);
   if (!evento.success) return 'Listo.';
   const { titulo, inicio, fin, todoElDia } = evento.data;
@@ -97,6 +106,18 @@ function textoDelResultado(op: OperacionRespuesta, zona: string): string {
   if (op.tipo === 'agenda.cancelar') return `Listo: cancelé «${titulo}», que era ${cuando}.`;
   if (op.tipo === 'agenda.modificar') return `Listo: «${titulo}» quedó ${cuando}.`;
   return `Listo: «${titulo}» quedó en tu calendario ${cuando}.`;
+}
+
+// T-050 · 09-tareas-personales: lo que quedó, dicho por el código y sin prometer avisos (H-TP-10)
+const DONDE: Readonly<Record<TareaPersonal['franja'], string>> = { con_fecha: 'Con fecha', sin_fecha: 'Sin fecha', esperando: 'Esperando de alguien' };
+function textoDeTarea(tipo: string, tarea: TareaPersonal): string {
+  const t = `«${tarea.texto}»`;
+  if (tipo === 'tareas.registrar') return `Listo: ${t} quedó en tus tareas, en «${DONDE[tarea.franja]}».`;
+  if (tipo === 'tareas.cambiar') return `Listo: cambié ${t}. Ahora está en «${DONDE[tarea.franja]}».`;
+  if (tipo === 'tareas.completar') return `Listo: ${t} quedó hecha.`;
+  if (tipo === 'tareas.recibido') return `Listo: marqué ${t} como recibido.`;
+  if (tipo === 'tareas.reabrir') return `Listo: ${t} vuelve a estar pendiente, en «${DONDE[tarea.franja]}».`;
+  return `Listo: descarté ${t}. Ya no aparece en tus tareas.`;
 }
 
 export interface DependenciasGrafo {
@@ -107,7 +128,21 @@ export interface DependenciasGrafo {
 
 // Se compila en cada petición: los nodos cierran sobre la identidad de quien pide, que nunca pasa por el
 // estado ni por el modelo (P-04).
-export function construirGrafo(deps: DependenciasGrafo, contexto: ContextoSolicitud, conversacionId: string, punto: PuntoControlConversacion) {
+// T-040 · plan §14.2: `nota` da la nota de continuidad ya escrita por el servicio, para que el grafo no lea
+// Operaciones. Se pide solo si `interpretar` llama al modelo, y no entra en el estado: no pesa en el punto de
+// control y en cada invocación llega al día.
+export function construirGrafo(
+  deps: DependenciasGrafo,
+  contexto: ContextoSolicitud,
+  conversacionId: string,
+  punto: PuntoControlConversacion,
+  anotar: (turnos: TurnoAsistente[]) => void,
+  nota: () => Promise<string | null> = async () => null,
+) {
+  const con = (turnos: TurnoAsistente[], cambio: Partial<EstadoAsistente>): Partial<EstadoAsistente> => {
+    anotar(turnos);
+    return cambio;
+  };
   const referenciaDe = (estado: EstadoAsistente) => {
     const r = estado.referencia ?? { instante: ahora(), zonaHoraria: 'UTC' };
     return { instante: new Date(r.instante), zonaHoraria: r.zonaHoraria };
@@ -128,20 +163,23 @@ export function construirGrafo(deps: DependenciasGrafo, contexto: ContextoSolici
   }
 
   async function interpretar(estado: EstadoAsistente): Promise<Partial<EstadoAsistente>> {
-    if (estado.vueltas >= TOPE_VUELTAS) return { turnos: [turnoFallo(FALLO)], siguiente: 'fin' };
+    if (estado.vueltas >= TOPE_VUELTAS) return con([turnoFallo(FALLO)], { siguiente: 'fin' });
     const referencia = referenciaDe(estado);
+    const datos = await nota();
     const r = await deps.llamadas.llamar(contexto, conversacionId, {
       sistema: instrucciones(referencia),
+      // REQ-AGT-01 v2: lo último que hizo la persona, como datos y aparte de las instrucciones (H-AGT-15)
+      ...(datos ? { nota: datos } : {}),
       mensajes: recortar(estado.mensajes),
       herramientas: deps.ejecutor.definiciones(),
       maxTokens: 1024,
       referencia,
     });
     if (!r.ok) {
-      if (!(r.error instanceof ModeloNoDisponible)) return { turnos: [turnoFallo(FALLO)], siguiente: 'fin' };
+      if (!(r.error instanceof ModeloNoDisponible)) return con([turnoFallo(FALLO)], { siguiente: 'fin' });
       // Lo que ya estaba en espera sigue igual; lo nuevo se encola (REQ-CUN01-11, REQ-CAP-24)
       if (estado.enEspera) return { noDisponible: true, siguiente: 'fin' };
-      return { turnos: [await enEspera(estado, 'asistente_no_disponible', EN_ESPERA)], noDisponible: true, siguiente: 'fin' };
+      return con([await enEspera(estado, 'asistente_no_disponible', EN_ESPERA)], { noDisponible: true, siguiente: 'fin' });
     }
     const { texto, llamadas } = r.respuesta;
     const mensaje: MensajeModelo = { rol: 'asistente', texto, llamadas };
@@ -149,7 +187,7 @@ export function construirGrafo(deps: DependenciasGrafo, contexto: ContextoSolici
       return { mensajes: [mensaje], vueltas: estado.vueltas + 1, llamadas: { lista: llamadas, llamadaModeloId: r.llamadaModeloId }, siguiente: 'herramientas' };
     }
     const dicho = texto?.trim();
-    return { mensajes: [mensaje], vueltas: estado.vueltas + 1, turnos: dicho ? [turnoTexto(dicho)] : [], siguiente: 'fin' };
+    return con(dicho ? [turnoTexto(dicho)] : [], { mensajes: [mensaje], vueltas: estado.vueltas + 1, siguiente: 'fin' });
   }
 
   async function herramientas(estado: EstadoAsistente): Promise<Partial<EstadoAsistente>> {
@@ -166,6 +204,8 @@ export function construirGrafo(deps: DependenciasGrafo, contexto: ContextoSolici
     let faltante: string | null = null;
     let sinCalendario = false;
     let guardada = false;
+    let candidatas: EstadoAsistente['candidatas'] = null;
+    let sinTarea: string | null = null;
 
     for (const llamada of lista) {
       // Una acción a la vez: la persona decide sobre una tarjeta antes de ver otra
@@ -180,8 +220,18 @@ export function construirGrafo(deps: DependenciasGrafo, contexto: ContextoSolici
       if (turno.success) {
         const base = { id: randomUUID(), en: ahora() };
         if (turno.data.tipo === 'agenda') turnos.push({ ...base, tipo: 'agenda', lista: turno.data.lista });
+        else if (turno.data.tipo === 'tareas') turnos.push({ ...base, tipo: 'tareas', lista: turno.data.lista });
+        // T-126 · REQ-CUN03-23: la bitácora es una lista, como la de tareas; no cierra el episodio
+        else if (turno.data.tipo === 'bitacora') turnos.push({ ...base, tipo: 'bitacora', bitacora: turno.data.bitacora });
         else if (turno.data.tipo === 'propuesta') turnos.push({ ...base, tipo: 'propuesta', operacion: turno.data.operacion });
-        else {
+        else if (turno.data.tipo === 'alternativas_de_referente') {
+          turnos.push({ ...base, tipo: 'alternativas_de_referente', lista: turno.data.lista });
+          candidatas = {
+            accion: turno.data.lista.accion,
+            ids: turno.data.lista.candidatas.map((c) => c.id),
+            ...(turno.data.lista.avance ? { avance: turno.data.lista.avance } : {}),
+          };
+        } else {
           turnos.push({ ...base, ...turno.data });
           guardada = true;
         }
@@ -190,28 +240,32 @@ export function construirGrafo(deps: DependenciasGrafo, contexto: ContextoSolici
       const error = (r.paraModelo as { error?: { codigo?: string; campos?: string[] } } | null)?.error;
       if (error?.codigo === 'DATOS_FALTANTES' && !faltante) faltante = error.campos?.[0] ?? 'cambio';
       if (error?.codigo === 'PERMISO_GOOGLE_FALTANTE') sinCalendario = true;
+      if (error?.codigo === 'TAREA_NO_ENCONTRADA' && !sinTarea) sinTarea = (error as { mensaje?: string }).mensaje ?? null;
     }
 
     // REQ-CUN01-08, REQ-ACC-08: el permiso que falta lo dice el código, y lo pedido queda guardado
     if (sinCalendario && !pendiente) {
       const aviso = estado.enEspera ? turnoTexto(SIN_CALENDARIO) : await enEspera(estado, 'permiso_faltante', SIN_CALENDARIO);
-      return { mensajes: [...mensajes, deAsistente(SIN_CALENDARIO)], turnos: [...turnos, aviso], siguiente: 'fin' };
+      return con([...turnos, aviso], { mensajes: [...mensajes, deAsistente(SIN_CALENDARIO)], siguiente: 'fin' });
     }
-    // REQ-AGT-02: una tarea guardada en espera no necesita otra vuelta del modelo
-    if (guardada && !pendiente) return { mensajes, turnos, siguiente: 'fin' };
+    // REQ-AGT-02: una tarea guardada en espera no necesita otra vuelta del modelo, y cierra el episodio (decisión 27)
+    if (guardada && !pendiente) return con(turnos, { mensajes, cerrada: true, siguiente: 'fin' });
+    // T-051 · REQ-CUN03-15: con varias candidatas no se propone nada; la persona elige sin pasar por el modelo
+    if (candidatas && !pendiente) return con(turnos, { mensajes, candidatas, siguiente: 'fin' });
+    // Ninguna tarea encaja: se dice con las palabras del código, sin otra vuelta del modelo
+    if (sinTarea && !pendiente) return con([...turnos, turnoTexto(sinTarea)], { mensajes: [...mensajes, deAsistente(sinTarea)], siguiente: 'fin' });
     const siguiente: Siguiente = pendiente ? 'esperar' : faltante ? 'preguntar' : 'interpretar';
-    return { mensajes, turnos, pendiente, faltante, siguiente };
+    return con(turnos, { mensajes, pendiente, faltante, siguiente });
   }
 
   async function preguntar(estado: EstadoAsistente): Promise<Partial<EstadoAsistente>> {
     const campo = estado.faltante ?? 'cambio';
     const texto = PREGUNTAS[campo] ?? PREGUNTAS.cambio!;
-    return {
+    return con([{ id: randomUUID(), en: ahora(), tipo: 'pregunta', texto, campo }], {
       mensajes: [deAsistente(texto)],
-      turnos: [{ id: randomUUID(), en: ahora(), tipo: 'pregunta', texto, campo }],
       faltante: null,
       siguiente: 'fin',
-    };
+    });
   }
 
   // Al reanudar, este nodo se vuelve a ejecutar desde el principio: no hace nada antes de interrumpirse
@@ -227,39 +281,38 @@ export function construirGrafo(deps: DependenciasGrafo, contexto: ContextoSolici
 
     if (decision.tipo === 'nuevo_mensaje') {
       // REQ-AGT-01: la propuesta anterior ya se descartó y el mensaje nuevo se interpreta con lo hablado
-      return {
+      return con([turnoPersona(decision.texto)], {
         mensajes: [deAsistente('(La propuesta anterior quedó descartada.)'), { rol: 'persona', texto: decision.texto }],
-        turnos: [turnoPersona(decision.texto)],
         referencia: decision.referencia,
         pendiente: null,
         decision: null,
         vueltas: 0,
         siguiente: 'interpretar',
-      };
+      });
     }
 
     const op = decision.operacion;
     const base = { id: randomUUID(), en: ahora() };
     // Elegir una alternativa ya la propuso el código; se muestra la tarjeta nueva y se vuelve a esperar
     if (decision.tipo === 'alternativa' || op.estado === 'propuesta') {
-      return {
+      return con([{ ...base, tipo: 'propuesta', operacion: op }], {
         mensajes: [deAsistente('(Se propuso de nuevo con otro horario.)')],
-        turnos: [{ ...base, tipo: 'propuesta', operacion: op }],
         pendiente: op.id,
         decision: null,
         siguiente: 'esperar',
-      };
+      });
     }
     if (decision.tipo === 'descartada') {
-      const texto = 'De acuerdo, no hice nada.';
-      return { mensajes: [deAsistente(texto)], turnos: [turnoTexto(texto)], pendiente: null, decision: null, cerrada: true, siguiente: 'fin' };
+      // T-041 · H-AG-08: la que descartó el trabajador a las 24 horas lo dice así
+      const texto = decision.caducada ? 'Esta propuesta caducó; no se hizo nada.' : 'De acuerdo, no hice nada.';
+      return con([turnoTexto(texto)], { mensajes: [deAsistente(texto)], pendiente: null, decision: null, cerrada: true, siguiente: 'fin' });
     }
     if (op.estado === 'ejecutada') {
       const texto = textoDelResultado(op, zona);
-      return { mensajes: [deAsistente(texto)], turnos: [{ ...base, tipo: 'resultado', texto, operacion: op }], pendiente: null, decision: null, cerrada: true, siguiente: 'fin' };
+      return con([{ ...base, tipo: 'resultado', texto, operacion: op }], { mensajes: [deAsistente(texto)], pendiente: null, decision: null, cerrada: true, siguiente: 'fin' });
     }
     const texto = `No se pudo hacer: ${op.error ?? 'el calendario rechazó la acción'}. No cambió nada.`;
-    return { mensajes: [deAsistente(texto)], turnos: [turnoFallo(texto)], pendiente: null, decision: null, cerrada: true, siguiente: 'fin' };
+    return con([turnoFallo(texto)], { mensajes: [deAsistente(texto)], pendiente: null, decision: null, cerrada: true, siguiente: 'fin' });
   }
 
   const ir = (estado: EstadoAsistente) => (estado.siguiente === 'esperar' ? 'esperar_decision' : estado.siguiente === 'fin' ? END : estado.siguiente);

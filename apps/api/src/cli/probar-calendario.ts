@@ -11,7 +11,7 @@ import { PrismaService } from '../plataforma/prisma.service';
 
 // T-013 · prueba manual de la implementación real contra Google Calendar, con los mismos pasos que la
 // prueba calendario.contrato-del-proveedor. Usa la base de desarrollo y el permiso ya concedido. Uso:
-//   pnpm --filter @nexoai/api probar-calendario -- --correo <correo> [--solo-lectura]
+//   pnpm --filter @nexoai/api probar-calendario --correo <correo> [--solo-lectura]
 // Sin --solo-lectura crea un evento de prueba dentro de 30 días, lo cambia y lo cancela.
 
 @Module({ imports: [PlataformaModule, IntegracionesModule] })
