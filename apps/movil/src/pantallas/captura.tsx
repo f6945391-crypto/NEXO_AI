@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextStyle } from 'react-native';
 import { ConversacionAsistente, Perfil, RespuestaAsistente, type DecisionAsistente, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
+import { nombreDeZona } from '../agenda/dia';
 import { Aviso, Boton, ResumenDeBitacora } from '../componentes';
 import { conSesion, mensajeDeError, SIN_CONEXION } from '../sesion';
 import { elementosDe, textoDelSeparador, type Elemento } from '../separador';
@@ -15,6 +16,9 @@ import { color, espaciado, tipografia } from '../tokens';
 // una línea con la hora y lo que se hizo, y «Ver anteriores» trae lo más viejo.
 // T-128 · 09-tareas-personales plan §13.6: el turno «¿cómo va…?» con la bitácora de la tarea, y la tarjeta
 // «Anotar avance» deja a la vista la tarea y el texto que se anotará aunque esté plegada.
+// T-135 · 10-reuniones plan §10 · REQ-CUN06-01, 10: el turno `reunion` con las propuestas de horario; pulsar
+// una la propone el código (no pasa por el modelo) y vuelve la tarjeta «Convocar esta reunión». La tarjeta se
+// exporta para el detalle de una reunión en Agenda, que la usa igual.
 // Pulido · «Ver anteriores» visible: el botón se queda pegado arriba de la lista aunque se haga scroll,
 // mientras quede algo anterior (`stickyHeaderIndices`, que en Expo web es `position: sticky`).
 
@@ -27,6 +31,16 @@ const SIN_ANILLO_WEB = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as unkn
 const hora = (iso: string, zona?: string) =>
   new Intl.DateTimeFormat('es', { timeZone: zona, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso));
 const dia = (iso: string, zona?: string) => new Intl.DateTimeFormat('es', { timeZone: zona, weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso));
+const mayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
+// «Jueves 26, 14:00», como en la lista de reuniones (REQ-CUN06-07, 10)
+export const diaYHora = (iso: string, zona: string) =>
+  `${mayuscula(new Intl.DateTimeFormat('es', { timeZone: zona, weekday: 'long', day: 'numeric' }).format(new Date(iso)).replace(',', ''))}, ${hora(iso, zona)}`;
+
+// T-135 · REQ-CUN06-04: cuántos están libres en un horario propuesto, y de los opcionales cuántos pueden
+export function libres(p: { libres: number; de: number; opcionalesLibres: number }): string {
+  const base = `Libres ${p.libres} de ${p.de}`;
+  return p.opcionalesLibres > 0 ? `${base} · ${p.opcionalesLibres === 1 ? '1 opcional puede' : `${p.opcionalesLibres} opcionales pueden`}` : base;
+}
 
 // Pulido · REQ-CUN01-05, decisión 27 de 02-agenda: el choque de horario se dice en una línea, «Se cruza con
 // «título»». El motivo largo que arma la API no se pinta aquí.
@@ -37,9 +51,11 @@ const seCruzaCon = (eventos: { titulo: string }[]) => `Se cruza con ${enLista(ev
 // vista, armado con los datos que trae la propia tarjeta y sin inventar nada.
 type Dato = { etiqueta: string; valor: string };
 // El compromiso o la tarea de que se habla, si la acción no lo nombra
-const NOMBRE = ['Título', 'Compromiso', 'Título nuevo', 'Tarea'];
+const NOMBRE = ['Título', 'Compromiso', 'Título nuevo', 'Tarea', 'Reunión'];
 // T-128 · REQ-CUN03-21: el texto que se anotará en la bitácora tampoco se pliega (P-03, los datos exactos)
 const SIN_PLEGAR = ['Avance'];
+// T-135 · REQ-CUN06-10: a quién le llegará la invitación tampoco se pliega: es lo irreversible (P-03)
+const A_QUIEN = /^(Invitados|Opcionales)\b/;
 // Cuándo, siempre con su zona (P-05)
 const CUANDO = ['Fecha', 'Hora', 'Cuándo', 'Ahora', 'Nueva', 'Zona horaria'];
 // Lo que puso el sistema por su cuenta lleva su explicación, y nunca se pliega (decisión 19 de 02-agenda)
@@ -49,10 +65,11 @@ function plegada(accion: string, datos: Dato[]) {
   const valores = (etiquetas: string[]) => etiquetas.flatMap((e) => datos.filter((d) => d.etiqueta === e && !explica(d)).map((d) => d.valor));
   const nombre = valores(NOMBRE).filter((v) => !accion.includes(v));
   const sinPlegar = valores(SIN_PLEGAR);
+  const aQuien = datos.filter((d) => A_QUIEN.test(d.etiqueta));
   let cuando = valores(CUANDO);
   // Una tarjeta con otros datos: los dos primeros, tal cual
   if (nombre.length === 0 && cuando.length === 0) cuando = datos.filter((d) => d.etiqueta !== 'Alternativas' && !explica(d)).slice(0, 2).map((d) => d.valor);
-  return { nombre: nombre.join(' · '), cuando: cuando.join(' · '), sinPlegar, explicaciones: datos.filter(explica) };
+  return { nombre: nombre.join(' · '), cuando: cuando.join(' · '), sinPlegar, aQuien, explicaciones: datos.filter(explica) };
 }
 
 // Qué se decidió sobre una tarjeta que ya no espera: se lee en lo que vino después
@@ -60,7 +77,7 @@ function desenlace(elementos: Elemento[], desde: number, operacionId: string): s
   for (const e of elementos.slice(desde + 1)) {
     if (e.clase === 'separador') {
       if (e.cierre.desenlace === 'descartado') return 'Descartado';
-      return ['registrado', 'movido', 'cancelado'].includes(e.cierre.desenlace) ? 'Confirmado' : null;
+      return ['registrado', 'movido', 'cancelado', 'convocada'].includes(e.cierre.desenlace) ? 'Confirmado' : null;
     }
     const t = e.turno;
     if (t.tipo === 'resultado' && t.operacion.id === operacionId) return 'Confirmado';
@@ -74,7 +91,7 @@ function desenlace(elementos: Elemento[], desde: number, operacionId: string): s
 // La primera petición de la persona en lo que se está pidiendo
 const primeraPeticion = (turnos: TurnoAsistente[]) => turnos.find((t) => t.tipo === 'persona')?.texto ?? null;
 
-function Tarjeta({
+export function Tarjeta({
   operacion,
   activa,
   decidido,
@@ -88,7 +105,7 @@ function Tarjeta({
   decidido: string | null;
   ocupado: boolean;
   alDecidir: (d: DecisionAsistente) => void;
-  alUbicar: (y: number, alto: number) => void;
+  alUbicar?: (y: number, alto: number) => void;
 }) {
   const [abierta, setAbierta] = useState(false);
   // Una tarjeta ya decidida queda plegada
@@ -99,13 +116,13 @@ function Tarjeta({
   // Con los botones a la vista, las alternativas no se repiten en texto. Desde la decisión 28 de 02-agenda la API
   // ya no manda esa fila; el filtro queda por las propuestas guardadas antes, que todavía la traen
   const datos = activa && alternativas.length > 0 ? vista.datos.filter((d) => d.etiqueta !== 'Alternativas') : vista.datos;
-  const { nombre, cuando, sinPlegar, explicaciones } = plegada(vista.accion, vista.datos);
+  const { nombre, cuando, sinPlegar, aQuien, explicaciones } = plegada(vista.accion, vista.datos);
   return (
     // P-03: la acción exacta, sus datos y qué es irreversible, antes de ejecutarla. H-CAP-01: plegada por
     // defecto; «Ver detalles» muestra todos los datos en la misma tarjeta (REQ-CAP-01)
     <View
       accessibilityLabel="Para confirmar"
-      onLayout={(e) => alUbicar(e.nativeEvent.layout.y, e.nativeEvent.layout.height)}
+      onLayout={(e) => alUbicar?.(e.nativeEvent.layout.y, e.nativeEvent.layout.height)}
       style={[estilos.tarjeta, !activa && estilos.tarjetaDecidida]}
     >
       <Text style={estilos.accion}>{vista.accion}</Text>
@@ -116,6 +133,13 @@ function Tarjeta({
           <Text key={v} style={estilos.cuerpo}>
             «{v}»
           </Text>
+        ))}
+      {!detalles &&
+        aQuien.map((d) => (
+          <View key={d.etiqueta}>
+            <Text style={estilos.suave}>{d.etiqueta}</Text>
+            <Text style={estilos.cuerpo}>{d.valor}</Text>
+          </View>
         ))}
       {!detalles &&
         explicaciones.map((d) => (
@@ -163,7 +187,20 @@ function Tarjeta({
   );
 }
 
-function Turno({ turno, pendiente, ocupado, alDecidir }: { turno: TurnoAsistente; pendiente: string | null; ocupado: boolean; alDecidir: (d: DecisionAsistente) => void }) {
+function Turno({
+  turno,
+  pendiente,
+  ocupado,
+  cerrado,
+  alDecidir,
+}: {
+  turno: TurnoAsistente;
+  pendiente: string | null;
+  ocupado: boolean;
+  // Lo que se pedía ya terminó: lo que se ofrecía para elegir queda a la vista, sin poder pulsarse
+  cerrado: boolean;
+  alDecidir: (d: DecisionAsistente) => void;
+}) {
   switch (turno.tipo) {
     case 'persona':
       return (
@@ -261,6 +298,37 @@ function Turno({ turno, pendiente, ocupado, alDecidir }: { turno: TurnoAsistente
           ))}
         </View>
       );
+    // T-135 · REQ-CUN06-01, 10: las propuestas armadas por el código, con la hora en la zona de quien convoca
+    case 'reunion': {
+      const { reunion, texto, propuestas } = turno.propuestas;
+      const zona = reunion.zonaHoraria;
+      return (
+        <View accessibilityLabel={`Horarios para «${reunion.titulo}»`} style={estilos.respuesta}>
+          <Text style={estilos.cuerpo}>{texto}</Text>
+          {propuestas.length > 0 && <Text style={estilos.suave}>{nombreDeZona(zona)}</Text>}
+          {propuestas.map((p) => {
+            // «Jueves 26, 14:00 – 15:00», en una línea a 390 px; debajo, cuántos están libres
+            const texto = `${diaYHora(p.inicio, zona)} – ${hora(p.fin, zona)}`;
+            const apagado = ocupado || cerrado || pendiente !== null;
+            return (
+              <Pressable
+                key={p.inicio}
+                accessibilityRole="button"
+                accessibilityLabel={texto}
+                accessibilityHint={libres(p)}
+                accessibilityState={{ disabled: apagado }}
+                disabled={apagado}
+                onPress={() => alDecidir({ decision: 'horario', reunionId: reunion.id, inicio: p.inicio })}
+                style={[estilos.horario, apagado && estilos.horarioApagado]}
+              >
+                <Text style={estilos.horarioTexto}>{texto}</Text>
+                <Text style={estilos.suave}>{libres(p)}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      );
+    }
     case 'propuesta':
       // La tarjeta se pinta desde la lista, que sabe qué vino después
       return null;
@@ -284,8 +352,11 @@ export function CapaCaptura({
   alCambiarAgenda,
   alCambiarPendiente,
   alSalir,
+  borradorInicial,
 }: {
   visible: boolean;
+  // T-135: un ejemplo pulsable abre la capa con el texto ya escrito, sin enviarlo
+  borradorInicial?: string | null;
   alCerrar: () => void;
   // Algo quedó hecho: la agenda se vuelve a pedir
   alCambiarAgenda: () => void;
@@ -355,6 +426,10 @@ export function CapaCaptura({
     if (visible) void cargar();
   }, [visible, cargar]);
 
+  useEffect(() => {
+    if (visible && borradorInicial) setBorrador(borradorInicial);
+  }, [visible, borradorInicial]);
+
   useEffect(() => alCambiarPendiente(pendiente !== null), [pendiente, alCambiarPendiente]);
 
   const lista = useRef<ScrollView>(null);
@@ -389,7 +464,8 @@ export function CapaCaptura({
       ]);
       setPendiente(respuesta.data.pendiente);
       if (turnos.some((t) => t.tipo === 'propuesta')) porUbicar.current = respuesta.data.pendiente;
-      if (respuesta.data.turnos.some((t) => t.tipo === 'resultado')) alCambiarAgenda();
+      // T-135 · D-REU-10: un turno `reunion` trae una reunión pendiente recién creada, sin tarjeta; la lista la muestra
+      if (respuesta.data.turnos.some((t) => t.tipo === 'resultado' || t.tipo === 'reunion')) alCambiarAgenda();
     } catch {
       setError(SIN_CONEXION);
     } finally {
@@ -478,7 +554,8 @@ export function CapaCaptura({
                 }
                 if (elemento.clase === 'turno') {
                   const { turno } = elemento;
-                  return <Turno key={turno.id} turno={turno} pendiente={pendiente} ocupado={ocupado} alDecidir={(d) => void hablar('/asistente/decisiones', d)} />;
+                  const cerrado = elementos.slice(indice + 1).some((e) => e.clase === 'separador');
+                  return <Turno key={turno.id} turno={turno} pendiente={pendiente} ocupado={ocupado} cerrado={cerrado} alDecidir={(d) => void hablar('/asistente/decisiones', d)} />;
                 }
                 const texto = textoDelSeparador(elemento.cierre, zona ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
                 return (
@@ -546,6 +623,9 @@ const estilos = StyleSheet.create({
   respuesta: { alignSelf: 'flex-start', maxWidth: '92%', padding: espaciado[12], borderRadius: 12, backgroundColor: color.agente.suave },
   grupoTareas: { fontWeight: '600', marginTop: espaciado[4] },
   avances: { gap: espaciado[8], marginTop: espaciado[4] },
+  horario: { gap: 2, minHeight: 56, justifyContent: 'center', marginTop: espaciado[8], paddingVertical: espaciado[8], paddingHorizontal: espaciado[12], borderRadius: 8, borderWidth: 1, borderColor: color.borde.fuerte, backgroundColor: color.superficie.base },
+  horarioApagado: { opacity: 0.6 },
+  horarioTexto: { fontSize: tipografia.cuerpo, fontWeight: '600', color: color.texto.fuerte },
   agenda: { gap: espaciado[4], padding: espaciado[12], borderRadius: 12, borderWidth: 1, borderColor: color.borde.base, backgroundColor: color.superficie.elevada },
   tarjeta: { gap: espaciado[8], padding: espaciado[16], borderRadius: 12, borderWidth: 1, borderColor: color.borde.fuerte, backgroundColor: color.superficie.base },
   // Ya decidida: deja de pedir atención (ARQUITECTURA-VISUAL-MOVIL §3, el borde graduado)

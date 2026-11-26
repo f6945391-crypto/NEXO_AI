@@ -17,7 +17,7 @@
 - **Depende de:** T-131
 - **Contenido:** migración `20261125200000_reuniones`; contratos; `ReunionesService`; `GET /reuniones` y `GET /reuniones/:id`; Operaciones `reunion.convocar`, `reunion.mover` y `reunion.cancelar`; invitados, aviso y `direccion` en el proveedor de calendario; `correo_cuenta` al conectar; `409 ES_REUNION` en la agenda
 - **Hecho cuando:** convocar crea un evento con los invitados, con aviso, y la reunión queda agendada; confirmar dos veces crea uno; si un obligatorio se ocupó, `reproponer` y no se escribe nada; la invitada ve la reunión agendada y no la pendiente; mover y cancelar avisan; quien no convocó recibe 403; borrar en Google la deja cancelada; pasado el rango, vencida; la dirección es la del Google conectado o el correo de NexoAI; cancelar el compromiso desde la agenda da 409
-- **Pruebas:** `reuniones.convocar`, `reuniones.lista-y-detalle`, `reuniones.mover-y-cancelar`, `reuniones.conciliacion`
+- **Pruebas:** `agente.reuniones`, `reuniones.conciliacion` (`test/reuniones/reuniones.spec.ts`)
 - **Estado:** hecha · 25 de noviembre de 2026. Migración `20261125200000_reuniones`, generada con `prisma migrate diff --from-config-datasource`. Tres ajustes al plan: (1) la dirección de Google se lee y se guarda la primera vez que hace falta, no al conectar: así sirve también para las cuentas conectadas antes (P-REU-05); (2) después de convocar, mover o cancelar se sincroniza la agenda de cada invitado con Google, para que el compromiso aparezca enseguida y el cálculo siguiente no use una copia vieja (P-REU-06); (3) la comprobación al confirmar sincroniza a los obligatorios antes de calcular. La conciliación y el vencimiento, al leer (P-REU-01). Pruebas en `test/reuniones/reuniones.spec.ts`
 
 ### T-133 · El asistente propone (agente)
@@ -36,7 +36,7 @@
 - **Contenido:** el corte «Reuniones» en lugar de «Disponibilidad de equipo»; lista, con la autorización propia; detalle con mapa de calor, resumen de invitados desplegable, duración, sugerido y tarjeta; cancelar; turno `reunion` con las propuestas pulsables
 - **Hecho cuando:** pedir una reunión en la conversación muestra las propuestas y la lista la muestra en ámbar; elegir una muestra la tarjeta, y confirmar la deja en verde; el detalle muestra el mapa y recalcula al marcar a alguien como opcional; la invitada la ve agendada
 - **Prueba:** `web.reuniones` (extremo a extremo)
-- **Estado:** pendiente
+- **Estado:** hecha · 25 de noviembre de 2026. `aplicacion/reuniones.tsx` (lista, detalle, mapa, invitados y tarjeta), `acciones-reuniones.ts` (acciones de servidor) y `autorizaciones-equipo.tsx` (la autorización propia y el responsable, REQ-CUN05-19, al pie de la lista). `disponibilidad-equipo.tsx` y `rejilla-disponibilidad.tsx` quedan marcados como anteriores (D-REU-09), sin borrar. En `e2e/reuniones.spec.ts`, `web.escenario-reuniones` conserva CP-R-01 a 04 (CP-R-04 lee ahora el responsable al pie) y retira CP-R-05, que probaba el formulario. Los eventos de «Reuniones Demo» en `arrancar-api.mjs` caen ahora en los cinco días hábiles desde mañana. Decisiones de interfaz en `spec.md` §8. Web e2e 61 de 61. Capturas en `design/capturas/2026-11-25-reuniones/web/`
 
 ### T-135 · Reuniones en el móvil
 
@@ -45,7 +45,7 @@
 - **Contenido:** el corte «Reuniones» en Agenda; lista; detalle con propuestas y «Elegir», sin mapa; tarjeta; cancelar; turno `reunion` en la capa
 - **Hecho cuando:** lo mismo que T-134, sin el mapa, a 390 × 844
 - **Prueba:** `movil.reuniones` (extremo a extremo)
-- **Estado:** pendiente
+- **Estado:** hecha · 25 de noviembre de 2026. `pantallas/reuniones.tsx` (lista y detalle con propuestas, sin mapa); turno `reunion` en `captura.tsx`; corte «Reuniones» en `agenda.tsx`. Los cortes de Agenda pasan a 44 px de alto (RT-20). Cuentas propias `@reuniones-movil.test` en `e2e/cuentas.json`, sobre el mismo bloque de `arrancar-api.mjs`. En el detalle móvil no se marcan opcionales: para eso queda el asistente. Móvil e2e 35 de 35. Capturas en `design/capturas/2026-11-25-reuniones/movil/`. **Pendiente:** en la tarjeta del detalle, el asa «Pedir algo» tapa en parte «Ver detalles» (captura 05)
 
 ### T-136 · Cuentas de prueba con Google real
 

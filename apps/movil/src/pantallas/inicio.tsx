@@ -33,10 +33,23 @@ const SECCIONES: Record<Seccion, { nombre: string; pregunta: string }> = {
 const NOMBRE_PLAN = { gratuito: 'Gratuito', personal: 'Personal', empresarial: 'Empresarial' } as const;
 
 // T-035: `version` sube cada vez que el asistente deja algo hecho, para que la sección vuelva a pedir sus datos
-export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido: (seccion: Seccion, abrirCaptura: () => void, version: number, lienzo: Lienzo) => ReactNode }) {
+// T-135: `abrirCaptura` puede llevar un texto de ejemplo, que queda escrito en el campo sin enviarse
+export function Inicio({
+  alSalir,
+  contenido,
+}: {
+  alSalir: () => void;
+  contenido: (seccion: Seccion, abrirCaptura: (borrador?: string) => void, version: number, lienzo: Lienzo) => ReactNode;
+}) {
   const [seccion, setSeccion] = useState<Seccion>('agenda');
   const [ajustes, setAjustes] = useState(false);
   const [captura, setCaptura] = useState(false);
+  const [borrador, setBorrador] = useState<string | null>(null);
+  // Un botón pasa su evento como primer argumento: solo un texto cuenta como borrador
+  const abrirCaptura = useCallback((texto?: unknown) => {
+    setBorrador(typeof texto === 'string' ? texto : null);
+    setCaptura(true);
+  }, []);
   const [version, setVersion] = useState(0);
   const [esperas, setEsperas] = useState(0);
   // H-CAP-04: hay una propuesta esperando decisión. Se sabe por la capa, sin otra llamada: hasta que la capa
@@ -95,7 +108,7 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
       >
         <View ref={contenidoDesplazable} style={estilos.cuerpo}>
           {seccion === 'agenda' && nivel === 'Hoy' && <FranjaEnEspera version={version + esperas} alSalir={alSalir} />}
-          {contenido(seccion, () => setCaptura(true), version, { alCambiarNivel, mostrar })}
+          {contenido(seccion, abrirCaptura, version, { alCambiarNivel, mostrar })}
         </View>
       </ScrollView>
 
@@ -103,7 +116,7 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={porDecidir ? 'Pedir algo al asistente, hay algo esperando tu decisión' : 'Pedir algo al asistente'}
-        onPress={() => setCaptura(true)}
+        onPress={() => abrirCaptura()}
         style={estilos.asa}
       >
         <Text style={estilos.asaTexto}>Pedir algo</Text>
@@ -111,8 +124,10 @@ export function Inicio({ alSalir, contenido }: { alSalir: () => void; contenido:
       </Pressable>
       <CapaCaptura
         visible={captura}
+        borradorInicial={borrador}
         alCerrar={() => {
           setCaptura(false);
+          setBorrador(null);
           setEsperas((e) => e + 1);
         }}
         alCambiarAgenda={() => setVersion((v) => v + 1)}

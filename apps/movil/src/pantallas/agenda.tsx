@@ -23,6 +23,7 @@ import {
 import { Aviso, Boton } from '../componentes';
 import { conSesion, mensajeDeError, SIN_CONEXION } from '../sesion';
 import { color, espaciado, tipografia } from '../tokens';
+import { Reuniones } from './reuniones';
 import { TareasParaEsteDia } from './tareas';
 
 // T-021 · REQ-CUN01-06, 10, 11, 12 · specs/02-agenda/plan.md §5. El nivel Hoy de Agenda en el móvil:
@@ -31,8 +32,11 @@ import { TareasParaEsteDia } from './tareas';
 // T-044 · REQ-CUN01-14, 15 · design/ARQUITECTURA-VISUAL-MOVIL.md §3 ter. Semana: los siete días uno debajo de
 // otro, cada uno con sus compromisos. Mes: la rejilla con un punto por cada dos compromisos; tocar un día lo
 // abre en Hoy, con «Volver a hoy». Los tres niveles giran sobre una fecha, `foco`, que empieza en hoy.
+// T-135 · REQ-CUN06-07, 19 · 10-reuniones plan §10: el corte «Reuniones», al final, solo con plan efectivo
+// Empresarial y algún equipo (como la web, REQ-CUN05-18). No es un nivel de período: no lee la agenda.
 
 const NIVELES = ['Hoy', 'Semana', 'Mes'] as const;
+const CORTES = [...NIVELES, 'Reuniones'] as const;
 
 type Estado =
   | { tipo: 'cargando' }
@@ -40,10 +44,10 @@ type Estado =
   | { tipo: 'error'; mensaje: string }
   | { tipo: 'lista'; eventos: EventoAgenda[] };
 
-export type Nivel = (typeof NIVELES)[number];
+export type Nivel = (typeof CORTES)[number];
 
 // Las fechas que pinta cada nivel alrededor del foco
-function fechasDelNivel(nivel: Nivel, foco: string): string[] {
+function fechasDelNivel(nivel: (typeof NIVELES)[number], foco: string): string[] {
   if (nivel === 'Semana') return dias(lunesDe(foco), 7);
   if (nivel === 'Mes') return rejillaDelMes(foco);
   return [foco];
@@ -63,7 +67,7 @@ export function AgendaHoy({
   version = 0,
 }: {
   alSalir: () => void;
-  alAbrirCaptura: () => void;
+  alAbrirCaptura: (borrador?: string) => void;
   alCambiarNivel?: (nivel: Nivel) => void;
   mostrar?: (vista: View) => void;
   version?: number;
@@ -76,6 +80,7 @@ export function AgendaHoy({
   const [cancelacion, setCancelacion] = useState<Cancelacion>({ tipo: 'detalle' });
   const [aviso, setAviso] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [conReuniones, setConReuniones] = useState(false);
 
   // Quien la pinta sabe en qué nivel está: la franja «en espera» solo va sobre Hoy (REQ-CAP-25)
   useEffect(() => alCambiarNivel?.(nivel), [nivel, alCambiarNivel]);
@@ -88,6 +93,7 @@ export function AgendaHoy({
         if (!perfil) return alSalir();
         const leido = Perfil.safeParse(perfil.cuerpo);
         const dePerfil = leido.success ? leido.data.zonaHoraria : null;
+        if (leido.success) setConReuniones(leido.data.planEfectivo === 'empresarial' && leido.data.equipos > 0);
         if (!dePerfil) return setEstado({ tipo: 'error', mensaje: 'No pudimos leer tu zona horaria.' });
         setZona(dePerfil);
         setFoco(hoyEn(dePerfil));
@@ -102,7 +108,7 @@ export function AgendaHoy({
   const ultima = useRef(0);
 
   const cargar = useCallback(async () => {
-    if (!zona || !foco) return;
+    if (!zona || !foco || nivel === 'Reuniones') return;
     const esta = ++ultima.current;
     try {
       const fechas = fechasDelNivel(nivel, foco);
@@ -166,7 +172,7 @@ export function AgendaHoy({
   return (
     <View style={estilos.contenedor}>
       <View accessibilityRole="tablist" style={estilos.niveles}>
-        {NIVELES.map((n) => (
+        {(conReuniones ? CORTES : NIVELES).map((n) => (
           <Pressable key={n} accessibilityRole="tab" accessibilityState={{ selected: n === nivel }} onPress={() => setNivel(n)} style={[estilos.nivel, n === nivel && estilos.nivelActivo]}>
             <Text style={[estilos.nivelTexto, n === nivel && estilos.nivelTextoActivo]}>{n}</Text>
           </Pressable>
@@ -179,9 +185,10 @@ export function AgendaHoy({
         </Text>
       )}
 
-      {estado.tipo === 'cargando' && <Text style={estilos.suave}>Leyendo tu agenda…</Text>}
-      {estado.tipo === 'error' && <Vacio titulo="No pudimos leer tu agenda" texto={estado.mensaje} />}
-      {estado.tipo === 'sin-calendario' && (
+      {nivel === 'Reuniones' && <Reuniones alSalir={alSalir} alAbrirCaptura={alAbrirCaptura} mostrar={mostrar} version={version} />}
+      {nivel !== 'Reuniones' && estado.tipo === 'cargando' && <Text style={estilos.suave}>Leyendo tu agenda…</Text>}
+      {nivel !== 'Reuniones' && estado.tipo === 'error' && <Vacio titulo="No pudimos leer tu agenda" texto={estado.mensaje} />}
+      {nivel !== 'Reuniones' && estado.tipo === 'sin-calendario' && (
         <Vacio titulo="Tu agenda llega con tu calendario" texto="Para mostrarte tus compromisos, NexoAI necesita permiso para ver tu calendario de Google. Conéctalo desde Ajustes en la web." />
       )}
       {estado.tipo === 'lista' && zona && foco && nivel === 'Hoy' && (
@@ -451,7 +458,8 @@ function Etiqueta({ texto }: { texto: string }) {
 const estilos = StyleSheet.create({
   contenedor: { flex: 1, gap: espaciado[16] },
   niveles: { flexDirection: 'row', alignSelf: 'flex-start', padding: 4, gap: 4, borderRadius: 12, backgroundColor: color.superficie.hundida },
-  nivel: { minHeight: 36, paddingHorizontal: espaciado[16], justifyContent: 'center', borderRadius: 8 },
+  // T-135: 44 px de alto, el mínimo táctil (RT-20); con cuatro cortes, un relleno algo menor para que quepan a 390
+  nivel: { minHeight: 44, paddingHorizontal: espaciado[12], justifyContent: 'center', borderRadius: 8 },
   nivelActivo: { backgroundColor: color.superficie.base },
   nivelTexto: { fontSize: tipografia.etiqueta, color: color.texto.suave },
   nivelTextoActivo: { color: color.texto.fuerte, fontWeight: '700' },

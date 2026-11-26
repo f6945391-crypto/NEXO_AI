@@ -337,16 +337,32 @@ if (empresas['Reuniones Demo'] && perfiles.reunionesLider) {
       data: { organizacionId: demo, perfilId: perfiles[clave], proveedor: 'google', alcance: 'calendario', estado: 'concedido' },
     });
   }
-  for (const [clave, inicio, fin, titulo] of [
-    ['reunionesLider', '09:00', '10:00', 'Comité'],
-    ['reunionesLider', '15:00', '16:00', 'Revisión'],
-    ['reunionesAna', '10:00', '11:00', 'Cliente'],
-    ['reunionesAna', '15:30', '17:00', 'Taller'],
-    ['reunionesBeto', '08:00', '09:30', 'Desayuno'],
-    ['reunionesBeto', '13:00', '14:00', 'Almuerzo'],
-    ['reunionesCarla', '11:00', '12:00', 'Privado'],
+  // T-134: los eventos caen en los cinco días hábiles desde mañana, que es donde busca una reunión sin días dichos
+  // (REQ-CUN06-03). El primero tiene el escenario de T-124; Beto está de viaje los otros cuatro, así marcarlo como
+  // opcional cambia las propuestas (REQ-CUN06-09), y Ana y el líder tienen algo más para que el mapa tenga relieve.
+  const habiles = [];
+  for (let n = 1; habiles.length < 5; n++) {
+    const dia = new Date(Date.parse(`${hoy}T12:00:00Z`) + n * 24 * 3600_000);
+    if (dia.getUTCDay() !== 0 && dia.getUTCDay() !== 6) habiles.push(dia.toISOString().slice(0, 10));
+  }
+  for (const [clave, d, inicio, fin, titulo] of [
+    ['reunionesLider', 0, '09:00', '10:00', 'Comité'],
+    ['reunionesLider', 0, '15:00', '16:00', 'Revisión'],
+    ['reunionesAna', 0, '10:00', '11:00', 'Cliente'],
+    ['reunionesAna', 0, '15:30', '17:00', 'Taller'],
+    ['reunionesBeto', 0, '08:00', '09:30', 'Desayuno'],
+    ['reunionesBeto', 0, '13:00', '14:00', 'Almuerzo'],
+    ['reunionesCarla', 0, '11:00', '12:00', 'Privado'],
+    ['reunionesBeto', 1, '08:00', '20:00', 'Viaje'],
+    ['reunionesBeto', 2, '08:00', '20:00', 'Viaje'],
+    ['reunionesBeto', 3, '08:00', '20:00', 'Viaje'],
+    ['reunionesBeto', 4, '08:00', '20:00', 'Viaje'],
+    ['reunionesAna', 1, '09:00', '10:30', 'Cliente'],
+    ['reunionesAna', 2, '14:00', '16:00', 'Taller'],
+    ['reunionesLider', 1, '16:00', '17:00', 'Seguimiento'],
+    ['reunionesLider', 3, '10:00', '12:00', 'Comité'],
   ]) {
-    calendario.sembrar(perfiles[clave], { titulo, inicio: aLas(manana, inicio), fin: aLas(manana, fin), zonaHoraria: 'America/Lima' });
+    calendario.sembrar(perfiles[clave], { titulo, inicio: aLas(habiles[d], inicio), fin: aLas(habiles[d], fin), zonaHoraria: 'America/Lima' });
   }
   const alfa = await prisma.equipo.create({ data: { organizacionId: demo, nombre: 'Proyecto Alfa' } });
   for (const [clave, rolEnEquipo, estadoConsentimiento] of [

@@ -1694,3 +1694,545 @@ body {
   font-size: var(--tam-etiqueta);
   color: var(--texto-suave);
 }
+
+/* T-134 · 10-reuniones: el corte «Reuniones» de Agenda (bocetos 01 y 02 de Franco). Lista con el estado por
+   color, detalle con el mapa de calor y la línea de invitados. El verde solo significa disponibilidad (D-REU-08) */
+.reuniones__corte {
+  display: grid;
+  gap: var(--espaciado-32);
+}
+
+.reuniones__titulo {
+  margin: 0 0 var(--espaciado-16);
+  font-size: var(--tam-cuerpo);
+}
+
+.reuniones__aviso {
+  margin: 0 0 var(--espaciado-16);
+}
+
+.reuniones__vacio {
+  margin: var(--espaciado-24) auto;
+}
+
+.reuniones__vacio .reuniones__ejemplo {
+  margin-top: var(--espaciado-16);
+  text-align: center;
+}
+
+.reuniones__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-12);
+}
+
+.reunion-ficha {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaciado-16);
+  padding: var(--espaciado-16) var(--espaciado-24);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-md);
+  background: var(--superficie-base);
+  font: inherit;
+  color: var(--texto-fuerte);
+  text-align: left;
+  cursor: pointer;
+}
+
+.reunion-ficha:hover {
+  border-color: var(--borde-fuerte);
+  background: var(--superficie-elevada);
+}
+
+.reunion-ficha:focus-visible,
+.mapa__celda:focus-visible,
+.invitados__resumen:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+.reunion-ficha__cuerpo {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.reunion-ficha__titulo {
+  font-weight: 600;
+}
+
+.reunion-ficha__detalle {
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.reunion-ficha .pildora {
+  margin-top: var(--espaciado-8);
+}
+
+.reunion-ficha__accion {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-12);
+  flex-shrink: 0;
+  color: var(--marca-base);
+  font-weight: 600;
+}
+
+.reunion-ficha__chevron {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.reunion-ficha--agendada .reunion-ficha__chevron,
+.reunion-ficha--vencida .reunion-ficha__chevron {
+  color: var(--texto-suave);
+}
+
+/* REQ-CUN06-07: ámbar, pendiente; verde, agendada; gris, vencida o cancelada */
+.pildora {
+  display: inline-block;
+  padding: 4px var(--espaciado-12);
+  border-radius: 999px;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  background: var(--superficie-hundida);
+  color: var(--texto-suave);
+}
+
+.pildora--pendiente {
+  background: var(--estado-advertencia-suave);
+  color: var(--estado-advertencia);
+}
+
+.pildora--agendada {
+  background: var(--estado-exito-suave);
+  color: var(--estado-exito);
+}
+
+/* Detalle */
+.reunion-detalle {
+  display: grid;
+  gap: var(--espaciado-16);
+}
+
+.reunion-detalle__cabecera {
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.reunion-detalle__volver {
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.reunion-detalle__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaciado-12);
+}
+
+.reunion-detalle__titulo h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.reunion-detalle__datos {
+  max-width: 480px;
+}
+
+.reunion-detalle__controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaciado-16);
+}
+
+.reunion-detalle__duracion {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-8);
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.reunion-detalle__duracion select {
+  font: inherit;
+  min-height: 36px;
+  padding: 0 var(--espaciado-8);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  color: var(--texto-fuerte);
+}
+
+.reunion-detalle__subtitulo {
+  margin: 0 0 var(--espaciado-8);
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.propuestas-horario {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaciado-8);
+}
+
+.propuesta-horario {
+  display: grid;
+  text-align: left;
+  gap: 2px;
+}
+
+.propuesta-horario[aria-pressed="true"] {
+  background: var(--marca-suave);
+  box-shadow: inset 0 0 0 1px var(--marca-base);
+}
+
+.propuesta-horario__libres {
+  font-weight: 400;
+  font-size: var(--tam-micro);
+  color: var(--texto-suave);
+}
+
+.reunion-detalle__privacidad {
+  margin: 0;
+  text-align: center;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.reunion-detalle__confirmar {
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.reunion-detalle__boton {
+  width: 100%;
+}
+
+.reunion-detalle__cancelar {
+  justify-self: start;
+}
+
+.reuniones__tarjeta {
+  max-width: 560px;
+}
+
+/* La línea de invitados (D-REU-20) y su lista con la marca obligatorio u opcional (D-REU-19) */
+.invitados {
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-md);
+  background: var(--superficie-base);
+}
+
+.invitados__resumen {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--espaciado-12);
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border: none;
+  border-radius: var(--radio-md);
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--texto-fuerte);
+  text-align: left;
+  cursor: pointer;
+}
+
+.invitados__abrir {
+  font-weight: 400;
+  font-size: var(--tam-etiqueta);
+  color: var(--marca-base);
+}
+
+.invitados__buscar {
+  margin: 0 var(--espaciado-16) var(--espaciado-8);
+  width: calc(100% - 2 * var(--espaciado-16));
+  font: inherit;
+  min-height: 36px;
+  padding: 0 var(--espaciado-12);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-sm);
+}
+
+.invitados__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--espaciado-16) var(--espaciado-8);
+}
+
+.invitado {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-12);
+  padding: var(--espaciado-8) 0;
+  border-top: 1px solid var(--borde-base);
+}
+
+/* D-REU-08: el punto es neutro, no un color por persona */
+.invitado__punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--borde-fuerte);
+  flex-shrink: 0;
+}
+
+.invitado__nombre {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+
+.invitado__correo {
+  font-size: var(--tam-micro);
+  color: var(--texto-suave);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invitado--sin-datos .invitado__nombre {
+  color: var(--texto-suave);
+}
+
+.invitado .etiqueta {
+  margin-left: 0;
+}
+
+.marca {
+  display: inline-flex;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.marca__opcion {
+  position: relative;
+  padding: 4px var(--espaciado-12);
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.marca__opcion + .marca__opcion {
+  border-left: 1px solid var(--borde-fuerte);
+}
+
+.marca__opcion input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.marca__opcion--activa {
+  background: var(--marca-suave);
+  color: var(--marca-fuerte);
+  font-weight: 600;
+}
+
+.marca__opcion:focus-within {
+  outline: 2px solid var(--marca-base);
+  outline-offset: -2px;
+}
+
+/* El mapa de calor (REQ-CUN06-08): columnas = días; filas = medias horas */
+.mapa {
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.mapa__leyenda {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-12);
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.mapa__escala {
+  width: 160px;
+  height: 12px;
+  border: 1px solid var(--borde-base);
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--superficie-base), var(--estado-exito));
+}
+
+.mapa__rejilla {
+  display: grid;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-sm);
+}
+
+.mapa__fila {
+  display: contents;
+}
+
+.mapa__esquina,
+.mapa__dia {
+  background: var(--superficie-base);
+  border-bottom: 1px solid var(--borde-fuerte);
+}
+
+.mapa__dia {
+  display: grid;
+  justify-items: center;
+  padding: 4px 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.mapa__dia strong {
+  color: var(--texto-fuerte);
+}
+
+.mapa__hora {
+  padding-right: var(--espaciado-8);
+  font-size: var(--tam-micro);
+  text-align: right;
+  line-height: 20px;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.mapa__hora--media {
+  color: transparent;
+}
+
+.mapa__lugar {
+  position: relative;
+  display: block;
+}
+
+.mapa__celda {
+  display: block;
+  width: 100%;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-left: 1px solid var(--borde-base);
+  border-top: 1px dotted var(--borde-base);
+  background: var(--superficie-base);
+  font: inherit;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.mapa__celda--fuerte {
+  color: var(--texto-inverso);
+}
+
+.mapa__celda--vacia {
+  display: block;
+  height: 20px;
+  background: var(--superficie-hundida);
+  border-left: 1px solid var(--borde-base);
+}
+
+.mapa__celda--sugerida {
+  box-shadow: inset 0 0 0 2px var(--marca-base);
+}
+
+.mapa__celda--elegida {
+  box-shadow: inset 0 0 0 3px var(--marca-fuerte);
+  font-weight: 700;
+}
+
+.mapa__detalle {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 2px;
+  width: max-content;
+  max-width: 280px;
+  padding: var(--espaciado-8) var(--espaciado-12);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  box-shadow: 0 4px 16px rgb(20 33 46 / 0.16);
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-fuerte);
+  pointer-events: none;
+}
+
+.mapa__detalle-nota {
+  font-size: var(--tam-micro);
+  color: var(--texto-suave);
+}
+
+/* La autorización propia, al pie de la lista */
+.autorizaciones {
+  padding-top: var(--espaciado-24);
+  border-top: 1px solid var(--borde-base);
+}
+
+.autorizaciones h3 {
+  margin: 0 0 var(--espaciado-12);
+  font-size: var(--tam-cuerpo);
+}
+
+.autorizaciones__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-24);
+}
+
+.autorizaciones__equipo {
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.autorizaciones__nombre {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* El componente de CUN-05 trae su propio título; aquí basta con el del equipo */
+.autorizaciones .consentimiento-equipo {
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.autorizaciones .consentimiento-equipo h3 {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.autorizaciones .consentimiento-equipo p {
+  margin: 0;
+}
+
+.autorizaciones .consentimiento-equipo .cambio-zona__acciones {
+  margin-top: var(--espaciado-8);
+}
+
+/* El turno `reunion` en la conversación */
+.turno-reunion__todos {
+  margin-top: var(--espaciado-8);
+}

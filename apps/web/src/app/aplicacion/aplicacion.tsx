@@ -11,9 +11,9 @@ import { Actividad } from './actividad';
 import { AgendaMes, AgendaSemana, ListaCompromisos } from './agenda';
 import { CambioContrasena } from './cambio-contrasena';
 import { CambioZona } from './cambio-zona';
-import { DisponibilidadEquipo } from './disponibilidad-equipo';
 import { FranjaEnEspera } from './en-espera';
 import { Conversacion } from './conversacion';
+import { Reuniones } from './reuniones';
 import {
   IconoActividad,
   IconoAdministracion,
@@ -102,9 +102,10 @@ export function Aplicacion({
   const actual = SECCIONES[seccion];
   const router = useRouter();
   const [cambiando, enTransicion] = useTransition();
-  // CUN-05 (specs/05-equipos/plan.md §8): «Disponibilidad de equipo» es un corte de Agenda que no es un nivel
+  // CUN-05 (specs/05-equipos/plan.md §8): el corte del equipo es un corte de Agenda que no es un nivel
   // de período (INC-36). No va en la dirección: lo recuerda el estado de la página, como los cortes de Tareas.
-  // T-120 · REQ-CUN05-18, H-ACC-07: el corte existe solo con plan efectivo Empresarial y algún equipo
+  // T-120 · REQ-CUN05-18, H-ACC-07: el corte existe solo con plan efectivo Empresarial y algún equipo.
+  // T-134 · D-REU-07: se llama «Reuniones» y muestra la lista de reuniones (REQ-CUN06-07, 19)
   const conEquipo = perfil?.planEfectivo === 'empresarial' && perfil.equipos > 0;
   const vistaEquipo = seccion === 'agenda' && conEquipo && corte === NIVELES.length;
   const vistaAgendaPersonal = seccion === 'agenda' && !vistaEquipo;
@@ -113,11 +114,28 @@ export function Aplicacion({
 
   const ejemplos = vistaEquipo
     ? [
-        'Consulta la disponibilidad de mi equipo para mañana',
-        'Busca un horario de 30 minutos para reunirnos',
-        'Consulta la disponibilidad de mi equipo el viernes',
+        'Busca un horario con mi equipo para el jueves',
+        'Reunión de avance con mi equipo esta semana',
+        'Mueve la reunión de avance al viernes',
       ]
     : actual.ejemplos;
+
+  // T-134: lo que une la conversación con el corte «Reuniones». La lista se vuelve a pedir cuando la conversación
+  // cambió una reunión; «Ver todos los horarios» abre su detalle; el ejemplo del estado vacío llega a la barra.
+  const [versionReuniones, setVersionReuniones] = useState(0);
+  const [reunionPedida, setReunionPedida] = useState<{ id: string; vez: number } | null>(null);
+  const [pedido, setPedido] = useState<{ texto: string; vez: number } | null>(null);
+
+  function verReunion(id: string) {
+    setSeccion('agenda');
+    setCorte(NIVELES.length);
+    setReunionPedida((previa) => ({ id, vez: (previa?.vez ?? 0) + 1 }));
+  }
+
+  function pedirAlAsistente(texto: string) {
+    setExpandido(false);
+    setPedido((previo) => ({ texto, vez: (previo?.vez ?? 0) + 1 }));
+  }
 
   function irA(nueva: VistaAgenda) {
     setCorte(0);
@@ -125,12 +143,14 @@ export function Aplicacion({
   }
 
   function elegirCorte(indice: number) {
+    setReunionPedida(null);
     const nivel = NIVELES[indice];
     if (seccion === 'agenda' && nivel) irA({ nivel, fecha: null });
     else setCorte(indice);
   }
 
   function cambiarSeccion(nueva: Seccion) {
+    setReunionPedida(null);
     setSeccion(nueva);
     setCorte(0);
   }
@@ -159,7 +179,7 @@ export function Aplicacion({
     seccion === 'tareas' && encarga
       ? [...actual.cortes, 'Encargadas']
       : seccion === 'agenda' && conEquipo
-        ? [...actual.cortes, 'Disponibilidad de equipo']
+        ? [...actual.cortes, 'Reuniones']
         : actual.cortes;
 
   return (
@@ -197,7 +217,17 @@ export function Aplicacion({
         </div>
       </nav>
 
-      {!expandido && <Conversacion inicial={conversacion} ejemplos={ejemplos} zona={perfil?.zonaHoraria ?? undefined} entrada={entrada} />}
+      {!expandido && (
+        <Conversacion
+          inicial={conversacion}
+          ejemplos={ejemplos}
+          zona={perfil?.zonaHoraria ?? undefined}
+          entrada={entrada}
+          pedido={pedido}
+          alCambiarReuniones={() => setVersionReuniones((v) => v + 1)}
+          alVerReunion={conEquipo ? verReunion : undefined}
+        />
+      )}
 
       <main className="lienzo">
         {aviso && (
@@ -287,10 +317,18 @@ export function Aplicacion({
           {lista?.nivel === 'mes' && <AgendaMes agenda={lista} irA={irA} />}
           {/* REQ-CUN03-13: debajo de los compromisos de Hoy, y nunca en Semana ni en Mes */}
           {vistaAgendaPersonal && vista.nivel === 'dia' && <TareasParaEsteDia dia={tareasDelDia} />}
-          {/* CUN-05: la rejilla de disponibilidad del equipo (05-equipos) */}
+          {/* T-134 · 10-reuniones: la lista de reuniones y su detalle. El formulario y la rejilla de CUN-05
+              (disponibilidad-equipo.tsx) salieron de la pantalla (D-REU-09) */}
           {vistaEquipo && (
             perfil ? (
-              <DisponibilidadEquipo key={perfil.perfilId} zona={perfil.zonaHoraria ?? 'America/Lima'} perfilId={perfil.perfilId} />
+              <Reuniones
+                key={perfil.perfilId}
+                zona={perfil.zonaHoraria ?? 'America/Lima'}
+                perfilId={perfil.perfilId}
+                version={versionReuniones}
+                abrir={reunionPedida}
+                alPedir={pedirAlAsistente}
+              />
             ) : (
               <div className="vacio">
                 <h2>No pudimos identificar tu perfil</h2>

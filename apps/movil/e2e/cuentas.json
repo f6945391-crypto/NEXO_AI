@@ -83,5 +83,55 @@
     "plan": "personal",
     "organizacion": "personal",
     "lista": true
+  },
+  "reunionesAdmin": {
+    "correo": "admin@reuniones-movil.test",
+    "rol": "gerente",
+    "plan": "empresarial",
+    "administrador": true,
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesLider": {
+    "correo": "lider@reuniones-movil.test",
+    "rol": "gerente",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesAna": {
+    "correo": "ana@reuniones-movil.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesBeto": {
+    "correo": "beto@reuniones-movil.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesCarla": {
+    "correo": "carla@reuniones-movil.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesDiego": {
+    "correo": "diego@reuniones-movil.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesPablo": {
+    "correo": "pablo@reuniones-movil.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "organizacion": "Reuniones Demo",
+    "lista": true
   }
 }

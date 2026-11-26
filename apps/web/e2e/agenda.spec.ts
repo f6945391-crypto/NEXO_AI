@@ -160,7 +160,8 @@ test.describe('web.agenda-semana-y-mes', () => {
   });
 });
 
-// Fusión del 25 de noviembre de 2026 · CUN-05 (specs/05-equipos/plan.md §8). «Disponibilidad de equipo» es un
+// Fusión del 25 de noviembre de 2026 · CUN-05 (specs/05-equipos/plan.md §8). «Reuniones» (antes «Disponibilidad de
+// equipo», T-134 · D-REU-07) es un
 // corte de Agenda que no es un nivel de período (INC-36): no va en la dirección y, al volver a un nivel, la
 // agenda de la persona reaparece tal cual. Desde T-120, con una cuenta Empresarial que está en un equipo.
 test.describe('agenda.corte-disponibilidad-de-equipo', () => {
@@ -170,22 +171,22 @@ test.describe('agenda.corte-disponibilidad-de-equipo', () => {
     await entrar(page, cuentas.acmeResponsable.correo);
     const selector = page.getByRole('tablist', { name: 'Niveles' });
 
-    await selector.getByRole('tab', { name: 'Disponibilidad de equipo' }).click();
-    await expect(selector.getByRole('tab', { name: 'Disponibilidad de equipo' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('heading', { name: 'Disponibilidad del equipo' })).toBeVisible();
+    await selector.getByRole('tab', { name: 'Reuniones' }).click();
+    await expect(selector.getByRole('tab', { name: 'Reuniones' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('heading', { name: 'Tus reuniones' })).toBeVisible();
     await expect(page.getByText('Encuentra un horario para reunirse')).toBeVisible();
     await expect(page).not.toHaveURL(/nivel=/);
 
     await selector.getByRole('tab', { name: 'Semana' }).click();
     await expect(page).toHaveURL(/nivel=semana/);
     await expect(selector.getByRole('tab', { name: 'Semana' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('heading', { name: 'Disponibilidad del equipo' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Tus reuniones' })).toHaveCount(0);
 
-    await selector.getByRole('tab', { name: 'Disponibilidad de equipo' }).click();
-    await expect(page.getByRole('heading', { name: 'Disponibilidad del equipo' })).toBeVisible();
+    await selector.getByRole('tab', { name: 'Reuniones' }).click();
+    await expect(page.getByRole('heading', { name: 'Tus reuniones' })).toBeVisible();
     await selector.getByRole('tab', { name: 'Hoy' }).click();
     await expect(selector.getByRole('tab', { name: 'Hoy' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('heading', { name: 'Disponibilidad del equipo' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Tus reuniones' })).toHaveCount(0);
   });
 });
 
@@ -202,8 +203,8 @@ test.describe('agenda.corte-disponibilidad-por-plan', () => {
 
   test('con Plan Empresarial y un equipo, el corte muestra al responsable', async ({ page }) => {
     await entrar(page, cuentas.acmeResponsable.correo);
-    await page.getByRole('tablist', { name: 'Niveles' }).getByRole('tab', { name: 'Disponibilidad de equipo' }).click();
-    await expect(page.getByLabel('Equipo')).toHaveValue(/.+/);
+    // T-134 · D-REU-07: el corte se llama «Reuniones»; el responsable va al pie, con la autorización propia
+    await page.getByRole('tablist', { name: 'Niveles' }).getByRole('tab', { name: 'Reuniones' }).click();
     await expect(page.getByText(`Responsable: ${cuentas.acmeResponsable.correo} · 3 integrantes`)).toBeVisible();
   });
 });

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState, useTransition, type FormEvent, type RefObject } from 'react';
-import type { ConversacionAsistente, DecisionAsistente, OperacionRespuesta, TurnoAsistente } from '@nexoai/contratos';
+import type { ConversacionAsistente, DecisionAsistente, OperacionRespuesta, PropuestasDeReunion, TurnoAsistente } from '@nexoai/contratos';
 import { decidirEnAsistente, enviarAlAsistente, verAnteriores } from '../acciones';
 import { elementosDe, textoDelSeparador, type Elemento } from '../../lib/separador';
 import { IconoEnviar } from './iconos';
@@ -23,6 +23,9 @@ const seCruzaCon = (eventos: { titulo: string }[]) => `Se cruza con ${enLista(ev
 
 const hora = (iso: string, zona?: string) =>
   new Intl.DateTimeFormat('es', { timeZone: zona, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso));
+const mayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
+const diaSemana = (iso: string, zona?: string) => new Intl.DateTimeFormat('es', { timeZone: zona, weekday: 'long' }).format(new Date(iso));
+const numeroDia = (iso: string, zona?: string) => new Intl.DateTimeFormat('es', { timeZone: zona, day: 'numeric' }).format(new Date(iso));
 const dia = (iso: string, zona?: string) =>
   new Intl.DateTimeFormat('es', { timeZone: zona, weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso));
 
@@ -33,7 +36,7 @@ function desenlace(elementos: Elemento[], desde: number, operacionId: string): s
   for (const e of elementos.slice(desde + 1)) {
     if (e.clase === 'separador') {
       if (e.cierre.desenlace === 'descartado') return 'Descartado';
-      return ['registrado', 'movido', 'cancelado', 'anotado'].includes(e.cierre.desenlace) ? 'Confirmado' : null;
+      return ['registrado', 'movido', 'cancelado', 'anotado', 'convocada'].includes(e.cierre.desenlace) ? 'Confirmado' : null;
     }
     const t = e.turno;
     if (t.tipo === 'resultado' && t.operacion.id === operacionId) return 'Confirmado';
@@ -122,6 +125,7 @@ function Turno({
   zona,
   esUltimo,
   alDecidir,
+  alVerReunion,
 }: {
   turno: TurnoAsistente;
   pendiente: string | null;
@@ -130,6 +134,7 @@ function Turno({
   zona?: string;
   esUltimo: boolean;
   alDecidir: (d: DecisionAsistente) => void;
+  alVerReunion?: (reunionId: string) => void;
 }) {
   switch (turno.tipo) {
     case 'persona':
@@ -245,6 +250,20 @@ function Turno({
           </ul>
         </li>
       );
+    // T-134 · REQ-CUN06-01, 10: las propuestas de horario armadas por el código. Elegir una no pasa por el modelo:
+    // la decisión `horario` vuelve con la tarjeta de convocar (o de mover)
+    case 'reunion':
+      return (
+        <li className="turno">
+          <TurnoReunion
+            propuestas={turno.propuestas}
+            zona={zona}
+            bloqueado={ocupado || pendiente !== null}
+            alElegir={(inicio) => alDecidir({ decision: 'horario', reunionId: turno.propuestas.reunion.id, inicio })}
+            alVerTodos={alVerReunion ? () => alVerReunion(turno.propuestas.reunion.id) : undefined}
+          />
+        </li>
+      );
     case 'propuesta':
       return (
         <li className="turno">
@@ -279,6 +298,46 @@ function Turno({
   }
 }
 
+function TurnoReunion({
+  propuestas: { reunion, texto, propuestas },
+  zona,
+  bloqueado,
+  alElegir,
+  alVerTodos,
+}: {
+  propuestas: PropuestasDeReunion;
+  zona?: string;
+  bloqueado: boolean;
+  alElegir: (inicio: string) => void;
+  alVerTodos?: () => void;
+}) {
+  const z = zona ?? 'UTC';
+  return (
+    <>
+      <p className="turno__texto">{texto}</p>
+      {propuestas.length > 0 && (
+        <ul className="candidatas turno-reunion" aria-label={`Horarios para ${reunion.titulo}`}>
+          {propuestas.map((p) => (
+            <li key={p.inicio}>
+              <button type="button" className="boton boton--secundario" disabled={bloqueado} onClick={() => alElegir(p.inicio)}>
+                {`${mayuscula(diaSemana(p.inicio, z))} ${numeroDia(p.inicio, z)}, ${hora(p.inicio, z)} – ${hora(p.fin, z)}`}
+                <span className="candidatas__detalle">
+                  {p.libres}/{p.de} libres{p.opcionalesLibres > 0 ? ` · ${p.opcionalesLibres} ${p.opcionalesLibres === 1 ? 'opcional libre' : 'opcionales libres'}` : ''}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {alVerTodos && (reunion.estado === 'pendiente' || reunion.estado === 'agendada') && (
+        <button type="button" className="boton-texto turno-reunion__todos" onClick={alVerTodos}>
+          Ver todos los horarios
+        </button>
+      )}
+    </>
+  );
+}
+
 function Separador({ texto }: { texto: string }) {
   return (
     <li className="separador" role="separator" aria-label={texto}>
@@ -292,11 +351,19 @@ export function Conversacion({
   ejemplos,
   zona,
   entrada,
+  pedido,
+  alCambiarReuniones,
+  alVerReunion,
 }: {
   inicial: ConversacionAsistente | null;
   ejemplos: string[];
   zona?: string;
   entrada: RefObject<HTMLTextAreaElement | null>;
+  // T-134: un ejemplo pulsado fuera de la conversación (el estado vacío de Reuniones) llega a la barra de entrada
+  pedido?: { texto: string; vez: number } | null;
+  // T-134: algo cambió en las reuniones (se buscó horario o se confirmó): Reuniones vuelve a pedir su lista
+  alCambiarReuniones?: () => void;
+  alVerReunion?: (reunionId: string) => void;
 }) {
   const [elementos, setElementos] = useState<Elemento[]>(() => elementosDe(inicial?.episodios ?? []));
   const [pendiente, setPendiente] = useState<string | null>(inicial?.pendiente ?? null);
@@ -338,7 +405,14 @@ export function Conversacion({
       ...(respuesta.cierre ? [{ clase: 'separador' as const, id: `separador-${respuesta.episodioId}`, cierre: respuesta.cierre }] : []),
     ]);
     setPendiente(respuesta.pendiente);
+    if (respuesta.turnos.some((turno) => turno.tipo === 'reunion' || turno.tipo === 'resultado')) alCambiarReuniones?.();
   }
+
+  useEffect(() => {
+    if (!pedido) return;
+    setBorrador(pedido.texto);
+    entrada.current?.focus();
+  }, [pedido, entrada]);
 
   function enviar(evento?: FormEvent) {
     evento?.preventDefault();
@@ -418,6 +492,7 @@ export function Conversacion({
                   zona={zona}
                   esUltimo={elemento === ultimo}
                   alDecidir={decidir}
+                  alVerReunion={alVerReunion}
                 />
               ),
             )}

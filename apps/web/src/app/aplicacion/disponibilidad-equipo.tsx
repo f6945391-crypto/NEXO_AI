@@ -1,5 +1,8 @@
 'use client';
 
+// ANTERIOR · T-134 · D-REU-09: el formulario de disponibilidad de CUN-05 salió de la pantalla; el corte de Agenda
+// muestra ahora la lista de reuniones (reuniones.tsx). Se conserva sin usar, como registro (AGENTS.md: no se borra).
+
 import { useEffect, useState } from 'react';
 import type {
   EquipoResumen as Equipo,

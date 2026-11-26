@@ -410,3 +410,23 @@ D-REU-01 a 16 vienen de la propuesta (§7) y se aplican tal como están, **pendi
 | **D-REU-21** | **Franja del día opcional:** «por la mañana» es de 08:00 a 13:00 y «por la tarde», de 13:00 a 20:00, en la zona de quien convoca | REQ-CUN06-03 |
 | **D-REU-22** | **Una reunión es de un solo equipo.** La autorización para compartir disponibilidad es por equipo (REQ-CUN05-14), así que todos los invitados tienen que estar en el mismo equipo que quien convoca. Si los nombrados están repartidos, el asistente lo dice | REQ-CUN06-02 |
 | **D-REU-23** | **Lo que necesita el asistente.** Solo es obligatorio **con quién**. Todo lo demás tiene un valor por defecto: los días, la duración, la franja, el tema y quién es opcional. El modelo pasa lo que entendió como texto (nombres de equipo o de personas, fechas en formato año-mes-día) y el código resuelve y calcula | REQ-CUN06-02, 03 |
+
+---
+
+## 8. Decisiones de interfaz tomadas al construir (T-134, T-135)
+
+Detectadas el 25 de noviembre de 2026 al construir la web y el móvil. **Pendientes de aval del equipo.**
+
+| # | Decisión | Afecta |
+|---|---|---|
+| D-REU-24 | La línea de invitados separa «sin autorizar» y «sin calendario»; «obligatorios» y «opcionales» cuentan solo a quienes tienen datos | REQ-CUN06-09 |
+| D-REU-25 | En la web, la marca es un control de dos opciones por persona, Obligatorio u Opcional; el buscador aparece desde 8 invitados. En el móvil no se marca: se le pide al asistente | REQ-CUN06-09; D-REU-19, 20 |
+| D-REU-26 | En el detalle del mapa, quien convoca aparece como «tú» («Ocupados: tú»), y se avisa «Al elegirla, la reunión dura N min» | REQ-CUN06-08 |
+| D-REU-27 | «Convocada por» usa el nombre derivado del correo («Lider»), no el correo que pone el criterio de REQ-CUN06-07 | REQ-CUN06-07; D-REU-18 |
+| D-REU-28 | La ficha de una reunión pendiente lleva «Elegir horario» y «Configurar horario ›», como el boceto 01. La subcabecera es «<equipo> · N invitados» | REQ-CUN06-07 |
+| D-REU-29 | Quien convocó puede cancelar desde el detalle también una reunión pendiente o vencida | REQ-CUN06-15 |
+| D-REU-30 | En la conversación de la web, las propuestas se desactivan solo con una tarjeta abierta; en el móvil, también cuando el episodio ya se cerró. Si una propuesta antigua ya no vale, la API lo rechaza | REQ-CUN06-10 |
+| D-REU-31 | El ejemplo pulsable de la lista vacía escribe el texto en la conversación sin enviarlo | REQ-CUN06-07 |
+| D-REU-32 | La autorización propia y el responsable del equipo (REQ-CUN05-19) pasan al pie de la lista de reuniones | REQ-CUN05-14 a 16, 19 |
+| D-REU-33 | En el móvil, la tarjeta plegada muestra también «Invitados» y «Opcionales» con sus direcciones: a quién le llega el correo es lo irreversible (P-03). Se aparta de lo que H-CAP-01 deja plegado | REQ-CUN06-10; H-CAP-01 |
+

@@ -7,7 +7,8 @@ export const SECCIONES: Record<
   agenda: {
     nombre: 'Agenda',
     pregunta: 'Lo que va a pasar',
-    // «Disponibilidad de equipo» se añade en aplicacion.tsx solo con plan efectivo Empresarial y algún equipo
+    // «Reuniones» (antes «Disponibilidad de equipo», D-REU-07) se añade en aplicacion.tsx solo con plan efectivo
+    // Empresarial y algún equipo
     // (T-120 · REQ-CUN05-18)
     cortes: ['Hoy', 'Semana', 'Mes'],
     ejemplos: [

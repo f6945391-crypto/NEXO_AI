@@ -1,3 +1,5 @@
+// ANTERIOR · T-134 · D-REU-09: la rejilla de CUN-05 salió de la pantalla con el formulario; la reemplaza el mapa de
+// calor del detalle de una reunión (reuniones.tsx). Se conserva sin usar, como registro.
 import type {
   DisponibilidadEquipoRespuesta,
   DisponibilidadIndividualEquipo,

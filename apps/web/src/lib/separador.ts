@@ -17,6 +17,8 @@ const QUE_PASO: Record<CierreEpisodio['desenlace'], (titulo: string | null) => s
   cambiado: (t) => (t ? `Se cambió «${t}»` : 'Tarea cambiada'),
   quitado: (t) => (t ? `Se descartó la tarea «${t}»` : 'Tarea descartada'),
   anotado: (t) => (t ? `Se anotó un avance en «${t}»` : 'Avance anotado'),
+  // T-134 · 10-reuniones: una reunión agendada con sus invitados
+  convocada: (t) => (t ? `Se convocó «${t}»` : 'Reunión convocada'),
   sin_accion: () => null,
 };
 
