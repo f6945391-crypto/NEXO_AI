@@ -19,7 +19,7 @@
 | 07-agente | 5 | 2 | 0 | 3 | 0 | 0 |
 | 08-administracion | 32 | 15 | 4 | 13 | 0 | 0 |
 | 09-tareas-personales | 28 | 1 | 1 | 26 | 0 | 0 |
-| 10-reuniones | 21 | 0 | 1 | 20 | 0 | 0 |
+| 10-reuniones | 21 | 0 | 0 | 21 | 0 | 0 |
 
 ## Requisitos
 
@@ -268,13 +268,13 @@
 | REQ-CUN06-09 | 10-reuniones | pregunta de Franco del 25 de noviembre de 2026 (con 5 o 10 personas, una fila de fichas es tediosa); D-REU-03, D-REU-08, D-REU-19, D-REU-20 | — | T-132, T-134 | agente.reuniones; web.reuniones | implementado |
 | REQ-CUN06-10 | 10-reuniones | P-03, P-05; RN-ER-03; DP-01 (elegir es un control sobre algo que ya existe); D-REU-05, D-REU-11; propuesta §4 bis.2, pasos 5 y 6 | — | T-133, T-134, T-135 | agente.reuniones; web.reuniones; movil.reuniones | implementado |
 | REQ-CUN06-11 | 10-reuniones | H-AG-07 (comprobar de nuevo al confirmar); AD-09, AD-10; P-08 (la invitación la manda Google); D-REU-16 | — | T-132 | agente.reuniones | implementado |
-| REQ-CUN06-12 | 10-reuniones | hallazgo de la propuesta §4 bis.4; D-REU-11 | — | T-132 | agente.reuniones | implementado |
-| REQ-CUN06-13 | 10-reuniones | P-09, R-16; REQ-CUN01-12 (marca de invitado); D-REU-13 | — | T-132, T-134 | agente.reuniones; web.reuniones | implementado |
+| REQ-CUN06-12 | 10-reuniones | hallazgo de la propuesta §4 bis.4; D-REU-11 | — | T-132, T-137 | agente.reuniones; calendario.direccion-de-google | implementado |
+| REQ-CUN06-13 | 10-reuniones | P-09, R-16; REQ-CUN01-12 (marca de invitado); D-REU-13; D-REU-34 | — | T-132, T-134, T-138 | agente.reuniones; web.reuniones; reuniones.invitacion-sin-responder | implementado |
 | REQ-CUN06-14 | 10-reuniones | CUN-06; D-REU-15, D-REU-16; propuesta §4 bis.3 | — | T-132, T-133 | agente.reuniones | implementado |
 | REQ-CUN06-15 | 10-reuniones | DP-01 (cancelar es un control directo); P-03; D-REU-15, D-REU-16 | — | T-132, T-134, T-135 | agente.reuniones; web.reuniones; movil.reuniones | implementado |
 | REQ-CUN06-16 | 10-reuniones | P-04; D-REU-15 | — | T-132, T-133 | agente.reuniones | implementado |
 | REQ-CUN06-17 | 10-reuniones | AD-10 (Google es la fuente de verdad); R-25 | — | T-132 | agente.reuniones; reuniones.conciliacion | implementado |
 | REQ-CUN06-18 | 10-reuniones | H-AG-08; D-REU-14 | — | T-132 | reuniones.conciliacion | implementado |
 | REQ-CUN06-19 | 10-reuniones | REQ-CUN05-18; H-EMP-03; propuesta §5 | — | T-133, T-134, T-135 | agente.reuniones; web.reuniones; movil.reuniones | implementado |
-| REQ-CUN06-20 | 10-reuniones | P-11; DP-01 | — | T-132, T-134 | — | en curso |
+| REQ-CUN06-20 | 10-reuniones | P-11; DP-01 | — | T-132, T-134, T-137 | reuniones.sin-asistente | implementado |
 | REQ-CUN06-21 | 10-reuniones | H-AG-11 (la agenda no avisa a los invitados); D-REU-16; propuesta §4 bis.3 | — | T-132 | agente.reuniones | implementado |

@@ -20,6 +20,8 @@ interface Entrada {
   cancelado: boolean;
   // Número de cambio en que se tocó por última vez
   version: number;
+  // T-138 · P-REU-08: una invitación que Google no pone en la lista del invitado hasta que responde
+  oculto?: boolean;
 }
 
 interface Calendario {
@@ -40,12 +42,16 @@ export class ProveedorCalendarioSimulado implements ProveedorCalendario {
   // Lo que se escribió con invitados, para comprobar el aviso en las pruebas
   readonly avisos: { tipo: 'crear' | 'actualizar' | 'cancelar'; id: string; avisar: boolean; invitados: string[] }[] = [];
   private siguienteId = 1;
+  // T-138 · P-REU-08: como la protección contra spam de Google, las copias de los invitados no salen en su
+  // lista hasta que responden (`responder`). Se leen igual por su id
+  ocultarInvitaciones = false;
 
   reiniciar(): void {
     this.calendarios.clear();
     this.copias.clear();
     this.direcciones.clear();
     this.avisos.length = 0;
+    this.ocultarInvitaciones = false;
     this.llamadas.lecturas = 0;
     this.llamadas.escrituras = 0;
     this.caido = false;
@@ -57,13 +63,13 @@ export class ProveedorCalendarioSimulado implements ProveedorCalendario {
     let cambios: CambioCalendario[];
     if (lectura.tipo === 'completa') {
       cambios = [...cal.eventos.values()]
-        .filter((e) => !e.cancelado && e.evento.inicio < lectura.hasta && e.evento.fin > lectura.desde)
+        .filter((e) => !e.cancelado && !e.oculto && e.evento.inicio < lectura.hasta && e.evento.fin > lectura.desde)
         .map((e) => ({ tipo: 'evento', evento: { ...e.evento } }));
     } else {
       const [perfil, epoca, version] = lectura.syncToken.split(':');
       if (perfil !== quien.perfilId || Number(epoca) !== cal.epoca) throw new SincronizacionCaducada();
       cambios = [...cal.eventos.values()]
-        .filter((e) => e.version > Number(version))
+        .filter((e) => e.version > Number(version) && !e.oculto)
         .map((e) => (e.cancelado ? { tipo: 'cancelado', id: e.evento.id } : { tipo: 'evento', evento: { ...e.evento } }));
     }
     return { cambios, syncToken: `${quien.perfilId}:${cal.epoca}:${cal.version}` };
@@ -108,6 +114,21 @@ export class ProveedorCalendarioSimulado implements ProveedorCalendario {
     return this.direcciones.get(quien.perfilId) ?? null;
   }
 
+  async obtener(quien: Quien, id: string): Promise<CambioCalendario> {
+    this.llamada('lecturas');
+    const entrada = this.calendario(quien.perfilId).eventos.get(id);
+    return !entrada || entrada.cancelado ? { tipo: 'cancelado', id } : { tipo: 'evento', evento: { ...entrada.evento } };
+  }
+
+  // El invitado responde en Google: desde ahí la invitación sale en su lista
+  responder(perfilId: string, id: string): void {
+    const cal = this.calendario(perfilId);
+    const entrada = cal.eventos.get(id);
+    if (!entrada) return;
+    entrada.oculto = false;
+    entrada.version = ++cal.version;
+  }
+
   // —— Solo para pruebas ——
 
   fijarDireccion(perfilId: string, direccion: string): void {
@@ -116,7 +137,7 @@ export class ProveedorCalendarioSimulado implements ProveedorCalendario {
 
   private copiar(perfilId: string, evento: EventoCalendario): void {
     const cal = this.calendario(perfilId);
-    cal.eventos.set(evento.id, { evento: { ...evento }, cancelado: false, version: ++cal.version });
+    cal.eventos.set(evento.id, { evento: { ...evento }, cancelado: false, version: ++cal.version, oculto: this.ocultarInvitaciones });
   }
 
   // —— Lo que alguien hace directamente en Google. No cuenta como llamada. ——

@@ -239,17 +239,28 @@ ENTONCES ve «Ana · ana.real@gmail.com» y «Beto · beto@empresa.test, sin Goo
 
 ### REQ-CUN06-13
 
-**Requisito:** MIENTRAS una reunión esté agendada, EL SISTEMA la mostrará en la lista de cada invitado y su evento en su Agenda, con la marca de invitado que ya existe. El invitado responderá a la invitación en Google, y su respuesta no cambiará la reunión.
+> **v2 · 26 de noviembre de 2026.** La v1 daba por hecho que Google pone la invitación en la lista de eventos del invitado. La prueba con Google real mostró que no lo hace mientras el invitado no responde, si quien convoca no es un contacto conocido, y la reunión se veía en Reuniones pero no en Hoy, Semana ni Mes (D-REU-34). La v1 queda debajo como anterior.
 
-**Origen:** P-09, R-16; REQ-CUN01-12 (marca de invitado); D-REU-13
+**Requisito:** MIENTRAS una reunión esté agendada, EL SISTEMA la mostrará en la lista de Reuniones de cada invitado con Google conectado y su evento en su Agenda (Hoy, Semana y Mes), con la marca de invitado que ya existe, desde que se agenda y aunque el invitado todavía no haya respondido en Google ni Google la haya añadido a su lista de eventos. Los datos del evento serán los que Google tiene de él en el calendario del invitado. El invitado responderá a la invitación en Google, y su respuesta no cambiará la reunión.
+
+**Origen:** P-09, R-16; REQ-CUN01-12 (marca de invitado); D-REU-13; D-REU-34
 **Tipo:** dirigido por estado
 
 **Criterio de aceptación**
-DADO una reunión agendada con Ana como invitada, que tiene Google conectado
+DADO una reunión agendada con Ana como invitada, que tiene Google conectado y todavía no respondió
+Y Google no devuelve la invitación en la lista de eventos de Ana
 CUANDO Ana abra su Agenda del jueves 26
-ENTONCES ve el compromiso con la marca de invitada
-Y en Reuniones ve «Convocada por lucia@… · Jueves 26, 14:00»
+ENTONCES ve el compromiso con la marca de invitada, a la misma hora que en Reuniones
+Y en Reuniones ve «Convocada por Lider · Jueves 26, 08:00»
+Y al buscar horario para otra reunión, Ana figura ocupada a esa hora
+Y si quien convocó la mueve o la cancela, la Agenda de Ana lo refleja en la siguiente sincronización
 Y si Ana rechaza la invitación en Google, la reunión sigue agendada
+
+<details><summary>REQ-CUN06-13 v1 (anterior, 25 de noviembre de 2026)</summary>
+
+MIENTRAS una reunión esté agendada, EL SISTEMA la mostrará en la lista de cada invitado y su evento en su Agenda, con la marca de invitado que ya existe. El invitado responderá a la invitación en Google, y su respuesta no cambiará la reunión.
+
+</details>
 
 ---
 
@@ -429,4 +440,12 @@ Detectadas el 25 de noviembre de 2026 al construir la web y el móvil. **Pendien
 | D-REU-31 | El ejemplo pulsable de la lista vacía escribe el texto en la conversación sin enviarlo | REQ-CUN06-07 |
 | D-REU-32 | La autorización propia y el responsable del equipo (REQ-CUN05-19) pasan al pie de la lista de reuniones | REQ-CUN05-14 a 16, 19 |
 | D-REU-33 | En el móvil, la tarjeta plegada muestra también «Invitados» y «Opcionales» con sus direcciones: a quién le llega el correo es lo irreversible (P-03). Se aparta de lo que H-CAP-01 deja plegado | REQ-CUN06-10; H-CAP-01 |
+
+### Hallazgos de la prueba con Google real (T-137, 26 de noviembre de 2026)
+
+**Pendientes de decisión del equipo.**
+
+| # | Hallazgo | Afecta |
+|---|---|---|
+| ~~D-REU-34~~ | **Resuelta el 26 de noviembre de 2026 por Franco, con la opción (b):** al ver que Reuniones y Agenda no concordaban en las cuentas de Ana, Beto y Lucía, pidió relacionar las dos partes. NexoAI lee por su id el evento de cada reunión agendada en el calendario del invitado y lo pone en su copia; los datos siguen saliendo de Google (AD-10). Queda en REQ-CUN06-13 v2 y P-REU-10. **El hallazgo:** el invitado no ve la reunión en su Agenda hasta que Google la añade a su calendario. Con cuentas de Gmail reales, la invitación llega y el evento existe en el calendario de cada invitado, pero Google no lo pone en su lista de eventos mientras quien convoca no sea un contacto conocido y la persona no haya respondido (protección contra spam, ajuste «Añadir invitaciones a mi calendario»). La copia de NexoAI sale de esa lista, así que el compromiso no aparece en la Agenda del invitado, aunque en Reuniones sí la ve agendada. **Opciones:** (a) aceptarlo: la Agenda sigue a Google (AD-10) y se le dice al invitado «Responde a la invitación en Google para verla en tu Agenda»; (b) NexoAI lee por su id el evento de cada reunión agendada donde la persona es invitada y lo añade a su copia, aunque Google no lo liste. La (b) muestra en NexoAI algo que el calendario de Google de esa persona todavía no muestra. **Comprobado el 26 de noviembre de 2026** en las cuentas de Ana, Beto y Lucía: la vista Mes no marca el jueves 26 en ninguna, porque Google no les devuelve el evento en la lista; leído por su id, el evento está, con la respuesta pendiente (`needsAction`). Después de que Franco aceptara la invitación desde el correo de Ana, Google seguía sin registrar la respuesta en esa cuenta | REQ-CUN06-13; AD-10; P-REU-08 |
 

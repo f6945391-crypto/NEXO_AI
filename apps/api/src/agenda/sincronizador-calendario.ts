@@ -1,3 +1,4 @@
+import { EventosPorId, type EventoPorId } from './eventos-por-id';
 import { Inject, Injectable } from '@nestjs/common';
 import { ClienteGoogle } from '../integraciones/cliente-google';
 import {
@@ -38,6 +39,7 @@ export class SincronizadorCalendario {
     private readonly prisma: PrismaService,
     private readonly google: ClienteGoogle,
     @Inject(PROVEEDOR_CALENDARIO) private readonly proveedor: ProveedorCalendario,
+    private readonly porId: EventosPorId,
   ) {}
 
   sincronizar(quien: Quien, ahora = new Date()): Promise<ResultadoSincronizacion> {
@@ -72,6 +74,7 @@ export class SincronizadorCalendario {
       try {
         const r = await this.proveedor.listar(quien, { tipo: 'incremental', syncToken: estado.syncToken });
         await this.aplicar(quien, r.cambios, ahora);
+        await this.completarPorId(quien, await this.porId.de(quien), new Set(r.cambios.map((c) => (c.tipo === 'evento' ? c.evento.id : c.id))), ahora);
         await this.datos(quien).sincronizacionCalendario.update({
           where: { perfilId: quien.perfilId },
           data: { syncToken: r.syncToken, ultimaSincronizacion: ahora },
@@ -92,11 +95,14 @@ export class SincronizadorCalendario {
     await this.aplicar(quien, r.cambios, ahora);
 
     // Lo que la réplica tenía en la ventana y Google ya no trae se borró allí: queda cancelado (R-25).
+    // Lo que se lee por su id (P-REU-10) tampoco sale en la lista, y no por eso se borró
     const vigentes = r.cambios.flatMap((c) => (c.tipo === 'evento' ? [c.evento.id] : []));
+    const porId = await this.porId.de(quien);
     await this.datos(quien).eventoAgenda.updateMany({
-      where: { perfilId: quien.perfilId, estado: 'confirmado', inicio: { lt: hasta }, fin: { gt: desde }, googleEventoId: { notIn: vigentes } },
+      where: { perfilId: quien.perfilId, estado: 'confirmado', inicio: { lt: hasta }, fin: { gt: desde }, googleEventoId: { notIn: [...vigentes, ...porId.map((e) => e.id)] } },
       data: { estado: 'cancelado', sincronizadoEn: ahora },
     });
+    await this.completarPorId(quien, porId, new Set(vigentes), ahora);
 
     const fila = { syncToken: r.syncToken, ventanaDesde: desde, ventanaHasta: hasta, ultimaSincronizacion: ahora };
     await this.datos(quien).sincronizacionCalendario.upsert({
@@ -105,6 +111,17 @@ export class SincronizadorCalendario {
       update: fila,
     });
     return { tipo: 'completa', cambios: r.cambios.length };
+  }
+
+  // T-138 · P-REU-10: lo que no llegó en la lista se pide por su id. Un fallo con uno no detiene a los demás:
+  // queda la copia anterior hasta la próxima sincronización
+  private async completarPorId(quien: Quien, eventos: EventoPorId[], vistos: Set<string>, ahora: Date): Promise<void> {
+    for (const e of eventos) {
+      if (vistos.has(e.id)) continue;
+      const cambio = await this.proveedor.obtener(quien, e.id, e.zonaHoraria).catch(() => null);
+      if (cambio?.tipo === 'evento') await this.incorporar(quien, cambio.evento, ahora);
+      else if (cambio) await this.marcarCancelado(quien, e.id, ahora);
+    }
   }
 
   private async aplicar(quien: Quien, cambios: CambioCalendario[], ahora: Date): Promise<void> {

@@ -61,6 +61,9 @@ export interface ProveedorCalendario {
   cancelar(quien: Quien, id: string, opciones?: OpcionesEscritura): Promise<void>;
   // T-132 · D-REU-11: la dirección de la cuenta conectada (el id del calendario principal), o nada
   direccion(quien: Quien): Promise<string | null>;
+  // T-138 · P-REU-10: un evento por su id, aunque no salga en la lista. Una invitación sin responder de alguien
+  // que no es contacto no sale en la lista del invitado, pero se lee por su id. Borrado o inexistente: `cancelado`
+  obtener(quien: Quien, id: string, zonaPorDefecto: string): Promise<CambioCalendario>;
 }
 
 export class SincronizacionCaducada extends Error {

@@ -5,6 +5,7 @@ import { DetalleReunion, ErrorApi, IngresoRespuesta, ListaReuniones, OperacionRe
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { instanteLocal, sumarDias, diaDeLaSemana, type FechaLocal } from '../../src/agenda/dominio/tiempo';
+import { ProcesadorEnEspera } from '../../src/agente/en-espera';
 import { GUION_DEMOSTRACION } from '../../src/agente/modelo/guion-demostracion';
 import { OPCIONES_LLAMADOR } from '../../src/agente/modelo/llamador-modelo';
 import { ModeloSimulado } from '../../src/agente/modelo/modelo-simulado';
@@ -15,6 +16,7 @@ import { ProveedorCalendarioSimulado } from '../../src/integraciones/calendario/
 import { PROVEEDOR_CALENDARIO } from '../../src/integraciones/calendario/proveedor-calendario';
 import type { PrismaClient } from '../../src/plataforma/prisma';
 import { rangoPorDefecto } from '../../src/reuniones/dominio/mapa';
+import { SincronizadorCalendario } from '../../src/agenda/sincronizador-calendario';
 import { clientePrueba, crearCuentaLista, vaciarTablas } from '../utilidades/base-prueba';
 
 // T-132, T-133 · specs/10-reuniones · REQ-CUN06-01 a 21. «Reuniones Demo»: el líder convoca a Ana, Beto y Lucía,
@@ -286,6 +288,86 @@ describe('reuniones', () => {
       calendario.borrarEnGoogle(p.lider.perfilId, id);
       expect((await reuniones('lider')).some((x) => x.id === turno.propuestas.reunion.id)).toBe(false);
       expect((await prisma.reunion.findUniqueOrThrow({ where: { id: turno.propuestas.reunion.id } })).estado).toBe('cancelada');
+    });
+  });
+
+  // T-137 · P-11, DP-01: sin asistente, pedir queda en espera; lo que ya existe se sigue usando
+  describe('reuniones.sin-asistente', () => {
+    it('REQ-CUN06-20 · lo pedido queda en espera sin crear reunión, y la pendiente se convoca desde el detalle', async () => {
+      const pendiente = de((await enviar('lider', 'reunión con el proyecto Alfa')).turnos, 'reunion')!.propuestas.reunion;
+      const antes = await prisma.reunion.count();
+
+      simulado.caer();
+      try {
+        const r = await enviar('lider', 'reunión con el equipo Diseño');
+        expect(de(r.turnos, 'en_espera')).toMatchObject({ motivo: 'asistente_no_disponible' });
+        expect(de(r.turnos, 'reunion')).toBeUndefined();
+        expect(await prisma.reunion.count()).toBe(antes);
+        expect(await prisma.operacion.findFirst({ where: { estado: 'en_espera', perfilId: p.lider.perfilId } })).toMatchObject({ solicitudOriginal: 'reunión con el equipo Diseño' });
+
+        // La lista y el detalle no dependen del asistente; elegir y confirmar desde el detalle es un control directo
+        expect((await reuniones('lider')).some((x) => x.id === pendiente.id)).toBe(true);
+        const d = await detalle('lider', pendiente.id);
+        expect(d.propuestas.length).toBeGreaterThan(0);
+        const tarjeta = await proponer('lider', 'reunion.convocar', { reunionId: pendiente.id, inicio: d.propuestas[0]!.inicio });
+        expect(tarjeta.vistaConfirmacion.accion).toBe('Convocar esta reunión');
+        expect((await confirmar('lider', tarjeta.id)).estado).toBe('ejecutada');
+        expect((await reuniones('lider')).find((x) => x.id === pendiente.id)!.estado).toBe('agendada');
+      } finally {
+        simulado.recuperar();
+      }
+
+      // Al volver, lo encolado lo interpreta el asistente: propone horarios de Diseño, sin tarjeta todavía
+      await app.get(ProcesadorEnEspera).repasar();
+      expect(await prisma.operacion.count({ where: { estado: 'en_espera', perfilId: p.lider.perfilId } })).toBe(0);
+      const nueva = await prisma.reunion.findFirstOrThrow({ where: { convocanteId: p.lider.perfilId }, orderBy: { creadaEn: 'desc' }, include: { equipo: true } });
+      expect(nueva).toMatchObject({ estado: 'pendiente', equipo: { nombre: 'Diseño' } });
+    });
+  });
+
+  // T-138 · REQ-CUN06-13 v2 · P-REU-08, P-REU-10: lo que encontró la prueba con Google real (D-REU-34). Google no
+  // pone la invitación en la lista del invitado hasta que responde; la Agenda la tiene igual, leída por su id
+  describe('reuniones.invitacion-sin-responder', () => {
+    it('REQ-CUN06-13 · la invitada ve la reunión en su Agenda aunque Google no la liste, y su cancelación', async () => {
+      calendario.ocultarInvitaciones = true;
+      try {
+        const turno = de((await enviar('lider', 'reunión con el equipo Diseño')).turnos, 'reunion')!;
+        const elegida = turno.propuestas.propuestas[0]!;
+        const tarjeta = de((await decidir('lider', { decision: 'horario', reunionId: turno.propuestas.reunion.id, inicio: elegida.inicio })).turnos, 'propuesta')!.operacion;
+        await decidir('lider', { operacionId: tarjeta.id, decision: 'confirmar' });
+        const reunion = await prisma.reunion.findUniqueOrThrow({ where: { id: turno.propuestas.reunion.id } });
+        const quienAna = { perfilId: p.ana.perfilId, organizacionId };
+
+        // En Google, la lista de Ana no la trae; por su id, sí
+        const lista = await calendario.listar(quienAna, { tipo: 'completa', desde: reunion.rangoDesde, hasta: reunion.rangoHasta });
+        expect(lista.cambios.some((c) => c.tipo === 'evento' && c.evento.id === reunion.googleEventoId)).toBe(false);
+
+        // Su Agenda la muestra igual, a la hora de la reunión y como invitada
+        const dia = { desde: new Date(reunion.inicio!.getTime() - 3_600_000).toISOString(), hasta: new Date(reunion.fin!.getTime() + 3_600_000).toISOString() };
+        const eventos = (await http().get('/agenda/eventos').query(dia).set('Authorization', p.ana.autorizacion).expect(200)).body as { titulo: string; inicio: string; esOrganizador: boolean; estado: string }[];
+        expect(eventos.find((e) => e.titulo === 'Reunión de Diseño' && Date.parse(e.inicio) === reunion.inicio!.getTime())).toMatchObject({ esOrganizador: false, estado: 'confirmado' });
+
+        // Y cuenta como ocupada al buscar otra reunión con ella
+        const otra = de((await enviar('lider', 'reunión con el equipo Diseño')).turnos, 'reunion')!;
+        expect(otra.propuestas.propuestas.some((x) => Date.parse(x.inicio) === reunion.inicio!.getTime())).toBe(false);
+
+        // Una sincronización completa no la da por borrada
+        await prisma.sincronizacionCalendario.update({ where: { perfilId: p.ana.perfilId }, data: { syncToken: null } });
+        await app.get(SincronizadorCalendario).sincronizar(quienAna);
+        expect((await prisma.eventoAgenda.findFirstOrThrow({ where: { perfilId: p.ana.perfilId, googleEventoId: reunion.googleEventoId! } })).estado).toBe('confirmado');
+
+        // Si Ana responde en Google, sale en su lista y no se duplica
+        calendario.responder(p.ana.perfilId, reunion.googleEventoId!);
+        await app.get(SincronizadorCalendario).sincronizar(quienAna);
+        expect(await prisma.eventoAgenda.count({ where: { perfilId: p.ana.perfilId, googleEventoId: reunion.googleEventoId! } })).toBe(1);
+
+        // Quien convocó la cancela: la copia de Ana queda cancelada
+        const cancelar = await proponer('lider', 'reunion.cancelar', { reunionId: reunion.id });
+        await confirmar('lider', cancelar.id);
+        expect((await prisma.eventoAgenda.findFirstOrThrow({ where: { perfilId: p.ana.perfilId, googleEventoId: reunion.googleEventoId! } })).estado).toBe('cancelado');
+      } finally {
+        calendario.ocultarInvitaciones = false;
+      }
     });
   });
 });

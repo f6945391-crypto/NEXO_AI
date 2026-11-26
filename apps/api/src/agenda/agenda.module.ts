@@ -4,6 +4,7 @@ import { OperacionesModule } from '../operaciones/operaciones.module';
 import { AgendaController } from './agenda.controller';
 import { CancelarCompromiso } from './cancelar-compromiso';
 import { ConsultaAgendaService } from './consulta-agenda.service';
+import { EventosPorId } from './eventos-por-id';
 import { ModificarCompromiso } from './modificar-compromiso';
 import { RegistrarCompromiso } from './registrar-compromiso';
 import { ReplicaEventosRepositorio } from './replica-eventos.repositorio';
@@ -17,6 +18,7 @@ import { SincronizadorCalendario } from './sincronizador-calendario';
   controllers: [AgendaController],
   providers: [
     SincronizadorCalendario,
+    EventosPorId,
     ReplicaEventosRepositorio,
     ConsultaAgendaService,
     RevisionHorario,
@@ -24,6 +26,6 @@ import { SincronizadorCalendario } from './sincronizador-calendario';
     ModificarCompromiso,
     CancelarCompromiso,
   ],
-  exports: [SincronizadorCalendario, ReplicaEventosRepositorio, ConsultaAgendaService],
+  exports: [SincronizadorCalendario, EventosPorId, ReplicaEventosRepositorio, ConsultaAgendaService],
 })
 export class AgendaModule {}

@@ -14,7 +14,8 @@
     "semilla-reuniones": "node dist/cli/semilla-reuniones.js",
     "crear-cuenta": "node dist/cli/crear-cuenta.js",
     "probar-calendario": "node dist/cli/probar-calendario.js",
-    "evaluar-asistente": "node dist/cli/evaluar-asistente.js"
+    "evaluar-asistente": "node dist/cli/evaluar-asistente.js",
+    "probar-reuniones": "node dist/cli/probar-reuniones.js"
   },
   "dependencies": {
     "@langchain/core": "1.2.17",

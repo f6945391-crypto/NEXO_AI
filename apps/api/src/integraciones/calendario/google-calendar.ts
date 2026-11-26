@@ -18,7 +18,6 @@ import {
 // cuatro llamadas HTTP. Solo el calendario principal (H-AG-06).
 
 const EVENTOS = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
-const PRINCIPAL = 'https://www.googleapis.com/calendar/v3/calendars/primary';
 // D-REU-16: solo una reunión avisa a sus invitados; un compromiso propio, nunca (H-AG-11)
 const avisos = (opciones?: OpcionesEscritura) => (opciones?.avisar ? 'all' : 'none');
 
@@ -55,6 +54,21 @@ function convertir(item: Json, zonaCalendario: string): CambioCalendario {
     serieId: texto(item.recurringEventId) ?? null,
   };
   return { tipo: 'evento', evento };
+}
+
+const esCorreo = (valor: string | undefined): valor is string => !!valor && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor);
+
+// P-REU-07: primero, quien organizó o creó un evento propio (`self`); si no hay, el nombre del calendario
+// principal, que Google pone igual a la dirección. Si la persona lo renombró y no tiene eventos propios, null
+export function direccionDeLista(cuerpo: Json): string | null {
+  for (const item of Array.isArray(cuerpo.items) ? cuerpo.items : []) {
+    for (const quien of [objeto(objeto(item).organizer), objeto(objeto(item).creator)]) {
+      const correo = texto(quien.email);
+      if (quien.self === true && esCorreo(correo)) return correo;
+    }
+  }
+  const nombre = texto(cuerpo.summary);
+  return esCorreo(nombre) ? nombre : null;
 }
 
 function cuerpoEvento(datos: Partial<DatosEvento>): Json {
@@ -127,11 +141,18 @@ export class ProveedorCalendarioGoogle implements ProveedorCalendario {
     throw await this.fallo(respuesta);
   }
 
-  // D-REU-11: en Google, el id del calendario principal es la dirección de la cuenta
+  // D-REU-11 · P-REU-07: la dirección de la cuenta. Con `calendar.events`, Google no deja leer el calendario
+  // (`calendars/primary` da 403), pero la lista de eventos sí trae lo necesario
   async direccion(quien: Quien): Promise<string | null> {
-    const cuerpo = await this.leer(await this.peticion(quien, new URL(PRINCIPAL), { method: 'GET' }));
-    const id = texto(cuerpo.id);
-    return id && id.includes('@') ? id : null;
+    const url = new URL(EVENTOS);
+    url.searchParams.set('maxResults', '50');
+    return direccionDeLista(await this.leer(await this.peticion(quien, url, { method: 'GET' })));
+  }
+
+  async obtener(quien: Quien, id: string, zonaPorDefecto: string): Promise<CambioCalendario> {
+    const respuesta = await this.peticion(quien, new URL(`${EVENTOS}/${encodeURIComponent(id)}`), { method: 'GET' });
+    if (respuesta.status === 404 || respuesta.status === 410) return { tipo: 'cancelado', id };
+    return convertir(await this.leer(respuesta), zonaPorDefecto);
   }
 
   private peticion(quien: Quien, url: URL, init: RequestInit): Promise<Response> {

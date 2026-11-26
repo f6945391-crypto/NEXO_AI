@@ -1,6 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, type OnModuleInit } from '@nestjs/common';
 import type { ArgsProponerReunion, DatosInvitado, DetalleReunion, InvitadoReunion, PropuestaHorario, ReunionResumen } from '@nexoai/contratos';
 import { enZona, instanteLocal, isoConDesfase, sumarDias, type FechaLocal } from '../agenda/dominio/tiempo';
+import { EventosPorId } from '../agenda/eventos-por-id';
 import { SincronizadorCalendario } from '../agenda/sincronizador-calendario';
 import { DisponibilidadEquipoService } from '../equipos/disponibilidad-equipo.service';
 import { EquiposService } from '../equipos/equipos.service';
@@ -70,7 +71,7 @@ export const lista = (nombres: string[]) =>
   nombres.length <= 1 ? (nombres[0] ?? '') : `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`;
 
 @Injectable()
-export class ReunionesService {
+export class ReunionesService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly equipos: EquiposService,
@@ -78,7 +79,29 @@ export class ReunionesService {
     private readonly sincronizador: SincronizadorCalendario,
     private readonly google: ClienteGoogle,
     @Inject(PROVEEDOR_CALENDARIO) private readonly proveedor: ProveedorCalendario,
+    private readonly porId: EventosPorId,
   ) {}
+
+  // T-138 · REQ-CUN06-13 v2 · P-REU-10: la sincronización del invitado lee por su id el evento de cada reunión
+  // agendada, aunque Google no lo ponga en su lista. Las canceladas que todavía no pasaron, para dejar su copia
+  // cancelada; las agendadas de los últimos 30 días, como la ventana de la copia
+  onModuleInit(): void {
+    this.porId.registrar(async (quien) => {
+      const ahora = Date.now();
+      const filas = await this.datos(quien).reunion.findMany({
+        where: {
+          googleEventoId: { not: null },
+          invitados: { some: { perfilId: quien.perfilId } },
+          OR: [
+            { estado: 'agendada', fin: { gt: new Date(ahora - 30 * 86_400_000) } },
+            { estado: 'cancelada', fin: { gt: new Date(ahora) } },
+          ],
+        },
+        select: { googleEventoId: true, zonaHoraria: true },
+      });
+      return filas.map((f) => ({ id: f.googleEventoId!, zonaHoraria: f.zonaHoraria }));
+    });
+  }
 
   private datos(contexto: Quien) {
     return this.prisma.deOrganizacion(contexto.organizacionId);
@@ -346,6 +369,7 @@ export class ReunionesService {
     if (permiso.correoCuenta) return { direccion: permiso.correoCuenta, conGoogle: true };
     const leida = await this.proveedor.direccion({ organizacionId: contexto.organizacionId, perfilId }).catch(() => null);
     if (leida) await db.consentimientoIntegracion.update({ where: { id: permiso.id }, data: { correoCuenta: leida } });
+    // P-REU-07: si no se pudo leer, va al correo de NexoAI; la tarjeta muestra a qué dirección sale
     return { direccion: leida ?? correo, conGoogle: true };
   }
 

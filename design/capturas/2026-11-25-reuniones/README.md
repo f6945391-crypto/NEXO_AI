@@ -37,7 +37,7 @@ Especificación: `specs/10-reuniones/spec.md` (REQ-CUN06-01 a 21). Las capturas 
 
 - **Calendarios reales.** Las capturas usan el calendario simulado, que copia el evento en el calendario de cada invitado igual que haría Google (P-REU-04). Para probarlo de verdad están las cuatro cuentas de «Reuniones Demo» (abajo).
 - **Mover una reunión** (REQ-CUN06-14), **la conciliación con Google** (REQ-CUN06-17) y **el vencimiento** (REQ-CUN06-18). Están probados en la API (`agente.reuniones` y `reuniones.conciliacion`), sin captura.
-- **Con el asistente caído** (REQ-CUN06-20): usa la cola de siempre, pero falta su prueba propia.
+- **Con el asistente caído** (REQ-CUN06-20): probado en la API (`reuniones.sin-asistente`, 26 de noviembre de 2026), sin captura.
 
 ## Probar con Google real
 
@@ -49,3 +49,28 @@ Especificación: `specs/10-reuniones/spec.md` (REQ-CUN06-01 a 21). Las capturas 
    3. Agenda › Reuniones › autorizar a compartir la disponibilidad en «Proyecto Alfa».
 4. Desde `lider@`, escribir «busca una hora con el proyecto Alfa esta semana», elegir una propuesta y confirmar. Google envía la invitación a los Gmail conectados (NexoAI lee y guarda esa dirección la primera vez, D-REU-11), y el evento aparece en sus calendarios.
 5. Desde `ana@`, «reunión con Ana» pregunta en qué equipo, porque Ana está en dos.
+
+### Lo que hay que saber antes de probar con Google real
+
+- **Una ventana del navegador por cuenta.** La sesión vive en una cookie de `localhost:3001`, compartida por todas las pestañas: entrar con otra cuenta o cerrar sesión en una pestaña cambia todas. Usa una ventana normal, una de incógnito y otro perfil del navegador.
+- **La primera invitación de un remitente desconocido pide confirmar una vez en Gmail** que se añada al calendario; desde la segunda, Google la añade sola (lo encontró Franco el 26 de noviembre de 2026). Desde T-138 NexoAI no depende de eso: la reunión llega a la Agenda del invitado igual, leída por su id.
+- **El invitado la ve en su Agenda al aceptar.** Mientras no responde, si quien convoca no es un contacto conocido, Google no pone el evento en su lista de eventos, y la Agenda de NexoAI sale de esa lista (D-REU-34). Al aceptar **desde ese mismo Gmail**, el evento entra en la lista y llega a NexoAI en la siguiente sincronización. Comprueba en su Google Calendar que figura «Sí», o con `--paso verificar` que su respuesta es `accepted`: si el navegador tiene varias cuentas de Google abiertas, responder desde el correo puede no registrarse en la cuenta invitada. Solo para verla **antes** de responder hace falta su ajuste «Añadir invitaciones a mi calendario» › «De todo el mundo».
+- **Cuándo se ve un cambio de Google en NexoAI** (P-REU-09): como mucho a los 5 minutos con el trabajador en marcha (`node apps/api/dist/trabajador.js`), o al abrir la Agenda si pasaron más de 2 minutos desde la última lectura. Sin el trabajador, solo al abrir la Agenda.
+- **Para ver lo que dice Google sin pasar por la pantalla:** `npx pnpm@12.10.1 --filter @nexoai/api probar-reuniones --paso verificar` muestra, por cuenta, si el evento existe, si sale en la lista, la respuesta del invitado y la copia de NexoAI.
+
+## Resultado con Google real (26 de noviembre de 2026, T-137)
+
+Con las cuatro cuentas conectadas a cuatro Gmail distintos, `npx pnpm@12.10.1 --filter @nexoai/api probar-reuniones --paso <paso>` repite el recorrido sin pantalla y comprueba en Google directamente:
+
+| Paso | Resultado |
+|---|---|
+| `autorizar` | Las cuatro autorizan «Proyecto Alfa» por la Operación de siempre |
+| `convocar` | El asistente de Groq propone 3 horarios que no pisan ningún evento de los cuatro calendarios; la tarjeta y el evento invitan a las tres direcciones de Gmail; el evento queda en el calendario del líder y en el de cada invitado, pendiente de respuesta |
+| `verificar` | En la web, la vista Mes de los tres invitados no marca el jueves 26. **D-REU-34:** el evento no aparece en la lista de eventos de los invitados mientras no respondan, así que no llega a su Agenda de NexoAI (en Reuniones sí la ven agendada) |
+| T-138 | Desde la lectura por id, los tres invitados tienen la reunión en su Agenda, también Ana, cuya lista de Google seguía sin traerla |
+| `mover` | Del jueves 26 al viernes 27, 08:00: en los cuatro Google Calendar y en la copia de los tres invitados |
+| `google` | Movida en Google a las 09:00 sin avisar: NexoAI toma esa hora, y los invitados también |
+| `cancelar` | Pendiente: la reunión queda agendada para verla en la interfaz |
+
+Defecto encontrado y corregido: la dirección de Gmail no se podía leer con el permiso `calendar.events` y la invitación habría salido a `@reuniones.test` (P-REU-07).
+
