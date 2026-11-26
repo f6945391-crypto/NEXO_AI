@@ -1,0 +1,65 @@
+# T-140 · Prueba de humo de las imágenes, aparte del desarrollo (specs/06-acceso/plan.md §5.10).
+#
+# Se usa junto a docker-compose.yml, con otro nombre de proyecto, para que nada choque con los servicios
+# de desarrollo que estén corriendo (contenedores, volúmenes y red distintos):
+#
+#   docker compose -p nexoai-imagenes -f docker-compose.yml -f docker-compose.prueba-imagenes.yml --profile aplicacion build
+#   docker compose -p nexoai-imagenes -f docker-compose.yml -f docker-compose.prueba-imagenes.yml --profile aplicacion up -d
+#   docker compose -p nexoai-imagenes -f docker-compose.yml -f docker-compose.prueba-imagenes.yml --profile aplicacion down -v
+#
+# Qué cambia frente al perfil «aplicacion»:
+#   - Solo se publican la API (4000) y la web (4001). PostgreSQL, Redis y Mailpit quedan dentro de la red.
+#   - La base es la del volumen del proyecto nexoai-imagenes, vacía al empezar: migrar la crea entera.
+#   - No se lee el .env de la raíz (env_file: !reset). Ningún secreto real entra en los contenedores.
+#   - Modo producción, como las imágenes: modelo «no-configurado» (nunca llama a un proveedor) y correo
+#     por SMTP al Mailpit de este proyecto, que no sale a internet. Google con valores de mentira: la
+#     prueba no conecta ninguna cuenta.
+
+x-entorno-prueba: &entorno-prueba
+  NODE_ENV: production
+  PUERTO: "3000"
+  DATABASE_URL: postgresql://nexoai:nexoai@postgres:5432/nexoai
+  REDIS_URL: redis://redis:6379
+  JWT_SECRETO: prueba-de-imagenes-no-es-un-secreto-real-0123456789
+  TOKENS_CLAVE_CIFRADO: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+  GOOGLE_CLIENT_ID: prueba.apps.googleusercontent.com
+  GOOGLE_CLIENT_SECRET: prueba
+  GOOGLE_REDIRECT_URI: http://localhost:4000/integraciones/google/retorno
+  WEB_URL: http://localhost:4001
+  MODELO_PROVEEDOR: no-configurado
+  CORREO_PROVEEDOR: smtp
+  CORREO_SMTP_URL: smtp://mailpit:1025
+  CORREO_REMITENTE: NexoAI prueba <no-responder@prueba.invalid>
+
+services:
+  postgres:
+    ports: !reset []
+  redis:
+    ports: !reset []
+  mailpit:
+    ports: !reset []
+
+  migrar:
+    env_file: !reset []
+    environment: !override
+      DATABASE_URL: postgresql://nexoai:nexoai@postgres:5432/nexoai
+
+  api:
+    env_file: !reset []
+    environment: !override
+      <<: *entorno-prueba
+    ports: !override
+      - "4000:3000"
+
+  trabajador:
+    env_file: !reset []
+    environment: !override
+      <<: *entorno-prueba
+
+  web:
+    env_file: !reset []
+    environment: !override
+      PORT: "3001"
+      API_URL: http://api:3000
+    ports: !override
+      - "4001:3001"

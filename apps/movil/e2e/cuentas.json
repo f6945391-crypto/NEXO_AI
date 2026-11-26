@@ -1,0 +1,144 @@
+{
+  "_nota": "Cuentas de prueba de extremo a extremo del móvil. Las crea apps/web/e2e/arrancar-api.mjs en nexoai_e2e_movil_prueba, que se vacía en cada ejecución.",
+  "contrasenaTemporal": "temporal-de-prueba-movil",
+  "contrasenaNueva": "contrasena-nueva-movil",
+  "recorrido": {
+    "correo": "recorrido-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "credencialesErroneas": {
+    "correo": "errores-movil@nexoai.test",
+    "rol": "colaborador",
+    "plan": "empresarial"
+  },
+  "agenda": {
+    "correo": "agenda-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "agendaVacia": {
+    "correo": "agenda-vacia-movil@nexoai.test",
+    "rol": "colaborador",
+    "plan": "empresarial"
+  },
+  "captura": {
+    "correo": "captura-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "capturaEspera": {
+    "correo": "captura-espera-movil@nexoai.test",
+    "rol": "colaborador",
+    "plan": "empresarial"
+  },
+  "asistente": {
+    "correo": "semana-mes-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "asistenteEspera": {
+    "correo": "en-espera-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "semanaLlena": {
+    "correo": "semana-llena-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "actividad": {
+    "correo": "actividad-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "actividadVacia": {
+    "correo": "actividad-vacia-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "actividadSinCalendario": {
+    "correo": "actividad-sin-calendario-movil@nexoai.test",
+    "rol": "colaborador",
+    "plan": "empresarial"
+  },
+  "tareas": {
+    "correo": "movil-tareas-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "tareasVacio": {
+    "correo": "movil-tareas-vacio-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "tareasBitacora": {
+    "correo": "movil-tareas-bitacora-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal"
+  },
+  "restablecer": {
+    "correo": "restablecer-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "organizacion": "personal",
+    "lista": true
+  },
+  "contrasena": {
+    "correo": "contrasena-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "organizacion": "personal",
+    "lista": true
+  },
+  "reunionesAdmin": {
+    "correo": "admin@reuniones-movil.test",
+    "rol": "gerente",
+    "plan": "empresarial",
+    "administrador": true,
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesLider": {
+    "correo": "lider@reuniones-movil.test",
+    "rol": "gerente",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesAna": {
+    "correo": "ana@reuniones-movil.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesBeto": {
+    "correo": "beto@reuniones-movil.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesCarla": {
+    "correo": "carla@reuniones-movil.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesDiego": {
+    "correo": "diego@reuniones-movil.test",
+    "rol": "colaborador",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
+  "reunionesPablo": {
+    "correo": "pablo@reuniones-movil.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  }
+}

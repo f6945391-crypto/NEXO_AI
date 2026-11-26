@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["apps/api/dist/main.js"],
+      "port": 3000
+    },
+    {
+      "name": "trabajador",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["apps/api/dist/trabajador.js"],
+      "port": 3990
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "npx.cmd",
+      "runtimeArgs": ["--yes", "pnpm@12.10.1", "--filter", "@nexoai/web", "dev"],
+      "port": 3001
+    }
+  ]
+}

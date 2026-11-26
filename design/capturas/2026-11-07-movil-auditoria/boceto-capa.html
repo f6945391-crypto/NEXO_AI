@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390, initial-scale=1">
+<title>Boceto · Capa de captura con la tarjeta plegada · 7 de noviembre de 2026</title>
+<!--
+  Cuadro de referencia de design/ARQUITECTURA-VISUAL-MOVIL.md §8 (revisión del 7 de noviembre de 2026).
+  Solo cajas y texto, 390 × 844. Los colores y tamaños son los de apps/movil/src/tokens.ts; los dos valores
+  marcados «propuesto» no existen todavía como token y los decide el equipo (hallazgos MC-10 y MC-14).
+  El guion del final solo anota en el documento la altura medida de la tarjeta; no cambia nada de lo que se ve.
+-->
+<style>
+  :root {
+    --marca-base: #2166B0; --marca-fuerte: #17497E; --marca-suave: #E8F1FA;
+    --superficie-base: #FFFFFF; --superficie-elevada: #F7FAFC; --superficie-hundida: #EDF2F6;
+    --texto-fuerte: #14212E; --texto-suave: #5A6E7A; --texto-inverso: #FFFFFF;
+    --borde-base: #DCE6EC; --borde-fuerte: #B8C9D4;
+    --agente-base: #6B4FD8; --agente-suave: #F0ECFD;
+    --estado-error: #B3261E; --estado-exito: #1B7F4B; --estado-advertencia: #9A6400;
+    --esp-4: 4px; --esp-8: 8px; --esp-12: 12px; --esp-16: 16px; --esp-20: 20px; --esp-24: 24px; --esp-32: 32px;
+    --tam-titulo: 28px; --tam-subtitulo: 22px; --tam-cuerpo: 16px; --tam-etiqueta: 14px; --tam-micro: 12px;
+    /* propuesto (MC-14): opacidad del velo, como token */
+    --propuesto-velo: rgba(20, 33, 46, 0.48);
+    /* propuesto (MC-10): contorno de campo con 3:1 frente al blanco */
+    --propuesto-contorno-campo: #8397A3;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 390px; height: 844px; overflow: hidden; }
+  body { position: relative; font-family: system-ui, sans-serif; color: var(--texto-fuerte); background: var(--superficie-base); }
+
+  /* El antecedente: la sección sigue detrás */
+  .seccion { position: absolute; inset: 0; padding: var(--esp-24) var(--esp-16); }
+  .seccion h1 { font-size: var(--tam-titulo); }
+  .velo { position: absolute; inset: 0; background: var(--propuesto-velo); }
+
+  /* La capa completa: deja 12 px del antecedente arriba */
+  .capa { position: absolute; top: 12px; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column;
+          background: var(--superficie-base); border-radius: 16px 16px 0 0; }
+
+  .cabecera { display: flex; align-items: center; gap: var(--esp-8); padding: var(--esp-8) var(--esp-16);
+              border-bottom: 1px solid var(--borde-base); }
+  .cabecera .textos { flex: 1; min-width: 0; }
+  .cabecera h2 { font-size: var(--tam-subtitulo); font-weight: 700; line-height: 28px; }
+  .cabecera .apoyo { font-size: var(--tam-etiqueta); line-height: 20px; color: var(--texto-suave);
+                     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .texto-boton { min-height: 44px; min-width: 44px; display: flex; align-items: center; justify-content: center;
+                 font-size: var(--tam-etiqueta); font-weight: 600; color: var(--marca-base); background: none; border: 0; }
+
+  .lista { flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start;
+           gap: var(--esp-8); padding: var(--esp-8) var(--esp-16); }
+  .anteriores { align-self: center; min-height: 44px; padding: 0 var(--esp-16); border: 1px solid var(--borde-fuerte);
+                border-radius: 12px; background: var(--superficie-base); font-size: var(--tam-etiqueta); font-weight: 600;
+                color: var(--marca-base); }
+  .separador { margin-top: auto; display: flex; align-items: center; gap: var(--esp-8); font-size: var(--tam-micro); color: var(--texto-suave); }
+  .separador::before, .separador::after { content: ""; flex: 1; height: 1px; background: var(--borde-base); }
+  .pedido { align-self: flex-end; max-width: 85%; padding: var(--esp-12); border-radius: 12px; background: var(--marca-base);
+            color: var(--texto-inverso); font-size: var(--tam-cuerpo); line-height: 22px; }
+
+  /* La tarjeta plegada: lo que pide decisión, borde/fuerte (§3, borde graduado) */
+  .tarjeta { display: flex; flex-direction: column; gap: var(--esp-8); padding: var(--esp-16); border: 1px solid var(--borde-fuerte);
+             border-radius: 12px; background: var(--superficie-base); }
+  .accion { font-size: var(--tam-cuerpo); font-weight: 700; line-height: 22px; }
+  .que { display: flex; align-items: center; justify-content: space-between; min-height: 44px; margin: -11px 0; }
+  .que strong { font-size: var(--tam-cuerpo); font-weight: 600; }
+  .cuando { font-size: var(--tam-cuerpo); line-height: 22px; }
+  .supuesto { font-size: var(--tam-etiqueta); line-height: 20px; color: var(--texto-suave); }
+  .cruce { font-size: var(--tam-etiqueta); line-height: 20px; color: var(--estado-advertencia);
+           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .boton { min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 8px;
+           font-size: var(--tam-cuerpo); font-weight: 600; }
+  .secundario { background: var(--superficie-base); border: 1px solid var(--borde-fuerte); color: var(--texto-fuerte); }
+
+  /* La barra de una fila: el envío dentro del contorno */
+  .barra { padding: var(--esp-8) var(--esp-16) var(--esp-16); }
+  .contorno { display: flex; align-items: flex-end; gap: var(--esp-8); min-height: 52px; padding: var(--esp-4) var(--esp-4) var(--esp-4) var(--esp-16);
+              border: 1px solid var(--propuesto-contorno-campo); border-radius: 12px; }
+  .campo { flex: 1; align-self: center; font-size: var(--tam-cuerpo); line-height: 22px; color: var(--texto-suave); }
+  .enviar { width: 44px; height: 44px; border-radius: 22px; border: 0; background: var(--marca-base); color: var(--texto-inverso);
+            font-size: var(--tam-subtitulo); font-weight: 700; opacity: 0.4; }
+</style>
+</head>
+<body>
+  <div class="seccion" aria-hidden="true"><h1>Agenda</h1></div>
+  <div class="velo" aria-hidden="true"></div>
+
+  <section class="capa" aria-label="Asistente">
+    <header class="cabecera">
+      <div class="textos">
+        <h2>Asistente</h2>
+        <p class="apoyo">Agéndame una reunión mañana a las 10</p>
+      </div>
+      <button class="texto-boton">Cerrar</button>
+    </header>
+
+    <div class="lista">
+      <button class="anteriores">Ver anteriores</button>
+      <div class="separador" role="separator">Viernes 6, 22:22 · Tarea guardada</div>
+      <div class="pedido">Agéndame una reunión mañana a las 10</div>
+
+      <article class="tarjeta" id="tarjeta" aria-label="Para confirmar">
+        <p class="accion">Registrar este compromiso en tu calendario de Google</p>
+        <div class="que"><strong>Reunión</strong><button class="texto-boton" aria-expanded="false">Ver detalles</button></div>
+        <p class="cuando">sábado, 7 de noviembre de 2026 · 10:00 – 11:00 · Hora de Lima (GMT-5)</p>
+        <p class="supuesto">1 hora, porque no indicaste la hora de fin</p>
+        <p class="cruce">Se cruza con «Llamada con proveedores»</p>
+        <button class="boton secundario">lunes, 9 de noviembre, 12:00 – 13:00</button>
+        <button class="boton secundario">Descartar</button>
+      </article>
+    </div>
+
+    <div class="barra">
+      <div class="contorno">
+        <span class="campo">Pídele algo al asistente</span>
+        <button class="enviar" aria-label="Enviar" disabled>↑</button>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Solo para medir al renderizar: el alto de la tarjeta frente al 40 % del alto de la pantalla.
+    const t = document.getElementById('tarjeta').getBoundingClientRect();
+    document.body.dataset.altoTarjeta = Math.round(t.height);
+    document.body.dataset.porcentaje = Math.round((100 * t.height) / 844);
+    document.body.dataset.barra = Math.round(document.querySelector('.barra').getBoundingClientRect().height);
+  </script>
+</body>
+</html>

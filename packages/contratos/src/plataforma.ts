@@ -1,0 +1,62 @@
+import { z } from 'zod';
+
+// GET /salud — T-001
+export const SaludRespuesta = z.strictObject({
+  estado: z.literal('ok'),
+});
+
+export type SaludRespuesta = z.infer<typeof SaludRespuesta>;
+
+// Todo error de la API tiene esta forma. `codigo` es estable y lo usan los clientes; `mensaje` es para personas.
+export const CodigoError = z.enum([
+  'SOLICITUD_INVALIDA',
+  'NO_AUTENTICADO',
+  'CREDENCIALES_INVALIDAS',
+  'SESION_INVALIDA',
+  'ROL_NO_PERMITIDO',
+  'DEMASIADOS_INTENTOS',
+  'PRIMER_INGRESO_PENDIENTE',
+  'PRIMER_INGRESO_YA_COMPLETADO',
+  'CONTRASENA_NO_VALIDA',
+  // T-123 · REQ-ACC-19: el enlace para restablecer no existe, venció o ya se usó
+  'ENLACE_NO_VALIDO',
+  'OPERACION_DESCONOCIDA',
+  'OPERACION_NO_ENCONTRADA',
+  'OPERACION_NO_CONFIRMABLE',
+  'OPERACION_EN_CURSO',
+  'PERMISO_GOOGLE_FALTANTE',
+  'PERMISO_GOOGLE_RETIRADO',
+  'GOOGLE_NO_DISPONIBLE',
+  'EVENTO_NO_ENCONTRADO',
+  'EVENTO_NO_MODIFICABLE',
+  'DATOS_FALTANTES',
+  'ORIGEN_NO_PERMITIDO',
+  // specs/08-administracion/plan.md §4.2, §6 y §7.3 · T-059
+  'ADMINISTRACION_NO_PERMITIDA',
+  'SIN_ORGANIZACION',
+  'CUENTA_SUSPENDIDA',
+  'CUENTA_CERRADA',
+  'AMBITO_INCORRECTO',
+  // 09-tareas-personales · T-048
+  'TAREA_NO_ENCONTRADA',
+  'TAREA_NO_MODIFICABLE',
+  // T-132 · 10-reuniones
+  'REUNION_NO_ENCONTRADA',
+  'REUNION_NO_PENDIENTE',
+  'REUNION_NO_AGENDADA',
+  'REUNION_CANCELADA',
+  'SOLO_CONVOCANTE',
+  'ES_REUNION',
+  // 05-equipos · T-120 · REQ-CUN05-18
+  'SIN_PLAN_EMPRESARIAL',
+  'SIN_EQUIPO',
+]);
+export type CodigoError = z.infer<typeof CodigoError>;
+
+export const ErrorApi = z.strictObject({
+  codigo: CodigoError,
+  mensaje: z.string(),
+  // Solo con DATOS_FALTANTES: qué campos de la carga faltan (REQ-CUN01-07)
+  campos: z.array(z.string()).optional(),
+});
+export type ErrorApi = z.infer<typeof ErrorApi>;

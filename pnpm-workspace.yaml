@@ -1,0 +1,35 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Dependencias autorizadas a ejecutar scripts de instalación.
+allowBuilds:
+  '@swc/core': true
+  '@prisma/engines': true
+  prisma: true
+  # T-014: aceleración nativa opcional de msgpackr (BullMQ); sin ella usa JavaScript puro
+  msgpackr-extract: false
+
+# Excepciones de auditoría (22 de octubre de 2026, T-020). Solo vulnerabilidades sin versión corregida
+# publicada, en herramientas de desarrollo que no entran en ninguna aplicación. Revisar en cada SDK de Expo.
+#   GHSA-86w9-cpqp-85rv  node-forge <=1.4.0  · vía la CLI de Expo (firma de código)
+#   GHSA-vfj7-8cjw-p6xm  braces <=3.0.3      · vía Metro, el empaquetador de React Native
+#   GHSA-mrhx-c7xc-m3w5  zod 3.25.76         · vía la CLI de Expo (24 de octubre de 2026). La corrección solo
+#                        existe en la línea 4 (4.6.6, que ya usamos en contratos y API); la CLI usa la 3 y
+#                        forzarla rompería la herramienta. Solo valida datos propios, no de terceros
+auditConfig:
+  ignoreGhsas:
+    - GHSA-86w9-cpqp-85rv
+    - GHSA-vfj7-8cjw-p6xm
+    - GHSA-mrhx-c7xc-m3w5
+
+# Correcciones de seguridad en dependencias que no declaramos directamente (24 de octubre de 2026).
+# Entran en cuanto existen (AGENTS.md). Quitar cuando NestJS y Expo traigan ya estas versiones.
+#   GHSA-27r3-jxmh-p828  body-parser <2.4.0  · vía Express, en @nestjs/platform-express
+#   GHSA-q7qp-rjg7-q26m  multer <2.5.0       · @nestjs/platform-express fija la 2.4.0
+overrides:
+  body-parser@>=2.0.0 <2.4.0: 2.4.0
+  multer@>=2.0.0 <2.5.0: 2.5.0
+  node-forge@<=1.4.0: 1.4.1
+  # GHSA-7589-6fvf-x4pw: ReDoS en effect, via Prisma.
+  effect@<=3.22.0: 3.22.1

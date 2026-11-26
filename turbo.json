@@ -1,0 +1,65 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "agentGuidance": false,
+  "tasks": {
+    "generar": {
+      "inputs": [
+        "prisma/schema.prisma"
+      ],
+      "outputs": [
+        "src/generado/**"
+      ]
+    },
+    "build": {
+      "dependsOn": [
+        "^build",
+        "generar"
+      ],
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**"
+      ]
+    },
+    "typecheck": {
+      "dependsOn": [
+        "^build",
+        "generar"
+      ]
+    },
+    "test": {
+      "dependsOn": [
+        "^build",
+        "generar"
+      ],
+      "env": [
+        "DATABASE_URL_PRUEBA",
+        "JWT_SECRETO",
+        "TOKENS_CLAVE_CIFRADO",
+        "REDIS_URL"
+      ]
+    },
+    "@nexoai/web#test": {
+      "dependsOn": [
+        "^build",
+        "@nexoai/api#build"
+      ],
+      "env": [
+        "DATABASE_URL_PRUEBA",
+        "JWT_SECRETO",
+        "CI"
+      ]
+    },
+    "@nexoai/movil#test": {
+      "dependsOn": [
+        "^build",
+        "@nexoai/api#build"
+      ],
+      "env": [
+        "DATABASE_URL_PRUEBA",
+        "JWT_SECRETO",
+        "CI"
+      ]
+    }
+  }
+}

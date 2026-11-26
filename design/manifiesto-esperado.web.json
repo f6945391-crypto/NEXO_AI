@@ -1,0 +1,19 @@
+{
+  "casoDeUso": "CUN-07",
+  "plataforma": "Web",
+  "cuadros": [
+    { "nombre": "CUN-07 / Web / Principal / 01 Panel de delegación vacío",     "requisitos": ["REQ-CUN07-01"] },
+    { "nombre": "CUN-07 / Web / Principal / 02 Indicando actividad y colaborador", "requisitos": ["REQ-CUN07-01"] },
+    { "nombre": "CUN-07 / Web / Principal / 03 Propuesta preparada",           "requisitos": ["REQ-CUN07-02"] },
+    { "nombre": "CUN-07 / Web / Principal / 04 Confirmación pendiente",        "requisitos": ["REQ-CUN07-07"] },
+    { "nombre": "CUN-07 / Web / Principal / 05 Delegada y notificada",         "requisitos": ["REQ-CUN07-03"] },
+    { "nombre": "CUN-07 / Web / FA-01 / 01 Editando la propuesta",             "requisitos": ["REQ-CUN07-08"] },
+    { "nombre": "CUN-07 / Web / FA-02 / 01 Cancelada antes de confirmar",      "requisitos": ["REQ-CUN07-07"] },
+    { "nombre": "CUN-07 / Web / EX-01 / 01 Colaborador no válido",             "requisitos": ["REQ-CUN07-05"] },
+    { "nombre": "CUN-07 / Web / EX-02 / 01 Información insuficiente",          "requisitos": ["REQ-CUN07-06"] },
+    { "nombre": "CUN-07 / Web / EX-03 / 01 Delegación no autorizada",          "requisitos": ["REQ-CUN07-04"] },
+    { "nombre": "CUN-07 / Web / Transversal / Sin permiso de equipo",          "requisitos": ["REQ-CUN07-04"] },
+    { "nombre": "CUN-07 / Web / Transversal / Modo degradado",                 "requisitos": ["REQ-CUN07-09"] }
+  ],
+  "requisitosSinRepresentacionVisual": []
+}

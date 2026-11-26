@@ -1,0 +1,20 @@
+{
+  "name": "nexoai",
+  "private": true,
+  "description": "NexoAI — asistente personal inteligente. Desarrollo guiado por especificación: ver SPEC.md",
+  "packageManager": "pnpm@12.10.1",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "trazabilidad": "python tools/trazabilidad.py --check",
+    "verificar": "turbo run typecheck build test && python tools/trazabilidad.py --check"
+  },
+  "devDependencies": {
+    "turbo": "2.11.7",
+    "typescript": "7.0.2"
+  }
+}

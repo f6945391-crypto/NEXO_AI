@@ -1,0 +1,2257 @@
+/* Tokens de design/tokens.json (modo claro, el único cargado en Figma). */
+:root {
+  --marca-base: #2166b0;
+  --marca-fuerte: #17497e;
+  --marca-suave: #e8f1fa;
+  --superficie-base: #ffffff;
+  --superficie-elevada: #f7fafc;
+  --superficie-hundida: #edf2f6;
+  --texto-fuerte: #14212e;
+  --texto-suave: #5a6e7a;
+  --texto-inverso: #ffffff;
+  --borde-base: #dce6ec;
+  --borde-fuerte: #b8c9d4;
+  --estado-error: #b3261e;
+  --estado-error-suave: #fbeae9;
+  /* Lo que se está recargando se atenúa; no es un color de design/tokens.json, es una opacidad */
+  --estado-cargando-opacidad: 0.6;
+
+  --espaciado-8: 8px;
+  --espaciado-12: 12px;
+  --espaciado-16: 16px;
+  --espaciado-24: 24px;
+  --espaciado-32: 32px;
+  --espaciado-40: 40px;
+
+  --radio-sm: 8px;
+  --radio-md: 12px;
+  --radio-lg: 16px;
+
+  --tam-titulo: 28px;
+  --tam-cuerpo: 16px;
+  --tam-etiqueta: 14px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: var(--tam-cuerpo);
+  color: var(--texto-fuerte);
+  background: var(--superficie-hundida);
+}
+
+/* Acceso: sin navegación, una tarjeta centrada (WEB-v2 / Acceso). */
+.acceso {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--espaciado-24);
+}
+
+.tarjeta {
+  width: 100%;
+  max-width: 440px;
+  background: var(--superficie-base);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-lg);
+  padding: var(--espaciado-40);
+  display: grid;
+  gap: var(--espaciado-24);
+}
+
+.marca {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  color: var(--marca-base);
+  letter-spacing: 0.02em;
+}
+
+.tarjeta h1 {
+  margin: 0;
+  font-size: var(--tam-titulo);
+  line-height: 1.2;
+}
+
+.explicacion {
+  margin: 0;
+  color: var(--texto-suave);
+  line-height: 1.5;
+}
+
+.formulario {
+  display: grid;
+  gap: var(--espaciado-16);
+}
+
+.campo {
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.campo label {
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+}
+
+.campo input,
+.campo select {
+  font: inherit;
+  padding: var(--espaciado-12);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  color: var(--texto-fuerte);
+  min-height: 44px;
+}
+
+.campo input:focus-visible,
+.campo select:focus-visible,
+.boton:focus-visible,
+.boton-texto:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+.ayuda {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.boton {
+  font: inherit;
+  font-weight: 600;
+  min-height: 44px;
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border: none;
+  border-radius: var(--radio-sm);
+  background: var(--marca-base);
+  color: var(--texto-inverso);
+  cursor: pointer;
+}
+
+.boton:disabled {
+  background: var(--borde-fuerte);
+  cursor: progress;
+}
+
+.boton-texto {
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--marca-base);
+  text-decoration: underline;
+  cursor: pointer;
+  justify-self: start;
+}
+
+.error {
+  margin: 0;
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border-radius: var(--radio-sm);
+  background: var(--estado-error-suave);
+  color: var(--estado-error);
+  font-size: var(--tam-etiqueta);
+}
+
+/* T-123 · REQ-ACC-19: lo que se dice tras pedir el enlace o cambiar la contraseña, y un enlace con forma de botón */
+.confirmacion-acceso {
+  margin: 0;
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border-radius: var(--radio-sm);
+  background: var(--estado-exito-suave);
+  color: var(--estado-exito);
+  line-height: 1.5;
+}
+
+a.boton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+/* ===== Aplicación: navegación 72 · conversación 528 · lienzo 840 (T-023) ===== */
+:root {
+  --agente-base: #6b4fd8;
+  --agente-suave: #f0ecfd;
+  --estado-advertencia: #9a6400;
+  --estado-advertencia-suave: #fdf3e0;
+  --tam-subtitulo: 22px;
+  --tam-micro: 12px;
+}
+
+.solo-lector {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.aplicacion {
+  display: grid;
+  /* 72 · 528 · 840 a 1440 px de ancho; en pantallas menores se estrechan conversación y lienzo. */
+  grid-template-columns: 72px minmax(300px, 528px) minmax(340px, 1fr);
+  height: 100vh;
+  background: var(--superficie-base);
+}
+
+.aplicacion--expandida {
+  grid-template-columns: 72px minmax(0, 1fr);
+}
+
+/* Navegación: solo iconos; Ajustes al pie, separado */
+.navegacion {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--espaciado-16) 0;
+  border-right: 1px solid var(--borde-base);
+  background: var(--superficie-elevada);
+}
+
+.navegacion__secciones {
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.navegacion__boton {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--radio-md);
+  background: none;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.navegacion__boton:hover {
+  background: var(--superficie-hundida);
+}
+
+.navegacion__boton[aria-current='page'] {
+  background: var(--marca-suave);
+  color: var(--marca-base);
+}
+
+.navegacion__pie {
+  display: grid;
+  gap: var(--espaciado-8);
+  border-top: 1px solid var(--borde-base);
+  padding-top: var(--espaciado-8);
+}
+
+.navegacion__boton:focus-visible,
+.ejemplo:focus-visible,
+.selector button:focus-visible,
+.lienzo__expandir:focus-visible,
+.barra-entrada textarea:focus-visible,
+.barra-entrada__enviar:focus-visible,
+.capa__cerrar:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+/* Conversación: área de trabajo, desechable */
+.conversacion {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--borde-base);
+}
+
+.conversacion__contenido {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--espaciado-32) var(--espaciado-24);
+}
+
+.blanco-inicial {
+  display: grid;
+  gap: var(--espaciado-16);
+  margin-top: 15vh;
+}
+
+.blanco-inicial h2 {
+  margin: 0;
+  font-size: var(--tam-subtitulo);
+}
+
+.blanco-inicial p {
+  margin: 0;
+  color: var(--texto-suave);
+  line-height: 1.5;
+}
+
+.ejemplos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.ejemplo {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-md);
+  background: var(--agente-suave);
+  color: var(--texto-fuerte);
+  cursor: pointer;
+}
+
+.ejemplo:hover {
+  border-color: var(--agente-base);
+}
+
+.aviso-espera {
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border-radius: var(--radio-md);
+  background: var(--estado-advertencia-suave);
+  color: var(--estado-advertencia);
+  font-size: var(--tam-etiqueta);
+  line-height: 1.5;
+  margin-bottom: var(--espaciado-24);
+}
+
+/* T-039 · REQ-AGT-03: línea entre lo que se pidió antes y lo nuevo; texto pequeño, centrado y secundario */
+.separador {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-12);
+  color: var(--texto-suave);
+  font-size: 12px;
+}
+
+.separador::before,
+.separador::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--borde-base);
+}
+
+/* Pulido: se queda visible al inicio de la zona de mensajes aunque se haya desplazado (pegajoso) */
+.ver-anteriores {
+  position: sticky;
+  top: calc(-1 * var(--espaciado-24));
+  z-index: 1;
+  display: block;
+  margin: 0 auto var(--espaciado-16);
+  padding: var(--espaciado-8) var(--espaciado-16);
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-md);
+  background: var(--superficie-base);
+  color: var(--marca-base);
+  cursor: pointer;
+}
+
+.ver-anteriores:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+.ver-anteriores:disabled {
+  color: var(--texto-suave);
+  cursor: default;
+}
+
+.mensajes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-16);
+}
+
+.mensaje {
+  justify-self: end;
+  max-width: 85%;
+  display: grid;
+  gap: var(--espaciado-4, 4px);
+}
+
+.mensaje__texto {
+  margin: 0;
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border-radius: var(--radio-md) var(--radio-md) var(--radio-sm) var(--radio-md);
+  background: var(--marca-base);
+  color: var(--texto-inverso);
+  line-height: 1.4;
+}
+
+.mensaje__estado {
+  margin: 0;
+  justify-self: end;
+  font-size: var(--tam-micro);
+  color: var(--texto-suave);
+}
+
+.barra-entrada {
+  display: flex;
+  gap: var(--espaciado-8);
+  align-items: flex-end;
+  padding: var(--espaciado-16) var(--espaciado-24);
+  border-top: 1px solid var(--borde-base);
+}
+
+.barra-entrada textarea {
+  flex: 1;
+  resize: none;
+  font: inherit;
+  padding: var(--espaciado-12);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-md);
+  color: var(--texto-fuerte);
+}
+
+.barra-entrada__enviar {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--radio-md);
+  background: var(--marca-base);
+  color: var(--texto-inverso);
+  cursor: pointer;
+}
+
+.barra-entrada__enviar:disabled {
+  background: var(--borde-base);
+  color: var(--texto-suave);
+  cursor: default;
+}
+
+/* T-034: lo que responde el asistente. Cada tipo se ve distinto (REQ-CAP-23) */
+.turno {
+  justify-self: start;
+  max-width: 92%;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.turno__texto {
+  margin: 0;
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border-radius: var(--radio-md) var(--radio-md) var(--radio-md) var(--radio-sm);
+  background: var(--agente-suave);
+  color: var(--texto-fuerte);
+  line-height: 1.4;
+}
+
+.turno__resultado {
+  margin: 0;
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border-radius: var(--radio-md);
+  background: var(--estado-exito-suave);
+  color: var(--estado-exito);
+  line-height: 1.4;
+}
+
+.turno__fallo {
+  margin: 0;
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border-radius: var(--radio-md);
+  background: var(--estado-error-suave);
+  color: var(--estado-error);
+  line-height: 1.4;
+}
+
+.turno .aviso-espera {
+  margin-bottom: 0;
+}
+
+.pensando {
+  margin: var(--espaciado-16) 0 0;
+  color: var(--texto-suave);
+  font-size: var(--tam-etiqueta);
+}
+
+.tarjeta {
+  display: grid;
+  gap: var(--espaciado-12);
+  padding: var(--espaciado-16);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-md);
+  background: var(--superficie-base);
+}
+
+.tarjeta__accion {
+  margin: 0;
+  font-size: var(--tam-cuerpo);
+}
+
+.tarjeta__datos {
+  margin: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.tarjeta__datos div {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: var(--espaciado-8);
+}
+
+.tarjeta__datos dt {
+  color: var(--texto-suave);
+  font-size: var(--tam-etiqueta);
+}
+
+.tarjeta__datos dd {
+  margin: 0;
+}
+
+.tarjeta__irreversible,
+.tarjeta__motivo {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--estado-advertencia);
+}
+
+.tarjeta__motivo--choque {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tarjeta__alternativas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.tarjeta__acciones {
+  display: flex;
+  gap: var(--espaciado-8);
+}
+
+/* Paridad con H-CAP-01 del móvil: una tarjeta que ya no espera dice cómo terminó */
+.tarjeta--decidida {
+  border-color: var(--borde-base);
+}
+
+.tarjeta__decidido {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.turno-agenda {
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border-radius: var(--radio-md);
+  background: var(--superficie-elevada);
+  border: 1px solid var(--borde-base);
+}
+
+.turno-agenda__rango {
+  margin: 0 0 var(--espaciado-8);
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.turno-agenda__lista {
+  margin: 0;
+  padding-left: var(--espaciado-16);
+  display: grid;
+  gap: var(--espaciado-4, 4px);
+}
+
+.turno-agenda__horario {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.turno-agenda__dia {
+  color: var(--texto-suave);
+  font-size: var(--tam-etiqueta);
+}
+
+/* Lienzo: contexto y memoria */
+.lienzo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--espaciado-32) var(--espaciado-40);
+  overflow-y: auto;
+}
+
+.lienzo__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.lienzo__cabecera h1 {
+  margin: 0;
+  font-size: var(--tam-titulo);
+}
+
+.lienzo__pregunta {
+  margin: var(--espaciado-4, 4px) 0 0;
+  color: var(--texto-suave);
+}
+
+.lienzo__expandir {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.selector {
+  display: inline-flex;
+  gap: var(--espaciado-4, 4px);
+  margin: var(--espaciado-24) 0;
+  padding: var(--espaciado-4, 4px);
+  border-radius: var(--radio-md);
+  background: var(--superficie-hundida);
+  align-self: flex-start;
+}
+
+.selector button {
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  padding: var(--espaciado-8) var(--espaciado-16);
+  border: none;
+  border-radius: var(--radio-sm);
+  background: none;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.selector button[aria-selected='true'] {
+  background: var(--superficie-base);
+  color: var(--texto-fuerte);
+  font-weight: 600;
+}
+
+.lienzo__cuerpo {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--borde-base);
+  border-radius: var(--radio-lg);
+  background: var(--superficie-elevada);
+}
+
+/* Agenda del día (T-025): una lista que ocupa el lienzo */
+.lienzo__cuerpo--lista {
+  display: block;
+  /* Chrome también alinea los bloques con place-items: sin esto, la lista quedaría centrada y encogida */
+  place-items: normal;
+  border-style: solid;
+  background: var(--superficie-base);
+  padding: var(--espaciado-24);
+  overflow-y: auto;
+}
+
+.agenda-dia__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--espaciado-16);
+  margin-bottom: var(--espaciado-16);
+}
+
+.agenda-dia__cabecera h2 {
+  margin: 0;
+  font-size: var(--tam-cuerpo);
+}
+
+.agenda-dia__cabecera h2::first-letter {
+  text-transform: uppercase;
+}
+
+.agenda-dia__zona,
+.compromiso__zona {
+  margin: var(--espaciado-8) 0 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.agenda-dia__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.compromiso {
+  display: grid;
+  grid-template-columns: minmax(96px, 128px) 1fr;
+  gap: var(--espaciado-16);
+  padding: var(--espaciado-12) 0;
+  border-top: 1px solid var(--borde-base);
+}
+
+.compromiso p {
+  margin: 0;
+}
+
+.compromiso__horario {
+  font-variant-numeric: tabular-nums;
+  color: var(--texto-suave);
+}
+
+.compromiso__titulo {
+  font-weight: 600;
+}
+
+.compromiso--cancelado .compromiso__titulo {
+  text-decoration: line-through;
+  color: var(--texto-suave);
+}
+
+.vacio {
+  max-width: 420px;
+  text-align: center;
+  padding: var(--espaciado-24);
+}
+
+.vacio h2 {
+  margin: 0 0 var(--espaciado-8);
+  font-size: var(--tam-cuerpo);
+}
+
+.vacio p {
+  margin: 0;
+  color: var(--texto-suave);
+  line-height: 1.5;
+}
+
+/* Ajustes: encima, sin barra, se cierra con una equis (R-43) */
+.capa {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(20 33 46 / 0.16);
+}
+
+.capa__panel {
+  width: min(440px, calc(100vw - 32px));
+  display: grid;
+  gap: var(--espaciado-16);
+  padding: var(--espaciado-32);
+  border-radius: var(--radio-lg);
+  background: var(--superficie-base);
+  border: 1px solid var(--borde-base);
+}
+
+.capa__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.capa__cabecera h2 {
+  margin: 0;
+  font-size: var(--tam-subtitulo);
+}
+
+.capa__cerrar {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--radio-sm);
+  background: none;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+/* Perfil en Ajustes (T-006): solo lectura */
+.perfil {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--espaciado-8) var(--espaciado-16);
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+}
+
+.perfil dt {
+  color: var(--texto-suave);
+}
+
+.perfil dd {
+  margin: 0;
+  color: var(--texto-fuerte);
+  overflow-wrap: anywhere;
+}
+
+/* Permisos de Google en Ajustes y aviso de vuelta (T-022) */
+:root {
+  --estado-exito: #1b7f4b;
+  --estado-exito-suave: #e6f4ec;
+}
+
+.capa__panel {
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+
+.permisos {
+  display: grid;
+  gap: var(--espaciado-12);
+  padding-top: var(--espaciado-16);
+  border-top: 1px solid var(--borde-base);
+}
+
+.permisos h3 {
+  margin: 0;
+  font-size: var(--tam-cuerpo);
+}
+
+.permisos ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-12);
+}
+
+.permiso {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--espaciado-12);
+  align-items: start;
+  padding: var(--espaciado-12);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-md);
+}
+
+.permiso__nombre {
+  margin: 0;
+  font-weight: 600;
+  font-size: var(--tam-etiqueta);
+}
+
+.permiso__para {
+  margin: 4px 0 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+  line-height: 1.4;
+}
+
+.etiqueta {
+  display: inline-block;
+  margin-left: var(--espaciado-8);
+  padding: 2px var(--espaciado-8);
+  border-radius: 999px;
+  font-size: var(--tam-micro);
+  font-weight: 600;
+  background: var(--superficie-hundida);
+  color: var(--texto-suave);
+}
+
+.etiqueta--concedido {
+  background: var(--estado-exito-suave);
+  color: var(--estado-exito);
+}
+
+.etiqueta--revocado,
+.etiqueta--caducado {
+  background: var(--estado-advertencia-suave);
+  color: var(--estado-advertencia);
+}
+
+.boton--secundario {
+  background: var(--superficie-base);
+  color: var(--marca-base);
+  border: 1px solid var(--marca-base);
+  min-height: 36px;
+  padding: var(--espaciado-8) var(--espaciado-12);
+}
+
+.vacio .boton {
+  margin-top: var(--espaciado-16);
+}
+
+.vacio .vacio__volver {
+  margin-left: var(--espaciado-8);
+}
+
+.aviso {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--espaciado-12);
+  margin-bottom: var(--espaciado-24);
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border-radius: var(--radio-md);
+  font-size: var(--tam-etiqueta);
+}
+
+.aviso--exito {
+  background: var(--estado-exito-suave);
+  color: var(--estado-exito);
+}
+
+.aviso--advertencia {
+  background: var(--estado-advertencia-suave);
+  color: var(--estado-advertencia);
+}
+
+.aviso__cerrar {
+  display: grid;
+  place-items: center;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* Cambio de zona horaria en Ajustes (T-027) */
+.cambio-zona {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaciado-8);
+}
+
+.cambio-zona p {
+  margin: 0;
+}
+
+.cambio-zona__eleccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaciado-8);
+}
+
+.cambio-zona__eleccion select {
+  font: inherit;
+  min-height: 44px;
+  padding: 0 var(--espaciado-8);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  color: var(--texto-fuerte);
+}
+
+.cambio-zona__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaciado-8);
+}
+
+.cambio-zona__aviso {
+  color: var(--estado-exito);
+  font-size: var(--tam-etiqueta);
+}
+
+.tarjeta-confirmacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaciado-12);
+  padding: var(--espaciado-16);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-md);
+  background: var(--superficie-elevada);
+}
+
+.tarjeta-confirmacion h4 {
+  margin: 0;
+  font-size: var(--tam-cuerpo);
+}
+
+.tarjeta-confirmacion dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaciado-8);
+}
+
+.tarjeta-confirmacion__dato dt {
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.tarjeta-confirmacion__dato dd {
+  margin: 0;
+}
+
+/* T-044 · REQ-CUN01-14, REQ-CUN01-15: Semana y Mes en el lienzo */
+.lienzo__cuerpo[aria-busy='true'] {
+  opacity: var(--estado-cargando-opacidad);
+}
+
+.periodo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--espaciado-16);
+  margin-bottom: var(--espaciado-16);
+}
+
+.periodo h2 {
+  margin: 0;
+  font-size: var(--tam-cuerpo);
+}
+
+.periodo__pasos {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-8);
+}
+
+.periodo__paso {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.periodo__paso:focus-visible,
+.mes__dia:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+.semana__dias {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-12);
+}
+
+/* Cada día, con sus bloques; el de hoy lleva borde/fuerte */
+.semana__dia {
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-md);
+}
+
+.semana__dia--hoy {
+  border-color: var(--borde-fuerte);
+  background: var(--superficie-elevada);
+  /* Al abrir la semana con hoy más abajo, queda este aire por encima */
+  scroll-margin-top: var(--espaciado-16);
+}
+
+.semana__nombre {
+  margin: 0 0 var(--espaciado-8);
+  font-size: var(--tam-etiqueta);
+}
+
+.semana__vacio {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.semana__dia .compromiso {
+  padding: var(--espaciado-8) 0;
+}
+
+/* Rejilla del mes: semanas en filas, de lunes a domingo */
+.mes__rejilla {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: var(--espaciado-4, 4px);
+  table-layout: fixed;
+}
+
+.mes__rejilla th {
+  padding-bottom: var(--espaciado-8);
+  font-size: var(--tam-micro);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.mes__rejilla abbr {
+  text-decoration: none;
+}
+
+.mes__dia {
+  width: 100%;
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--espaciado-8);
+  padding: var(--espaciado-8);
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  color: var(--texto-fuerte);
+  cursor: pointer;
+}
+
+.mes__dia:hover {
+  background: var(--superficie-elevada);
+}
+
+.mes__dia--fuera {
+  background: var(--superficie-elevada);
+  color: var(--texto-suave);
+}
+
+.mes__dia--hoy {
+  border-color: var(--borde-fuerte);
+}
+
+.mes__dia--hoy .mes__numero {
+  font-weight: 600;
+}
+
+.mes__numero {
+  font-variant-numeric: tabular-nums;
+}
+
+.mes__puntos {
+  display: flex;
+  gap: var(--espaciado-4, 4px);
+  min-height: 8px;
+}
+
+.mes__punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--marca-base);
+}
+
+.mes__dia--fuera .mes__punto {
+  background: var(--borde-fuerte);
+}
+
+/* T-045 · REQ-CAP-25: franja «en espera» encima de la agenda de hoy. El tinte de advertencia, completo solo aquí */
+.en-espera {
+  margin-bottom: var(--espaciado-16);
+  border-radius: var(--radio-md);
+  background: var(--estado-advertencia-suave);
+  color: var(--estado-advertencia);
+}
+
+.en-espera__resumen {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-12);
+  padding: var(--espaciado-12) var(--espaciado-16);
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  border: none;
+  border-radius: var(--radio-md);
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.en-espera__resumen:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+.en-espera__marca {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--estado-advertencia);
+}
+
+.en-espera__cuantas {
+  flex: 1;
+  font-weight: 600;
+}
+
+.en-espera__accion {
+  text-decoration: underline;
+}
+
+.en-espera__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--espaciado-16) var(--espaciado-12);
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.en-espera__lista li {
+  padding: var(--espaciado-8) var(--espaciado-12);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+}
+
+.en-espera__lista p {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  line-height: 1.4;
+}
+
+.en-espera__pedido {
+  color: var(--texto-fuerte);
+}
+
+.en-espera__motivo {
+  color: var(--texto-suave);
+}
+
+/* T-052, T-053 · 09-tareas-personales: la sección Tareas y el grupo «Tareas para este día» de Hoy */
+.lienzo__cuerpo--lista > .vacio,
+.tareas__vacio .vacio {
+  margin: 0 auto;
+}
+
+.tareas__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tarea {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaciado-16);
+  padding: var(--espaciado-12) 0;
+  border-top: 1px solid var(--borde-base);
+}
+
+.tarea__cuerpo {
+  min-width: 0;
+}
+
+.tarea p {
+  margin: 0;
+}
+
+.tarea__texto {
+  font-weight: 600;
+}
+
+.tarea__detalle {
+  margin-top: 2px;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.tarea__detalle--vencida {
+  color: var(--estado-error);
+}
+
+.etiqueta--vencida {
+  background: var(--estado-error-suave);
+  color: var(--estado-error);
+}
+
+.tarea__acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-16);
+  flex-shrink: 0;
+}
+
+.tarea__acciones .boton {
+  min-height: 36px;
+  padding: var(--espaciado-8) var(--espaciado-16);
+}
+
+/* T-127 · REQ-CUN03-24, 26, 27: contexto, bitácora y el aviso al vencer, dentro de la misma tarea */
+.tarea:has(> .tarea__aviso) {
+  flex-wrap: wrap;
+}
+
+.tarea__aviso {
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  margin-bottom: 0;
+}
+
+.tarea .tarea__aviso-texto {
+  flex: 1 1 280px;
+  line-height: 1.5;
+}
+
+.tarea__aviso-acciones {
+  display: flex;
+  gap: var(--espaciado-8);
+  flex-shrink: 0;
+}
+
+.tarea__aviso-acciones .boton {
+  min-height: 36px;
+}
+
+.tarea__aviso .turno__fallo {
+  flex-basis: 100%;
+}
+
+.tarea__cuerpo {
+  flex: 1 1 0;
+}
+
+.tarea__contexto {
+  margin-top: 2px;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.tarea__bitacora {
+  margin-top: var(--espaciado-8);
+  padding-left: var(--espaciado-12);
+  border-left: 2px solid var(--borde-base);
+  font-size: var(--tam-etiqueta);
+}
+
+/* T-130 · REQ-CUN03-28 · H-TP-35: el resumen del asistente, con el tinte del asistente y su etiqueta, para que
+   no se lea como un avance */
+.resumen-bitacora {
+  margin: 0 0 var(--espaciado-8);
+  padding: var(--espaciado-8) var(--espaciado-12);
+  border-radius: var(--radio-sm);
+  background: var(--agente-suave);
+  font-size: var(--tam-etiqueta);
+  line-height: 1.4;
+}
+
+.resumen-bitacora p {
+  margin: 0;
+}
+
+.resumen-bitacora .resumen-bitacora__etiqueta {
+  font-size: var(--tam-micro);
+  font-weight: 600;
+  color: var(--agente-base);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.resumen-bitacora .resumen-bitacora__texto {
+  color: var(--texto-fuerte);
+}
+
+.resumen-bitacora__cuando {
+  color: var(--texto-suave);
+}
+
+.tarea .tarea__avance {
+  color: var(--texto-fuerte);
+  line-height: 1.4;
+}
+
+.tarea__avance-cuando,
+.bitacora__cuando {
+  color: var(--texto-suave);
+}
+
+.tarea__ver-bitacora {
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  padding: var(--espaciado-8) 0 0;
+  border: none;
+  background: none;
+  color: var(--marca-base);
+  cursor: pointer;
+}
+
+.tarea__ver-bitacora:focus-visible,
+.tareas__ver-hechas:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+.bitacora {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.bitacora__avance {
+  display: grid;
+  gap: 2px;
+  line-height: 1.4;
+}
+
+.tarea--hecha .tarea__texto {
+  color: var(--texto-suave);
+  text-decoration: line-through;
+}
+
+.tareas__hechas {
+  margin-top: var(--espaciado-24);
+}
+
+.tareas__ver-hechas {
+  font: inherit;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  padding: var(--espaciado-8) 0;
+  border: none;
+  background: none;
+  color: var(--marca-base);
+  cursor: pointer;
+}
+
+.tareas__deshacer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--espaciado-12);
+}
+
+.tareas-del-dia {
+  margin-top: var(--espaciado-32);
+}
+
+.tareas-del-dia__titulo {
+  margin: 0 0 var(--espaciado-8);
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* La lista de tareas y las candidatas en la conversación (T-050, T-051) */
+.turno-tareas__grupo {
+  margin: var(--espaciado-8) 0 0;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.turno-tareas__vencida {
+  color: var(--estado-error);
+}
+
+/* T-127 · REQ-CUN03-23: la bitácora de una tarea en la conversación */
+.turno-bitacora__tarea {
+  margin: 0 0 var(--espaciado-8);
+  font-size: var(--tam-cuerpo);
+  font-weight: 600;
+}
+
+.turno-bitacora__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.turno-bitacora__lista li {
+  display: grid;
+  gap: 2px;
+  line-height: 1.4;
+}
+
+.candidatas {
+  list-style: none;
+  margin: var(--espaciado-8) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.candidatas .boton {
+  width: 100%;
+  text-align: left;
+}
+
+.candidatas__detalle {
+  display: block;
+  font-weight: 400;
+  font-size: var(--tam-etiqueta);
+}
+
+/* CUN-05: rejilla de disponibilidad reutilizable */
+
+.rejilla-disponibilidad {
+  width: 100%;
+  min-width: 0;
+  margin-block: var(--espaciado-24);
+  color: var(--texto-fuerte);
+}
+
+.rejilla-encabezado {
+  margin-bottom: var(--espaciado-16);
+}
+
+.rejilla-encabezado h3 {
+  margin: 0 0 4px;
+}
+
+.rejilla-encabezado p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.rejilla-aviso-parcial {
+  padding: var(--espaciado-12);
+  margin-bottom: var(--espaciado-16);
+  border-radius: var(--radio-sm);
+  background: var(--estado-advertencia-suave);
+  color: var(--texto-fuerte);
+}
+
+.rejilla-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaciado-16);
+  margin-bottom: var(--espaciado-16);
+  font-size: 12px;
+}
+
+.rejilla-leyenda > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rejilla-muestra {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.rejilla-libre {
+  background: var(--superficie-base);
+}
+
+.rejilla-ocupado {
+  background: var(--borde-fuerte);
+}
+
+.rejilla-comun {
+  background: var(--estado-exito-suave);
+  border-color: var(--estado-exito);
+}
+
+.rejilla-sin-datos {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--superficie-hundida),
+    var(--superficie-hundida) 5px,
+    var(--borde-fuerte) 5px,
+    var(--borde-fuerte) 6px
+  );
+}
+
+.rejilla-desplazamiento {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: var(--espaciado-8);
+}
+
+.rejilla-tabla {
+  width: 100%;
+  min-width: 720px;
+}
+
+.rejilla-fila {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--espaciado-12);
+  margin-bottom: 6px;
+}
+
+.rejilla-participante {
+  min-width: 0;
+  padding: var(--espaciado-8);
+  font-size: 12px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.rejilla-eje {
+  position: relative;
+  height: 32px;
+}
+
+.rejilla-marca {
+  position: absolute;
+  top: 8px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+.rejilla-marca-inicial {
+  transform: none;
+}
+
+.rejilla-marca-final {
+  transform: translateX(-100%);
+}
+
+.rejilla-linea {
+  position: relative;
+  isolation: isolate;
+  min-height: 44px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rejilla-guia {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--borde-fuerte);
+  opacity: 0.45;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.rejilla-bloque {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 3px;
+  z-index: 3;
+}
+
+.rejilla-banda-comun {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--estado-exito-suave);
+  border-inline: 1px solid var(--estado-exito);
+  box-sizing: border-box;
+  z-index: 2;
+}
+
+.rejilla-motivo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--superficie-hundida);
+  color: var(--texto-suave);
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 4;
+}
+
+.rejilla-duraciones {
+  position: relative;
+  height: 28px;
+}
+
+.rejilla-duracion {
+  position: absolute;
+  top: 4px;
+  color: var(--estado-exito);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rejilla-fila-eje .rejilla-participante,
+.rejilla-fila-duraciones .rejilla-participante {
+  color: var(--texto-suave);
+}
+
+.disponibilidad-equipo {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--espaciado-24);
+}
+
+/* T-120 · REQ-CUN05-19: el responsable y cuántas personas tiene el equipo, bajo el selector */
+.disponibilidad-equipo__resumen {
+  margin: calc(-1 * var(--espaciado-8)) 0 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+/* T-134 · 10-reuniones: el corte «Reuniones» de Agenda (bocetos 01 y 02 de Franco). Lista con el estado por
+   color, detalle con el mapa de calor y la línea de invitados. El verde solo significa disponibilidad (D-REU-08) */
+.reuniones__corte {
+  display: grid;
+  gap: var(--espaciado-32);
+}
+
+.reuniones__titulo {
+  margin: 0 0 var(--espaciado-16);
+  font-size: var(--tam-cuerpo);
+}
+
+.reuniones__aviso {
+  margin: 0 0 var(--espaciado-16);
+}
+
+.reuniones__vacio {
+  margin: var(--espaciado-24) auto;
+}
+
+.reuniones__vacio .reuniones__ejemplo {
+  margin-top: var(--espaciado-16);
+  text-align: center;
+}
+
+.reuniones__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-12);
+}
+
+.reunion-ficha {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaciado-16);
+  padding: var(--espaciado-16) var(--espaciado-24);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-md);
+  background: var(--superficie-base);
+  font: inherit;
+  color: var(--texto-fuerte);
+  text-align: left;
+  cursor: pointer;
+}
+
+.reunion-ficha:hover {
+  border-color: var(--borde-fuerte);
+  background: var(--superficie-elevada);
+}
+
+.reunion-ficha:focus-visible,
+.mapa__celda:focus-visible,
+.invitados__resumen:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+.reunion-ficha__cuerpo {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.reunion-ficha__titulo {
+  font-weight: 600;
+}
+
+.reunion-ficha__detalle {
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.reunion-ficha .pildora {
+  margin-top: var(--espaciado-8);
+}
+
+.reunion-ficha__accion {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-12);
+  flex-shrink: 0;
+  color: var(--marca-base);
+  font-weight: 600;
+}
+
+.reunion-ficha__chevron {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.reunion-ficha--agendada .reunion-ficha__chevron,
+.reunion-ficha--vencida .reunion-ficha__chevron {
+  color: var(--texto-suave);
+}
+
+/* REQ-CUN06-07: ámbar, pendiente; verde, agendada; gris, vencida o cancelada */
+.pildora {
+  display: inline-block;
+  padding: 4px var(--espaciado-12);
+  border-radius: 999px;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  background: var(--superficie-hundida);
+  color: var(--texto-suave);
+}
+
+.pildora--pendiente {
+  background: var(--estado-advertencia-suave);
+  color: var(--estado-advertencia);
+}
+
+.pildora--agendada {
+  background: var(--estado-exito-suave);
+  color: var(--estado-exito);
+}
+
+/* Detalle */
+.reunion-detalle {
+  display: grid;
+  gap: var(--espaciado-16);
+}
+
+.reunion-detalle__cabecera {
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.reunion-detalle__volver {
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.reunion-detalle__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaciado-12);
+}
+
+.reunion-detalle__titulo h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.reunion-detalle__datos {
+  max-width: 480px;
+}
+
+.reunion-detalle__controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaciado-16);
+}
+
+.reunion-detalle__duracion {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-8);
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.reunion-detalle__duracion select {
+  font: inherit;
+  min-height: 36px;
+  padding: 0 var(--espaciado-8);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  color: var(--texto-fuerte);
+}
+
+.reunion-detalle__subtitulo {
+  margin: 0 0 var(--espaciado-8);
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.propuestas-horario {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaciado-8);
+}
+
+.propuesta-horario {
+  display: grid;
+  text-align: left;
+  gap: 2px;
+}
+
+.propuesta-horario[aria-pressed="true"] {
+  background: var(--marca-suave);
+  box-shadow: inset 0 0 0 1px var(--marca-base);
+}
+
+.propuesta-horario__libres {
+  font-weight: 400;
+  font-size: var(--tam-micro);
+  color: var(--texto-suave);
+}
+
+.reunion-detalle__privacidad {
+  margin: 0;
+  text-align: center;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.reunion-detalle__confirmar {
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.reunion-detalle__boton {
+  width: 100%;
+}
+
+.reunion-detalle__cancelar {
+  justify-self: start;
+}
+
+.reuniones__tarjeta {
+  max-width: 560px;
+}
+
+/* La línea de invitados (D-REU-20) y su lista con la marca obligatorio u opcional (D-REU-19) */
+.invitados {
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-md);
+  background: var(--superficie-base);
+}
+
+.invitados__resumen {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--espaciado-12);
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border: none;
+  border-radius: var(--radio-md);
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--texto-fuerte);
+  text-align: left;
+  cursor: pointer;
+}
+
+.invitados__abrir {
+  font-weight: 400;
+  font-size: var(--tam-etiqueta);
+  color: var(--marca-base);
+}
+
+.invitados__buscar {
+  margin: 0 var(--espaciado-16) var(--espaciado-8);
+  width: calc(100% - 2 * var(--espaciado-16));
+  font: inherit;
+  min-height: 36px;
+  padding: 0 var(--espaciado-12);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-sm);
+}
+
+.invitados__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--espaciado-16) var(--espaciado-8);
+}
+
+.invitado {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-12);
+  padding: var(--espaciado-8) 0;
+  border-top: 1px solid var(--borde-base);
+}
+
+/* D-REU-08: el punto es neutro, no un color por persona */
+.invitado__punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--borde-fuerte);
+  flex-shrink: 0;
+}
+
+.invitado__nombre {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+
+.invitado__correo {
+  font-size: var(--tam-micro);
+  color: var(--texto-suave);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invitado--sin-datos .invitado__nombre {
+  color: var(--texto-suave);
+}
+
+.invitado .etiqueta {
+  margin-left: 0;
+}
+
+/* `span`: `.marca` es también el nombre «NexoAI» de las pantallas de acceso y de la zona de empresa (un `p`), que
+   con esta regla salía recuadrado (T-123) */
+span.marca {
+  display: inline-flex;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.marca__opcion {
+  position: relative;
+  padding: 4px var(--espaciado-12);
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.marca__opcion + .marca__opcion {
+  border-left: 1px solid var(--borde-fuerte);
+}
+
+.marca__opcion input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.marca__opcion--activa {
+  background: var(--marca-suave);
+  color: var(--marca-fuerte);
+  font-weight: 600;
+}
+
+.marca__opcion:focus-within {
+  outline: 2px solid var(--marca-base);
+  outline-offset: -2px;
+}
+
+/* El mapa de calor (REQ-CUN06-08): columnas = días; filas = medias horas */
+.mapa {
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.mapa__leyenda {
+  display: flex;
+  align-items: center;
+  gap: var(--espaciado-12);
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.mapa__escala {
+  width: 160px;
+  height: 12px;
+  border: 1px solid var(--borde-base);
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--superficie-base), var(--estado-exito));
+}
+
+.mapa__rejilla {
+  display: grid;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-sm);
+}
+
+.mapa__fila {
+  display: contents;
+}
+
+.mapa__esquina,
+.mapa__dia {
+  background: var(--superficie-base);
+  border-bottom: 1px solid var(--borde-fuerte);
+}
+
+.mapa__dia {
+  display: grid;
+  justify-items: center;
+  padding: 4px 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.mapa__dia strong {
+  color: var(--texto-fuerte);
+}
+
+.mapa__hora {
+  padding-right: var(--espaciado-8);
+  font-size: var(--tam-micro);
+  text-align: right;
+  line-height: 20px;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.mapa__hora--media {
+  color: transparent;
+}
+
+.mapa__lugar {
+  position: relative;
+  display: block;
+}
+
+.mapa__celda {
+  display: block;
+  width: 100%;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-left: 1px solid var(--borde-base);
+  border-top: 1px dotted var(--borde-base);
+  background: var(--superficie-base);
+  font: inherit;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.mapa__celda--fuerte {
+  color: var(--texto-inverso);
+}
+
+.mapa__celda--vacia {
+  display: block;
+  height: 20px;
+  background: var(--superficie-hundida);
+  border-left: 1px solid var(--borde-base);
+}
+
+.mapa__celda--sugerida {
+  box-shadow: inset 0 0 0 2px var(--marca-base);
+}
+
+.mapa__celda--elegida {
+  box-shadow: inset 0 0 0 3px var(--marca-fuerte);
+  font-weight: 700;
+}
+
+.mapa__detalle {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 2px;
+  width: max-content;
+  max-width: 280px;
+  padding: var(--espaciado-8) var(--espaciado-12);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  box-shadow: 0 4px 16px rgb(20 33 46 / 0.16);
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-fuerte);
+  pointer-events: none;
+}
+
+.mapa__detalle-nota {
+  font-size: var(--tam-micro);
+  color: var(--texto-suave);
+}
+
+/* La autorización propia, al pie de la lista */
+.autorizaciones {
+  padding-top: var(--espaciado-24);
+  border-top: 1px solid var(--borde-base);
+}
+
+.autorizaciones h3 {
+  margin: 0 0 var(--espaciado-12);
+  font-size: var(--tam-cuerpo);
+}
+
+.autorizaciones__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-24);
+}
+
+.autorizaciones__equipo {
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.autorizaciones__nombre {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* El componente de CUN-05 trae su propio título; aquí basta con el del equipo */
+.autorizaciones .consentimiento-equipo {
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
+.autorizaciones .consentimiento-equipo h3 {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.autorizaciones .consentimiento-equipo p {
+  margin: 0;
+}
+
+.autorizaciones .consentimiento-equipo .cambio-zona__acciones {
+  margin-top: var(--espaciado-8);
+}
+
+/* El turno `reunion` en la conversación */
+.turno-reunion__todos {
+  margin-top: var(--espaciado-8);
+}

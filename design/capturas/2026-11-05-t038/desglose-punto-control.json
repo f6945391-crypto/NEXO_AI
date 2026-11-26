@@ -1,0 +1,21 @@
+{
+  "bytesCerrado": 7805,
+  "bytesDecodificados": 4958,
+  "bytesConPropuesta": 5588,
+  "puntos": 2,
+  "campos": {
+    "mensajes": 571,
+    "referencia": 68,
+    "pendiente": 38,
+    "llamadas": 201,
+    "faltante": 4,
+    "decision": 917,
+    "vueltas": 1,
+    "siguiente": 9,
+    "noDisponible": 5,
+    "enEspera": 4,
+    "cerrada": 5,
+    "__pregel_tasks": 2,
+    "branch:to:comunicar": 4
+  }
+}

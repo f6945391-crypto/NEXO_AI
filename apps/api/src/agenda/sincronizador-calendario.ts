@@ -1,0 +1,173 @@
+import { EventosPorId, type EventoPorId } from './eventos-por-id';
+import { Inject, Injectable } from '@nestjs/common';
+import { ClienteGoogle } from '../integraciones/cliente-google';
+import {
+  PROVEEDOR_CALENDARIO,
+  SincronizacionCaducada,
+  type CambioCalendario,
+  type EventoCalendario,
+  type ProveedorCalendario,
+  type Quien,
+} from '../integraciones/calendario/proveedor-calendario';
+import { PrismaService } from '../plataforma/prisma.service';
+
+// REQ-CUN01-09, REQ-CUN01-10 · T-014 · specs/02-agenda/plan.md §4. Copia el calendario principal de
+// Google en evento_agenda (AD-10). Lee completo la primera vez, y después solo lo que cambió.
+
+const DIA_MS = 24 * 3600_000;
+// Ventana de la lectura completa: 30 días atrás, 365 adelante
+export const VENTANA_ATRAS_DIAS = 30;
+export const VENTANA_ADELANTE_DIAS = 365;
+// H-AG-09: la lectura incremental solo trae lo que cambia, así que lo que ya existía más allá de la
+// ventana no entra en ella hasta que cambie. Se vuelve a leer completo cuando la ventana ha avanzado
+// 30 días, para que siempre cubra al menos 335 días por delante.
+export const RENOVAR_VENTANA_DIAS = 30;
+
+export type ResultadoSincronizacion =
+  | { tipo: 'completa' | 'incremental'; cambios: number }
+  // Sin permiso de calendario no se llama al proveedor (REQ-CUN01-08, REQ-ACC-09)
+  | { tipo: 'sin_permiso' };
+
+const esClaveRepetida = (error: unknown) => (error as { code?: string }).code === 'P2002';
+
+@Injectable()
+export class SincronizadorCalendario {
+  // Una sola sincronización a la vez por perfil dentro de un proceso: dos consultas seguidas comparten la misma.
+  private readonly enCurso = new Map<string, Promise<ResultadoSincronizacion>>();
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly google: ClienteGoogle,
+    @Inject(PROVEEDOR_CALENDARIO) private readonly proveedor: ProveedorCalendario,
+    private readonly porId: EventosPorId,
+  ) {}
+
+  sincronizar(quien: Quien, ahora = new Date()): Promise<ResultadoSincronizacion> {
+    const actual = this.enCurso.get(quien.perfilId);
+    if (actual) return actual;
+    const nueva = this.ejecutar(quien, ahora).finally(() => this.enCurso.delete(quien.perfilId));
+    this.enCurso.set(quien.perfilId, nueva);
+    return nueva;
+  }
+
+  // Cuándo se sincronizó por última vez; nulo si nunca.
+  // T-043: ¿se concedió el permiso de calendario después de ese instante? (volver de conectar Google)
+  async conectadoDespuesDe(quien: Quien, instante: Date): Promise<boolean> {
+    const fila = await this.datos(quien).consentimientoIntegracion.findFirst({
+      where: { perfilId: quien.perfilId, proveedor: 'google', alcance: 'calendario', estado: 'concedido', concedidoEn: { gt: instante } },
+      select: { id: true },
+    });
+    return fila !== null;
+  }
+
+  async ultimaSincronizacion(quien: Quien): Promise<Date | null> {
+    const fila = await this.datos(quien).sincronizacionCalendario.findUnique({ where: { perfilId: quien.perfilId } });
+    return fila?.ultimaSincronizacion ?? null;
+  }
+
+  private async ejecutar(quien: Quien, ahora: Date): Promise<ResultadoSincronizacion> {
+    if (!(await this.google.tienePermiso(quien, 'calendario'))) return { tipo: 'sin_permiso' };
+
+    const estado = await this.datos(quien).sincronizacionCalendario.findUnique({ where: { perfilId: quien.perfilId } });
+    const ventanaVigente = estado && estado.ventanaHasta.getTime() > ahora.getTime() + (VENTANA_ADELANTE_DIAS - RENOVAR_VENTANA_DIAS) * DIA_MS;
+    if (estado?.syncToken && ventanaVigente) {
+      try {
+        const r = await this.proveedor.listar(quien, { tipo: 'incremental', syncToken: estado.syncToken });
+        await this.aplicar(quien, r.cambios, ahora);
+        await this.completarPorId(quien, await this.porId.de(quien), new Set(r.cambios.map((c) => (c.tipo === 'evento' ? c.evento.id : c.id))), ahora);
+        await this.datos(quien).sincronizacionCalendario.update({
+          where: { perfilId: quien.perfilId },
+          data: { syncToken: r.syncToken, ultimaSincronizacion: ahora },
+        });
+        return { tipo: 'incremental', cambios: r.cambios.length };
+      } catch (error) {
+        // El 410 de Google: el token ya no vale y se vuelve a leer completo
+        if (!(error instanceof SincronizacionCaducada)) throw error;
+      }
+    }
+    return this.completa(quien, ahora);
+  }
+
+  private async completa(quien: Quien, ahora: Date): Promise<ResultadoSincronizacion> {
+    const desde = new Date(ahora.getTime() - VENTANA_ATRAS_DIAS * DIA_MS);
+    const hasta = new Date(ahora.getTime() + VENTANA_ADELANTE_DIAS * DIA_MS);
+    const r = await this.proveedor.listar(quien, { tipo: 'completa', desde, hasta });
+    await this.aplicar(quien, r.cambios, ahora);
+
+    // Lo que la réplica tenía en la ventana y Google ya no trae se borró allí: queda cancelado (R-25).
+    // Lo que se lee por su id (P-REU-10) tampoco sale en la lista, y no por eso se borró
+    const vigentes = r.cambios.flatMap((c) => (c.tipo === 'evento' ? [c.evento.id] : []));
+    const porId = await this.porId.de(quien);
+    await this.datos(quien).eventoAgenda.updateMany({
+      where: { perfilId: quien.perfilId, estado: 'confirmado', inicio: { lt: hasta }, fin: { gt: desde }, googleEventoId: { notIn: [...vigentes, ...porId.map((e) => e.id)] } },
+      data: { estado: 'cancelado', sincronizadoEn: ahora },
+    });
+    await this.completarPorId(quien, porId, new Set(vigentes), ahora);
+
+    const fila = { syncToken: r.syncToken, ventanaDesde: desde, ventanaHasta: hasta, ultimaSincronizacion: ahora };
+    await this.datos(quien).sincronizacionCalendario.upsert({
+      where: { perfilId: quien.perfilId },
+      create: { perfilId: quien.perfilId, organizacionId: quien.organizacionId, ...fila },
+      update: fila,
+    });
+    return { tipo: 'completa', cambios: r.cambios.length };
+  }
+
+  // T-138 · P-REU-10: lo que no llegó en la lista se pide por su id. Un fallo con uno no detiene a los demás:
+  // queda la copia anterior hasta la próxima sincronización
+  private async completarPorId(quien: Quien, eventos: EventoPorId[], vistos: Set<string>, ahora: Date): Promise<void> {
+    for (const e of eventos) {
+      if (vistos.has(e.id)) continue;
+      const cambio = await this.proveedor.obtener(quien, e.id, e.zonaHoraria).catch(() => null);
+      if (cambio?.tipo === 'evento') await this.incorporar(quien, cambio.evento, ahora);
+      else if (cambio) await this.marcarCancelado(quien, e.id, ahora);
+    }
+  }
+
+  private async aplicar(quien: Quien, cambios: CambioCalendario[], ahora: Date): Promise<void> {
+    for (const cambio of cambios) {
+      if (cambio.tipo === 'cancelado') {
+        await this.marcarCancelado(quien, cambio.id, ahora);
+        continue;
+      }
+      await this.incorporar(quien, cambio.evento, ahora);
+    }
+  }
+
+  // Guarda en la réplica un evento tal como lo devolvió Google. Lo usan la sincronización y las
+  // Operaciones de agenda tras escribir (REQ-CUN01-04: la réplica queda con la respuesta, no con lo pedido).
+  async incorporar(quien: Quien, e: EventoCalendario, ahora = new Date()) {
+    const fila = {
+      etag: e.etag,
+      titulo: e.titulo,
+      inicio: e.inicio,
+      fin: e.fin,
+      zonaHoraria: e.zonaHoraria,
+      todoElDia: e.todoElDia,
+      esOrganizador: e.esOrganizador,
+      serieId: e.serieId,
+      estado: 'confirmado' as const,
+      sincronizadoEn: ahora,
+    };
+    const guardar = () =>
+      this.datos(quien).eventoAgenda.upsert({
+        where: { perfilId_googleEventoId: { perfilId: quien.perfilId, googleEventoId: e.id } },
+        create: { perfilId: quien.perfilId, organizacionId: quien.organizacionId, googleCalendarioId: 'primary', googleEventoId: e.id, ...fila },
+        update: fila,
+      });
+    // El trabajador y una consulta pueden crear el mismo evento a la vez; el segundo intento lo actualiza.
+    return guardar().catch((error: unknown) => (esClaveRepetida(error) ? guardar() : Promise.reject(error)));
+  }
+
+  // Nunca se borra de la réplica: se marca (R-25). Lo usan la sincronización y `agenda.cancelar`. Nulo si
+  // la réplica nunca tuvo ese evento.
+  async marcarCancelado(quien: Quien, googleEventoId: string, ahora = new Date()) {
+    const datos = this.datos(quien);
+    await datos.eventoAgenda.updateMany({ where: { perfilId: quien.perfilId, googleEventoId }, data: { estado: 'cancelado', sincronizadoEn: ahora } });
+    return datos.eventoAgenda.findFirst({ where: { perfilId: quien.perfilId, googleEventoId } });
+  }
+
+  private datos(quien: Quien) {
+    return this.prisma.deOrganizacion(quien.organizacionId);
+  }
+}

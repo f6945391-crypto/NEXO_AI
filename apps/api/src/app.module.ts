@@ -1,0 +1,35 @@
+
+import { Module } from '@nestjs/common';
+import { CorreoModule } from './plataforma/correo/correo.module';
+import { ActividadModule } from './actividad/actividad.module';
+import { AdministracionModule } from './administracion/administracion.module';
+import { AgendaModule } from './agenda/agenda.module';
+import { AgenteModule } from './agente/agente.module';
+import { EquiposModule } from './equipos/equipos.module';
+import { ReunionesModule } from './reuniones/reuniones.module';
+import { IdentidadModule } from './identidad/identidad.module';
+import { IntegracionesModule } from './integraciones/integraciones.module';
+import { OperacionesModule } from './operaciones/operaciones.module';
+import { PlataformaModule } from './plataforma/plataforma.module';
+import { SaludController } from './salud/salud.controller';
+import { TareasModule } from './tareas/tareas.module';
+
+@Module({
+  imports: [
+    PlataformaModule,
+    CorreoModule,
+    IdentidadModule,
+    OperacionesModule,
+    IntegracionesModule,
+    AgendaModule,
+    AgenteModule,
+    ActividadModule,
+    AdministracionModule,
+    TareasModule,
+    EquiposModule,
+    // 10-reuniones (CUN-06)
+    ReunionesModule,
+  ],
+  controllers: [SaludController],
+})
+export class AppModule {}
