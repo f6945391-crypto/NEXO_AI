@@ -17,6 +17,10 @@ export async function eventoQueSePuedeCambiar(replica: ReplicaEventosRepositorio
       'Ese compromiso lo organiza otra persona: solo quien lo organiza puede cambiarlo o cancelarlo. Si no vas a ir, puedes rechazar la invitación en Google Calendar.',
     );
   }
+  // T-132 · REQ-CUN06-21 · D-REU-16: una reunión con invitados se mueve o se cancela como reunión, para que Google les avise
+  if (await replica.esReunion(quien, evento.googleEventoId)) {
+    throw errorApi(409, 'ES_REUNION', 'Es una reunión con invitados. Cámbiala o cancélala desde Reuniones, así Google les avisa.');
+  }
   return evento;
 }
 

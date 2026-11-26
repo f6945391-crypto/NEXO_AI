@@ -11,6 +11,7 @@
     "test": "vitest run",
     "migrar": "prisma migrate deploy",
     "semilla": "node dist/cli/semilla.js",
+    "semilla-reuniones": "node dist/cli/semilla-reuniones.js",
     "crear-cuenta": "node dist/cli/crear-cuenta.js",
     "probar-calendario": "node dist/cli/probar-calendario.js",
     "evaluar-asistente": "node dist/cli/evaluar-asistente.js"

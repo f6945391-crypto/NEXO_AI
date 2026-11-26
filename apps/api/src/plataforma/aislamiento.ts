@@ -33,6 +33,9 @@ export const MODELOS_CON_ORGANIZACION: ReadonlySet<string> = new Set([
   'TareaPersonal',
   // 09-tareas-personales plan §13.1 · T-125: la bitácora de una tarea
   'AvanceTarea',
+  // T-132: las reuniones y sus invitados (10-reuniones)
+  'Reunion',
+  'InvitadoReunion',
 ]);
 
 export class ErrorDeAislamiento extends Error {

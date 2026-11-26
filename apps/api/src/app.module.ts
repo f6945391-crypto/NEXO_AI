@@ -5,6 +5,7 @@ import { AdministracionModule } from './administracion/administracion.module';
 import { AgendaModule } from './agenda/agenda.module';
 import { AgenteModule } from './agente/agente.module';
 import { EquiposModule } from './equipos/equipos.module';
+import { ReunionesModule } from './reuniones/reuniones.module';
 import { IdentidadModule } from './identidad/identidad.module';
 import { IntegracionesModule } from './integraciones/integraciones.module';
 import { OperacionesModule } from './operaciones/operaciones.module';
@@ -24,6 +25,8 @@ import { TareasModule } from './tareas/tareas.module';
     AdministracionModule,
     TareasModule,
     EquiposModule,
+    // 10-reuniones (CUN-06)
+    ReunionesModule,
   ],
   controllers: [SaludController],
 })

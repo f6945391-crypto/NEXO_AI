@@ -28,6 +28,7 @@ FASE_POR_PREFIJO = {
     "AGT": "2",
     "CUN02": "3",
     "CUN05": "4",
+    "CUN06": "4",
     "CUN07": "4",
     "CUN08": "4",
     "ENC": "4",

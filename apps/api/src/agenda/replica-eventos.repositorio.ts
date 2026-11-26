@@ -20,4 +20,10 @@ export class ReplicaEventosRepositorio {
   porId(quien: Quien, id: string) {
     return this.prisma.deOrganizacion(quien.organizacionId).eventoAgenda.findFirst({ where: { id, perfilId: quien.perfilId } });
   }
+
+  // T-132 · REQ-CUN06-21: el evento es una reunión agendada de NexoAI, que se cambia como reunión para avisar a los invitados
+  async esReunion(quien: Quien, googleEventoId: string): Promise<boolean> {
+    const reunion = await this.prisma.deOrganizacion(quien.organizacionId).reunion.findFirst({ where: { googleEventoId, estado: 'agendada' }, select: { id: true } });
+    return reunion !== null;
+  }
 }

@@ -385,6 +385,8 @@ Es el componente visual más difícil del producto y el que da identidad a la pl
 
 CUN-06 Coordinar reunión **incluye** a CUN-05: la consulta de disponibilidad no se reimplementa, se invoca. **Desde el 23 de octubre de 2026, cualquier miembro del equipo puede consultarla y convocar una reunión** (REQ-CUN05-17): convocar no es asignar trabajo. En la interfaz eso significa que la rejilla es el mismo componente en ambos casos de uso; lo que cambia es lo que viene después: en CUN-05 el gerente solo consulta, en CUN-06 selecciona una alternativa y se registra una Reunión.
 
+**Nota del 25 de noviembre de 2026.** CUN-06 está especificado en `specs/10-reuniones/` (REQ-CUN06-01 a 21). En la interfaz, el corte «Disponibilidad de equipo» de Agenda pasa a llamarse **«Reuniones»** y muestra la lista de reuniones en lugar del formulario y la rejilla de §4 (D-REU-07, D-REU-09). Los requisitos de este archivo siguen vigentes, pero ahora los cumple el cálculo que usan la lista y el detalle de una reunión. La rejilla de §4 queda como diseño anterior: su lugar lo ocupa el mapa de calor de REQ-CUN06-08. La autorización propia (REQ-CUN05-14 a 16) pasa al pie de la lista de reuniones. No se renumera nada.
+
 ---
 
 ## 6. Pendiente

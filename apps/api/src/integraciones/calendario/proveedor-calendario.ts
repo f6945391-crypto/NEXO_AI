@@ -40,17 +40,27 @@ export interface DatosEvento {
   inicio: Date;
   fin: Date;
   zonaHoraria: string;
+  // T-132 · REQ-CUN06-11: los invitados de una reunión. `perfilId` solo lo usa el simulado, para copiar el
+  // evento en el calendario del invitado como haría Google (P-REU-04)
+  invitados?: { correo: string; opcional: boolean; perfilId?: string }[];
+}
+
+// T-132 · D-REU-16: avisar a los invitados, por Google. Sin indicarlo, no se avisa a nadie (H-AG-11)
+export interface OpcionesEscritura {
+  avisar?: boolean;
 }
 
 export interface ProveedorCalendario {
   // Lanza SincronizacionCaducada si el token ya no vale: hay que volver a leer completo.
   listar(quien: Quien, lectura: Lectura): Promise<ResultadoLectura>;
-  crear(quien: Quien, datos: DatosEvento): Promise<EventoCalendario>;
+  crear(quien: Quien, datos: DatosEvento, opciones?: OpcionesEscritura): Promise<EventoCalendario>;
   // Solo la instancia indicada, nunca la serie entera (H-AG-04). Conviene pasar siempre `zonaHoraria`:
   // si el evento no tiene zona propia, es la que se le da al evento devuelto.
-  actualizar(quien: Quien, id: string, cambios: Partial<DatosEvento>): Promise<EventoCalendario>;
+  actualizar(quien: Quien, id: string, cambios: Partial<DatosEvento>, opciones?: OpcionesEscritura): Promise<EventoCalendario>;
   // Idempotente: cancelar lo ya cancelado no falla (P-07).
-  cancelar(quien: Quien, id: string): Promise<void>;
+  cancelar(quien: Quien, id: string, opciones?: OpcionesEscritura): Promise<void>;
+  // T-132 · D-REU-11: la dirección de la cuenta conectada (el id del calendario principal), o nada
+  direccion(quien: Quien): Promise<string | null>;
 }
 
 export class SincronizacionCaducada extends Error {

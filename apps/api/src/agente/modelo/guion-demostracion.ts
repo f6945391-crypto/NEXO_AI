@@ -13,6 +13,52 @@ const consulta = (franja: string, desde: string, hasta: string): ReglaGuion => (
 });
 
 export const GUION_DEMOSTRACION: ReglaGuion[] = [
+  // T-133 · 10-reuniones: van primero, para que «agéndame una reunión con…» no se lea como un compromiso.
+  // El simulado solo pasa lo dicho; el grupo lo resuelve el código (REQ-CUN06-02)
+  {
+    si: `^(?:busca una hora|reuni[oó]n|ag[eé]ndame una reuni[oó]n) (?:de (.+?) )?con el (?:equipo|proyecto) (.+?) esta semana$`,
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { tema: '$1', equipo: '$2', desde: '{hoy}', hasta: '{viernes}' } }] }, { texto: '' }],
+  },
+  {
+    si: `^(?:busca una hora|reuni[oó]n|ag[eé]ndame una reuni[oó]n) (?:de (.+?) )?con el (?:equipo|proyecto) (.+?)$`,
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { tema: '$1', equipo: '$2' } }] }, { texto: '' }],
+  },
+  {
+    si: `^(?:busca una hora|reuni[oó]n) con (.+?) el ${DIA} por la tarde$`,
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { personas: ['$1'], desde: '{$2}', hasta: '{$2}', franja: 'tarde' } }] }, { texto: '' }],
+  },
+  {
+    si: `^(?:busca una hora|reuni[oó]n) con (.+?) el ${DIA} por la mañana$`,
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { personas: ['$1'], desde: '{$2}', hasta: '{$2}', franja: 'manana' } }] }, { texto: '' }],
+  },
+  {
+    si: '^(?:busca una hora|reuni[oó]n) con (.+?) y (.+?), (.+?) si puede$',
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { personas: ['$1', '$2', '$3'], opcionales: ['$3'] } }] }, { texto: '' }],
+  },
+  {
+    si: '^(?:busca una hora|reuni[oó]n) con (.+?) y (.+?)$',
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { personas: ['$1', '$2'] } }] }, { texto: '' }],
+  },
+  {
+    si: `^(?:busca una hora|reuni[oó]n) con (.+?) ${DIA}$`,
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { personas: ['$1'], desde: '{$2}', hasta: '{$2}' } }] }, { texto: '' }],
+  },
+  {
+    si: '^(?:busca una hora|reuni[oó]n) con (.+?)$',
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { personas: ['$1'] } }] }, { texto: '' }],
+  },
+  {
+    si: '^(?:agenda|organiza|coordina) una reuni[oó]n$',
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: {} }] }, { texto: '' }],
+  },
+  {
+    si: `^(?:mueve|pasa) la reuni[oó]n (?:de |del )?(.+?) al ${DIA}$`,
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { reunion: '$1', desde: '{$2}', hasta: '{$2}' } }] }, { texto: '' }],
+  },
+  {
+    si: '^cancela la reuni[oó]n (?:de |del )?(.+)$',
+    pasos: [{ llamadas: [{ nombre: 'reuniones_cancelar', argumentos: { reunion: '$1' } }] }, { texto: '' }],
+  },
   {
     si: `^ag[eé]ndame (.+?) (?:el |este |para el )?${DIA} a las ${HORA}$`,
     pasos: [

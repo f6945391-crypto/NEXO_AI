@@ -38,6 +38,13 @@ export const CodigoError = z.enum([
   // 09-tareas-personales · T-048
   'TAREA_NO_ENCONTRADA',
   'TAREA_NO_MODIFICABLE',
+  // T-132 · 10-reuniones
+  'REUNION_NO_ENCONTRADA',
+  'REUNION_NO_PENDIENTE',
+  'REUNION_NO_AGENDADA',
+  'REUNION_CANCELADA',
+  'SOLO_CONVOCANTE',
+  'ES_REUNION',
   // 05-equipos · T-120 · REQ-CUN05-18
   'SIN_PLAN_EMPRESARIAL',
   'SIN_EQUIPO',

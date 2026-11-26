@@ -31,6 +31,10 @@ export const DESENLACE_POR_TIPO: Readonly<Record<string, DesenlaceEpisodio>> = {
   'tareas.descartar': 'quitado',
   // T-125: un avance en la bitácora
   'tareas.anotar_avance': 'anotado',
+  // T-133 · 10-reuniones
+  'reunion.convocar': 'convocada',
+  'reunion.mover': 'movido',
+  'reunion.cancelar': 'cancelado',
 };
 
 type OperacionDelEpisodio = { tipo: string; estado: string; motivoEspera?: string | null; carga: unknown; resultado: unknown };
@@ -50,7 +54,9 @@ export function cierreDe(cerradaEn: Date | null, operaciones: OperacionDelEpisod
   const tarea = TareaPersonal.safeParse(op.resultado);
   const carga = op.carga as { titulo?: unknown; texto?: unknown } | null;
   const deCarga = carga?.titulo ?? carga?.texto;
-  const titulo = evento.success ? evento.data.titulo : tarea.success ? tarea.data.texto : typeof deCarga === 'string' ? deCarga : null;
+  // T-133: una reunión devuelve su resumen, con `titulo`
+  const deResultado = (op.resultado as { titulo?: unknown } | null)?.titulo;
+  const titulo = evento.success ? evento.data.titulo : tarea.success ? tarea.data.texto : typeof deCarga === 'string' ? deCarga : typeof deResultado === 'string' ? deResultado : null;
   return { en: cerradaEn.toISOString(), desenlace, titulo };
 }
 

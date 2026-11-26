@@ -22,6 +22,7 @@ import { TranscripcionService } from './transcripcion';
 import { NotaDeContinuidad } from './nota-de-continuidad';
 import { ConsultaTareasService } from '../tareas/consulta-tareas.service';
 import { accionDeEtiqueta, armarBitacora, tipoDe } from './herramientas/herramientas-tareas';
+import { ReunionesService } from '../reuniones/reuniones.service';
 
 // specs/07-agente/plan.md §4.3 y §9 · T-032 · REQ-AGT-01. La conversación con el asistente: cada persona
 // tiene como mucho una abierta; se cierra cuando se cierra su acción (H-AGT-05), y la siguiente solicitud
@@ -51,6 +52,7 @@ export class AsistenteService {
     private readonly transcripcion: TranscripcionService,
     private readonly tareas: ConsultaTareasService,
     private readonly nota: NotaDeContinuidad,
+    private readonly reuniones: ReunionesService,
   ) {}
 
   async conversacion(contexto: ContextoSolicitud, consulta: ConsultaConversacion = { limite: 3 }): Promise<ConversacionAsistente> {
@@ -179,6 +181,7 @@ export class AsistenteService {
     const { grafo, config } = await this.grafo(contexto, conversacion.id, turnos);
     const estado = await grafo.getState(config);
     if (decision.decision === 'referente') return this.elegirReferente(contexto, conversacion.id, decision.referenteId, { grafo, config, estado, turnos });
+    if (decision.decision === 'horario') return this.elegirHorario(contexto, conversacion.id, decision, { grafo, config, estado, turnos });
     if (!estado.next.includes('esperar_decision') || (estado.values as EstadoAsistente).pendiente !== decision.operacionId) throw sinAccion();
     await this.anotarActividad(contexto, conversacion.id);
 
@@ -228,6 +231,35 @@ export class AsistenteService {
     );
     turnos.push({ id: randomUUID(), en: new Date().toISOString(), tipo: 'propuesta', operacion: op });
     await grafo.updateState(config, { pendiente: op.id, candidatas: null, siguiente: 'esperar' }, 'herramientas');
+    return this.responder(contexto, episodioId, await grafo.invoke(null, config), turnos);
+  }
+
+  // T-133 · REQ-CUN06-10, 14: elegir una de las propuestas de una reunión no pasa por el modelo. Solo vale una de
+  // las ofrecidas en este episodio; el código propone convocar (o mover, si ya está agendada) y el grafo espera
+  private async elegirHorario(
+    contexto: ContextoSolicitud,
+    episodioId: string,
+    decision: Extract<DecisionAsistente, { decision: 'horario' }>,
+    { grafo, config, estado, turnos }: { grafo: Grafo; config: Config; estado: Awaited<ReturnType<Grafo['getState']>>; turnos: TurnoAsistente[] },
+  ): Promise<RespuestaAsistente> {
+    const valores = estado.values as Partial<EstadoAsistente>;
+    const ofrecida = valores.reunion;
+    if (estado.next.length > 0 || !ofrecida || ofrecida.id !== decision.reunionId || !ofrecida.inicios.some((i) => Date.parse(i) === Date.parse(decision.inicio))) throw sinAccion();
+    await this.anotarActividad(contexto, episodioId);
+    const reunion = await this.reuniones.resumenPorId(contexto, decision.reunionId);
+    const ultima = [...(valores.mensajes ?? [])].reverse().find((m) => m.rol === 'persona');
+    const op = await this.operaciones.proponer(
+      contexto,
+      {
+        tipo: reunion.estado === 'agendada' ? 'reunion.mover' : 'reunion.convocar',
+        carga: { reunionId: decision.reunionId, inicio: decision.inicio },
+        origen: 'agente',
+        ...(ultima?.rol === 'persona' ? { solicitudOriginal: ultima.texto.slice(0, 2000) } : {}),
+      },
+      { conversacionId: episodioId },
+    );
+    turnos.push({ id: randomUUID(), en: new Date().toISOString(), tipo: 'propuesta', operacion: op });
+    await grafo.updateState(config, { pendiente: op.id, reunion: null, siguiente: 'esperar' }, 'herramientas');
     return this.responder(contexto, episodioId, await grafo.invoke(null, config), turnos);
   }
 

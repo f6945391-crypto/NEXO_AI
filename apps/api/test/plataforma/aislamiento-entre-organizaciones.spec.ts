@@ -138,6 +138,11 @@ describe('plataforma.aislamiento-entre-organizaciones', () => {
         data: { organizacionId, perfilId, tipo: 'tareas.anotar_avance', origen: 'agente', carga: {}, vistaConfirmacion: {}, estado: 'ejecutada' },
       });
       await base.avanceTarea.create({ data: { organizacionId, perfilId, tareaId: tarea.id, texto: 'Pagué en el banco', zonaHoraria: 'America/Lima', operacionOrigenId: anotar.id } });
+      // Y una reunión pendiente, con su único invitado, que aquí es la misma persona (T-132)
+      const reunion = await base.reunion.create({
+        data: { organizacionId, equipoId: equipo.id, convocanteId: perfilId, titulo: 'Avance', duracionMinutos: 60, zonaHoraria: 'America/Lima', rangoDesde: ahora, rangoHasta: ahora },
+      });
+      await base.invitadoReunion.create({ data: { organizacionId, reunionId: reunion.id, perfilId } });
       // Y su transcripción (T-038)
       await base.turnoTranscripcion.create({
         data: { id: randomUUID(), organizacionId, perfilId, conversacionId: conversacion.id, en: new Date(), tipo: 'texto', datos: {} },

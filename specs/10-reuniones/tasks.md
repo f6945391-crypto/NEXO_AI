@@ -9,7 +9,7 @@
 - **Contenido:** `dominio/mapa.ts`, que calcula los días hábiles, las bandas por persona y zona, quién está libre por franja y las propuestas; `dominio/grupo.ts`, que reconoce un equipo o una persona por texto (D-REU-17, 18)
 - **Hecho cuando:** con tres personas en dos zonas, el mapa marca libre solo lo que cae en la banda de cada uno; las propuestas exigen a los obligatorios, ordenan por opcionales y después por cercanía, y van en días distintos; nada en el pasado; la franja de la tarde empieza a las 13:00; «Ana» encaja con `ana.perez@`, «proyecto alfa» con «Proyecto Alfa»
 - **Pruebas:** `reuniones.mapa`, `reuniones.grupo`
-- **Estado:** pendiente
+- **Estado:** hecha · 25 de noviembre de 2026. `src/reuniones/dominio/mapa.ts` y `grupo.ts`, funciones puras. La banda de cada persona se mira en su zona: con alguien en Madrid, la tarde de Lima queda fuera. 10 pruebas en `src/reuniones/dominio/mapa.spec.ts` (`reuniones.mapa`, `reuniones.propuestas`, `reuniones.grupo`)
 
 ### T-132 · La reunión y sus Operaciones (API)
 
@@ -18,7 +18,7 @@
 - **Contenido:** migración `20261125200000_reuniones`; contratos; `ReunionesService`; `GET /reuniones` y `GET /reuniones/:id`; Operaciones `reunion.convocar`, `reunion.mover` y `reunion.cancelar`; invitados, aviso y `direccion` en el proveedor de calendario; `correo_cuenta` al conectar; `409 ES_REUNION` en la agenda
 - **Hecho cuando:** convocar crea un evento con los invitados, con aviso, y la reunión queda agendada; confirmar dos veces crea uno; si un obligatorio se ocupó, `reproponer` y no se escribe nada; la invitada ve la reunión agendada y no la pendiente; mover y cancelar avisan; quien no convocó recibe 403; borrar en Google la deja cancelada; pasado el rango, vencida; la dirección es la del Google conectado o el correo de NexoAI; cancelar el compromiso desde la agenda da 409
 - **Pruebas:** `reuniones.convocar`, `reuniones.lista-y-detalle`, `reuniones.mover-y-cancelar`, `reuniones.conciliacion`
-- **Estado:** pendiente
+- **Estado:** hecha · 25 de noviembre de 2026. Migración `20261125200000_reuniones`, generada con `prisma migrate diff --from-config-datasource`. Tres ajustes al plan: (1) la dirección de Google se lee y se guarda la primera vez que hace falta, no al conectar: así sirve también para las cuentas conectadas antes (P-REU-05); (2) después de convocar, mover o cancelar se sincroniza la agenda de cada invitado con Google, para que el compromiso aparezca enseguida y el cálculo siguiente no use una copia vieja (P-REU-06); (3) la comprobación al confirmar sincroniza a los obligatorios antes de calcular. La conciliación y el vencimiento, al leer (P-REU-01). Pruebas en `test/reuniones/reuniones.spec.ts`
 
 ### T-133 · El asistente propone (agente)
 
@@ -27,7 +27,7 @@
 - **Contenido:** herramientas `reuniones.proponer`, `reuniones.listar` y `reuniones.cancelar`; turno `reunion`; decisión `horario`; aclaraciones `REUNION_ACLARAR` y `SOLO_CONVOCANTE` con texto del código; pregunta «¿Con quién es la reunión?»; instrucciones; guion del simulado
 - **Hecho cuando:** con el simulado, «reunión con el proyecto Alfa esta semana» deja una reunión pendiente y muestra 3 propuestas sin tarjeta; elegir una propone `reunion.convocar` sin pasar por el modelo; «con Ana» con dos equipos pregunta cuál; «con Carlos» dice que no lo encuentra; sin quién, pregunta; «Beto, si puede» lo deja opcional; «mueve la reunión al viernes» propone del viernes y elegir propone `reunion.mover`; una invitada que pide cancelar recibe el texto de REQ-CUN06-16; con el Plan Personal, el texto de sin acceso
 - **Prueba:** `agente.reuniones`
-- **Estado:** pendiente
+- **Estado:** hecha · 25 de noviembre de 2026. Herramientas en `src/agente/herramientas/herramientas-reuniones.ts`. `reuniones.proponer` y `reuniones.cancelar` aceptan también el **título** de la reunión (`reunion`), además del id: así el modelo no necesita listar antes, y el simulado puede probarlo. Las aclaraciones y `SOLO_CONVOCANTE` salen con el texto del código, como `TAREA_NO_ENCONTRADA`. Desenlace nuevo `convocada`. Guion del simulado con 11 frases. 15 pruebas en `test/reuniones/reuniones.spec.ts` (`agente.reuniones`, `reuniones.conciliacion`)
 
 ### T-134 · Reuniones en la web
 
@@ -53,4 +53,4 @@
 - **Depende de:** T-132
 - **Contenido:** script `semilla-reuniones`, idempotente, sobre la base de desarrollo: organización de empresa «Reuniones Demo», cuatro cuentas del Plan Empresarial con contraseñas temporales de desarrollo escritas en el script (como `semilla.ts`), y los equipos «Proyecto Alfa» (las cuatro) y «Diseño» (dos); instrucciones para conectar un Google real en cada una
 - **Hecho cuando:** ejecutarlo dos veces no duplica nada; cada cuenta entra, cambia su contraseña y conecta Google desde Ajustes
-- **Estado:** pendiente
+- **Estado:** hecha · 25 de noviembre de 2026. `npx pnpm@12.10.1 --filter @nexoai/api semilla-reuniones`: organización «Reuniones Demo», `lider@`, `ana@`, `beto@` y `lucia@reuniones.test`, y los equipos «Proyecto Alfa» y «Diseño». Las contraseñas temporales están en `src/plataforma/semilla-reuniones.ts`; el script no las imprime

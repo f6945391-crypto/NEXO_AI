@@ -7,6 +7,7 @@ import {
   type CambioCalendario,
   type DatosEvento,
   type EventoCalendario,
+  type OpcionesEscritura,
   type Lectura,
   type ProveedorCalendario,
   type Quien,
@@ -17,6 +18,9 @@ import {
 // cuatro llamadas HTTP. Solo el calendario principal (H-AG-06).
 
 const EVENTOS = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+const PRINCIPAL = 'https://www.googleapis.com/calendar/v3/calendars/primary';
+// D-REU-16: solo una reunión avisa a sus invitados; un compromiso propio, nunca (H-AG-11)
+const avisos = (opciones?: OpcionesEscritura) => (opciones?.avisar ? 'all' : 'none');
 
 const noDisponible = () =>
   errorApi(502, 'GOOGLE_NO_DISPONIBLE', 'Google Calendar no responde ahora mismo. Inténtalo de nuevo en un momento.');
@@ -58,6 +62,8 @@ function cuerpoEvento(datos: Partial<DatosEvento>): Json {
   if (datos.titulo !== undefined) cuerpo.summary = datos.titulo;
   if (datos.inicio) cuerpo.start = { dateTime: datos.inicio.toISOString(), timeZone: datos.zonaHoraria };
   if (datos.fin) cuerpo.end = { dateTime: datos.fin.toISOString(), timeZone: datos.zonaHoraria };
+  // T-132 · REQ-CUN06-06, 11: los invitados, con los opcionales marcados
+  if (datos.invitados) cuerpo.attendees = datos.invitados.map((i) => ({ email: i.correo, ...(i.opcional ? { optional: true } : {}) }));
   return cuerpo;
 }
 
@@ -98,27 +104,34 @@ export class ProveedorCalendarioGoogle implements ProveedorCalendario {
     }
   }
 
-  async crear(quien: Quien, datos: DatosEvento): Promise<EventoCalendario> {
+  async crear(quien: Quien, datos: DatosEvento, opciones?: OpcionesEscritura): Promise<EventoCalendario> {
     const url = new URL(EVENTOS);
-    url.searchParams.set('sendUpdates', 'none');
+    url.searchParams.set('sendUpdates', avisos(opciones));
     const respuesta = await this.peticion(quien, url, { method: 'POST', body: JSON.stringify(cuerpoEvento(datos)) });
     return this.eventoDe(respuesta, datos.zonaHoraria);
   }
 
-  async actualizar(quien: Quien, id: string, cambios: Partial<DatosEvento>): Promise<EventoCalendario> {
+  async actualizar(quien: Quien, id: string, cambios: Partial<DatosEvento>, opciones?: OpcionesEscritura): Promise<EventoCalendario> {
     const url = new URL(`${EVENTOS}/${encodeURIComponent(id)}`);
-    url.searchParams.set('sendUpdates', 'none');
+    url.searchParams.set('sendUpdates', avisos(opciones));
     const respuesta = await this.peticion(quien, url, { method: 'PATCH', body: JSON.stringify(cuerpoEvento(cambios)) });
     return this.eventoDe(respuesta, cambios.zonaHoraria ?? 'UTC');
   }
 
-  async cancelar(quien: Quien, id: string): Promise<void> {
+  async cancelar(quien: Quien, id: string, opciones?: OpcionesEscritura): Promise<void> {
     const url = new URL(`${EVENTOS}/${encodeURIComponent(id)}`);
-    url.searchParams.set('sendUpdates', 'none');
+    url.searchParams.set('sendUpdates', avisos(opciones));
     const respuesta = await this.peticion(quien, url, { method: 'DELETE' });
     // 410: ya estaba borrado. Cancelar dos veces no es un error (P-07).
     if (respuesta.ok || respuesta.status === 410) return;
     throw await this.fallo(respuesta);
+  }
+
+  // D-REU-11: en Google, el id del calendario principal es la dirección de la cuenta
+  async direccion(quien: Quien): Promise<string | null> {
+    const cuerpo = await this.leer(await this.peticion(quien, new URL(PRINCIPAL), { method: 'GET' }));
+    const id = texto(cuerpo.id);
+    return id && id.includes('@') ? id : null;
   }
 
   private peticion(quien: Quien, url: URL, init: RequestInit): Promise<Response> {

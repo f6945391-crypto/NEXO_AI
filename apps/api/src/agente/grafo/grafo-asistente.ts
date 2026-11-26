@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Annotation, END, interrupt, START, StateGraph } from '@langchain/langgraph';
-import { EventoAgenda, TareaPersonal, TurnoDeHerramienta, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
+import { EventoAgenda, ReunionResumen, TareaPersonal, TurnoDeHerramienta, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
 import { fechaLarga, horario, nombreDeZona } from '../../agenda/formato';
 import type { ContextoSolicitud } from '../../identidad/contexto';
 import type { OperacionesService } from '../../operaciones/operaciones.service';
@@ -68,6 +68,8 @@ export const EstadoAsistente = Annotation.Root({
   // T-051 · REQ-CUN03-15: las tareas candidatas que se ofrecieron y qué se haría con la elegida. Escribir otra
   // cosa las descarta (plan §14.9)
   candidatas: reemplazar<{ accion: string; ids: string[]; avance?: string } | null>(null),
+  // T-133 · REQ-CUN06-10: la reunión cuyas propuestas se ofrecieron. Elegir una la propone el código
+  reunion: reemplazar<{ id: string; inicios: string[] } | null>(null),
 });
 export type EstadoAsistente = typeof EstadoAsistente.State;
 
@@ -97,6 +99,9 @@ function recortar(mensajes: MensajeModelo[]): MensajeModelo[] {
 
 // REQ-CUN01-04: el resultado sale de lo que devolvió la Operación, no de lo propuesto
 function textoDelResultado(op: OperacionRespuesta, zona: string): string {
+  // T-133 · 10-reuniones: lo que quedó, con lo que devolvió la Operación
+  const reunion = op.tipo.startsWith('reunion.') ? ReunionResumen.safeParse(op.resultado) : null;
+  if (reunion?.success) return textoDeReunion(op.tipo, reunion.data);
   const tarea = op.tipo.startsWith('tareas.') ? TareaPersonal.safeParse(op.resultado) : null;
   if (tarea?.success) return textoDeTarea(op.tipo, tarea.data);
   const evento = EventoAgenda.safeParse(op.resultado);
@@ -119,6 +124,17 @@ function textoDeTarea(tipo: string, tarea: TareaPersonal): string {
   if (tipo === 'tareas.reabrir') return `Listo: ${t} vuelve a estar pendiente, en «${DONDE[tarea.franja]}».`;
   return `Listo: descarté ${t}. Ya no aparece en tus tareas.`;
 }
+
+function textoDeReunion(tipo: string, r: ReunionResumen): string {
+  const t = `«${r.titulo}»`;
+  if (tipo === 'reunion.cancelar') return r.inicio ? `Listo: cancelé ${t}. Google avisa a los invitados.` : `Listo: cancelé ${t}. No se avisó a nadie, porque aún no tenía horario.`;
+  const cuando = r.inicio && r.fin ? `el ${fechaLarga(new Date(r.inicio), r.zonaHoraria)}, de ${horario(new Date(r.inicio), new Date(r.fin), r.zonaHoraria)} (${zonaEnFrase(r.zonaHoraria, new Date(r.inicio))})` : '';
+  if (tipo === 'reunion.mover') return `Listo: ${t} quedó ${cuando}. Google avisa del cambio a los invitados.`;
+  return `Listo: ${t} quedó agendada ${cuando}. Google envía la invitación a ${r.invitados === 1 ? '1 persona' : `${r.invitados} personas`}.`;
+}
+
+// Errores cuyo mensaje ya es la respuesta: lo dice el código, sin otra vuelta del modelo
+const SE_DICEN_TAL_CUAL = new Set(['TAREA_NO_ENCONTRADA', 'REUNION_ACLARAR', 'SOLO_CONVOCANTE', 'REUNION_NO_ENCONTRADA', 'REUNION_NO_PENDIENTE', 'REUNION_NO_AGENDADA', 'ES_REUNION']);
 
 export interface DependenciasGrafo {
   llamadas: LlamadasAuditadas;
@@ -205,6 +221,7 @@ export function construirGrafo(
     let sinCalendario = false;
     let guardada = false;
     let candidatas: EstadoAsistente['candidatas'] = null;
+    let reunion: EstadoAsistente['reunion'] = null;
     let sinTarea: string | null = null;
 
     for (const llamada of lista) {
@@ -224,6 +241,11 @@ export function construirGrafo(
         // T-126 · REQ-CUN03-23: la bitácora es una lista, como la de tareas; no cierra el episodio
         else if (turno.data.tipo === 'bitacora') turnos.push({ ...base, tipo: 'bitacora', bitacora: turno.data.bitacora });
         else if (turno.data.tipo === 'propuesta') turnos.push({ ...base, tipo: 'propuesta', operacion: turno.data.operacion });
+        // T-133 · REQ-CUN06-01: las propuestas de una reunión; la persona elige sin pasar por el modelo
+        else if (turno.data.tipo === 'reunion') {
+          turnos.push({ ...base, tipo: 'reunion', propuestas: turno.data.propuestas });
+          reunion = { id: turno.data.propuestas.reunion.id, inicios: turno.data.propuestas.propuestas.map((p) => p.inicio) };
+        }
         else if (turno.data.tipo === 'alternativas_de_referente') {
           turnos.push({ ...base, tipo: 'alternativas_de_referente', lista: turno.data.lista });
           candidatas = {
@@ -240,7 +262,7 @@ export function construirGrafo(
       const error = (r.paraModelo as { error?: { codigo?: string; campos?: string[] } } | null)?.error;
       if (error?.codigo === 'DATOS_FALTANTES' && !faltante) faltante = error.campos?.[0] ?? 'cambio';
       if (error?.codigo === 'PERMISO_GOOGLE_FALTANTE') sinCalendario = true;
-      if (error?.codigo === 'TAREA_NO_ENCONTRADA' && !sinTarea) sinTarea = (error as { mensaje?: string }).mensaje ?? null;
+      if (error?.codigo && SE_DICEN_TAL_CUAL.has(error.codigo) && !sinTarea) sinTarea = (error as { mensaje?: string }).mensaje ?? null;
     }
 
     // REQ-CUN01-08, REQ-ACC-08: el permiso que falta lo dice el código, y lo pedido queda guardado
@@ -252,6 +274,8 @@ export function construirGrafo(
     if (guardada && !pendiente) return con(turnos, { mensajes, cerrada: true, siguiente: 'fin' });
     // T-051 · REQ-CUN03-15: con varias candidatas no se propone nada; la persona elige sin pasar por el modelo
     if (candidatas && !pendiente) return con(turnos, { mensajes, candidatas, siguiente: 'fin' });
+    // T-133 · REQ-CUN06-01: con las propuestas a la vista, el turno termina; el texto lo escribió el código
+    if (reunion && !pendiente) return con(turnos, { mensajes, reunion, siguiente: 'fin' });
     // Ninguna tarea encaja: se dice con las palabras del código, sin otra vuelta del modelo
     if (sinTarea && !pendiente) return con([...turnos, turnoTexto(sinTarea)], { mensajes: [...mensajes, deAsistente(sinTarea)], siguiente: 'fin' });
     const siguiente: Siguiente = pendiente ? 'esperar' : faltante ? 'preguntar' : 'interpretar';

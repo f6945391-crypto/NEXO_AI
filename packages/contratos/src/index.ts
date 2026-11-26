@@ -12,3 +12,4 @@ export * from './actividad';
 export * from './administracion';
 export * from './tareas';
 export * from './equipos';
+export * from './reuniones';

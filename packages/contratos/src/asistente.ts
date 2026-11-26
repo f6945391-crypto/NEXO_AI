@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ListaAgenda, MotivoEspera } from './agente';
 import { OperacionRespuesta } from './operaciones';
 import { BitacoraTarea, CandidatasDeReferente, ListaTareas } from './tareas';
+import { PropuestasDeReunion } from './reuniones';
 
 // Conversación con el asistente (specs/07-agente/plan.md §9) · T-032. Lo que ven la web y la capa de
 // captura del móvil. Cada turno tiene un tipo, para que la interfaz muestre distinto lo que es distinto
@@ -31,6 +32,8 @@ export const TurnoAsistente = z.discriminatedUnion('tipo', [
   z.strictObject({ ...base, tipo: z.literal('alternativas_de_referente'), lista: CandidatasDeReferente }),
   // T-126 · REQ-CUN03-23: la bitácora de una tarea, armada por el código
   z.strictObject({ ...base, tipo: z.literal('bitacora'), bitacora: BitacoraTarea }),
+  // T-133 · REQ-CUN06-01: las propuestas de horario de una reunión; elegir una no pasa por el modelo
+  z.strictObject({ ...base, tipo: z.literal('reunion'), propuestas: PropuestasDeReunion }),
 ]);
 export type TurnoAsistente = z.infer<typeof TurnoAsistente>;
 
@@ -45,6 +48,8 @@ export const DecisionAsistente = z.discriminatedUnion('decision', [
   z.strictObject({ operacionId: z.uuid(), decision: z.literal('alternativa'), alternativa: z.strictObject({ inicio: Instante, fin: Instante }) }),
   // T-051 · plan §14.9: elegir una de las candidatas. Lo propone el código, sin pasar por el modelo
   z.strictObject({ decision: z.literal('referente'), referenteId: z.uuid() }),
+  // T-133 · REQ-CUN06-10: elegir una de las propuestas de horario de una reunión. Lo propone el código
+  z.strictObject({ decision: z.literal('horario'), reunionId: z.uuid(), inicio: Instante }),
 ]);
 export type DecisionAsistente = z.infer<typeof DecisionAsistente>;
 
@@ -55,7 +60,8 @@ export type DecisionAsistente = z.infer<typeof DecisionAsistente>;
 // T-046 · 09-tareas-personales plan §6: `hecho`, `reabierto`, `cambiado` y `quitado` (una tarea descartada,
 // distinto de `descartado`, que es una propuesta descartada)
 // T-125: `anotado`, un avance en la bitácora de una tarea
-export const DesenlaceEpisodio = z.enum(['registrado', 'movido', 'cancelado', 'descartado', 'guardado', 'hecho', 'reabierto', 'cambiado', 'quitado', 'anotado', 'sin_accion']);
+// T-133: `convocada`, una reunión agendada con sus invitados
+export const DesenlaceEpisodio = z.enum(['registrado', 'movido', 'cancelado', 'descartado', 'guardado', 'hecho', 'reabierto', 'cambiado', 'quitado', 'anotado', 'convocada', 'sin_accion']);
 export type DesenlaceEpisodio = z.infer<typeof DesenlaceEpisodio>;
 
 export const CierreEpisodio = z.strictObject({ en: Instante, desenlace: DesenlaceEpisodio, titulo: z.string().nullable() });

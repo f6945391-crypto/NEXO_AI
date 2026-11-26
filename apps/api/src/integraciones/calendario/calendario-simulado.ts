@@ -4,6 +4,7 @@ import {
   type CambioCalendario,
   type DatosEvento,
   type EventoCalendario,
+  type OpcionesEscritura,
   type Lectura,
   type ProveedorCalendario,
   type Quien,
@@ -33,10 +34,18 @@ export class ProveedorCalendarioSimulado implements ProveedorCalendario {
   // Mientras sea verdadero, toda llamada falla como si Google no respondiera
   caido = false;
   private readonly calendarios = new Map<string, Calendario>();
+  // T-132 · P-REU-04: las copias de un evento en el calendario de sus invitados, como hace Google
+  private readonly copias = new Map<string, string[]>();
+  private readonly direcciones = new Map<string, string>();
+  // Lo que se escribió con invitados, para comprobar el aviso en las pruebas
+  readonly avisos: { tipo: 'crear' | 'actualizar' | 'cancelar'; id: string; avisar: boolean; invitados: string[] }[] = [];
   private siguienteId = 1;
 
   reiniciar(): void {
     this.calendarios.clear();
+    this.copias.clear();
+    this.direcciones.clear();
+    this.avisos.length = 0;
     this.llamadas.lecturas = 0;
     this.llamadas.escrituras = 0;
     this.caido = false;
@@ -60,19 +69,54 @@ export class ProveedorCalendarioSimulado implements ProveedorCalendario {
     return { cambios, syncToken: `${quien.perfilId}:${cal.epoca}:${cal.version}` };
   }
 
-  async crear(quien: Quien, datos: DatosEvento): Promise<EventoCalendario> {
+  async crear(quien: Quien, datos: DatosEvento, opciones?: OpcionesEscritura): Promise<EventoCalendario> {
     this.llamada('escrituras');
-    return this.sembrar(quien.perfilId, datos);
+    const { invitados, ...resto } = datos;
+    const evento = this.sembrar(quien.perfilId, resto);
+    if (invitados?.length) {
+      this.avisos.push({ tipo: 'crear', id: evento.id, avisar: !!opciones?.avisar, invitados: invitados.map((i) => i.correo) });
+      const perfiles = invitados.flatMap((i) => (i.perfilId ? [i.perfilId] : []));
+      for (const perfilId of perfiles) this.copiar(perfilId, { ...evento, esOrganizador: false });
+      this.copias.set(evento.id, perfiles);
+    }
+    return evento;
   }
 
-  async actualizar(quien: Quien, id: string, cambios: Partial<DatosEvento>): Promise<EventoCalendario> {
+  async actualizar(quien: Quien, id: string, cambios: Partial<DatosEvento>, opciones?: OpcionesEscritura): Promise<EventoCalendario> {
     this.llamada('escrituras');
-    return this.cambiarEnGoogle(quien.perfilId, id, cambios);
+    const { invitados: _invitados, ...resto } = cambios;
+    const evento = this.cambiarEnGoogle(quien.perfilId, id, resto);
+    const copias = this.copias.get(id);
+    if (copias) {
+      this.avisos.push({ tipo: 'actualizar', id, avisar: !!opciones?.avisar, invitados: copias });
+      for (const perfilId of copias) if (this.calendario(perfilId).eventos.has(id)) this.cambiarEnGoogle(perfilId, id, resto);
+    }
+    return evento;
   }
 
-  async cancelar(quien: Quien, id: string): Promise<void> {
+  async cancelar(quien: Quien, id: string, opciones?: OpcionesEscritura): Promise<void> {
     this.llamada('escrituras');
     if (this.calendario(quien.perfilId).eventos.has(id)) this.borrarEnGoogle(quien.perfilId, id);
+    const copias = this.copias.get(id);
+    if (copias) {
+      this.avisos.push({ tipo: 'cancelar', id, avisar: !!opciones?.avisar, invitados: copias });
+      for (const perfilId of copias) this.borrarEnGoogle(perfilId, id);
+    }
+  }
+
+  async direccion(quien: Quien): Promise<string | null> {
+    return this.direcciones.get(quien.perfilId) ?? null;
+  }
+
+  // —— Solo para pruebas ——
+
+  fijarDireccion(perfilId: string, direccion: string): void {
+    this.direcciones.set(perfilId, direccion);
+  }
+
+  private copiar(perfilId: string, evento: EventoCalendario): void {
+    const cal = this.calendario(perfilId);
+    cal.eventos.set(evento.id, { evento: { ...evento }, cancelado: false, version: ++cal.version });
   }
 
   // —— Lo que alguien hace directamente en Google. No cuenta como llamada. ——

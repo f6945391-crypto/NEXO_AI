@@ -56,6 +56,9 @@ model Organizacion {
   // 09-tareas-personales
   tareas           TareaPersonal[]
   avancesTarea     AvanceTarea[]
+  // 10-reuniones
+  reuniones        Reunion[]
+  invitadosReunion InvitadoReunion[]
 
   @@map("organizacion")
 }
@@ -76,22 +79,25 @@ model PerfilUsuario {
   estadoCambiadoEn      DateTime?    @map("estado_cambiado_en") @db.Timestamptz(3)
   creadoEn              DateTime     @default(now()) @map("creado_en") @db.Timestamptz(3)
 
-  organizacion       Organizacion                @relation(fields: [organizacionId], references: [id])
-  eventosAuditoria   EventoAuditoria[]
-  sesionesRenovacion SesionRenovacion[]
-  operaciones        Operacion[]
-  consentimientos    ConsentimientoIntegracion[]
-  eventosAgenda      EventoAgenda[]
-  sincronizacion     SincronizacionCalendario?
-  conversaciones     ConversacionAgente[]
-  llamadasModelo     LlamadaModelo[]
-  invocaciones       InvocacionHerramienta[]
-  turnos             TurnoTranscripcion[]
-  pertenencias       MiembroOrganizacion[]
-  membresiasEquipo   MiembroDeEquipo[]
+  organizacion        Organizacion                @relation(fields: [organizacionId], references: [id])
+  eventosAuditoria    EventoAuditoria[]
+  sesionesRenovacion  SesionRenovacion[]
+  operaciones         Operacion[]
+  consentimientos     ConsentimientoIntegracion[]
+  eventosAgenda       EventoAgenda[]
+  sincronizacion      SincronizacionCalendario?
+  conversaciones      ConversacionAgente[]
+  llamadasModelo      LlamadaModelo[]
+  invocaciones        InvocacionHerramienta[]
+  turnos              TurnoTranscripcion[]
+  pertenencias        MiembroOrganizacion[]
+  membresiasEquipo    MiembroDeEquipo[]
   // 09-tareas-personales
-  tareas             TareaPersonal[]
-  avancesTarea       AvanceTarea[]
+  tareas              TareaPersonal[]
+  avancesTarea        AvanceTarea[]
+  // 10-reuniones
+  reunionesConvocadas Reunion[]
+  invitacionesReunion InvitadoReunion[]
 
   @@unique([id, organizacionId])
   @@index([organizacionId])
@@ -326,6 +332,8 @@ model ConsentimientoIntegracion {
   cambiadoEn     DateTime             @default(now()) @updatedAt @map("cambiado_en") @db.Timestamptz(3)
   // REQ-ACC-09: el aviso de revocación se da una sola vez
   avisoEmitidoEn DateTime?            @map("aviso_emitido_en") @db.Timestamptz(3)
+  // T-132 · D-REU-11: la dirección de la cuenta de Google conectada, a la que llegan las invitaciones
+  correoCuenta   String?              @map("correo_cuenta")
 
   organizacion Organizacion  @relation(fields: [organizacionId], references: [id])
   perfil       PerfilUsuario @relation(fields: [perfilId], references: [id], onDelete: Cascade)
@@ -538,6 +546,7 @@ model Equipo {
 
   organizacion Organizacion      @relation(fields: [organizacionId], references: [id])
   miembros     MiembroDeEquipo[]
+  reuniones    Reunion[]
 
   @@unique([id, organizacionId])
   // REQ-ADM-28 (migración 20261125000000). El responsable único (REQ-ADM-30) es un índice parcial del SQL
@@ -663,4 +672,78 @@ model AvanceTarea {
   @@index([tareaId, anotadoEn])
   @@index([organizacionId])
   @@map("avance_tarea")
+}
+
+// ---- 10-reuniones ----
+
+// EN-06 Reunión (specs/10-reuniones/plan.md §2) · T-132 · CUN-06. Existe antes de tener horario
+// (D-REU-01); al agendarse, su evento vive en el Google Calendar de quien convoca (AD-10, D-REU-05).
+enum EstadoReunion {
+  pendiente
+  agendada
+  vencida
+  cancelada
+
+  @@map("estado_reunion")
+}
+
+// D-REU-21
+enum FranjaReunion {
+  manana
+  tarde
+
+  @@map("franja_reunion")
+}
+
+model Reunion {
+  id              String         @id @default(uuid()) @db.Uuid
+  organizacionId  String         @map("organizacion_id") @db.Uuid
+  equipoId        String         @map("equipo_id") @db.Uuid
+  convocanteId    String         @map("convocante_id") @db.Uuid
+  titulo          String
+  duracionMinutos Int            @map("duracion_minutos")
+  franja          FranjaReunion?
+  // La de quien convoca al pedirla (P-05); las filas del mapa van en esta zona (P-REU-02)
+  zonaHoraria     String         @map("zona_horaria")
+  // Inicio del primer día y fin del último en que se busca horario, en esa zona
+  rangoDesde      DateTime       @map("rango_desde") @db.Timestamptz(3)
+  rangoHasta      DateTime       @map("rango_hasta") @db.Timestamptz(3)
+  estado          EstadoReunion  @default(pendiente)
+  inicio          DateTime?      @db.Timestamptz(3)
+  fin             DateTime?      @db.Timestamptz(3)
+  googleEventoId  String?        @map("google_evento_id")
+  creadaEn        DateTime       @default(now()) @map("creada_en") @db.Timestamptz(3)
+  cambiadaEn      DateTime       @default(now()) @updatedAt @map("cambiada_en") @db.Timestamptz(3)
+
+  organizacion Organizacion      @relation(fields: [organizacionId], references: [id])
+  equipo       Equipo            @relation(fields: [equipoId, organizacionId], references: [id, organizacionId])
+  convocante   PerfilUsuario     @relation(fields: [convocanteId, organizacionId], references: [id, organizacionId])
+  invitados    InvitadoReunion[]
+
+  @@unique([id, organizacionId])
+  @@index([organizacionId])
+  @@index([convocanteId])
+  @@map("reunion")
+}
+
+// Quien convoca no es una fila: es el organizador del evento
+model InvitadoReunion {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizacionId String   @map("organizacion_id") @db.Uuid
+  reunionId      String   @map("reunion_id") @db.Uuid
+  perfilId       String   @map("perfil_id") @db.Uuid
+  // REQ-CUN06-06, D-REU-19
+  opcional       Boolean  @default(false)
+  // D-REU-11: la dirección a la que se envió la invitación, guardada al convocar
+  direccion      String?
+  creadoEn       DateTime @default(now()) @map("creado_en") @db.Timestamptz(3)
+
+  organizacion Organizacion  @relation(fields: [organizacionId], references: [id])
+  reunion      Reunion       @relation(fields: [reunionId, organizacionId], references: [id, organizacionId], onDelete: Cascade)
+  perfil       PerfilUsuario @relation(fields: [perfilId, organizacionId], references: [id, organizacionId])
+
+  @@unique([reunionId, perfilId])
+  @@index([organizacionId])
+  @@index([perfilId])
+  @@map("invitado_reunion")
 }

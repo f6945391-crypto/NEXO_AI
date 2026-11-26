@@ -111,7 +111,7 @@ En las tres, si quien pide no convocó la reunión, el error es `403 SOLO_CONVOC
 | Google | Con invitados, el cuerpo lleva `attendees` (`optional` cuando corresponde). `sendUpdates` es `all` solo si `avisar` (D-REU-16); lo demás sigue en `none` (H-AG-11). `direccion` lee `GET calendars/primary`: su `id` es la dirección |
 | Simulado | El evento se copia en el calendario de cada invitado que tiene `perfilId` (como invitado, `esOrganizador = false`), y mover o borrar con aviso cambia también las copias. `direccion` devuelve lo fijado con `fijarDireccion`, o nada |
 
-**Dirección de la invitación (D-REU-11):** `correo_cuenta` se guarda al conectar Google. Para cuentas conectadas antes, se lee la primera vez que hace falta y se guarda. Sin Google, se usa el correo de NexoAI.
+**Dirección de la invitación (D-REU-11):** `correo_cuenta` se lee la primera vez que hace falta y se guarda (P-REU-05). Sin Google, se usa el correo de NexoAI.
 
 ## 8. Conciliación al leer (REQ-CUN06-17, 18)
 
@@ -153,3 +153,5 @@ Se escribe solo lo que cambió, y cada cambio queda en la auditoría (`reunion.c
 | P-REU-02 | El mapa usa la zona de quien convoca para las filas, y la banda de cada persona en su zona para saber si está libre |
 | P-REU-03 | `reunion.convocar` acepta `control_directo` y `opcionales`: es como se confirma desde el detalle sin el asistente (REQ-CUN06-20) |
 | P-REU-04 | El calendario simulado copia el evento a los invitados, para que las pruebas y las capturas muestren lo que haría Google |
+| P-REU-05 | La dirección de Google se lee (`GET calendars/primary`) y se guarda en `correo_cuenta` la primera vez que hace falta, no al conectar. Sirve también para las cuentas que ya estaban conectadas, y no toca el retorno de OAuth |
+| P-REU-06 | Después de convocar, mover o cancelar, se sincroniza la agenda de cada invitado que tiene Google conectado. Así el compromiso aparece enseguida en su Agenda, y el cálculo siguiente no usa una copia vieja |
