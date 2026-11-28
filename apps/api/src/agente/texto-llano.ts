@@ -119,6 +119,24 @@ function ordenar(texto: string): string {
   );
 }
 
+// T-148 · decisión 34: la negrita es la única marca que pasa. Mientras se limpia, cada par `**…**` (o `__…__`)
+// de una línea y con texto dentro queda entre dos caracteres de control que ninguna otra regla toca; al final
+// vuelve a ser `**…**`. Si al quitar un nombre interno la negrita queda vacía, desaparece.
+const ABRE = '\u0001';
+const CIERRA = '\u0002';
+const NEGRITA = /(\*\*|__)(?=\S)([^\n*_]{1,120}?)(?<=\S)\1/g;
+
+function protegerNegrita(texto: string): string {
+  return texto.replace(/[\u0001\u0002]/g, '').replace(NEGRITA, (_, _marca, dentro: string) => `${ABRE}${dentro}${CIERRA}`);
+}
+
+function devolverNegrita(texto: string): string {
+  return texto
+    .replace(new RegExp(`${ABRE}\\s*${CIERRA}`, 'g'), '')
+    .replace(new RegExp(`${ABRE}\\s*([^${CIERRA}]*?)\\s*${CIERRA}`, 'g'), (_, dentro: string) => `**${dentro}**`)
+    .replace(/[\u0001\u0002]/g, '');
+}
+
 export function aTextoLlano(texto: string, nombres: NombresInternos = { herramientas: [], campos: [] }): string {
-  return ordenar(separarPuntos(quitarNombres(quitarFormato(texto), nombres)));
+  return devolverNegrita(ordenar(separarPuntos(quitarNombres(quitarFormato(protegerNegrita(texto)), nombres))));
 }

@@ -6,6 +6,7 @@ import { decidirEnAsistente, enviarAlAsistente, verAnteriores } from '../accione
 import { elementosDe, textoDelSeparador, type Elemento } from '../../lib/separador';
 import { IconoEnviar } from './iconos';
 import { ResumenDeBitacora } from './resumen-bitacora';
+import { TextoConNegrita } from './texto-con-negrita';
 
 // T-034 · specs/07-agente/plan.md §9 · REQ-CAP-23. La conversación con el asistente. Cada turno se muestra
 // según su tipo, para que no se parezca lo que significa cosas distintas: una tarjeta que espera tu
@@ -148,7 +149,9 @@ function Turno({
     case 'pregunta':
       return (
         <li className="turno">
-          <p className="turno__texto">{turno.texto}</p>
+          <p className="turno__texto">
+            <TextoConNegrita texto={turno.texto} />
+          </p>
         </li>
       );
     case 'agenda':

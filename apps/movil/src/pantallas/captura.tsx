@@ -212,7 +212,18 @@ function Turno({
     case 'pregunta':
       return (
         <View style={estilos.respuesta}>
-          <Text style={estilos.cuerpo}>{turno.texto}</Text>
+          <Text style={estilos.cuerpo}>
+            {/* T-148 · decisión 34 de 07-agente: la negrita, `**así**`, es la única marca que llega de la API */}
+            {turno.texto.split(/(\*\*[^*\n]+\*\*)/g).map((tramo, i) =>
+              tramo.length > 4 && tramo.startsWith('**') && tramo.endsWith('**') ? (
+                <Text key={i} style={estilos.negrita}>
+                  {tramo.slice(2, -2)}
+                </Text>
+              ) : (
+                tramo
+              ),
+            )}
+          </Text>
         </View>
       );
     case 'agenda':
@@ -640,6 +651,7 @@ const estilos = StyleSheet.create({
   espera: { padding: espaciado[12], borderRadius: 12, backgroundColor: color.tinte.espera },
   esperaTexto: { color: color.tinte.esperaTexto, fontSize: tipografia.etiqueta, lineHeight: 20 },
   cuerpo: { fontSize: tipografia.cuerpo, color: color.texto.fuerte },
+  negrita: { fontWeight: '700' },
   suave: { fontSize: tipografia.etiqueta, lineHeight: 20, color: color.texto.suave },
   tachado: { textDecorationLine: 'line-through', color: color.texto.suave },
   separador: { flexDirection: 'row', alignItems: 'center', gap: espaciado[8], paddingVertical: espaciado[4] },

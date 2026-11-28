@@ -86,21 +86,23 @@ describe('agente.respuesta-en-texto-llano', () => {
     expect(nombres.campos).not.toContain('fecha');
   });
 
-  it('quita **, comillas invertidas y nombres internos, y deja cada punto en su línea, sin depender del modelo', async () => {
+  it('deja solo la negrita, quita comillas invertidas y nombres internos, y deja cada punto en su línea, sin depender del modelo', async () => {
     const r = await enviar('dime cómo funciona la sección tareas');
     const texto = (r.turnos.at(-1) as { tipo: string; texto: string }).texto;
     expect(r.turnos.at(-1)!.tipo).toBe('texto');
-    expect(texto).not.toMatch(/\*|`|#/);
+    expect(texto).not.toMatch(/`|#/);
+    // T-148: fuera de los pares de negrita no queda ningún asterisco
+    expect(texto.replace(/\*\*[^*\n]+\*\*/g, '')).not.toContain('*');
     expect(texto).not.toMatch(/tareas[_.][a-z]|deQuien|con_fecha/);
     const lineas = texto.split('\n');
     expect(lineas).toHaveLength(7);
-    expect(lineas[0]).toBe('¡Claro! La sección tareas es el lugar donde gestionas todo lo que tienes que hacer. Así funciona:');
+    expect(lineas[0]).toBe('¡Claro! La sección **tareas** es el lugar donde gestionas todo lo que tienes que hacer. Así funciona:');
     expect(lineas.slice(1).map((l) => l.slice(0, 3))).toEqual(['1. ', '2. ', '3. ', '4. ', '5. ', '6. ']);
-    expect(lineas[1]).toBe('1. Registrar una tarea – puedes anotar cualquier actividad que debes realizar (por ejemplo “Enviar informe a Ana”).');
-    expect(lineas[2]).toBe('2. Ver tus tareas – puedes listar tus pendientes, por tareas con fecha (con fecha) o sin fecha.');
-    expect(lineas[3]).toBe('3. Modificar una tarea – Si cambias el texto, la fecha o el.');
-    expect(lineas[5]).toBe('5. Reabrir o descartar – Si ya no es relevante.');
-    expect(lineas[6]).toBe('6. Anotar avances – Para registrar cómo vas.');
+    expect(lineas[1]).toBe('1. **Registrar una tarea** – puedes anotar cualquier actividad que debes realizar (por ejemplo “Enviar informe a Ana”).');
+    expect(lineas[2]).toBe('2. **Ver tus tareas** – puedes listar tus pendientes, por tareas con fecha (con fecha) o sin fecha.');
+    expect(lineas[3]).toBe('3. **Modificar una tarea** – Si cambias el texto, la fecha o el.');
+    expect(lineas[5]).toBe('5. **Reabrir o descartar** – Si ya no es relevante.');
+    expect(lineas[6]).toBe('6. **Anotar avances** – Para registrar cómo vas.');
 
     // Lo guardado en la transcripción es lo mismo que se mostró
     const leida = ConversacionAsistente.parse((await http().get('/asistente/conversacion').set('Authorization', autorizacion).expect(200)).body);
@@ -115,19 +117,31 @@ describe('agente.respuesta-en-texto-llano', () => {
 
   it('encabezados, viñetas, cursiva, citas, ids y líneas en blanco de más', async () => {
     const r = await enviar('dime algo con título');
-    expect((r.turnos.at(-1) as { texto: string }).texto).toBe('Resumen\n\n- Uno: el\n- Dos\n\nTres');
+    expect((r.turnos.at(-1) as { texto: string }).texto).toBe('Resumen\n\n- **Uno**: el\n- Dos\n\nTres');
   });
 
   it('la explicación del guion de demostración se ve en líneas, con ejemplos en palabras de la persona', () => {
     const regla = GUION_DEMOSTRACION.find((r) => new RegExp(r.si, 'iu').test('dime cómo funciona la sección tareas'))!;
     const paso = regla.pasos[0] as { texto: string };
     expect(aTextoLlano(paso.texto, nombres).split('\n')).toEqual([
-      'La sección Tareas guarda lo que tienes que hacer y lo que esperas de otras personas:',
-      '1. Anotar una tarea: por ejemplo «recuérdame enviar el informe el viernes».',
-      '2. Ver lo pendiente: «¿qué tengo pendiente?».',
-      '3. Darla por hecha: «ya envié el informe».',
-      '4. Contar cómo va: «sobre el informe: me falta la firma de Rosa».',
+      'La sección **Tareas** guarda lo que tienes que hacer y lo que esperas de otras personas:',
+      '1. **Anotar una tarea**: por ejemplo «recuérdame enviar el informe el viernes».',
+      '2. **Ver lo pendiente**: «¿qué tengo pendiente?».',
+      '3. **Darla por hecha**: «ya envié el informe».',
+      '4. **Contar cómo va**: «sobre el informe: me falta la firma de Rosa».',
     ]);
+  });
+
+  it('la negrita: solo pares de una línea y con texto; `__` pasa a `**`; una que queda vacía desaparece (T-148)', () => {
+    expect(aTextoLlano('Hola **Ana** y __Beto__', nombres)).toBe('Hola **Ana** y **Beto**');
+    // Sin pareja o partida en dos líneas: no es negrita
+    expect(aTextoLlano('Un * suelto y **sin cerrar', nombres)).toBe('Un suelto y sin cerrar');
+    expect(aTextoLlano('**uno\ndos**', nombres)).toBe('Uno\nDos');
+    // Vacía al quitar un nombre interno
+    // (el conector «usa» se va con el nombre, como fuera de la negrita)
+    expect(aTextoLlano('Usa **tareas_registrar** para anotar', nombres)).toBe('Para anotar');
+    // La cursiva y los encabezados se siguen quitando
+    expect(aTextoLlano('# Título\n*cursiva* y **negrita**', nombres)).toBe('Título\nCursiva y **negrita**');
   });
 
   it('un texto ya llano no cambia; «a las 3. Luego» no se parte', () => {

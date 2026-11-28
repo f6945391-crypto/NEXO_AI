@@ -212,5 +212,12 @@
     "rol": "gerente",
     "plan": "empresarial",
     "lista": true
+  },
+  "asistenteNegrita": {
+    "correo": "asistente-negrita-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "organizacion": "personal",
+    "lista": true
   }
 }

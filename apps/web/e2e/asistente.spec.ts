@@ -228,3 +228,19 @@ test.describe('web.en-espera-visible', () => {
     await expect(franja).toHaveCount(0);
   });
 });
+
+// T-148 · REQ-AGT-06 · decisión 34 de 07-agente: la negrita es la única marca que llega y se ve como negrita.
+// El guion de demostración responde a «dime cómo funciona la sección tareas» con un texto con formato, como Groq.
+test.describe('web.asistente-negrita', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('la negrita se ve en negrita, sin asteriscos, y un punto por línea', async ({ page }) => {
+    await entrar(page, cuentas.asistenteNegrita.correo);
+    await pedir(page, 'dime cómo funciona la sección tareas');
+    const respuesta = page.locator('.turno__texto').last();
+    await expect(respuesta.locator('strong', { hasText: 'Anotar una tarea' })).toBeVisible();
+    await expect(respuesta.locator('strong', { hasText: 'Tareas' }).first()).toBeVisible();
+    await expect(respuesta).not.toContainText('*');
+    await expect(respuesta).not.toContainText('tareas_registrar');
+  });
+});
