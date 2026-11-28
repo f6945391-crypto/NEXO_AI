@@ -6,6 +6,7 @@ import {
   ArgsConsultarTareas,
   ArgsRegistrarTarea,
   ArgsTareaExistente,
+  CargaRegistrarTarea,
   type BitacoraTarea,
   type CandidatasDeReferente,
   type FranjaTarea,
@@ -16,12 +17,12 @@ import {
 } from '@nexoai/contratos';
 import type { ContextoSolicitud } from '../../identidad/contexto';
 import { OperacionesService } from '../../operaciones/operaciones.service';
-import { diaLargo } from '../../tareas/dominio/formato';
+import { diaLargo, mayuscula } from '../../tareas/dominio/formato';
 import { ConsultaTareasService } from '../../tareas/consulta-tareas.service';
 import { aContrato, type FilaAvance, type FilaTarea } from '../../tareas/tareas.repositorio';
 import { AVISO_CONTENIDO_EXTERNO } from './contenido-externo';
 import { EjecutorHerramientas } from './ejecutor-herramientas';
-import type { EntornoHerramienta, ResultadoHerramienta } from './herramienta';
+import { nombreParaModelo, type EntornoHerramienta, type Oferta, type ResultadoHerramienta } from './herramienta';
 
 // T-050, T-051 · specs/09-tareas-personales/plan.md §7.1 · REQ-CUN03-01, 02, 12, 14, 15, 16. Las herramientas
 // de tareas del agente. **Ninguna escribe** (P-01, AD-09): consultan o proponen una Operación `tareas.*` con
@@ -62,6 +63,23 @@ function comoPropuesta(op: OperacionRespuesta): ResultadoHerramienta {
     operacionId: op.id,
     turno,
   };
+}
+
+// T-143 · H-TP-09: la frase fija con que empieza la respuesta a un horario para una tarea
+export const UNA_TAREA_NO_LLEVA_HORARIO = 'Una tarea lleva fecha, pero no horario.';
+
+// T-143 · REQ-AGT-07: la tarea propuesta, con lo que cambia; null quita, como en `tareas.cambiar`. Sin fecha no
+// queda hora límite, y sin persona no queda desde cuándo se espera (los CHECK de la tabla)
+function corregida(base: CargaRegistrarTarea, cambios: Omit<ArgsCambiarTarea, 'tareaId' | 'horaInicio' | 'horaFin'>): CargaRegistrarTarea {
+  const nueva: Record<string, unknown> = { ...base };
+  for (const [campo, valor] of Object.entries(cambios)) {
+    if (valor === undefined) continue;
+    if (valor === null) delete nueva[campo];
+    else nueva[campo] = valor;
+  }
+  if (!nueva.fecha) delete nueva.horaLimite;
+  if (!nueva.deQuien) delete nueva.esperadaDesde;
+  return nueva as CargaRegistrarTarea;
 }
 
 // La lista que ve la persona, por franja y en el orden de H-TP-05: solo los grupos que tienen algo
@@ -128,7 +146,8 @@ export class HerramientasTareas implements OnModuleInit {
     });
     this.ejecutor.registrar({
       nombre: 'tareas.cambiar',
-      descripcion: 'Propone cambiar el texto, la fecha, la hora límite o de quién se espera una tarea pendiente. Pasa solo lo que cambia; null quita la fecha o la persona.',
+      descripcion:
+        'Propone cambiar el texto, la fecha, la hora límite o de quién se espera una tarea pendiente, o corregir la tarea de la propuesta abierta (con su propuestaId). Pasa solo lo que cambia; null quita la fecha o la persona.',
       esquema: ArgsCambiarTarea,
       ejecutar: (contexto, args, entorno) => this.cambiar(contexto, args, entorno),
     });
@@ -215,9 +234,59 @@ export class HerramientasTareas implements OnModuleInit {
   }
 
   private async cambiar(contexto: ContextoSolicitud, args: ArgsCambiarTarea, entorno: EntornoHerramienta): Promise<ResultadoHerramienta> {
-    const { tareaId, ...cambios } = args;
+    const { tareaId, horaInicio, horaFin, ...cambios } = args;
+    // T-143 · REQ-AGT-07: con una tarea propuesta y sin confirmar, cambiarla es corregir la propuesta, no buscar
+    // entre las tareas guardadas
+    const abierta = await this.propuestaDeTarea(contexto, tareaId, entorno);
+    // H-TP-09: «a las 3» sin «hasta» es una hora límite; con inicio, un horario que la tarea no lleva
+    if (horaFin && !horaInicio && cambios.horaLimite === undefined) cambios.horaLimite = horaFin;
+    else if (horaInicio) return this.sinHorario(contexto, { tareaId, horaInicio, ...(horaFin ? { horaFin } : {}), fecha: cambios.fecha ?? null, texto: cambios.texto ?? null }, abierta, entorno);
     if (Object.values(cambios).every((v) => v === undefined)) return conError('DATOS_FALTANTES', 'No dice qué cambiar de la tarea.', ['cambio_tarea']);
+    if (abierta) return comoPropuesta(await this.proponer(contexto, entorno, 'tareas.registrar', corregida(abierta, cambios)));
     return comoPropuesta(await this.proponer(contexto, entorno, 'tareas.cambiar', { tareaId, ...cambios }));
+  }
+
+  // La propuesta abierta de una tarea nueva, si `tareaId` es su id o no es el de ninguna tarea pendiente (el
+  // modelo pasó lo que tenía a mano)
+  private async propuestaDeTarea(contexto: ContextoSolicitud, tareaId: string, entorno: EntornoHerramienta): Promise<CargaRegistrarTarea | null> {
+    const abierta = entorno.propuestaAbierta;
+    if (abierta?.tipo !== 'tareas.registrar') return null;
+    const carga = CargaRegistrarTarea.safeParse(abierta.carga);
+    if (!carga.success) return null;
+    if (abierta.id === tareaId) return carga.data;
+    const pendientes = await this.consulta.filas(contexto, 'pendientes', entorno.referencia.instante);
+    return pendientes.some((f) => f.id === tareaId) ? null : carga.data;
+  }
+
+  // T-143 · REQ-AGT-07 · H-TP-09: una tarea lleva fecha, no horario. El texto lo escribe el código; sobre una tarea
+  // propuesta, ofrece registrarla como compromiso (si la persona acepta, el grafo lo propone) y la tarjeta de la
+  // tarea sigue abierta; sobre una guardada, solo lo explica
+  private async sinHorario(
+    contexto: ContextoSolicitud,
+    pedido: { tareaId: string; horaInicio: string; horaFin?: string; fecha: string | null; texto: string | null },
+    abierta: CargaRegistrarTarea | null,
+    entorno: EntornoHerramienta,
+  ): Promise<ResultadoHerramienta> {
+    if (!abierta) {
+      const fila = (await this.consulta.filas(contexto, 'pendientes', entorno.referencia.instante)).find((f) => f.id === pedido.tareaId);
+      const nombre = fila ? `«${fila.texto}»` : 'La tarea';
+      return conError('TAREA_SIN_HORARIO', `${UNA_TAREA_NO_LLEVA_HORARIO} ${nombre} sigue como estaba. Si quieres apartar ese tiempo, pídeme un compromiso en tu calendario.`);
+    }
+    const texto = pedido.texto ?? abierta.texto;
+    const fecha = pedido.fecha ?? abierta.fecha ?? null;
+    const rango = pedido.horaFin ? `de ${pedido.horaInicio} a ${pedido.horaFin}` : `a las ${pedido.horaInicio}`;
+    const cuando = fecha ? `el ${diaLargo(fecha)}, ${rango}` : rango;
+    const sigue = abierta.fecha ? `para el ${diaLargo(abierta.fecha)}, sin horario` : 'sin fecha';
+    const oferta: Oferta = {
+      llamada: {
+        nombre: nombreParaModelo('agenda.registrar_evento'),
+        argumentos: { titulo: mayuscula(texto).slice(0, 200), ...(fecha ? { fecha } : {}), horaInicio: pedido.horaInicio, ...(pedido.horaFin ? { horaFin: pedido.horaFin } : {}) },
+      },
+      frase: entorno.solicitudOriginal,
+      alNegar: `De acuerdo: la tarea queda ${sigue}. Puedes confirmarla en su tarjeta.`,
+    };
+    const mensaje = `${UNA_TAREA_NO_LLEVA_HORARIO} ¿Quieres que «${texto}» quede como compromiso en tu calendario ${cuando}? Si me dices que sí, ${fecha ? 'te muestro su tarjeta' : 'te pregunto qué día'}; si no, la tarea queda ${sigue}.`;
+    return { paraModelo: { error: { codigo: 'TAREA_SIN_HORARIO', mensaje, oferta } } };
   }
 
   private async sobreExistente(contexto: ContextoSolicitud, accion: Accion, args: ArgsTareaExistente, entorno: EntornoHerramienta): Promise<ResultadoHerramienta> {

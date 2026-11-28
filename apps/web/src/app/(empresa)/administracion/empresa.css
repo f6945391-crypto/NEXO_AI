@@ -150,6 +150,31 @@
   color: var(--estado-advertencia);
 }
 
+.empresa__etiqueta--administrador {
+  background: var(--marca-suave);
+  color: var(--marca-base);
+}
+
+.empresa__etiqueta--responsable {
+  background: var(--marca-suave);
+  color: var(--marca-fuerte);
+}
+
+/* T-147 · H-ADM-35: «1 administrador · 2 miembros», encima de la tabla */
+.empresa__resumen {
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  color: var(--texto-suave);
+}
+
+.empresa__equipos-de {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaciado-8);
+}
+
 .empresa__entrada-accion .empresa__etiqueta {
   margin-left: var(--espaciado-8);
 }
@@ -301,6 +326,51 @@
   padding: 0;
   display: grid;
   gap: var(--espaciado-8);
+}
+
+/* T-067: cada persona del equipo, con sus acciones a la derecha */
+.empresa__miembro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaciado-8);
+  overflow-wrap: anywhere;
+}
+
+.empresa__miembro-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaciado-12);
+}
+
+.empresa__anadir {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaciado-8);
+  padding-top: var(--espaciado-12);
+  border-top: 1px solid var(--borde-base);
+}
+
+.empresa__anadir select {
+  flex: 1 1 180px;
+  font: inherit;
+  min-height: 36px;
+  padding: 0 var(--espaciado-8);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-sm);
+  background: var(--superficie-base);
+  color: var(--texto-fuerte);
+}
+
+.empresa__anadir select:focus-visible {
+  outline: 2px solid var(--marca-base);
+  outline-offset: 2px;
+}
+
+/* REQ-ADM-32: el equipo sin responsable se ve de lejos */
+.empresa__equipo--sin-responsable article {
+  border-color: var(--estado-advertencia);
 }
 
 .empresa__sin-responsable {

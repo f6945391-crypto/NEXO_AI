@@ -9,6 +9,7 @@ import type { Tareas } from '../../lib/tareas';
 import { asegurarAcceso, conectarGoogle, salir } from '../acciones';
 import { Actividad } from './actividad';
 import { AgendaMes, AgendaSemana, ListaCompromisos } from './agenda';
+import { AutorizacionesEquipo } from './autorizaciones-equipo';
 import { CambioContrasena } from './cambio-contrasena';
 import { CambioZona } from './cambio-zona';
 import { FranjaEnEspera } from './en-espera';
@@ -112,11 +113,13 @@ export function Aplicacion({
   // En Agenda el nivel lo dice la dirección; en las otras secciones, y en el corte del equipo, el estado de la página
   const corteVisible = vistaAgendaPersonal ? NIVELES.indexOf(vista.nivel) : corte;
 
+  // T-145 · REQ-CUN06-07 v2: en el corte «Reuniones», el blanco de la conversación ofrece ejemplos de reuniones,
+  // los del boceto del 27 de noviembre de 2026
   const ejemplos = vistaEquipo
     ? [
-        'Busca un horario con mi equipo para el jueves',
-        'Reunión de avance con mi equipo esta semana',
-        'Mueve la reunión de avance al viernes',
+        'Consulta la disponibilidad de mi equipo para mañana',
+        'Busca un horario de 30 minutos para reunirnos',
+        'Consulta la disponibilidad de mi equipo el viernes',
       ]
     : actual.ejemplos;
 
@@ -329,7 +332,6 @@ export function Aplicacion({
               <Reuniones
                 key={perfil.perfilId}
                 zona={perfil.zonaHoraria ?? 'America/Lima'}
-                perfilId={perfil.perfilId}
                 version={versionReuniones}
                 abrir={reunionPedida}
                 alPedir={pedirAlAsistente}
@@ -410,6 +412,9 @@ export function Aplicacion({
                 </ul>
               </section>
             )}
+            {/* T-146 · D-REU-36: la autorización para compartir la disponibilidad, con plan efectivo Empresarial
+                y algún equipo (REQ-CUN05-18) */}
+            {conEquipo && perfil && <AutorizacionesEquipo perfilId={perfil.perfilId} />}
             <form action={salir}>
               <button type="submit" className="boton">
                 Cerrar sesión

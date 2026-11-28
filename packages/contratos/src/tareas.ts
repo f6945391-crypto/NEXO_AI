@@ -186,12 +186,16 @@ export const ArgsRegistrarTarea = z.strictObject({
 export type ArgsRegistrarTarea = z.infer<typeof ArgsRegistrarTarea>;
 
 export const ArgsCambiarTarea = z.strictObject({
-  tareaId: z.uuid().describe('Id de la tarea, tal como lo dio tareas_consultar'),
+  // T-143 · REQ-AGT-07: también el propuestaId de la propuesta abierta, si corrige una tarea todavía sin confirmar
+  tareaId: z.uuid().describe('Id de la tarea, tal como lo dio tareas_consultar, o el propuestaId de la propuesta abierta'),
   texto: TextoTarea.optional(),
   fecha: Fecha.nullable().optional().describe('Fecha nueva; null para quitarla'),
   horaLimite: Hora.nullable().optional().describe('Hora límite nueva; null para quitarla'),
   deQuien: DeQuien.nullable().optional().describe('De quién se espera; null para quitarlo'),
   contexto: ContextoTarea.nullable().optional().describe('Con quién o para qué es; null para quitarlo'),
+  // T-143 · H-TP-09: una tarea no lleva horario. Si la persona da uno, se pasa tal cual y el código ofrece un compromiso
+  horaInicio: Hora.optional().describe('Solo si dijo a qué hora empieza («de 3 a 6»): una tarea no lleva horario'),
+  horaFin: Hora.optional().describe('Solo si dijo a qué hora termina, junto con horaInicio'),
 });
 export type ArgsCambiarTarea = z.infer<typeof ArgsCambiarTarea>;
 

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import type { DetalleReunion, InvitadoReunion, MapaReunion, OperacionRespuesta, ReunionResumen } from '@nexoai/contratos';
 import { confirmarOperacionReunion, obtenerDetalleReunion, obtenerReuniones, proponerCancelarReunion, proponerConvocar } from '../acciones-reuniones';
 import { descartarOperacion } from '../acciones';
-import { AutorizacionesEquipo } from './autorizaciones-equipo';
 
 // T-134 · specs/10-reuniones, REQ-CUN06-07 a 10, 15, 19 y 20 · bocetos 01 y 02 de Franco
 // (design/bocetos/2026-11-25-reuniones/). El corte «Reuniones» de Agenda (D-REU-07): la lista con el estado de
@@ -108,6 +107,25 @@ function TarjetaConfirmacion({
   );
 }
 
+// T-145 · REQ-CUN06-07 v2, D-REU-35: la petición que «Crear reunión» escribe en la conversación, sin enviarla
+export const PEDIR_REUNION = 'Busca un horario para reunirme con mi equipo';
+
+// El dibujo del estado vacío (boceto del 27 de noviembre de 2026): un calendario con una persona. Toma el color
+// del texto que lo rodea; el relleno de la persona tapa las líneas del calendario
+function DibujoReuniones() {
+  return (
+    <svg className="reuniones__dibujo" viewBox="0 0 96 96" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <rect x="10" y="16" width="60" height="58" rx="7" />
+      <path d="M10 32h60M26 10v12M54 10v12" />
+      <rect x="21" y="42" width="9" height="9" rx="2" />
+      <rect x="36" y="42" width="9" height="9" rx="2" />
+      <rect x="21" y="57" width="9" height="9" rx="2" />
+      <circle cx="68" cy="56" r="9" fill="var(--superficie-base)" />
+      <path d="M50 86v-4c0-8 8-13 18-13s18 5 18 13v4z" fill="var(--superficie-base)" />
+    </svg>
+  );
+}
+
 // ─── Lista (boceto 01) ──────────────────────────────────────────────────────────────────────────────────────
 
 function Lista({
@@ -125,7 +143,8 @@ function Lista({
 }) {
   return (
     <section className="reuniones" aria-labelledby="titulo-reuniones">
-      <h2 id="titulo-reuniones" className="reuniones__titulo">
+      {/* Sin reuniones, el título lo da el estado vacío; el de la sección queda para el lector de pantalla */}
+      <h2 id="titulo-reuniones" className={reuniones.length === 0 ? 'solo-lector' : 'reuniones__titulo'}>
         Tus reuniones
       </h2>
       {aviso && (
@@ -134,11 +153,14 @@ function Lista({
         </p>
       )}
       {reuniones.length === 0 ? (
+        // T-145 · REQ-CUN06-07 v2: «Crear reunión» no abre un formulario ni crea nada; escribe la petición en la
+        // conversación sin enviarla (D-REU-35, R-42)
         <div className="vacio reuniones__vacio">
-          <h2>Todavía no hay reuniones</h2>
-          <p>Pídele al asistente que busque un horario con tu equipo.</p>
-          <button type="button" className="ejemplo reuniones__ejemplo" onClick={() => alPedir('Busca un horario con mi equipo esta semana')}>
-            Busca un horario con mi equipo esta semana
+          <DibujoReuniones />
+          <h3>Aún no hay reuniones de equipo</h3>
+          <p>Crea una reunión para comparar la disponibilidad de tu equipo y elegir un horario.</p>
+          <button type="button" className="boton" onClick={() => alPedir(PEDIR_REUNION)}>
+            Crear reunión
           </button>
         </div>
       ) : (
@@ -581,13 +603,11 @@ function Detalle({ id, zona, alVolver }: { id: string; zona: string; alVolver: (
 
 export function Reuniones({
   zona,
-  perfilId,
   version,
   abrir,
   alPedir,
 }: {
   zona: string;
-  perfilId: string;
   // Sube cuando la conversación cambió alguna reunión: la lista se vuelve a pedir
   version: number;
   // «Ver todos los horarios» desde la conversación abre esta reunión
@@ -639,7 +659,6 @@ export function Reuniones({
       ) : (
         <p className="ayuda">Leyendo tus reuniones…</p>
       )}
-      <AutorizacionesEquipo perfilId={perfilId} />
     </div>
   );
 }

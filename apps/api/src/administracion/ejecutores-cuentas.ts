@@ -22,7 +22,7 @@ import { LecturasAdministracion, type CuentaDeLaEmpresa } from './lecturas';
 
 export const NOMBRE_PLAN: Readonly<Record<Plan, string>> = { gratuito: 'Gratuito', personal: 'Personal', empresarial: 'Empresarial' };
 
-const TEXTOS = {
+export const TEXTOS = {
   noPertenece: 'Esa cuenta no pertenece a la organización.',
   afiliada: 'Esa cuenta es de la persona: se sumó con su cuenta. Lo que sí puedes hacer es quitarla de la organización.',
   cerrada: 'Esa cuenta está cerrada y no se puede cambiar.',
@@ -30,9 +30,9 @@ const TEXTOS = {
   correoConCuenta: 'Ese correo ya tiene una cuenta en NexoAI. En lugar de darla de alta, puedes invitar a esa persona a sumarse a la organización.',
 };
 
-type Evaluacion = { vista: VistaConfirmacion; cuenta?: CuentaDeLaEmpresa };
+export type Evaluacion = { vista: VistaConfirmacion; cuenta?: CuentaDeLaEmpresa };
 
-const vistaDe = (accion: string, datos: VistaConfirmacion['datos'], irreversible: string | null, motivo: string | null): VistaConfirmacion => ({
+export const vistaDe = (accion: string, datos: VistaConfirmacion['datos'], irreversible: string | null, motivo: string | null): VistaConfirmacion => ({
   accion,
   datos,
   irreversible,
@@ -42,14 +42,14 @@ const vistaDe = (accion: string, datos: VistaConfirmacion['datos'], irreversible
 
 // Decorada para que NestJS lea los tipos de su constructor desde las clases hijas
 @Injectable()
-abstract class EjecutorDeAdministracion<C> implements EjecutorOperacion<C>, OnModuleInit {
+export abstract class EjecutorDeAdministracion<C, E extends Evaluacion = Evaluacion> implements EjecutorOperacion<C>, OnModuleInit {
   abstract readonly tipo: string;
   abstract readonly esquema: z.ZodType<C>;
   readonly ambito = 'empresa' as const;
   readonly soloAdministrador = true;
   readonly origenes = ['control_directo'] as const;
   readonly textoOrigenNoPermitido = 'Esto se hace en Administración, no con el asistente.';
-  readonly nombresDeCampos: Readonly<Record<string, string>> = { correo: 'el correo', plan: 'el plan', perfilId: 'la cuenta' };
+  readonly nombresDeCampos: Readonly<Record<string, string>> = { correo: 'el correo', plan: 'el plan', perfilId: 'la cuenta', nombre: 'el nombre', equipoId: 'el equipo' };
 
   constructor(
     protected readonly registro: RegistroOperaciones,
@@ -61,8 +61,8 @@ abstract class EjecutorDeAdministracion<C> implements EjecutorOperacion<C>, OnMo
     this.registro.registrar(this);
   }
 
-  protected abstract evaluar(contexto: ContextoSolicitud, carga: C): Promise<Evaluacion>;
-  protected abstract aplicar(contexto: ContextoSolicitud, carga: C, evaluacion: Evaluacion): Promise<ResultadoEjecucion>;
+  protected abstract evaluar(contexto: ContextoSolicitud, carga: C): Promise<E>;
+  protected abstract aplicar(contexto: ContextoSolicitud, carga: C, evaluacion: E): Promise<ResultadoEjecucion>;
 
   async proponer(contexto: ContextoSolicitud, carga: C): Promise<VistaConfirmacion> {
     return (await this.evaluar(contexto, carga)).vista;

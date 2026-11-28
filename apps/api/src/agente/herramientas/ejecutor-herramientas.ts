@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { ContextoSolicitud } from '../../identidad/contexto';
 import { PrismaService } from '../../plataforma/prisma.service';
 import type { DefinicionHerramienta, LlamadaHerramienta } from '../modelo/proveedor-modelo';
+import { esNombreInterno, type NombresInternos } from '../texto-llano';
 import { nombreParaModelo, type EntornoHerramienta, type Herramienta, type ResultadoHerramienta } from './herramienta';
 
 // P-01, P-07 · T-030 · specs/07-agente/plan.md §5 y §8. La única forma de que el modelo actúe: valida los
@@ -54,6 +55,20 @@ export class EjecutorHerramientas {
       descripcion: h.descripcion,
       esquema: z.toJSONSchema(h.esquema, { io: 'input' }) as Record<string, unknown>,
     }));
+  }
+
+  // T-142 · REQ-AGT-06: lo que la persona no debe leer en una respuesta, sacado de este registro: el nombre de
+  // cada herramienta, con punto y como lo ve el modelo, y los campos de sus argumentos
+  nombresInternos(): NombresInternos {
+    const herramientas: string[] = [];
+    // T-143: el id de la propuesta abierta lo nombra la nota (escribirPropuestaAbierta), no un esquema
+    const campos = new Set<string>(['propuestaId']);
+    for (const [nombre, h] of this.herramientas.entries()) {
+      herramientas.push(nombre, h.nombre);
+      const esquema = z.toJSONSchema(h.esquema, { io: 'input' }) as { properties?: Record<string, unknown> };
+      for (const campo of Object.keys(esquema.properties ?? {})) if (esNombreInterno(campo)) campos.add(campo);
+    }
+    return { herramientas, campos: [...campos] };
   }
 
   async ejecutar(

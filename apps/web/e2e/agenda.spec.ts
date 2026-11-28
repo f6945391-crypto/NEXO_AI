@@ -173,20 +173,21 @@ test.describe('agenda.corte-disponibilidad-de-equipo', () => {
 
     await selector.getByRole('tab', { name: 'Reuniones' }).click();
     await expect(selector.getByRole('tab', { name: 'Reuniones' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('heading', { name: 'Tus reuniones' })).toBeVisible();
+    // T-145: sin reuniones, el título de la sección queda solo para el lector de pantalla; la región lo conserva
+    await expect(page.getByRole('region', { name: 'Tus reuniones' })).toBeVisible();
     await expect(page.getByText('Encuentra un horario para reunirse')).toBeVisible();
     await expect(page).not.toHaveURL(/nivel=/);
 
     await selector.getByRole('tab', { name: 'Semana' }).click();
     await expect(page).toHaveURL(/nivel=semana/);
     await expect(selector.getByRole('tab', { name: 'Semana' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('heading', { name: 'Tus reuniones' })).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Tus reuniones' })).toHaveCount(0);
 
     await selector.getByRole('tab', { name: 'Reuniones' }).click();
-    await expect(page.getByRole('heading', { name: 'Tus reuniones' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Tus reuniones' })).toBeVisible();
     await selector.getByRole('tab', { name: 'Hoy' }).click();
     await expect(selector.getByRole('tab', { name: 'Hoy' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByRole('heading', { name: 'Tus reuniones' })).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Tus reuniones' })).toHaveCount(0);
   });
 });
 
@@ -201,10 +202,13 @@ test.describe('agenda.corte-disponibilidad-por-plan', () => {
     await expect(selector.getByRole('tab')).toHaveText(['Hoy', 'Semana', 'Mes']);
   });
 
-  test('con Plan Empresarial y un equipo, el corte muestra al responsable', async ({ page }) => {
+  test('con Plan Empresarial y un equipo, Ajustes muestra al responsable', async ({ page }) => {
     await entrar(page, cuentas.acmeResponsable.correo);
-    // T-134 · D-REU-07: el corte se llama «Reuniones»; el responsable va al pie, con la autorización propia
-    await page.getByRole('tablist', { name: 'Niveles' }).getByRole('tab', { name: 'Reuniones' }).click();
-    await expect(page.getByText(`Responsable: ${cuentas.acmeResponsable.correo} · 3 integrantes`)).toBeVisible();
+    // T-134 · D-REU-07: el corte se llama «Reuniones»
+    await expect(page.getByRole('tablist', { name: 'Niveles' }).getByRole('tab', { name: 'Reuniones' })).toBeVisible();
+    // T-146 · D-REU-36: el responsable y la autorización propia pasaron del pie de Reuniones a Ajustes
+    await page.getByRole('button', { name: 'Ajustes' }).click();
+    const apartado = page.getByRole('dialog', { name: 'Ajustes' }).getByRole('region', { name: 'Disponibilidad para tu equipo' });
+    await expect(apartado.getByText(`Responsable: ${cuentas.acmeResponsable.correo} · 3 integrantes`)).toBeVisible();
   });
 });

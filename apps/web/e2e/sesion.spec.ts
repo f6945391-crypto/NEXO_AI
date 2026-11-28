@@ -41,7 +41,7 @@ test.describe('web.sesion-se-renueva', () => {
     await test.step('Reuniones lee la lista con una acción de servidor', async () => {
       await caducarAcceso(context);
       await page.getByRole('tablist', { name: 'Niveles' }).getByRole('tab', { name: 'Reuniones' }).click();
-      await expect(page.getByRole('heading', { name: 'Todavía no hay reuniones' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Aún no hay reuniones de equipo' })).toBeVisible();
       await expect(page.getByText('Tu sesión terminó. Vuelve a iniciar sesión.')).toHaveCount(0);
       await accesoRenovado(context);
     });

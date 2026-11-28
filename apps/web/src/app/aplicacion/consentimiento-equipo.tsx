@@ -20,6 +20,10 @@ type Props = {
   alOcupar: (ocupado: boolean) => void;
   alProponer: (pendiente: boolean) => void;
   alActualizar: () => Promise<void>;
+  // T-146 · D-REU-36: en Ajustes, una fila por equipo. El nombre y el estado los pinta la fila; aquí quedan
+  // «Autorizar» o «Retirar autorización» y la tarjeta de confirmación (P-03)
+  variante?: 'completa' | 'fila';
+  nombreEquipo?: string;
 };
 
 const ESTADOS: Record<EstadoConsentimientoEquipo, string> = {
@@ -36,6 +40,8 @@ export function ConsentimientoEquipo({
   alOcupar,
   alProponer,
   alActualizar,
+  variante = 'completa',
+  nombreEquipo,
 }: Props) {
   const titulo = useId();
   const tituloConfirmacion = useId();
@@ -154,6 +160,130 @@ export function ConsentimientoEquipo({
 
   const deshabilitado = ocupado || bloqueado;
 
+  const tarjeta = propuesta && (
+    <section
+      className="tarjeta-confirmacion"
+      aria-labelledby={tituloConfirmacion}
+    >
+      <h4 id={tituloConfirmacion}>
+        {propuesta.vistaConfirmacion.accion}
+      </h4>
+
+      <dl>
+        {propuesta.vistaConfirmacion.datos.map(
+          (dato, indice) => (
+            <div
+              key={indice}
+              className="tarjeta-confirmacion__dato"
+            >
+              <dt>{dato.etiqueta}</dt>
+              <dd>{dato.valor}</dd>
+            </div>
+          ),
+        )}
+      </dl>
+
+      {propuesta.vistaConfirmacion.irreversible && (
+        <p className="ayuda">
+          {propuesta.vistaConfirmacion.irreversible}
+        </p>
+      )}
+
+      {!propuesta.vistaConfirmacion.confirmable && (
+        <p className="error" role="alert">
+          {propuesta.vistaConfirmacion.motivoNoConfirmable}
+        </p>
+      )}
+
+      <div className="cambio-zona__acciones">
+        <button
+          type="button"
+          className="boton"
+          disabled={
+            deshabilitado ||
+            !propuesta.vistaConfirmacion.confirmable
+          }
+          onClick={confirmar}
+        >
+          {ocupado ? 'Procesando…' : 'Confirmar cambio'}
+        </button>
+
+        <button
+          type="button"
+          className="boton boton--secundario"
+          disabled={deshabilitado}
+          onClick={cancelar}
+        >
+          Cancelar
+        </button>
+      </div>
+    </section>
+  );
+
+  const avisos = (
+    <>
+      {ocupado && !propuesta && (
+        <p className="ayuda" role="status">
+          Procesando solicitud…
+        </p>
+      )}
+
+      {aviso && (
+        <p className="cambio-zona__aviso" role="status">
+          {aviso}
+        </p>
+      )}
+
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+    </>
+  );
+
+  // T-146: en la fila de Ajustes, un solo botón. Lo pendiente, lo rechazado y lo retirado se leen igual,
+  // «Sin autorizar», y se autorizan con el mismo botón
+  if (variante === 'fila') {
+    // Con varios equipos, cada botón dice de cuál es, como «Conectar: …» en los permisos de Google
+    const deQuien = (texto: string) =>
+      nombreEquipo ? `${texto}: ${nombreEquipo}` : undefined;
+
+    return (
+      <div className="consentimiento-fila" aria-busy={ocupado}>
+        {!propuesta && (
+          <div className="consentimiento-fila__acciones">
+            {estadoActual === 'concedida' ? (
+              <button
+                type="button"
+                className="boton boton--secundario"
+                disabled={deshabilitado}
+                aria-label={deQuien('Retirar autorización')}
+                onClick={() => proponer('revocada')}
+              >
+                Retirar autorización
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="boton boton--secundario"
+                disabled={deshabilitado}
+                aria-label={deQuien('Autorizar')}
+                onClick={() => proponer('concedida')}
+              >
+                Autorizar
+              </button>
+            )}
+          </div>
+        )}
+
+        {tarjeta}
+
+        {avisos}
+      </div>
+    );
+  }
+
   return (
     <section
       className="consentimiento-equipo"
@@ -212,83 +342,9 @@ export function ConsentimientoEquipo({
         </div>
       )}
 
-      {propuesta && (
-        <section
-          className="tarjeta-confirmacion"
-          aria-labelledby={tituloConfirmacion}
-        >
-          <h4 id={tituloConfirmacion}>
-            {propuesta.vistaConfirmacion.accion}
-          </h4>
+      {tarjeta}
 
-          <dl>
-            {propuesta.vistaConfirmacion.datos.map(
-              (dato, indice) => (
-                <div
-                  key={indice}
-                  className="tarjeta-confirmacion__dato"
-                >
-                  <dt>{dato.etiqueta}</dt>
-                  <dd>{dato.valor}</dd>
-                </div>
-              ),
-            )}
-          </dl>
-
-          {propuesta.vistaConfirmacion.irreversible && (
-            <p className="ayuda">
-              {propuesta.vistaConfirmacion.irreversible}
-            </p>
-          )}
-
-          {!propuesta.vistaConfirmacion.confirmable && (
-            <p className="error" role="alert">
-              {propuesta.vistaConfirmacion.motivoNoConfirmable}
-            </p>
-          )}
-
-          <div className="cambio-zona__acciones">
-            <button
-              type="button"
-              className="boton"
-              disabled={
-                deshabilitado ||
-                !propuesta.vistaConfirmacion.confirmable
-              }
-              onClick={confirmar}
-            >
-              {ocupado ? 'Procesando…' : 'Confirmar cambio'}
-            </button>
-
-            <button
-              type="button"
-              className="boton boton--secundario"
-              disabled={deshabilitado}
-              onClick={cancelar}
-            >
-              Cancelar
-            </button>
-          </div>
-        </section>
-      )}
-
-      {ocupado && !propuesta && (
-        <p className="ayuda" role="status">
-          Procesando solicitud…
-        </p>
-      )}
-
-      {aviso && (
-        <p className="cambio-zona__aviso" role="status">
-          {aviso}
-        </p>
-      )}
-
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
+      {avisos}
     </section>
   );
 }

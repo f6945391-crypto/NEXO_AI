@@ -1,61 +1,16 @@
-import { EquipoOrganizacion } from '@nexoai/contratos';
+import { EquipoOrganizacion, PersonaOrganizacion } from '@nexoai/contratos';
 import { exigirSesionEmpresa } from '../_comun/exigir';
 import { leerDeLaZona } from '../_comun/sesion';
+import { Equipos } from './equipos';
 
-// T-062 · REQ-ADM-28 a 32 (lectura) · plan §7.2, «Equipos». Una tarjeta por equipo, con su responsable y sus
-// miembros; «Sin responsable» destacado. Crear y componer equipos llega con T-066 y T-067.
+// T-062, T-067 · REQ-ADM-28 a 32 · plan §7.2, «Equipos». Una tarjeta por equipo, con su responsable y sus
+// miembros; «Sin responsable» destacado. El administrador los crea y los compone; el responsable que no
+// administra ve los suyos en lectura y no pide la lista de personas, que no es suya (REQ-ADM-06).
 export default async function PaginaEquipos() {
   const sesion = await exigirSesionEmpresa('/administracion/equipos');
-  const equipos = await leerDeLaZona('/administracion/equipos', EquipoOrganizacion.array());
-  return (
-    <>
-      <header className="empresa__cabecera">
-        <div>
-          <h1>Equipos</h1>
-          <p className="empresa__subtitulo">
-            {sesion.administrador ? `Los equipos de ${sesion.organizacion.nombre}, con su responsable y sus miembros.` : 'Los equipos de los que eres responsable.'}
-          </p>
-        </div>
-      </header>
-      {equipos === null ? (
-        <p className="error" role="alert">
-          No pudimos leer los equipos. Vuelve a cargar la página.
-        </p>
-      ) : equipos.length === 0 ? (
-        <div className="empresa__vacio">
-          <h2>Todavía no hay equipos</h2>
-        </div>
-      ) : (
-        <ul className="empresa__equipos" aria-label="Equipos">
-          {equipos.map((equipo) => (
-            <li key={equipo.id} className="empresa__equipo">
-              <article aria-labelledby={`equipo-${equipo.id}`}>
-                <h2 id={`equipo-${equipo.id}`}>{equipo.nombre}</h2>
-                <dl>
-                  <div>
-                    <dt>Responsable</dt>
-                    <dd>{equipo.responsable ? equipo.responsable.correo : <span className="empresa__sin-responsable">Sin responsable</span>}</dd>
-                  </div>
-                  <div>
-                    <dt>Miembros</dt>
-                    <dd>
-                      {equipo.miembros.length === 0 ? (
-                        <span className="empresa__suave">Nadie más</span>
-                      ) : (
-                        <ul className="empresa__miembros">
-                          {equipo.miembros.map((m) => (
-                            <li key={m.perfilId}>{m.correo}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </dd>
-                  </div>
-                </dl>
-              </article>
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
-  );
+  const [equipos, personas] = await Promise.all([
+    leerDeLaZona('/administracion/equipos', EquipoOrganizacion.array()),
+    sesion.administrador ? leerDeLaZona('/administracion/personas', PersonaOrganizacion.array()) : Promise.resolve(null),
+  ]);
+  return <Equipos organizacion={sesion.organizacion.nombre} administrador={sesion.administrador} equipos={equipos} personas={personas} />;
 }

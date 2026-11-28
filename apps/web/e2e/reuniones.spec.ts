@@ -57,15 +57,21 @@ test.describe('web.reuniones', () => {
     await entrar(page, cuentas.reunionesLider.correo);
     await abrirReuniones(page);
 
-    await test.step('lista vacía, con la autorización propia al pie', async () => {
-      await expect(page.getByRole('heading', { name: 'Todavía no hay reuniones' })).toBeVisible();
-      await expect(page.getByRole('heading', { name: 'Compartir tu disponibilidad' })).toBeVisible();
-      // REQ-CUN05-19: el responsable y cuántas personas tiene el equipo
-      await expect(page.getByText(`Responsable: ${cuentas.reunionesLider.correo} · 5 integrantes`)).toBeVisible();
+    await test.step('lista vacía: el estado vacío del boceto, sin la autorización propia (T-145, T-146)', async () => {
+      await expect(page.getByRole('heading', { name: 'Aún no hay reuniones de equipo' })).toBeVisible();
+      await expect(page.getByText('Crea una reunión para comparar la disponibilidad de tu equipo y elegir un horario.')).toBeVisible();
+      // D-REU-36: la autorización propia pasó a Ajustes
+      await expect(page.getByRole('heading', { name: 'Compartir tu disponibilidad' })).toHaveCount(0);
+      await expect(page.getByRole('heading', { name: 'Disponibilidad para tu equipo' })).toHaveCount(0);
+      // REQ-CUN06-07 v2: en el corte «Reuniones», el blanco de la conversación ofrece ejemplos de reuniones
+      await expect(page.getByRole('button', { name: 'Busca un horario de 30 minutos para reunirnos' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Consulta la disponibilidad de mi equipo para mañana' })).toBeVisible();
       await capturar(page, '01-lista-vacia');
-      // El ejemplo del estado vacío llega a la barra de entrada, sin enviarse
-      await page.getByRole('button', { name: 'Busca un horario con mi equipo esta semana' }).click();
-      await expect(page.getByLabel('Pídele algo al asistente')).toHaveValue('Busca un horario con mi equipo esta semana');
+      // D-REU-35: «Crear reunión» escribe la petición en la barra de entrada, sin enviarla, y no crea nada
+      await page.getByRole('button', { name: 'Crear reunión' }).click();
+      await expect(page.getByLabel('Pídele algo al asistente')).toHaveValue('Busca un horario para reunirme con mi equipo');
+      await expect(page.getByRole('heading', { name: 'Aún no hay reuniones de equipo' })).toBeVisible();
+      await expect(page.getByRole('list', { name: 'Reuniones' })).toHaveCount(0);
     });
 
     const horarios = page.getByRole('list', { name: `Horarios para ${TITULO}` });
@@ -169,7 +175,7 @@ test.describe('web.reuniones', () => {
     await capturar(page, '10-tarjeta-cancelar');
     await tarjeta.getByRole('button', { name: 'Confirmar' }).click();
     await expect(page.getByText(`Listo: «${TITULO}» quedó cancelada.`)).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Todavía no hay reuniones' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Aún no hay reuniones de equipo' })).toBeVisible();
   });
 });
 
@@ -202,9 +208,68 @@ test.describe('web.escenario-reuniones', () => {
     }
   });
 
-  test('CP-R-04 · el integrante ve al responsable del equipo al pie de Reuniones', async ({ page }) => {
+  test('CP-R-04 · el integrante ve al responsable del equipo en Ajustes', async ({ page }) => {
     await entrar(page, cuentas.reunionesBeto.correo);
+    // T-146 · D-REU-36: el responsable y la autorización propia pasaron del pie de Reuniones a Ajustes
+    await page.getByRole('button', { name: 'Ajustes' }).click();
+    const apartado = page.getByRole('dialog', { name: 'Ajustes' }).getByRole('region', { name: 'Disponibilidad para tu equipo' });
+    await expect(apartado.getByText(`Responsable: ${cuentas.reunionesLider.correo} · 5 integrantes`)).toBeVisible();
+  });
+});
+
+// T-146 · D-REU-36 · REQ-CUN05-14 a 16, 18 y 19: «Compartir tu disponibilidad» salió del pie de Reuniones y está en
+// Ajustes, apartado «Disponibilidad para tu equipo», con una fila por equipo. La Operación es la de siempre
+// (`equipo.cambiar_consentimiento`), con su tarjeta. Carla empieza sin autorizar (pendiente) y termina sin autorizar
+// (retirada): para el escenario de `web.reuniones` sigue contando como «sin autorizar».
+test.describe('web.consentimiento-en-ajustes', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('con Plan Personal, Ajustes no tiene el apartado', async ({ page }) => {
+    await entrar(page, cuentas.reunionesPablo.correo);
+    await page.getByRole('button', { name: 'Ajustes' }).click();
+    const ajustes = page.getByRole('dialog', { name: 'Ajustes' });
+    await expect(ajustes.getByRole('button', { name: 'Cerrar sesión' })).toBeVisible();
+    await expect(ajustes.getByRole('heading', { name: 'Disponibilidad para tu equipo' })).toHaveCount(0);
+  });
+
+  test('la integrante autoriza y retira su autorización desde Ajustes, con su tarjeta', async ({ page }) => {
+    await entrar(page, cuentas.reunionesCarla.correo);
     await abrirReuniones(page);
-    await expect(page.getByText(`Responsable: ${cuentas.reunionesLider.correo} · 5 integrantes`)).toBeVisible();
+    // La lista de Reuniones queda solo con las reuniones
+    await expect(page.getByRole('heading', { name: 'Compartir tu disponibilidad' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Autorizar/ })).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Ajustes' }).click();
+    const apartado = page.getByRole('dialog', { name: 'Ajustes' }).getByRole('region', { name: 'Disponibilidad para tu equipo' });
+    const alfa = apartado.getByRole('listitem').filter({ hasText: 'Proyecto Alfa' });
+    await expect(alfa).toContainText(`Responsable: ${cuentas.reunionesLider.correo} · 5 integrantes`);
+    await expect(alfa).toContainText('Sin autorizar');
+    await capturar(page, '12-ajustes-sin-autorizar');
+
+    await test.step('autorizar pasa por la tarjeta y deja «Autorizado»', async () => {
+      await alfa.getByRole('button', { name: 'Autorizar: Proyecto Alfa' }).click();
+      // P-03: la tarjeta de la Operación, en la misma fila, antes de cambiar nada
+      await expect(alfa.getByRole('region', { name: /autoriz/i })).toContainText('Solo disponibilidad libre u ocupada');
+      await expect(alfa).toContainText('Sin autorizar');
+      await capturar(page, '13-ajustes-tarjeta-autorizar');
+      await alfa.getByRole('button', { name: 'Confirmar cambio' }).click();
+      await expect(alfa.getByRole('button', { name: 'Retirar autorización: Proyecto Alfa' })).toBeVisible();
+      await expect(alfa).toContainText('Autorizado');
+      await expect(alfa.getByText('Tu autorización se ha actualizado correctamente.')).toBeVisible();
+    });
+
+    await test.step('retirarla vuelve a «Sin autorizar»', async () => {
+      await alfa.getByRole('button', { name: 'Retirar autorización: Proyecto Alfa' }).click();
+      await alfa.getByRole('button', { name: 'Confirmar cambio' }).click();
+      await expect(alfa.getByRole('button', { name: 'Autorizar: Proyecto Alfa' })).toBeVisible();
+      await expect(alfa).toContainText('Sin autorizar');
+    });
+
+    await test.step('descartar la tarjeta no cambia nada', async () => {
+      await alfa.getByRole('button', { name: 'Autorizar: Proyecto Alfa' }).click();
+      await alfa.getByRole('button', { name: 'Cancelar' }).click();
+      await expect(alfa.getByText('No se realizaron cambios.')).toBeVisible();
+      await expect(alfa).toContainText('Sin autorizar');
+    });
   });
 });

@@ -77,7 +77,6 @@ describe('T-125 · bitácora, contexto y aviso al vencer', () => {
         { etiqueta: 'Tarea', valor: 'Presupuesto de la cocina' },
         { etiqueta: 'Contexto', valor: 'Lo veo con Juan y Rosa' },
         { etiqueta: 'Avance', valor: 'Ya hablé con Juan, me falta hablar con Rosa' },
-        { etiqueta: 'Dónde aparece', valor: 'En Tareas, en la bitácora de la tarea' },
       ]);
       expect((await tarea(t.id)).bitacora).toEqual([]);
 

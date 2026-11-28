@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { DetalleReunion, ListaReuniones, MisEquiposRespuesta, OperacionRespuesta, type DecisionAsistente, type InvitadoReunion, type ReunionResumen } from '@nexoai/contratos';
+import { DetalleReunion, ListaReuniones, OperacionRespuesta, type DecisionAsistente, type InvitadoReunion, type ReunionResumen } from '@nexoai/contratos';
 import { nombreDeZona } from '../agenda/dia';
 import { Aviso, Boton } from '../componentes';
 import { conSesion, mensajeDeError, SIN_CONEXION } from '../sesion';
@@ -29,6 +29,10 @@ function duracion(minutos: number): string {
   return m === 0 ? horas : `${horas} y ${m} minutos`;
 }
 
+// T-145 · REQ-CUN06-07 v2, D-REU-35: la petición que «Crear reunión» escribe en la capa, sin enviarla. La misma
+// que en la web
+const PEDIR_REUNION = 'Busca un horario para reunirme con mi equipo';
+
 type Estado = { tipo: 'cargando' } | { tipo: 'error'; mensaje: string } | { tipo: 'lista'; reuniones: ReunionResumen[] };
 
 export function Reuniones({
@@ -46,7 +50,6 @@ export function Reuniones({
   const [estado, setEstado] = useState<Estado>({ tipo: 'cargando' });
   const [abierta, setAbierta] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
-  const [ejemplo, setEjemplo] = useState<string | null>(null);
   const ultima = useRef(0);
 
   const cargar = useCallback(async () => {
@@ -59,13 +62,6 @@ export function Reuniones({
       if (r.estado !== 200 || !lista.success) return setEstado({ tipo: 'error', mensaje: mensajeDeError(r.cuerpo, 'No pudimos leer tus reuniones. Inténtalo de nuevo en un momento.') });
       const reuniones = lista.data.filter((x) => x.estado !== 'cancelada');
       setEstado({ tipo: 'lista', reuniones });
-      // REQ-CUN06-07: sin reuniones, un ejemplo pulsable con el nombre de un equipo propio, que el asistente entiende
-      if (reuniones.length === 0) {
-        const equipos = await conSesion('/equipos');
-        const leidos = MisEquiposRespuesta.safeParse(equipos?.cuerpo);
-        const primero = equipos?.estado === 200 && leidos.success ? leidos.data[0] : undefined;
-        if (esta === ultima.current) setEjemplo(primero ? `Reunión con el equipo ${primero.equipo.nombre}` : null);
-      }
     } catch {
       if (esta === ultima.current) setEstado({ tipo: 'error', mensaje: SIN_CONEXION });
     }
@@ -102,17 +98,17 @@ export function Reuniones({
       {estado.tipo === 'cargando' && <Text style={estilos.suave}>Leyendo tus reuniones…</Text>}
       {estado.tipo === 'error' && <Aviso texto={estado.mensaje} />}
       {estado.tipo === 'lista' && estado.reuniones.length === 0 && (
+        // T-145 · REQ-CUN06-07 v2: el estado vacío del boceto. «Crear reunión» no abre un formulario ni crea nada:
+        // abre la capa con la petición escrita, sin enviarla (D-REU-35, R-42)
         <View style={estilos.vacio}>
-          <Text style={estilos.vacioTitulo}>Todavía no hay reuniones. Pídele al asistente que busque un horario con tu equipo.</Text>
-          {ejemplo && <Text style={estilos.vacioTexto}>Por ejemplo:</Text>}
-          {ejemplo ? (
-            // Escribe el ejemplo en la capa, sin enviarlo: la persona lo completa o lo envía
-            <Pressable accessibilityRole="button" accessibilityLabel={`Ejemplo: ${ejemplo}`} onPress={() => alAbrirCaptura(ejemplo)} style={estilos.ejemplo}>
-              <Text style={estilos.ejemploTexto}>«{ejemplo}»</Text>
-            </Pressable>
-          ) : (
-            <Boton texto="Pedírselo al asistente" alPulsar={() => alAbrirCaptura()} />
-          )}
+          <DibujoReuniones />
+          <Text accessibilityRole="header" style={estilos.vacioTitulo}>
+            Aún no hay reuniones de equipo
+          </Text>
+          <Text style={estilos.vacioTexto}>Crea una reunión para comparar la disponibilidad de tu equipo y elegir un horario.</Text>
+          <View style={estilos.vacioBoton}>
+            <Boton texto="Crear reunión" alPulsar={() => alAbrirCaptura(PEDIR_REUNION)} />
+          </View>
         </View>
       )}
       {estado.tipo === 'lista' && estado.reuniones.length > 0 && (
@@ -130,6 +126,24 @@ export function Reuniones({
           ))}
         </View>
       )}
+    </View>
+  );
+}
+
+// El dibujo del estado vacío: un calendario con sus anillas y casillas, hecho con vistas, sin otra dependencia
+function DibujoReuniones() {
+  return (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden style={estilos.dibujo}>
+      <View style={[estilos.anilla, { left: 14 }]} />
+      <View style={[estilos.anilla, { right: 14 }]} />
+      <View style={estilos.calendario}>
+        <View style={estilos.calendarioCabecera} />
+        <View style={estilos.casillas}>
+          {[0, 1, 2, 3, 4, 5].map((n) => (
+            <View key={n} style={[estilos.casilla, n === 4 && estilos.casillaMarcada]} />
+          ))}
+        </View>
+      </View>
     </View>
   );
 }
@@ -453,8 +467,15 @@ const estilos = StyleSheet.create({
   propuestaTextos: { flex: 1, gap: 2 },
   elegir: { minWidth: 96 },
   vacio: { minHeight: 240, justifyContent: 'center', alignItems: 'center', gap: espaciado[12], padding: espaciado[24], borderRadius: 16, backgroundColor: color.superficie.elevada },
-  vacioTitulo: { fontSize: tipografia.cuerpo, fontWeight: '700', color: color.texto.fuerte, textAlign: 'center' },
+  vacioTitulo: { fontSize: tipografia.subtitulo, fontWeight: '700', color: color.texto.fuerte, textAlign: 'center' },
   vacioTexto: { fontSize: tipografia.etiqueta, lineHeight: 20, color: color.texto.suave, textAlign: 'center' },
-  ejemplo: { minHeight: 44, justifyContent: 'center', paddingHorizontal: espaciado[16], borderRadius: 22, borderWidth: 1, borderColor: color.agente.base, backgroundColor: color.agente.suave },
-  ejemploTexto: { fontSize: tipografia.etiqueta, fontWeight: '600', color: color.agente.base },
+  vacioBoton: { alignSelf: 'stretch', marginTop: espaciado[8] },
+  // El dibujo, en el azul de la marca aclarado, como en el boceto
+  dibujo: { width: 72, height: 72, marginBottom: espaciado[8], opacity: 0.55 },
+  anilla: { position: 'absolute', top: 0, zIndex: 1, width: 4, height: 14, borderRadius: 2, backgroundColor: color.marca.base },
+  calendario: { position: 'absolute', top: 6, left: 0, right: 0, bottom: 0, borderWidth: 3, borderColor: color.marca.base, borderRadius: 8, overflow: 'hidden' },
+  calendarioCabecera: { height: 14, borderBottomWidth: 3, borderBottomColor: color.marca.base },
+  casillas: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, padding: 7 },
+  casilla: { width: 12, height: 12, borderRadius: 3, borderWidth: 2, borderColor: color.marca.base },
+  casillaMarcada: { backgroundColor: color.marca.base },
 });

@@ -82,6 +82,19 @@ export const GUION_DEMOSTRACION: ReglaGuion[] = [
   // marcas {nota:…} (modelo-simulado.ts). «Mejor a las 5» va siempre sobre el último compromiso de la nota: con
   // una propuesta abierta, que el simulado no ve, este guion no distingue el criterio 1 de REQ-AGT-01. «A las 5»
   // se lee por la tarde, como en el criterio del requisito
+  // T-143 · REQ-AGT-07: lo que sigue a una tarea propuesta y sin decidir se aplica a ella ({nota:propuestaId}).
+  // Un horario («de 3 pm a 6 pm») no cabe en una tarea: la herramienta responde con la oferta de un compromiso
+  {
+    si: `^ser[aá] ese d[ií]a de ${HORA} ?(?:pm)? a (?:las )?${HORA} ?(?:pm)?$`,
+    pasos: [
+      { llamadas: [{ nombre: 'tareas_cambiar', argumentos: { tareaId: '{nota:propuestaId}', horaInicio: '{tarde:$1}', horaFin: '{tarde:$2}' } }] },
+      { texto: '' },
+    ],
+  },
+  {
+    si: `^mejor el ${DIA}$`,
+    pasos: [{ llamadas: [{ nombre: 'tareas_cambiar', argumentos: { tareaId: '{nota:propuestaId}', fecha: '{$1}' } }] }, { texto: '' }],
+  },
   {
     si: `^mejor a las ${HORA}(?: de la tarde)?$`,
     pasos: [
@@ -153,6 +166,22 @@ export const GUION_DEMOSTRACION: ReglaGuion[] = [
   {
     si: '^descarta (?:la tarea )?(.+)$',
     pasos: [{ llamadas: [{ nombre: 'tareas_descartar', argumentos: { texto: '$1' } }] }, { texto: '' }],
+  },
+  // T-142 · REQ-AGT-06: una explicación como la que devolvió Groq (captura 04a de la revisión del 27 de noviembre
+  // de 2026), con marcas, nombres internos y los puntos en un párrafo. La limpia el código: en pantalla se ve
+  // texto llano, un punto por línea
+  {
+    si: '^(?:dime )?¿?c[oó]mo funciona la secci[oó]n (?:de )?tareas\\??$',
+    pasos: [
+      {
+        texto:
+          'La sección **Tareas** guarda lo que tienes que hacer y lo que esperas de otras personas: ' +
+          '1. **Anotar una tarea**: con `tareas_registrar`, por ejemplo «recuérdame enviar el informe el viernes». ' +
+          '2. **Ver lo pendiente**: «¿qué tengo pendiente?» (`tareas_consultar`). ' +
+          '3. **Darla por hecha**: «ya envié el informe» (`tareas_completar`). ' +
+          '4. **Contar cómo va**: «sobre el informe: me falta la firma de Rosa» (`tareas_anotar_avance`).',
+      },
+    ],
   },
   // REQ-CUN03-16: lo que las tareas personales no hacen se dice, sin intentarlo
   {

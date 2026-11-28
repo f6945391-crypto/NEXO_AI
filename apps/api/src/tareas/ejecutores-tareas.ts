@@ -4,7 +4,6 @@ import {
   CargaCambiarTarea,
   CargaRegistrarTarea,
   CargaTareaExistente,
-  type FranjaTarea,
   type OrigenOperacion,
   type VistaConfirmacion,
 } from '@nexoai/contratos';
@@ -12,7 +11,7 @@ import type { ContextoSolicitud } from '../identidad/contexto';
 import { RegistroOperaciones, type EjecutorOperacion, type Propuesta, type ResultadoEjecucion } from '../operaciones/registro';
 import { errorApi } from '../plataforma/errores';
 import { diaLargo } from './dominio/formato';
-import { diaEn, franjaDe } from './dominio/franja';
+import { diaEn } from './dominio/franja';
 import { aColumnaFecha, aContrato, datosFranja, noModificable, TareasRepositorio, type FilaTarea } from './tareas.repositorio';
 
 // specs/09-tareas-personales/plan.md §4 · T-048 · AD-09. Las Operaciones de las tareas personales. Ninguna
@@ -23,12 +22,6 @@ import { aColumnaFecha, aContrato, datosFranja, noModificable, TareasRepositorio
 // Ajuste del plan (encargo de la cuarta tanda): son seis tipos, no cinco. `tareas.modificar` se llama
 // `tareas.cambiar`, y «Recibido» tiene su propio tipo, `tareas.recibido`, en vez de ser `tareas.completar`
 // con otro texto (H-TP-15): así la auditoría distingue una tarea hecha de algo recibido.
-
-const NOMBRE_FRANJA: Readonly<Record<FranjaTarea, string>> = {
-  con_fecha: 'Con fecha',
-  sin_fecha: 'Sin fecha',
-  esperando: 'Esperando de alguien',
-};
 
 export const TIPOS_TAREAS = [
   'tareas.registrar',
@@ -46,7 +39,8 @@ export const TIPOS_TAREAS = [
 const paraCuando = (fecha: string | null | undefined, hora: string | null | undefined) =>
   fecha ? `Para el ${diaLargo(fecha)}${hora ? `, antes de las ${hora}` : ''}` : 'Sin fecha';
 
-const dondeAparece = (franja: FranjaTarea) => ({ etiqueta: 'Dónde aparece', valor: `En Tareas, en «${NOMBRE_FRANJA[franja]}»` });
+// T-144 · H-TP-37: la tarjeta no nombra las franjas de la sección Tareas («Con fecha», «Sin fecha»,
+// «Esperando de alguien»): es vocabulario de la pantalla, y en la tarjeta confundía. Basta con cuándo y de quién
 
 // La tarea de la que se habla, como la ve la persona en la tarjeta
 function datosDe(fila: FilaTarea, zona: string): VistaConfirmacion['datos'] {
@@ -96,13 +90,11 @@ export class EjecutoresTareas implements OnModuleInit {
           zonaHoraria: zona,
           ...(carga.deQuien && !carga.esperadaDesde ? { esperadaDesde: diaEn(new Date(), zona) } : {}),
         };
-        const franja = franjaDe({ fecha: completa.fecha ?? null, deQuien: completa.deQuien ?? null });
         const datos: VistaConfirmacion['datos'] = [
           { etiqueta: 'Tarea', valor: completa.texto },
           ...(completa.deQuien ? [{ etiqueta: 'De quién', valor: completa.deQuien }] : []),
           { etiqueta: 'Cuándo', valor: paraCuando(completa.fecha, completa.horaLimite) },
           ...(completa.contexto ? [{ etiqueta: 'Contexto', valor: completa.contexto }] : []),
-          dondeAparece(franja),
           // R-12, H-TP-14: esperar algo de alguien no le escribe
           ...(completa.deQuien ? [{ etiqueta: 'Aviso', valor: `NexoAI no le escribe a ${completa.deQuien}` }] : []),
         ];
@@ -166,13 +158,10 @@ export class EjecutoresTareas implements OnModuleInit {
         if (completa.contexto !== undefined && completa.contexto !== fila.contexto) {
           partes.push([fila.contexto ? `Contexto: ${fila.contexto}` : 'Sin contexto', completa.contexto ? `Contexto: ${completa.contexto}` : 'Sin contexto']);
         }
-        const franjaAntes = franjaDe(antes);
-        const franjaDespues = franjaDe(despues);
         const datos: VistaConfirmacion['datos'] = [
           { etiqueta: 'Tarea', valor: fila.texto },
           { etiqueta: 'Antes', valor: partes.map(([a]) => a).join(' · ') || 'Igual' },
           { etiqueta: 'Ahora', valor: partes.map(([, b]) => b).join(' · ') || 'Igual' },
-          ...(franjaAntes !== franjaDespues ? [dondeAparece(franjaDespues)] : []),
         ];
         return { vista: vista('Cambiar la tarea', datos), carga: completa };
       },
@@ -298,7 +287,6 @@ export class EjecutoresTareas implements OnModuleInit {
         const datos: VistaConfirmacion['datos'] = [
           ...datosDe(fila, await this.tareas.zonaDe(contexto)),
           { etiqueta: 'Avance', valor: carga.texto },
-          { etiqueta: 'Dónde aparece', valor: 'En Tareas, en la bitácora de la tarea' },
         ];
         return vista('Anotar avance', datos);
       },

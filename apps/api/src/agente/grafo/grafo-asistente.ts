@@ -2,9 +2,13 @@ import { randomUUID } from 'node:crypto';
 import { Annotation, END, interrupt, START, StateGraph } from '@langchain/langgraph';
 import { EventoAgenda, ReunionResumen, TareaPersonal, TurnoDeHerramienta, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
 import { fechaLarga, horario, nombreDeZona } from '../../agenda/formato';
+import { diaLargo } from '../../tareas/dominio/formato';
 import type { ContextoSolicitud } from '../../identidad/contexto';
-import type { OperacionesService } from '../../operaciones/operaciones.service';
+import type { OperacionesService, PropuestaAbierta } from '../../operaciones/operaciones.service';
 import type { EjecutorHerramientas } from '../herramientas/ejecutor-herramientas';
+import type { Oferta } from '../herramientas/herramienta';
+import { escribirPropuestaAbierta } from '../nota-de-continuidad';
+import { aTextoLlano, type NombresInternos } from '../texto-llano';
 import type { LlamadasAuditadas } from '../llamadas-auditadas';
 import { ModeloNoDisponible, type LlamadaHerramienta, type MensajeModelo } from '../modelo/proveedor-modelo';
 import { instrucciones } from './instrucciones';
@@ -54,7 +58,8 @@ export const EstadoAsistente = Annotation.Root({
   mensajes: acumular<MensajeModelo>(),
   referencia: reemplazar<Referencia | null>(null),
   pendiente: reemplazar<string | null>(null),
-  llamadas: reemplazar<{ lista: LlamadaHerramienta[]; llamadaModeloId: string | null } | null>(null),
+  // T-143: `frase`, la que se guarda con lo que se proponga si no es la última de la persona (al aceptar una oferta)
+  llamadas: reemplazar<{ lista: LlamadaHerramienta[]; llamadaModeloId: string | null; frase?: string } | null>(null),
   faltante: reemplazar<string | null>(null),
   decision: reemplazar<Reanudacion | null>(null),
   vueltas: reemplazar<number>(0),
@@ -70,6 +75,12 @@ export const EstadoAsistente = Annotation.Root({
   candidatas: reemplazar<{ accion: string; ids: string[]; avance?: string } | null>(null),
   // T-133 · REQ-CUN06-10: la reunión cuyas propuestas se ofrecieron. Elegir una la propone el código
   reunion: reemplazar<{ id: string; inicios: string[] } | null>(null),
+  // T-143 · REQ-AGT-07: la propuesta sin decidir mientras se interpreta lo que la persona escribió después (si la
+  // invocación termina sin volver a esperarla, el servicio la descarta), y lo que el código ofreció en su lugar:
+  // «sí» lo propone y «no» deja la tarjeta como estaba. Un solo canal, para que el punto de control no crezca, y
+  // sin reiniciarlo en cada mensaje: lo que quede de antes no vale, porque la propuesta se lee de nuevo y tiene que
+  // seguir sin decidir, y la oferta solo cuenta si su tarjeta es la que se espera
+  abierta: reemplazar<{ id: string; oferta: Oferta | null } | null>(null),
 });
 export type EstadoAsistente = typeof EstadoAsistente.State;
 
@@ -113,15 +124,20 @@ function textoDelResultado(op: OperacionRespuesta, zona: string): string {
   return `Listo: «${titulo}» quedó en tu calendario ${cuando}.`;
 }
 
-// T-050 · 09-tareas-personales: lo que quedó, dicho por el código y sin prometer avisos (H-TP-10)
-const DONDE: Readonly<Record<TareaPersonal['franja'], string>> = { con_fecha: 'Con fecha', sin_fecha: 'Sin fecha', esperando: 'Esperando de alguien' };
+// T-050 · 09-tareas-personales: lo que quedó, dicho por el código y sin prometer avisos (H-TP-10).
+// T-144 · H-TP-37: sin nombrar la franja de la sección Tareas; como en un compromiso, solo cuándo, o de quién
+export function cuandoQueda(tarea: Pick<TareaPersonal, 'fecha' | 'horaLimite' | 'deQuien'>): string {
+  const fecha = tarea.fecha ? `para el ${diaLargo(tarea.fecha)}${tarea.horaLimite ? `, antes de las ${tarea.horaLimite}` : ''}` : null;
+  if (tarea.deQuien) return fecha ? `esperando a ${tarea.deQuien}, ${fecha}` : `esperando a ${tarea.deQuien}`;
+  return fecha ?? 'sin fecha';
+}
 function textoDeTarea(tipo: string, tarea: TareaPersonal): string {
   const t = `«${tarea.texto}»`;
-  if (tipo === 'tareas.registrar') return `Listo: ${t} quedó en tus tareas, en «${DONDE[tarea.franja]}».`;
-  if (tipo === 'tareas.cambiar') return `Listo: cambié ${t}. Ahora está en «${DONDE[tarea.franja]}».`;
+  if (tipo === 'tareas.registrar') return `Listo: ${t} quedó en tus tareas ${cuandoQueda(tarea)}.`;
+  if (tipo === 'tareas.cambiar') return `Listo: cambié ${t}. Ahora queda ${cuandoQueda(tarea)}.`;
   if (tipo === 'tareas.completar') return `Listo: ${t} quedó hecha.`;
   if (tipo === 'tareas.recibido') return `Listo: marqué ${t} como recibido.`;
-  if (tipo === 'tareas.reabrir') return `Listo: ${t} vuelve a estar pendiente, en «${DONDE[tarea.franja]}».`;
+  if (tipo === 'tareas.reabrir') return `Listo: ${t} vuelve a estar pendiente, ${cuandoQueda(tarea)}.`;
   return `Listo: descarté ${t}. Ya no aparece en tus tareas.`;
 }
 
@@ -133,8 +149,22 @@ function textoDeReunion(tipo: string, r: ReunionResumen): string {
   return `Listo: ${t} quedó agendada ${cuando}. Google envía la invitación a ${r.invitados === 1 ? '1 persona' : `${r.invitados} personas`}.`;
 }
 
+// T-143 · REQ-AGT-07: la respuesta a una oferta, en código. Solo un sí o un no claros; lo demás se interpreta
+const normal = (texto: string) =>
+  texto
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/[.!¡¿?,]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+const ACEPTA = /^(?:si|sip|claro|dale|vale|ok|okey|de acuerdo|perfecto|bueno|adelante|hazlo|por favor|si por favor|si claro|si dale|si hazlo|registralo|registrala|si registralo|si registrala|como compromiso|si como compromiso)$/;
+const NIEGA = /^(?:no|nop|no gracias|mejor no|asi esta bien|dejalo asi|dejala asi|no dejala asi|no dejalo asi|solo la tarea|no solo la tarea)$/;
+// Lo que lee el modelo cuando la persona escribe con una propuesta abierta
+const SIGUE_ABIERTA = '(La propuesta sigue abierta, sin decidir.)';
+
 // Errores cuyo mensaje ya es la respuesta: lo dice el código, sin otra vuelta del modelo
-const SE_DICEN_TAL_CUAL = new Set(['TAREA_NO_ENCONTRADA', 'REUNION_ACLARAR', 'SOLO_CONVOCANTE', 'REUNION_NO_ENCONTRADA', 'REUNION_NO_PENDIENTE', 'REUNION_NO_AGENDADA', 'ES_REUNION']);
+const SE_DICEN_TAL_CUAL = new Set(['TAREA_SIN_HORARIO', 'TAREA_NO_ENCONTRADA', 'REUNION_ACLARAR', 'SOLO_CONVOCANTE', 'REUNION_NO_ENCONTRADA', 'REUNION_NO_PENDIENTE', 'REUNION_NO_AGENDADA', 'ES_REUNION']);
 
 export interface DependenciasGrafo {
   llamadas: LlamadasAuditadas;
@@ -159,14 +189,24 @@ export function construirGrafo(
     anotar(turnos);
     return cambio;
   };
+  // T-142 · REQ-AGT-06: los nombres internos salen del registro de herramientas, una vez por petición
+  let nombres: NombresInternos | null = null;
+  const llano = (texto: string) => aTextoLlano(texto, (nombres ??= deps.ejecutor.nombresInternos()));
+  // T-143: la propuesta abierta del episodio, leída una vez por petición
+  let propuesta: Promise<PropuestaAbierta | null> | null = null;
+  const propuestaAbierta = (id: string | null) => (id ? (propuesta ??= deps.operaciones.propuestaDelEpisodio(contexto, id, conversacionId)) : Promise.resolve(null));
   const referenciaDe = (estado: EstadoAsistente) => {
     const r = estado.referencia ?? { instante: ahora(), zonaHoraria: 'UTC' };
     return { instante: new Date(r.instante), zonaHoraria: r.zonaHoraria };
   };
 
   // P-11 · T-033: lo pedido se guarda en espera con su motivo y el momento de la captura, sin crear nada
-  async function enEspera(estado: EstadoAsistente, motivo: 'asistente_no_disponible' | 'permiso_faltante', texto: string): Promise<TurnoAsistente> {
-    const frase = ultimaFrase(estado.mensajes);
+  async function enEspera(
+    estado: EstadoAsistente,
+    motivo: 'asistente_no_disponible' | 'permiso_faltante',
+    texto: string,
+    frase = ultimaFrase(estado.mensajes),
+  ): Promise<TurnoAsistente> {
     const op = await deps.operaciones.encolar(contexto, {
       tipo: 'asistente.solicitud',
       carga: { texto: frase },
@@ -181,7 +221,9 @@ export function construirGrafo(
   async function interpretar(estado: EstadoAsistente): Promise<Partial<EstadoAsistente>> {
     if (estado.vueltas >= TOPE_VUELTAS) return con([turnoFallo(FALLO)], { siguiente: 'fin' });
     const referencia = referenciaDe(estado);
-    const datos = await nota();
+    // T-143 · REQ-AGT-07: la propuesta abierta va con la nota, como datos y con su id
+    const abierta = await propuestaAbierta(estado.abierta?.id ?? null);
+    const datos = [await nota(), abierta ? escribirPropuestaAbierta(abierta) : null].filter(Boolean).join('\n\n') || null;
     const r = await deps.llamadas.llamar(contexto, conversacionId, {
       sistema: instrucciones(referencia),
       // REQ-AGT-01 v2: lo último que hizo la persona, como datos y aparte de las instrucciones (H-AGT-15)
@@ -202,17 +244,21 @@ export function construirGrafo(
     if (llamadas.length > 0) {
       return { mensajes: [mensaje], vueltas: estado.vueltas + 1, llamadas: { lista: llamadas, llamadaModeloId: r.llamadaModeloId }, siguiente: 'herramientas' };
     }
-    const dicho = texto?.trim();
-    return con(dicho ? [turnoTexto(dicho)] : [], { mensajes: [mensaje], vueltas: estado.vueltas + 1, siguiente: 'fin' });
+    // T-142 · REQ-AGT-06: texto llano, sin marcas ni nombres internos; también en lo que vuelve a leer el modelo
+    const dicho = texto ? llano(texto) : '';
+    return con(dicho ? [turnoTexto(dicho)] : [], { mensajes: [{ ...mensaje, texto: dicho || texto }], vueltas: estado.vueltas + 1, siguiente: 'fin' });
   }
 
   async function herramientas(estado: EstadoAsistente): Promise<Partial<EstadoAsistente>> {
     const { lista, llamadaModeloId } = estado.llamadas ?? { lista: [], llamadaModeloId: null };
+    const abierta = await propuestaAbierta(estado.abierta?.id ?? null);
+    const frase = estado.llamadas?.frase ?? ultimaFrase(estado.mensajes);
     const entorno = {
       conversacionId,
-      solicitudOriginal: ultimaFrase(estado.mensajes),
+      solicitudOriginal: frase,
       referencia: referenciaDe(estado),
       ...(estado.enEspera ? { enEspera: estado.enEspera } : {}),
+      ...(abierta ? { propuestaAbierta: abierta } : {}),
     };
     const mensajes: MensajeModelo[] = [];
     const turnos: TurnoAsistente[] = [];
@@ -223,6 +269,7 @@ export function construirGrafo(
     let candidatas: EstadoAsistente['candidatas'] = null;
     let reunion: EstadoAsistente['reunion'] = null;
     let sinTarea: string | null = null;
+    let oferta: Oferta | null = null;
 
     for (const llamada of lista) {
       // Una acción a la vez: la persona decide sobre una tarjeta antes de ver otra
@@ -262,12 +309,15 @@ export function construirGrafo(
       const error = (r.paraModelo as { error?: { codigo?: string; campos?: string[] } } | null)?.error;
       if (error?.codigo === 'DATOS_FALTANTES' && !faltante) faltante = error.campos?.[0] ?? 'cambio';
       if (error?.codigo === 'PERMISO_GOOGLE_FALTANTE') sinCalendario = true;
-      if (error?.codigo && SE_DICEN_TAL_CUAL.has(error.codigo) && !sinTarea) sinTarea = (error as { mensaje?: string }).mensaje ?? null;
+      if (error?.codigo && SE_DICEN_TAL_CUAL.has(error.codigo) && !sinTarea) {
+        sinTarea = (error as { mensaje?: string }).mensaje ?? null;
+        oferta = (error as { oferta?: Oferta }).oferta ?? null;
+      }
     }
 
     // REQ-CUN01-08, REQ-ACC-08: el permiso que falta lo dice el código, y lo pedido queda guardado
     if (sinCalendario && !pendiente) {
-      const aviso = estado.enEspera ? turnoTexto(SIN_CALENDARIO) : await enEspera(estado, 'permiso_faltante', SIN_CALENDARIO);
+      const aviso = estado.enEspera ? turnoTexto(SIN_CALENDARIO) : await enEspera(estado, 'permiso_faltante', SIN_CALENDARIO, frase);
       return con([...turnos, aviso], { mensajes: [...mensajes, deAsistente(SIN_CALENDARIO)], siguiente: 'fin' });
     }
     // REQ-AGT-02: una tarea guardada en espera no necesita otra vuelta del modelo, y cierra el episodio (decisión 27)
@@ -276,6 +326,16 @@ export function construirGrafo(
     if (candidatas && !pendiente) return con(turnos, { mensajes, candidatas, siguiente: 'fin' });
     // T-133 · REQ-CUN06-01: con las propuestas a la vista, el turno termina; el texto lo escribió el código
     if (reunion && !pendiente) return con(turnos, { mensajes, reunion, siguiente: 'fin' });
+    // T-143 · REQ-AGT-07: un horario para una tarea propuesta; se explica y se ofrece el compromiso, y la tarjeta de
+    // la tarea sigue esperando su decisión
+    if (sinTarea && oferta && estado.abierta && !pendiente) {
+      return con([...turnos, turnoTexto(sinTarea)], {
+        mensajes: [...mensajes, deAsistente(sinTarea)],
+        abierta: { id: estado.abierta.id, oferta },
+        pendiente: estado.abierta.id,
+        siguiente: 'esperar',
+      });
+    }
     // Ninguna tarea encaja: se dice con las palabras del código, sin otra vuelta del modelo
     if (sinTarea && !pendiente) return con([...turnos, turnoTexto(sinTarea)], { mensajes: [...mensajes, deAsistente(sinTarea)], siguiente: 'fin' });
     const siguiente: Siguiente = pendiente ? 'esperar' : faltante ? 'preguntar' : 'interpretar';
@@ -304,13 +364,40 @@ export function construirGrafo(
     if (!decision) return { siguiente: 'fin' };
 
     if (decision.tipo === 'nuevo_mensaje') {
-      // REQ-AGT-01: la propuesta anterior ya se descartó y el mensaje nuevo se interpreta con lo hablado
+      // REQ-AGT-01 · T-143 · REQ-AGT-07: el mensaje nuevo se interpreta con lo hablado y **contra la propuesta
+      // abierta**, que sigue sin decidir mientras tanto. Si lo que resulta no vuelve a esperarla, el servicio la
+      // descarta (con una propuesta nueva o con cualquier otra cosa, como antes)
+      const abierta = estado.pendiente;
+      const persona: MensajeModelo = { rol: 'persona', texto: decision.texto };
+      const previo = estado.mensajes.at(-1)?.rol === 'asistente' ? [] : [deAsistente(SIGUE_ABIERTA)];
+      const base = { referencia: decision.referencia, decision: null, vueltas: 0 };
+      const oferta = abierta && estado.abierta?.id === abierta ? estado.abierta.oferta : null;
+      if (oferta && abierta && ACEPTA.test(normal(decision.texto))) {
+        // Lo ofrecido lo propone el código, sin pasar por el modelo; la tarjeta anterior se descarta después
+        const llamada: LlamadaHerramienta = { id: `oferta-${randomUUID()}`, nombre: oferta.llamada.nombre, argumentos: oferta.llamada.argumentos };
+        return con([turnoPersona(decision.texto)], {
+          ...base,
+          mensajes: [...previo, persona, { rol: 'asistente', texto: null, llamadas: [llamada] }],
+          pendiente: null,
+          abierta: { id: abierta, oferta: null },
+          llamadas: { lista: [llamada], llamadaModeloId: null, frase: oferta.frase },
+          siguiente: 'herramientas',
+        });
+      }
+      if (oferta && abierta && NIEGA.test(normal(decision.texto))) {
+        return con([turnoPersona(decision.texto), turnoTexto(oferta.alNegar)], {
+          ...base,
+          mensajes: [...previo, persona, deAsistente(oferta.alNegar)],
+          abierta: null,
+          pendiente: abierta,
+          siguiente: 'esperar',
+        });
+      }
       return con([turnoPersona(decision.texto)], {
-        mensajes: [deAsistente('(La propuesta anterior quedó descartada.)'), { rol: 'persona', texto: decision.texto }],
-        referencia: decision.referencia,
+        ...base,
+        mensajes: [...previo, persona],
         pendiente: null,
-        decision: null,
-        vueltas: 0,
+        abierta: abierta ? { id: abierta, oferta: null } : null,
         siguiente: 'interpretar',
       });
     }
@@ -352,6 +439,6 @@ export function construirGrafo(
     .addConditionalEdges('herramientas', ir, ['interpretar', 'preguntar', 'esperar_decision', END])
     .addEdge('preguntar', END)
     .addEdge('esperar_decision', 'comunicar')
-    .addConditionalEdges('comunicar', ir, ['interpretar', 'esperar_decision', END])
+    .addConditionalEdges('comunicar', ir, ['interpretar', 'herramientas', 'esperar_decision', END])
     .compile({ checkpointer: punto });
 }

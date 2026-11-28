@@ -44,23 +44,26 @@ test.afterAll(async () => {
 });
 
 test.describe('movil.reuniones', () => {
-  test('sin reuniones, el corte lo dice y ofrece un ejemplo pulsable con su equipo (REQ-CUN06-07, 19)', async () => {
+  test('sin reuniones, el estado vacío del boceto con «Crear reunión» (REQ-CUN06-07 v2, 19; T-145)', async () => {
     await expect(lider.getByRole('tab', { name: 'Reuniones' })).toBeVisible();
     await abrirReuniones(lider);
-    await expect(lider.getByText('Todavía no hay reuniones. Pídele al asistente que busque un horario con tu equipo.')).toBeVisible();
-    const ejemplo = lider.getByRole('button', { name: 'Ejemplo: Reunión con el equipo Proyecto Alfa' });
-    await expect(ejemplo).toBeVisible();
+    await expect(lider.getByRole('heading', { name: 'Aún no hay reuniones de equipo' })).toBeVisible();
+    await expect(lider.getByText('Crea una reunión para comparar la disponibilidad de tu equipo y elegir un horario.')).toBeVisible();
+    const crear = lider.getByRole('button', { name: 'Crear reunión' });
+    await expect(crear).toBeVisible();
     // Los cortes tienen al menos 44 px de alto (RT-20)
     expect((await lider.getByRole('tab', { name: 'Reuniones' }).boundingBox())!.height).toBeGreaterThanOrEqual(44);
     await capturar(lider, '01-lista-vacia');
 
-    // El ejemplo abre la capa con el texto escrito, sin enviarlo
-    await ejemplo.click();
-    await expect(lider.getByLabel('Pídele algo al asistente')).toHaveValue('Reunión con el equipo Proyecto Alfa');
+    // D-REU-35: «Crear reunión» abre la capa con la petición escrita, sin enviarla, y no crea nada
+    await crear.click();
+    await expect(lider.getByLabel('Pídele algo al asistente')).toHaveValue('Busca un horario para reunirme con mi equipo');
     await expect(lider.getByLabel(/^Horarios para/)).toHaveCount(0);
   });
 
   test('en la capa, las propuestas pulsables; elegir una muestra la tarjeta y confirmar la deja agendada (REQ-CUN06-10)', async () => {
+    // El guion del modelo simulado no entiende la petición de «Crear reunión»: se nombra el equipo
+    await lider.getByLabel('Pídele algo al asistente').fill('Reunión con el equipo Proyecto Alfa');
     await enviar(lider);
     const turno = lider.getByLabel(/^Horarios para «/).last();
     await expect(turno).toBeVisible();
@@ -168,6 +171,26 @@ test.describe('movil.reuniones', () => {
     await tarjeta.getByRole('button', { name: 'Confirmar' }).click();
     await expect(lider.getByText('Reunión cancelada. Google avisó a los invitados.')).toBeVisible();
     await expect(reuniones(lider)).toHaveCount(1);
+  });
+
+  // T-146 · D-REU-36: la autorización propia está en Ajustes, una fila por equipo, y no en la lista de Reuniones
+  test('Ajustes tiene «Disponibilidad para tu equipo» con el responsable y el estado (REQ-CUN05-14, 19)', async () => {
+    await expect(lider.getByRole('button', { name: /^Autorizar|^Retirar autorización/ })).toHaveCount(0);
+    await lider.getByRole('button', { name: 'Ajustes' }).click();
+    await expect(lider.getByRole('heading', { name: 'Disponibilidad para tu equipo' })).toBeVisible();
+    const alfa = lider.getByRole('list', { name: 'Tus equipos' }).getByRole('listitem').filter({ hasText: 'Proyecto Alfa' });
+    await expect(alfa).toContainText(`Responsable: ${cuentas.reunionesLider.correo} · 5 integrantes`);
+    await expect(alfa).toContainText('Autorizado');
+    await expect(alfa.getByRole('button', { name: 'Retirar autorización' })).toBeVisible();
+    await capturar(lider, '09-ajustes-disponibilidad');
+    // Retirarla pasa por la tarjeta; se descarta para no cambiar el escenario
+    await alfa.getByRole('button', { name: 'Retirar autorización' }).click();
+    const tarjeta = alfa.getByLabel('Para confirmar');
+    await expect(tarjeta).toBeVisible();
+    await tarjeta.getByRole('button', { name: 'Descartar' }).click();
+    await expect(lider.getByText('No se realizaron cambios.')).toBeVisible();
+    await expect(alfa).toContainText('Autorizado');
+    await cerrarCapa(lider);
   });
 
   test('con el Plan Personal no hay corte «Reuniones» (REQ-CUN06-19)', async ({ browser }) => {

@@ -61,6 +61,14 @@ const noEncontrada = () => errorApi(404, 'OPERACION_NO_ENCONTRADA', 'No existe e
 
 const ambitoDe = (contexto: ContextoSolicitud): AmbitoSesion => contexto.ambito ?? 'propio';
 
+// T-143: lo que las herramientas y el grafo saben de la propuesta abierta del episodio
+export interface PropuestaAbierta {
+  id: string;
+  tipo: string;
+  carga: unknown;
+  vistaConfirmacion: VistaConfirmacion;
+}
+
 @Injectable()
 export class OperacionesService {
   private readonly pertenencias: PertenenciasRepositorio;
@@ -224,6 +232,13 @@ export class OperacionesService {
     });
     if (descartada.count !== 1) throw errorApi(409, 'OPERACION_NO_CONFIRMABLE', 'Esta acción ya no se puede descartar.');
     return aRespuesta(await this.buscar(contexto, id));
+  }
+
+  // T-143 · REQ-AGT-07: la propuesta sin decidir de un episodio, con la carga que se le propuso. Solo lee; nula
+  // si ya se decidió o no es de ese episodio
+  async propuestaDelEpisodio(contexto: ContextoSolicitud, id: string, conversacionId: string): Promise<PropuestaAbierta | null> {
+    const fila = await this.datos(contexto).operacion.findFirst({ where: { id, perfilId: contexto.perfilId, conversacionId, estado: 'propuesta' } });
+    return fila ? { id: fila.id, tipo: fila.tipo, carga: fila.carga, vistaConfirmacion: aRespuesta(fila).vistaConfirmacion } : null;
   }
 
   async listar(contexto: ContextoSolicitud, estados?: EstadoOperacion[]): Promise<OperacionRespuesta[]> {

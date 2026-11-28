@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { IdentidadModule } from '../identidad/identidad.module';
 import { AdministracionController } from './administracion.controller';
 import { EJECUTORES_DE_CUENTAS } from './ejecutores-cuentas';
+import { EJECUTORES_DE_EQUIPOS } from './ejecutores-equipos';
 import { LecturasAdministracion } from './lecturas';
 import { OperacionesEmpresaController } from './operaciones-empresa.controller';
 
@@ -10,6 +11,6 @@ import { OperacionesEmpresaController } from './operaciones-empresa.controller';
 @Module({
   imports: [IdentidadModule],
   controllers: [AdministracionController, OperacionesEmpresaController],
-  providers: [LecturasAdministracion, ...EJECUTORES_DE_CUENTAS],
+  providers: [LecturasAdministracion, ...EJECUTORES_DE_CUENTAS, ...EJECUTORES_DE_EQUIPOS],
 })
 export class AdministracionModule {}

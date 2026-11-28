@@ -1,14 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useState, useTransition } from 'react';
-import type { OperacionRespuesta, PersonaOrganizacion, Plan } from '@nexoai/contratos';
-import { confirmarEnEmpresa, descartarEnEmpresa, proponerEnEmpresa } from './acciones';
+import { useEffect, useRef, useState } from 'react';
+import type { PersonaOrganizacion, Plan } from '@nexoai/contratos';
+import { TarjetaConfirmacion, useConfirmacion } from './_comun/confirmacion';
 import { NOMBRE_CLASE, NOMBRE_ESTADO, NOMBRE_PLAN } from './_comun/textos';
 
 // T-062 · REQ-ADM-08 a 16 (interfaz). La tabla de personas y las acciones de cada fila. Cada acción pide a la
 // API su tarjeta de confirmación y la pinta tal como llega (vistaConfirmacion): la web no decide si se puede.
 // En una fila afiliada no hay acciones sobre la cuenta (REQ-ADM-15); quitarla de la organización llega con
 // la afiliación (T-063, T-064).
+// T-147 · H-ADM-35: la columna «Perfil» dice siempre «Administrador» o «Miembro», los administradores van primero
+// y encima hay un resumen; en «Equipos», la etiqueta «Responsable» donde lo es.
 
 const PLANES: Plan[] = ['empresarial', 'personal', 'gratuito'];
 
@@ -29,51 +31,46 @@ function accionesDe(p: PersonaOrganizacion): Accion[] {
   ];
 }
 
-const equiposDe = (p: PersonaOrganizacion) => (p.equipos.length === 0 ? '—' : p.equipos.map((e) => (e.responsable ? `${e.nombre} (responsable)` : e.nombre)).join(', '));
+function EquiposDe({ persona: p }: { persona: PersonaOrganizacion }) {
+  if (p.equipos.length === 0) return <>—</>;
+  return (
+    <ul className="empresa__equipos-de">
+      {p.equipos.map((e) => (
+        <li key={e.id}>
+          {e.nombre}
+          {e.responsable && (
+            <>
+              {' '}
+              <span className="empresa__etiqueta empresa__etiqueta--responsable">Responsable</span>
+            </>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const enPlural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
+
+// «1 administrador · 2 miembros»: cuenta las cuentas que llevan etiqueta de perfil, no las invitaciones
+function resumenDePerfiles(personas: PersonaOrganizacion[]): string {
+  const cuentas = personas.filter((p) => p.clase !== 'invitacion');
+  const administradores = cuentas.filter((p) => p.administrador).length;
+  return `${enPlural(administradores, 'administrador', 'administradores')} · ${enPlural(cuentas.length - administradores, 'miembro', 'miembros')}`;
+}
 
 export function Personas({ organizacion, personas }: { organizacion: string; personas: PersonaOrganizacion[] | null }) {
-  const [propuesta, setPropuesta] = useState<OperacionRespuesta | null>(null);
   const [temporal, setTemporal] = useState<{ correo: string; contrasena: string } | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [darDeAlta, setDarDeAlta] = useState(false);
-  const [ocupado, empezar] = useTransition();
-
-  const proponer = (tipo: string, carga: object) =>
-    empezar(async () => {
-      setError(null);
-      const r = await proponerEnEmpresa(tipo, carga);
-      if (r.error) setError(r.error);
-      else setPropuesta(r.propuesta ?? null);
-    });
-
-  const confirmar = () =>
-    empezar(async () => {
-      if (!propuesta) return;
-      const r = await confirmarEnEmpresa(propuesta.id);
-      if (r.error || !r.operacion) {
-        setError(r.error ?? 'No se pudo completar. Inténtalo de nuevo.');
-        setPropuesta(null);
-        return;
-      }
-      if (r.operacion.estado === 'propuesta') {
-        // Algo cambió desde que se preparó: llega la tarjeta nueva, con el motivo
-        setPropuesta(r.operacion);
-        return;
-      }
-      if (r.operacion.estado !== 'ejecutada') setError(r.operacion.error ?? 'No se pudo completar.');
-      if (r.operacion.efimero) {
-        const correo = r.operacion.vistaConfirmacion.datos.find((d) => d.etiqueta === 'Correo' || d.etiqueta === 'Cuenta')?.valor ?? '';
-        setTemporal({ correo, contrasena: r.operacion.efimero.contrasenaTemporal });
-      }
-      setPropuesta(null);
-      setDarDeAlta(false);
-    });
-
-  const cancelar = () =>
-    empezar(async () => {
-      if (propuesta) await descartarEnEmpresa(propuesta.id);
-      setPropuesta(null);
-    });
+  const { propuesta, error, ocupado, proponer, confirmar, cancelar } = useConfirmacion((operacion) => {
+    if (operacion.efimero) {
+      const correo = operacion.vistaConfirmacion.datos.find((d) => d.etiqueta === 'Correo' || d.etiqueta === 'Cuenta')?.valor ?? '';
+      setTemporal({ correo, contrasena: operacion.efimero.contrasenaTemporal });
+    }
+    setDarDeAlta(false);
+  });
+  // Los administradores primero; dentro de cada grupo, el orden de la API (invitaciones, y luego por correo)
+  const ordenadas = personas && [...personas].sort((a, b) => Number(b.administrador) - Number(a.administrador));
 
   return (
     <>
@@ -99,31 +96,34 @@ export function Personas({ organizacion, personas }: { organizacion: string; per
 
       {temporal && <ContrasenaTemporal {...temporal} alCerrar={() => setTemporal(null)} />}
 
-      {personas === null ? (
+      {ordenadas === null ? (
         <p className="error" role="alert">
           No pudimos leer las cuentas. Vuelve a cargar la página.
         </p>
       ) : (
-        <table className="empresa__tabla">
-          <thead>
-            <tr>
-              <th scope="col">Correo</th>
-              <th scope="col">Cuenta</th>
-              <th scope="col">Estado</th>
-              <th scope="col">Plan</th>
-              <th scope="col">Equipos</th>
-              <th scope="col">Administra</th>
-              <th scope="col">
-                <span className="solo-lector">Acciones</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {personas.map((p) => (
-              <Fila key={p.miembroId} persona={p} ocupado={ocupado || propuesta !== null} alPedir={proponer} />
-            ))}
-          </tbody>
-        </table>
+        <>
+          <p className="empresa__resumen">{resumenDePerfiles(ordenadas)}</p>
+          <table className="empresa__tabla">
+            <thead>
+              <tr>
+                <th scope="col">Correo</th>
+                <th scope="col">Cuenta</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Plan</th>
+                <th scope="col">Equipos</th>
+                <th scope="col">Perfil</th>
+                <th scope="col">
+                  <span className="solo-lector">Acciones</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {ordenadas.map((p) => (
+                <Fila key={p.miembroId} persona={p} ocupado={ocupado || propuesta !== null} alPedir={proponer} />
+              ))}
+            </tbody>
+          </table>
+        </>
       )}
     </>
   );
@@ -166,8 +166,18 @@ function Fila({ persona: p, ocupado, alPedir }: { persona: PersonaOrganizacion; 
           NOMBRE_PLAN[p.plan]
         )}
       </td>
-      <td>{equiposDe(p)}</td>
-      <td>{p.administrador ? 'Sí' : ''}</td>
+      <td>
+        <EquiposDe persona={p} />
+      </td>
+      <td>
+        {p.clase === 'invitacion' ? (
+          <span className="empresa__suave">—</span>
+        ) : p.administrador ? (
+          <span className="empresa__etiqueta empresa__etiqueta--administrador">Administrador</span>
+        ) : (
+          <span className="empresa__etiqueta">Miembro</span>
+        )}
+      </td>
       <td className="empresa__acciones">
         {acciones.length > 0 && <MenuAcciones correo={p.correo} acciones={acciones} ocupado={ocupado} alPedir={alPedir} />}
       </td>
@@ -261,42 +271,6 @@ function FormularioAlta({ ocupado, alCancelar, alRevisar }: { ocupado: boolean; 
         </div>
       </form>
     </section>
-  );
-}
-
-// La tarjeta de confirmación, tal como la arma la API (P-03, REQ-ADM-16)
-function TarjetaConfirmacion({ propuesta, ocupado, alConfirmar, alCancelar }: { propuesta: OperacionRespuesta; ocupado: boolean; alConfirmar: () => void; alCancelar: () => void }) {
-  const vista = propuesta.vistaConfirmacion;
-  return (
-    <div className="empresa__capa">
-      <article className="tarjeta-confirmacion empresa__confirmacion" role="dialog" aria-modal="true" aria-labelledby="titulo-confirmacion">
-        <h4 id="titulo-confirmacion">{vista.accion}</h4>
-        <dl>
-          {vista.datos.map((d) => (
-            <div key={d.etiqueta} className="tarjeta-confirmacion__dato">
-              <dt>{d.etiqueta}</dt>
-              <dd>{d.valor}</dd>
-            </div>
-          ))}
-        </dl>
-        {vista.irreversible && <p className="tarjeta__irreversible">{vista.irreversible}</p>}
-        {!vista.confirmable && vista.motivoNoConfirmable && (
-          <p className="tarjeta__motivo" role="status">
-            {vista.motivoNoConfirmable}
-          </p>
-        )}
-        <div className="tarjeta__acciones">
-          {vista.confirmable && (
-            <button type="button" className="boton" onClick={alConfirmar} disabled={ocupado} autoFocus>
-              Confirmar
-            </button>
-          )}
-          <button type="button" className="boton boton--secundario" onClick={alCancelar} disabled={ocupado}>
-            {vista.confirmable ? 'Cancelar' : 'Entendido'}
-          </button>
-        </div>
-      </article>
-    </div>
   );
 }
 

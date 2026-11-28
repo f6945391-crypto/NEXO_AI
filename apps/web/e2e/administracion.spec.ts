@@ -2,6 +2,7 @@ import { expect, test, type Browser, type Page } from '@playwright/test';
 import cuentas from './cuentas.json';
 
 // T-062 · REQ-ADM-05, REQ-ADM-08 a 16 (interfaz) · specs/08-administracion/plan.md §7, contra la API real.
+// T-067 · REQ-ADM-28 a 32 (interfaz): equipos. T-147 · H-ADM-35: «Perfil» en Personas.
 
 const aviso = (page: Page) => page.locator('p.error[role="alert"]');
 
@@ -41,6 +42,8 @@ test.describe('web.administracion-solo-para-administradores', () => {
     await expect(navegacion.getByRole('link', { name: 'Registro' })).toHaveCount(0);
     await expect(page.getByRole('heading', { level: 2, name: 'Ventas' })).toBeVisible();
     await expect(page.getByRole('heading', { level: 2, name: 'Soporte' })).toHaveCount(0);
+    // Solo lectura: ninguna acción en el lienzo (plan §7.2)
+    await expect(page.getByRole('main').getByRole('button')).toHaveCount(0);
     await page.goto('/administracion');
     await expect(page).toHaveURL(/\/administracion\/equipos$/);
   });
@@ -93,12 +96,19 @@ test.describe('web.administracion-cuentas', () => {
     await page.close();
   });
 
+  // web.administracion-personas (T-147, ajustada): «Perfil» siempre escrito, los administradores primero y el resumen
   test('la administradora entra y ve las personas de su organización', async () => {
     await entrarEnZona(page, cuentas.administradora.correo);
     await expect(page).toHaveURL(/\/administracion$/);
     await expect(page.getByRole('heading', { level: 1, name: 'Personas' })).toBeVisible();
-    await expect(fila(page, cuentas.acmeResponsable.correo)).toContainText('Ventas (responsable)');
-    await expect(fila(page, cuentas.administradora.correo)).toContainText('Sí');
+    await expect(page.getByText('1 administrador · 3 miembros', { exact: true })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Perfil' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Administra' })).toHaveCount(0);
+    await expect(page.getByRole('row').nth(1).getByRole('rowheader')).toHaveText(cuentas.administradora.correo);
+    await expect(fila(page, cuentas.administradora.correo)).toContainText('Administrador');
+    for (const cuenta of [cuentas.acmeResponsable, cuentas.acmeSuspender, cuentas.acmeRestablecer]) await expect(fila(page, cuenta.correo)).toContainText('Miembro');
+    await expect(fila(page, cuentas.acmeResponsable.correo).getByRole('listitem').filter({ hasText: 'Ventas' })).toContainText('Responsable');
+    await expect(fila(page, cuentas.acmeRestablecer.correo)).not.toContainText('Responsable');
     await expect(fila(page, cuentas.acmeSuspender.correo)).toContainText('De la organización');
     // Nadie de otra organización
     await expect(fila(page, cuentas.personalSinEmpresa.correo)).toHaveCount(0);
@@ -162,15 +172,13 @@ test.describe('web.administracion-cuentas', () => {
     await tarjeta.getByRole('button', { name: 'Entendido' }).click();
   });
 
-  test('ve los equipos en lectura, con «Sin responsable» destacado, y el registro de lo hecho', async () => {
+  test('ve los equipos, con «Sin responsable» destacado, y el registro de lo hecho', async () => {
     await page.goto('/administracion');
     await page.getByRole('navigation', { name: 'Administración' }).getByRole('link', { name: 'Equipos' }).click();
     const ventas = page.getByRole('article', { name: 'Ventas' });
     await expect(ventas).toContainText(cuentas.acmeResponsable.correo);
     await expect(ventas).toContainText(cuentas.acmeSuspender.correo);
     await expect(page.getByRole('article', { name: 'Soporte' }).getByText('Sin responsable')).toBeVisible();
-    // Solo lectura: ninguna acción en el lienzo
-    await expect(page.getByRole('main').getByRole('button')).toHaveCount(0);
 
     await page.getByRole('navigation', { name: 'Administración' }).getByRole('link', { name: 'Registro' }).click();
     const registro = page.getByRole('list', { name: 'Registro' });
@@ -191,5 +199,68 @@ test.describe('web.administracion-cuentas', () => {
     await expect(page).toHaveURL(/\/administracion\/entrar$/);
     await page.goto('/');
     await expect(page.getByRole('navigation', { name: 'Secciones' })).toBeVisible();
+  });
+});
+
+// T-067 · REQ-ADM-28 a 31. Sobre un equipo nuevo, para no cambiar «Ventas» ni «Soporte», que leen otras pruebas.
+test.describe('web.administracion-equipos', () => {
+  test('la administradora crea «Marketing», suma a dos personas, nombra responsable a una y la quita', async ({ page }) => {
+    await entrarEnZona(page, cuentas.administradora.correo);
+    await expect(page).toHaveURL(/\/administracion$/);
+    await page.getByRole('navigation', { name: 'Administración' }).getByRole('link', { name: 'Equipos' }).click();
+    await expect(page).toHaveURL(/\/administracion\/equipos$/);
+
+    // Crear
+    await page.getByRole('button', { name: 'Crear equipo' }).click();
+    await page.getByLabel('Nombre del equipo').fill('Marketing');
+    await page.getByRole('button', { name: 'Revisar' }).click();
+    const crear = page.getByRole('dialog', { name: 'Crear un equipo' });
+    await expect(crear).toContainText('Marketing');
+    await crear.getByRole('button', { name: 'Confirmar' }).click();
+    const marketing = page.getByRole('article', { name: 'Marketing' });
+    await expect(marketing.getByText('Sin responsable')).toBeVisible();
+
+    // El nombre repetido no se puede confirmar
+    await page.getByRole('button', { name: 'Crear equipo' }).click();
+    await page.getByLabel('Nombre del equipo').fill('ventas');
+    await page.getByRole('button', { name: 'Revisar' }).click();
+    const repetido = page.getByRole('dialog', { name: 'Crear un equipo' });
+    await expect(repetido).toContainText('Ya hay un equipo «Ventas» en la organización');
+    await expect(repetido.getByRole('button', { name: 'Confirmar' })).toHaveCount(0);
+    await repetido.getByRole('button', { name: 'Entendido' }).click();
+    await page.getByRole('button', { name: 'Cancelar' }).click();
+
+    // Añadir a dos personas
+    for (const cuenta of [cuentas.acmeSuspender, cuentas.acmeRestablecer]) {
+      await marketing.getByLabel('Persona para añadir a Marketing').selectOption({ label: cuenta.correo });
+      await marketing.getByRole('button', { name: 'Añadir a Marketing' }).click();
+      const anadir = page.getByRole('dialog', { name: 'Añadir a alguien a un equipo' });
+      await expect(anadir).toContainText(cuenta.correo);
+      await anadir.getByRole('button', { name: 'Confirmar' }).click();
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+      await expect(marketing.getByRole('listitem').filter({ hasText: cuenta.correo })).toBeVisible();
+    }
+
+    // Nombrar responsable
+    await marketing.getByRole('button', { name: `Nombrar a ${cuentas.acmeSuspender.correo} responsable de Marketing` }).click();
+    const nombrar = page.getByRole('dialog', { name: 'Nombrar responsable de un equipo' });
+    await expect(nombrar).toContainText('Nadie');
+    await nombrar.getByRole('button', { name: 'Confirmar' }).click();
+    await expect(marketing.getByText('Sin responsable')).toHaveCount(0);
+
+    // Quitarla: el equipo queda sin responsable, a la vista
+    await marketing.getByRole('button', { name: `Quitar a ${cuentas.acmeSuspender.correo} de Marketing` }).click();
+    const quitar = page.getByRole('dialog', { name: 'Quitar a alguien de un equipo' });
+    await expect(quitar).toContainText('el equipo queda sin responsable');
+    await expect(quitar).toContainText('tendrá que autorizar otra vez');
+    await quitar.getByRole('button', { name: 'Confirmar' }).click();
+    await expect(marketing.getByText('Sin responsable')).toBeVisible();
+    await expect(marketing.getByRole('listitem').filter({ hasText: cuentas.acmeSuspender.correo })).toHaveCount(0);
+    await expect(marketing.getByRole('listitem').filter({ hasText: cuentas.acmeRestablecer.correo })).toBeVisible();
+
+    // Personas lo refleja
+    await page.getByRole('navigation', { name: 'Administración' }).getByRole('link', { name: 'Personas' }).click();
+    await expect(fila(page, cuentas.acmeRestablecer.correo)).toContainText('Marketing');
+    await expect(fila(page, cuentas.acmeSuspender.correo)).not.toContainText('Marketing');
   });
 });

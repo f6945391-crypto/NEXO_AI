@@ -5,9 +5,10 @@ import type { EstadoConsentimientoEquipo } from '@nexoai/contratos';
 import { obtenerEquipos, obtenerIntegrantes } from '../acciones-equipo';
 import { ConsentimientoEquipo } from './consentimiento-equipo';
 
-// T-134 · specs/10-reuniones/plan.md §10: la autorización propia para compartir la disponibilidad, al pie de la
-// lista de reuniones (antes estaba en medio de la consulta de CUN-05). Una por equipo, con su responsable y
-// cuántas personas tiene (REQ-CUN05-19, H-EQ-01). El cambio es la Operación de CUN-05 (REQ-CUN05-14 a 16).
+// T-146 · D-REU-36 (reemplaza a D-REU-32): la autorización propia para compartir la disponibilidad, en Ajustes,
+// apartado «Disponibilidad para tu equipo». Una fila por equipo, con su responsable y cuántas personas tiene
+// (REQ-CUN05-19, H-EQ-01), el estado y el botón. El cambio es la Operación de CUN-05 (REQ-CUN05-14 a 16).
+// Lo pinta Ajustes solo con plan efectivo Empresarial y algún equipo (REQ-CUN05-18).
 
 type Equipo = { id: string; nombre: string; responsable: string | null; integrantes: number; estado: EstadoConsentimientoEquipo | null };
 
@@ -33,36 +34,54 @@ export function AutorizacionesEquipo({ perfilId }: { perfilId: string }) {
   }, [perfilId]);
 
   useEffect(() => {
-    // Carga al abrir el corte; la respuesta llega después, fuera del render
+    // Carga al abrir Ajustes; la respuesta llega después, fuera del render
     void cargar();
   }, [cargar]);
 
-  if (error) return <p className="ayuda" role="alert">{error}</p>;
-  if (!equipos || equipos.length === 0) return null;
+  if (!error && equipos?.length === 0) return null;
 
   return (
-    <section className="autorizaciones" aria-labelledby="titulo-autorizaciones">
-      <h3 id="titulo-autorizaciones">Compartir tu disponibilidad</h3>
-      <ul className="autorizaciones__lista">
-        {equipos.map((equipo) => (
-          <li key={equipo.id} className="autorizaciones__equipo">
-            <p className="autorizaciones__nombre">{equipo.nombre}</p>
-            <p className="ayuda">
-              {equipo.responsable ? `Responsable: ${equipo.responsable}` : 'Sin responsable'} · {equipo.integrantes} {equipo.integrantes === 1 ? 'integrante' : 'integrantes'}
-            </p>
-            {equipo.estado && (
-              <ConsentimientoEquipo
-                equipoId={equipo.id}
-                estadoActual={equipo.estado}
-                bloqueado={false}
-                alOcupar={() => undefined}
-                alProponer={() => undefined}
-                alActualizar={cargar}
-              />
-            )}
-          </li>
-        ))}
-      </ul>
+    <section className="permisos autorizaciones" aria-labelledby="titulo-autorizaciones">
+      <h3 id="titulo-autorizaciones">Disponibilidad para tu equipo</h3>
+      <p className="explicacion">Autoriza a cada equipo a ver tus horas libres y ocupadas para buscar horario de reunión. No se comparten títulos ni detalles, y puedes retirarlo cuando quieras.</p>
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+      {!error && !equipos && <p className="explicacion">Leyendo tus equipos…</p>}
+      {equipos && equipos.length > 0 && (
+        <ul aria-label="Tus equipos">
+          {equipos.map((equipo) => {
+            const autorizado = equipo.estado === 'concedida';
+            return (
+              <li key={equipo.id} className="permiso autorizacion">
+                <div>
+                  <p className="permiso__nombre">
+                    {equipo.nombre}{' '}
+                    <span className={`etiqueta${autorizado ? ' etiqueta--concedido' : ''}`}>{autorizado ? 'Autorizado' : 'Sin autorizar'}</span>
+                  </p>
+                  <p className="permiso__para">
+                    {equipo.responsable ? `Responsable: ${equipo.responsable}` : 'Sin responsable'} · {equipo.integrantes} {equipo.integrantes === 1 ? 'integrante' : 'integrantes'}
+                  </p>
+                </div>
+                {equipo.estado && (
+                  <ConsentimientoEquipo
+                    variante="fila"
+                    nombreEquipo={equipo.nombre}
+                    equipoId={equipo.id}
+                    estadoActual={equipo.estado}
+                    bloqueado={false}
+                    alOcupar={() => undefined}
+                    alProponer={() => undefined}
+                    alActualizar={cargar}
+                  />
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
   );
 }

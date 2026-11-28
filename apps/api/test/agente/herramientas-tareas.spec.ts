@@ -76,7 +76,7 @@ describe('T-050, T-051 · tareas por conversación', () => {
   });
 
   describe('agente.tareas.registra-con-tarjeta', () => {
-    it('«recuérdame… antes del sábado» propone con fecha; sin confirmar no existe; al confirmar está en «Con fecha», sin Google ni avisos', async () => {
+    it('«recuérdame… antes del sábado» propone con fecha; sin confirmar no existe; al confirmar queda para el sábado, sin Google ni avisos', async () => {
       const r = await enviar('Recuérdame pagar el recibo antes del sábado');
       expect(tipos(r.turnos)).toEqual(['persona', 'propuesta']);
       const vista = de(r.turnos, 'propuesta').operacion.vistaConfirmacion;
@@ -87,7 +87,7 @@ describe('T-050, T-051 · tareas por conversación', () => {
       expect(await prisma.tareaPersonal.count()).toBe(0);
 
       const hecha = await decidir({ operacionId: r.pendiente, decision: 'confirmar' });
-      expect(de(hecha.turnos, 'resultado').texto).toBe('Listo: «Pagar el recibo» quedó en tus tareas, en «Con fecha».');
+      expect(de(hecha.turnos, 'resultado').texto).toMatch(/^Listo: «Pagar el recibo» quedó en tus tareas para el sábado \d+ de \p{Ll}+\.$/u);
       expect((await tareas()).pendientes.map((t) => [t.texto, t.franja])).toEqual([['Pagar el recibo', 'con_fecha']]);
       expect(calendario.llamadas.escrituras).toBe(0);
       expect(await prisma.eventoAgenda.count()).toBe(0);
@@ -150,7 +150,7 @@ describe('T-050, T-051 · tareas por conversación', () => {
       expect(vista.datos).toContainEqual({ etiqueta: 'Tarea', valor: 'Informe' });
       expect(vista.datos).toContainEqual({ etiqueta: 'De quién', valor: 'María Fernanda' });
       expect(vista.datos).toContainEqual({ etiqueta: 'Aviso', valor: 'NexoAI no le escribe a María Fernanda' });
-      expect(vista.datos).toContainEqual({ etiqueta: 'Dónde aparece', valor: 'En Tareas, en «Esperando de alguien»' });
+      expect(vista.datos.map((d) => d.etiqueta)).not.toContain('Dónde aparece');
       await decidir({ operacionId: r.pendiente, decision: 'confirmar' });
       expect((await tareas()).pendientes[0]).toMatchObject({ franja: 'esperando', deQuien: 'María Fernanda' });
       expect(calendario.llamadas.escrituras).toBe(0);
@@ -236,6 +236,46 @@ describe('T-050, T-051 · tareas por conversación', () => {
 
       const q = await enviar('Cámbiala');
       expect(de(q.turnos, 'pregunta').campo).toBe('cambio_tarea');
+    });
+  });
+
+  // T-144 · H-TP-37: la tarjeta y la confirmación de una tarea no nombran las franjas de la sección Tareas
+  describe('tareas.tarjeta-sin-franja', () => {
+    const FRANJAS = /Dónde aparece|«Con fecha»|«Sin fecha»|Esperando de alguien/;
+    const sinFranja = (turnos: TurnoAsistente[]) => expect(JSON.stringify(turnos)).not.toMatch(FRANJAS);
+
+    it('registrar con fecha, sin fecha y esperando de alguien: la tarjeta dice cuándo o de quién, y la confirmación también', async () => {
+      const conFecha = await enviar('Recuérdame pagar el recibo antes del sábado');
+      sinFranja(conFecha.turnos);
+      expect(de(conFecha.turnos, 'propuesta').operacion.vistaConfirmacion.datos.map((d) => d.etiqueta)).toEqual(['Tarea', 'Cuándo']);
+      const hecha = await decidir({ operacionId: conFecha.pendiente, decision: 'confirmar' });
+      sinFranja(hecha.turnos);
+      expect(de(hecha.turnos, 'resultado').texto).toMatch(/^Listo: «Pagar el recibo» quedó en tus tareas para el sábado \d+ de \p{Ll}+\.$/u);
+
+      const sinFecha = await enviar('Tengo que llamar al dentista');
+      sinFranja(sinFecha.turnos);
+      const sinFechaHecha = await decidir({ operacionId: sinFecha.pendiente, decision: 'confirmar' });
+      expect(de(sinFechaHecha.turnos, 'resultado').texto).toBe('Listo: «Llamar al dentista» quedó en tus tareas sin fecha.');
+
+      const deAna = await enviar('Ana tiene que enviarme el presupuesto el lunes');
+      sinFranja(deAna.turnos);
+      expect(de(deAna.turnos, 'propuesta').operacion.vistaConfirmacion.datos).toContainEqual({ etiqueta: 'De quién', valor: 'Ana' });
+      const deAnaHecha = await decidir({ operacionId: deAna.pendiente, decision: 'confirmar' });
+      sinFranja(deAnaHecha.turnos);
+      expect(de(deAnaHecha.turnos, 'resultado').texto).toMatch(/^Listo: «Presupuesto» quedó en tus tareas esperando a Ana, para el lunes \d+ de \p{Ll}+\.$/u);
+    });
+
+    it('cambiar y anotar un avance tampoco nombran la franja, aunque la tarea cambie de franja', async () => {
+      const recibo = await sembrar({ texto: 'Pagar el recibo', fecha: dias(2) });
+      const op = OperacionRespuesta.parse(
+        (await http().post('/operaciones').set('Authorization', autorizacion).send({ tipo: 'tareas.cambiar', carga: { tareaId: recibo.id, fecha: null }, origen: 'agente' }).expect(201)).body,
+      );
+      expect(JSON.stringify(op.vistaConfirmacion)).not.toMatch(FRANJAS);
+      expect(op.vistaConfirmacion.datos.map((d) => d.etiqueta)).toEqual(['Tarea', 'Antes', 'Ahora']);
+
+      const avance = await enviar('Sobre el recibo: ya junté la plata');
+      sinFranja(avance.turnos);
+      expect(de(avance.turnos, 'propuesta').operacion.vistaConfirmacion.datos.map((d) => d.etiqueta)).toEqual(['Tarea', 'Cuándo', 'Avance']);
     });
   });
 });

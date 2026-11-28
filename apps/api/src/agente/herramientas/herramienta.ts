@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import type { ContextoSolicitud } from '../../identidad/contexto';
+import type { PropuestaAbierta } from '../../operaciones/operaciones.service';
 
 // specs/07-agente/plan.md §5 · T-030. Lo que hace una herramienta del agente. La identidad llega siempre del
 // contexto de la petición, nunca de los argumentos que dé el modelo (P-04).
@@ -12,6 +13,18 @@ export interface EntornoHerramienta {
   referencia: { instante: Date; zonaHoraria: string };
   // T-033: la Operación en espera que se está atendiendo; lo que se proponga ocupa esa misma fila
   enEspera?: string;
+  // T-143 · REQ-AGT-07: la propuesta sin decidir del episodio, mientras se interpreta lo que la persona escribió
+  // después. Cambiar una tarea o un compromiso puede referirse a ella
+  propuestaAbierta?: PropuestaAbierta;
+}
+
+// T-143 · REQ-AGT-07: lo que el código ofrece hacer en lugar de lo pedido («¿la registro como compromiso?»). Si
+// la persona acepta, el grafo llama a esa herramienta sin pasar por el modelo; si no, dice `alNegar`
+export interface Oferta {
+  llamada: { nombre: string; argumentos: Record<string, unknown> };
+  // La frase de la persona que la motivó: la que se guarda con lo que se proponga al aceptar
+  frase: string;
+  alNegar: string;
 }
 
 export interface ResultadoHerramienta {

@@ -456,6 +456,8 @@ a.boton {
   background: var(--agente-suave);
   color: var(--texto-fuerte);
   line-height: 1.4;
+  /* T-142 · REQ-AGT-06: cada punto de una enumeración en su línea; el texto llega llano, sin Markdown */
+  white-space: pre-line;
 }
 
 .turno__resultado {
@@ -1732,9 +1734,36 @@ a.boton {
   margin: var(--espaciado-24) auto;
 }
 
-.reuniones__vacio .reuniones__ejemplo {
-  margin-top: var(--espaciado-16);
-  text-align: center;
+/* T-145 · REQ-CUN06-07 v2: el estado vacío del boceto del 27 de noviembre de 2026, en un recuadro */
+.reuniones__corte .reuniones__vacio {
+  max-width: none;
+  min-height: 420px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--espaciado-8);
+  margin: 0;
+  padding: var(--espaciado-40) var(--espaciado-24);
+  border: 1px solid var(--borde-base);
+  border-radius: var(--radio-lg);
+  background: var(--superficie-base);
+}
+
+.reuniones__vacio .reuniones__dibujo {
+  width: 96px;
+  height: 96px;
+  margin-bottom: var(--espaciado-16);
+  color: var(--marca-base);
+  opacity: 0.55;
+}
+
+.reuniones__vacio h3 {
+  margin: 0;
+  font-size: var(--tam-subtitulo);
+}
+
+.reuniones__vacio p {
+  max-width: 440px;
 }
 
 .reuniones__lista {
@@ -2201,54 +2230,28 @@ span.marca {
   color: var(--texto-suave);
 }
 
-/* La autorización propia, al pie de la lista */
-.autorizaciones {
-  padding-top: var(--espaciado-24);
-  border-top: 1px solid var(--borde-base);
+/* T-146 · D-REU-36: la autorización propia, en Ajustes, una fila por equipo con la forma de los permisos de Google.
+   Los botones van a la derecha; la tarjeta de confirmación y los avisos, debajo, a todo el ancho */
+.autorizacion .consentimiento-fila {
+  display: contents;
 }
 
-.autorizaciones h3 {
-  margin: 0 0 var(--espaciado-12);
-  font-size: var(--tam-cuerpo);
-}
-
-.autorizaciones__lista {
-  list-style: none;
+.consentimiento-fila .tarjeta-confirmacion,
+.consentimiento-fila > p {
+  grid-column: 1 / -1;
   margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--espaciado-24);
 }
 
-.autorizaciones__equipo {
+.consentimiento-fila .tarjeta-confirmacion {
   display: grid;
   gap: var(--espaciado-8);
 }
 
-.autorizaciones__nombre {
-  margin: 0;
-  font-weight: 600;
-}
-
-/* El componente de CUN-05 trae su propio título; aquí basta con el del equipo */
-.autorizaciones .consentimiento-equipo {
-  display: grid;
-  gap: var(--espaciado-8);
-}
-
-.autorizaciones .consentimiento-equipo h3 {
+.consentimiento-fila .tarjeta-confirmacion h4,
+.consentimiento-fila .tarjeta-confirmacion dl,
+.consentimiento-fila .tarjeta-confirmacion p {
   margin: 0;
   font-size: var(--tam-etiqueta);
-  font-weight: 600;
-  color: var(--texto-suave);
-}
-
-.autorizaciones .consentimiento-equipo p {
-  margin: 0;
-}
-
-.autorizaciones .consentimiento-equipo .cambio-zona__acciones {
-  margin-top: var(--espaciado-8);
 }
 
 /* El turno `reunion` en la conversación */

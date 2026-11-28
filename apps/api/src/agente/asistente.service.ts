@@ -96,9 +96,13 @@ export class AsistenteService {
         await this.transcripcion.anotar(contexto, conversacion.id, turnos);
         return this.enviar(contexto, texto);
       }
-      // REQ-AGT-01: un mensaje nuevo con una propuesta pendiente la descarta y se interpreta con lo hablado
-      if (op) await this.operaciones.descartar(contexto, op.id);
-      const resultado = await grafo.invoke(new Command({ resume: { tipo: 'nuevo_mensaje', texto, referencia } satisfies Reanudacion }), config);
+      // REQ-AGT-01 · T-143 · REQ-AGT-07: el mensaje nuevo se interpreta contra la propuesta pendiente, que sigue
+      // abierta mientras tanto. Si el grafo no vuelve a esperarla (propuso otra, o era otra cosa), se descarta
+      const resultado = (await grafo.invoke(new Command({ resume: { tipo: 'nuevo_mensaje', texto, referencia } satisfies Reanudacion }), config)) as EstadoAsistente & {
+        __interrupt__?: unknown[];
+      };
+      const sigueEsperandola = !!resultado.__interrupt__?.length && resultado.pendiente === op?.id;
+      if (op && !sigueEsperandola) await this.descartarSiSigue(contexto, op.id);
       return this.responder(contexto, conversacion.id, resultado, turnos);
     }
 
@@ -287,6 +291,12 @@ export class AsistenteService {
       },
       { conversacionId },
     );
+  }
+
+  // T-143: la propuesta que quedó atrás; si ya se decidió por otra vía, no hay nada que descartar
+  private async descartarSiSigue(contexto: ContextoSolicitud, operacionId: string): Promise<void> {
+    const fila = await this.datos(contexto).operacion.findFirst({ where: { id: operacionId, perfilId: contexto.perfilId, estado: 'propuesta' } });
+    if (fila) await this.operaciones.descartar(contexto, operacionId);
   }
 
   // El punto de control ya se guardó dentro de `invoke`: los turnos se anotan después, para que un fallo a

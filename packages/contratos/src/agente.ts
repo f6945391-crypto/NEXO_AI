@@ -30,7 +30,8 @@ export const ArgsRegistrarEvento = z.strictObject({
 export type ArgsRegistrarEvento = z.infer<typeof ArgsRegistrarEvento>;
 
 export const ArgsModificarEvento = z.strictObject({
-  eventoId: z.uuid().describe('Id del compromiso, tal como lo dio agenda_consultar'),
+  // T-143 · REQ-AGT-07: también el propuestaId de la propuesta abierta, si corrige un compromiso todavía sin confirmar
+  eventoId: z.uuid().describe('Id del compromiso, tal como lo dio agenda_consultar, o el propuestaId de la propuesta abierta'),
   titulo: Titulo.optional(),
   fecha: Fecha.optional().describe('Fecha nueva; sin ella, el mismo día'),
   horaInicio: Hora.optional().describe('Hora nueva de inicio; sin ella, la misma hora'),

@@ -38,6 +38,9 @@ const instanteDeFin = (dia: FechaLocal, inicioMin: number, finMin: number, zona:
   instanteLocal(finMin <= inicioMin ? sumarDias(dia, 1) : dia, finMin, zona);
 const aTexto = (f: FechaLocal) => `${f.anio}-${String(f.mes).padStart(2, '0')}-${String(f.dia).padStart(2, '0')}`;
 
+// T-143: la carga de `agenda.registrar` tal como se propuso
+type CargaPropuesta = { titulo: string; inicio: string; fin?: string; zonaHoraria?: string };
+
 const conError = (codigo: string, mensaje: string, campos?: string[]): ResultadoHerramienta => ({
   paraModelo: { error: { codigo, mensaje, ...(campos ? { campos } : {}) } },
 });
@@ -84,7 +87,7 @@ export class HerramientasAgenda implements OnModuleInit {
     });
     this.ejecutor.registrar({
       nombre: 'agenda.modificar_evento',
-      descripcion: 'Propone cambiar el título o el horario de un compromiso propio. Pasa solo lo que cambia.',
+      descripcion: 'Propone cambiar el título o el horario de un compromiso propio, o corregir el compromiso de la propuesta abierta (con su propuestaId). Pasa solo lo que cambia.',
       esquema: ArgsModificarEvento,
       ejecutar: (contexto, args, entorno) => this.modificar(contexto, args, entorno),
     });
@@ -173,6 +176,9 @@ export class HerramientasAgenda implements OnModuleInit {
       return conError('DATOS_FALTANTES', 'No dice qué cambiar del compromiso.', ['cambio']);
     }
     const zona = entorno.referencia.zonaHoraria;
+    // T-143 · REQ-AGT-07: con un compromiso propuesto y sin confirmar, cambiarlo es corregir la propuesta
+    const abierta = await this.propuestaDeCompromiso(contexto, args.eventoId, entorno);
+    if (abierta) return this.corregir(contexto, abierta, args, entorno);
     // Lo que no se dice se conserva: el mismo día o la misma hora del compromiso, vistos en la zona de la persona
     const evento = await this.consulta.porId(contexto, args.eventoId, { alDia: true });
     const actual = enZona(new Date(evento.inicio), zona);
@@ -187,6 +193,43 @@ export class HerramientasAgenda implements OnModuleInit {
       ...(args.horaFin ? { fin: isoConDesfase(instanteDeFin(dia, inicioMin, minutos(args.horaFin), zona), zona) } : {}),
     };
     return comoPropuesta(await this.proponer(contexto, entorno, 'agenda.modificar', carga));
+  }
+
+  // La propuesta abierta de un compromiso nuevo, si `eventoId` es su id o no es el de ningún compromiso de la persona
+  private async propuestaDeCompromiso(contexto: ContextoSolicitud, eventoId: string, entorno: EntornoHerramienta): Promise<CargaPropuesta | null> {
+    const abierta = entorno.propuestaAbierta;
+    if (abierta?.tipo !== 'agenda.registrar') return null;
+    const carga = abierta.carga as Partial<CargaPropuesta> | null;
+    if (!carga?.titulo || !carga.inicio) return null;
+    const propia = { titulo: carga.titulo, inicio: carga.inicio, ...(carga.fin ? { fin: carga.fin } : {}), ...(carga.zonaHoraria ? { zonaHoraria: carga.zonaHoraria } : {}) };
+    if (abierta.id === eventoId) return propia;
+    const existe = await this.consulta.porId(contexto, eventoId, { alDia: true }).then(
+      () => true,
+      () => false,
+    );
+    return existe ? null : propia;
+  }
+
+  // T-143: lo que no se dice se conserva de la propuesta; sin hora de fin nueva, la misma duración
+  private async corregir(contexto: ContextoSolicitud, base: CargaPropuesta, args: ArgsModificarEvento, entorno: EntornoHerramienta): Promise<ResultadoHerramienta> {
+    const zona = base.zonaHoraria ?? entorno.referencia.zonaHoraria;
+    const antes = new Date(base.inicio);
+    const actual = enZona(antes, zona);
+    const dia = args.fecha ? fecha(args.fecha) : actual;
+    const inicioMin = args.horaInicio ? minutos(args.horaInicio) : actual.minutos;
+    const inicio = instanteLocal(dia, inicioMin, zona);
+    const fin = args.horaFin
+      ? instanteDeFin(dia, inicioMin, minutos(args.horaFin), zona)
+      : base.fin
+        ? new Date(inicio.getTime() + (Date.parse(base.fin) - antes.getTime()))
+        : null;
+    const carga = {
+      titulo: args.titulo ?? base.titulo,
+      inicio: isoConDesfase(inicio, zona),
+      ...(fin ? { fin: isoConDesfase(fin, zona) } : {}),
+      zonaHoraria: zona,
+    };
+    return comoPropuesta(await this.proponer(contexto, entorno, 'agenda.registrar', carga));
   }
 
   private async cancelar(contexto: ContextoSolicitud, args: ArgsCancelarEvento, entorno: EntornoHerramienta): Promise<ResultadoHerramienta> {

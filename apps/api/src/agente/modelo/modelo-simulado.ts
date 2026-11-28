@@ -25,6 +25,7 @@ import {
 //                                                        reciente de la nota
 //   {nota:tareaId}                                     → el id de la tarea más reciente de la nota
 //   {nota:resumen}                                     → las acciones de la nota en una frase, sin ids
+//   {nota:propuestaId}                                 → T-143: el id de la propuesta abierta del episodio
 // Sin nota, o sin lo que se busca en ella, la marca queda sin resolver y la herramienta lo rechaza.
 
 export type PasoGuion = { texto: string } | { llamadas: { nombre: string; argumentos: Record<string, unknown> }[] };
@@ -63,6 +64,8 @@ function accionesDeNota(nota: string | undefined): string[] {
 }
 
 function deNota(campo: string, nota: string | undefined): string | undefined {
+  // T-143 · REQ-AGT-07: el id de la propuesta abierta del episodio, si la nota la trae
+  if (campo === 'propuestaId') return /propuestaId ([0-9a-f-]{36})/.exec(nota ?? '')?.[1];
   const acciones = accionesDeNota(nota);
   if (campo === 'resumen') {
     if (acciones.length === 0) return 'Todavía no tengo acciones tuyas de estos días.';

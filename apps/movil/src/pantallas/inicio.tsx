@@ -3,6 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { Perfil } from '@nexoai/contratos';
 import { Boton } from '../componentes';
 import type { Nivel } from './agenda';
+import { AutorizacionesEquipo } from './autorizaciones-equipo';
 import { CambioContrasena } from './cambio-contrasena';
 import { CapaCaptura } from './captura';
 import { FranjaEnEspera } from './en-espera';
@@ -160,18 +161,24 @@ export function Inicio({
                 <Text style={estilos.textoBotonTexto}>Cerrar</Text>
               </Pressable>
             </View>
-            {perfil && (
-              <View style={estilos.perfil}>
-                <Dato etiqueta="Correo" valor={perfil.correo} />
-                <Dato etiqueta="Organización" valor={perfil.organizacion.nombre} />
-                <Dato etiqueta="Plan" valor={NOMBRE_PLAN[perfil.plan]} />
-                <Dato etiqueta="Zona horaria" valor={perfil.zonaHoraria ? etiquetarZona(perfil.zonaHoraria) : '—'} />
-              </View>
-            )}
-            {/* REQ-ACC-18 · T-121 */}
-            <CambioContrasena />
-            <Text style={estilos.pregunta}>Tu correo, tu plan y tu cuenta los gestiona tu organización.</Text>
-            <Boton texto="Cerrar sesión" alPulsar={alSalir} />
+            {/* T-146: con el apartado de los equipos, la hoja puede pasar del alto de la pantalla */}
+            <ScrollView contentContainerStyle={estilos.hojaContenido}>
+              {perfil && (
+                <View style={estilos.perfil}>
+                  <Dato etiqueta="Correo" valor={perfil.correo} />
+                  <Dato etiqueta="Organización" valor={perfil.organizacion.nombre} />
+                  <Dato etiqueta="Plan" valor={NOMBRE_PLAN[perfil.plan]} />
+                  <Dato etiqueta="Zona horaria" valor={perfil.zonaHoraria ? etiquetarZona(perfil.zonaHoraria) : '—'} />
+                </View>
+              )}
+              {/* REQ-ACC-18 · T-121 */}
+              <CambioContrasena />
+              <Text style={estilos.pregunta}>Tu correo, tu plan y tu cuenta los gestiona tu organización.</Text>
+              {/* T-146 · D-REU-36: la autorización para compartir la disponibilidad, con plan efectivo Empresarial y
+                  algún equipo (REQ-CUN05-18) */}
+              {perfil && perfil.planEfectivo === 'empresarial' && perfil.equipos > 0 && <AutorizacionesEquipo perfilId={perfil.perfilId} alSalir={alSalir} />}
+              <Boton texto="Cerrar sesión" alPulsar={alSalir} />
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -206,7 +213,8 @@ const estilos = StyleSheet.create({
   pestanaTexto: { fontSize: tipografia.etiqueta, color: color.texto.suave },
   pestanaActiva: { color: color.marca.base, fontWeight: '700' },
   velo: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(20, 33, 46, 0.4)' },
-  hoja: { gap: espaciado[16], padding: espaciado[16], paddingBottom: espaciado[32], borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: color.superficie.base },
+  hoja: { maxHeight: '92%', gap: espaciado[16], padding: espaciado[16], paddingBottom: espaciado[32], borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: color.superficie.base },
+  hojaContenido: { gap: espaciado[16] },
   perfil: { gap: espaciado[12] },
   dato: { gap: 2 },
   datoEtiqueta: { fontSize: tipografia.etiqueta, color: color.texto.suave },

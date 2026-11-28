@@ -49,7 +49,8 @@ export const PersonaOrganizacion = z.strictObject({
 });
 export type PersonaOrganizacion = z.infer<typeof PersonaOrganizacion>;
 
-// GET /administracion/equipos — REQ-ADM-28 a 32, solo lectura en esta entrega. `miembros` no repite al responsable.
+// GET /administracion/equipos — REQ-ADM-28 a 32. `miembros` no repite al responsable (H-ADM-29). Se compone con
+// las Operaciones de equipos (T-066).
 export const EquipoOrganizacion = z.strictObject({
   id: z.uuid(),
   nombre: z.string(),
@@ -82,3 +83,11 @@ export type CambioPlanCarga = z.infer<typeof CambioPlanCarga>;
 
 export const CuentaCarga = z.strictObject({ perfilId: z.uuid() });
 export type CuentaCarga = z.infer<typeof CuentaCarga>;
+
+// Cargas de las Operaciones de equipos (plan §5.1) · T-066, REQ-ADM-28 a 31. El nombre se guarda sin los
+// espacios de los extremos.
+export const CrearEquipoCarga = z.strictObject({ nombre: z.string().trim().min(1).max(80) });
+export type CrearEquipoCarga = z.infer<typeof CrearEquipoCarga>;
+
+export const MiembroEquipoCarga = z.strictObject({ equipoId: z.uuid(), perfilId: z.uuid() });
+export type MiembroEquipoCarga = z.infer<typeof MiembroEquipoCarga>;

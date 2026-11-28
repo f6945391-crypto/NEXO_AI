@@ -67,14 +67,13 @@ describe('T-048 · Operaciones de tareas', () => {
   });
 
   describe('tareas.sin-confirmar-no-registra', () => {
-    it('la tarjeta dice la tarea, cuándo y dónde aparece; sin confirmar no existe, y confirmar dos veces crea una', async () => {
+    it('la tarjeta dice la tarea y cuándo; sin confirmar no existe, y confirmar dos veces crea una', async () => {
       const { autorizacion } = await persona();
       const op = OperacionRespuesta.parse((await proponer(autorizacion, 'tareas.registrar', { texto: 'Pagar el recibo', fecha: VIERNES }).expect(201)).body);
       expect(op.vistaConfirmacion.accion).toBe('Nueva tarea');
       expect(op.vistaConfirmacion.datos).toEqual([
         { etiqueta: 'Tarea', valor: 'Pagar el recibo' },
         { etiqueta: 'Cuándo', valor: expect.stringMatching(/^Para el viernes \d+ de \w+$/) },
-        { etiqueta: 'Dónde aparece', valor: 'En Tareas, en «Con fecha»' },
       ]);
       // H-TP-10: ninguna tarjeta promete un aviso
       expect(JSON.stringify(op.vistaConfirmacion)).not.toMatch(/recordar|aviso|avisar/i);
@@ -114,7 +113,7 @@ describe('T-048 · Operaciones de tareas', () => {
       const { autorizacion } = await persona();
       const op = OperacionRespuesta.parse((await proponer(autorizacion, 'tareas.registrar', { texto: 'Presupuesto', deQuien: 'Juan', fecha: VIERNES }).expect(201)).body);
       expect(op.vistaConfirmacion.datos).toContainEqual({ etiqueta: 'De quién', valor: 'Juan' });
-      expect(op.vistaConfirmacion.datos).toContainEqual({ etiqueta: 'Dónde aparece', valor: 'En Tareas, en «Esperando de alguien»' });
+      expect(op.vistaConfirmacion.datos.map((d) => d.etiqueta)).not.toContain('Dónde aparece');
       // R-12: un dato de contacto no entra en la carga
       await proponer(autorizacion, 'tareas.registrar', { texto: 'Presupuesto', deQuien: 'Juan', correo: 'juan@x.pe' }).expect(400);
 
@@ -181,7 +180,7 @@ describe('T-048 · Operaciones de tareas', () => {
       // REQ-CUN03-03: sin fecha pasa a «Sin fecha», sigue pendiente, conserva su texto y pierde la hora
       const quitar = OperacionRespuesta.parse((await proponer(autorizacion, 'tareas.cambiar', { tareaId: tarea.id, fecha: null }).expect(201)).body);
       expect(quitar.vistaConfirmacion.datos).toContainEqual({ etiqueta: 'Ahora', valor: 'Sin fecha' });
-      expect(quitar.vistaConfirmacion.datos).toContainEqual({ etiqueta: 'Dónde aparece', valor: 'En Tareas, en «Sin fecha»' });
+      expect(quitar.vistaConfirmacion.datos.map((d) => d.etiqueta)).not.toContain('Dónde aparece');
       const sinFecha = TareaPersonal.parse(OperacionRespuesta.parse((await confirmar(autorizacion, quitar.id).expect(200)).body).resultado);
       expect(sinFecha).toMatchObject({ franja: 'sin_fecha', estado: 'pendiente', texto: 'Pagar el recibo', fecha: null, horaLimite: null });
     });

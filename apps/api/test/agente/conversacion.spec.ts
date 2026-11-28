@@ -238,7 +238,7 @@ describe('T-032 · conversación con el asistente', () => {
       const hecha = await decidir({ operacionId: r.pendiente, decision: 'confirmar' });
       expect(hecha).toMatchObject({ episodioCerrado: true, cierre: { desenlace: 'registrado', titulo: 'Pagar el recibo' } });
       expect(tipos(hecha.turnos)).toEqual(['resultado']);
-      expect((hecha.turnos[0] as { texto: string }).texto).toBe('Listo: «Pagar el recibo» quedó en tus tareas, en «Sin fecha».');
+      expect((hecha.turnos[0] as { texto: string }).texto).toBe('Listo: «Pagar el recibo» quedó en tus tareas sin fecha.');
       expect(await prisma.operacion.count({ where: { estado: 'en_espera' } })).toBe(0);
       const [episodio] = (await leer()).episodios;
       expect(episodio!.cierre?.desenlace).toBe('registrado');
