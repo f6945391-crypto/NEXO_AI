@@ -18,6 +18,9 @@ process.env.MODELO_PROVEEDOR = 'no-configurado';
 delete process.env.MODELO_CLAVE;
 // T-122: las pruebas nunca envían un correo real, aunque el .env tenga Resend (PT-3). Simulado y en memoria.
 process.env.CORREO_PROVEEDOR = 'simulado';
+// T-154: las pruebas nunca mandan audio a un proveedor real, aunque el .env tenga OpenRouter. El simulado.
+process.env.DICTADO_PROVEEDOR = 'simulado';
+delete process.env.DICTADO_CLAVE;
 delete process.env.CORREO_SMTP_URL;
 delete process.env.CORREO_SIMULADO_ARCHIVO;
 

@@ -56,6 +56,20 @@ export const IconoEnviar = () => (
   </svg>
 );
 
+// T-155 · REQ-CAP-27: dictar en la barra de la conversación, y detener la grabación
+export const IconoMicrofono = () => (
+  <svg {...comunes}>
+    <rect x="9" y="3" width="6" height="11" rx="3" />
+    <path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6" />
+  </svg>
+);
+
+export const IconoDetener = () => (
+  <svg {...comunes}>
+    <rect x="7" y="7" width="10" height="10" rx="1" fill="currentColor" />
+  </svg>
+);
+
 export const IconoCerrar = () => (
   <svg {...comunes}>
     <path d="M6 6l12 12M18 6L6 18" />

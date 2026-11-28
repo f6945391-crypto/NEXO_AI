@@ -15,9 +15,12 @@ async function entrar(page: Page) {
 
 async function pedirYCerrar(page: Page, texto: string) {
   await page.getByRole('button', { name: 'Pedir algo al asistente' }).click();
+  // Al reabrir la capa siguen a la vista los avisos anteriores: se espera a que aparezca uno más, el de esta petición
+  const avisos = page.getByText(/^En espera\./);
+  const antes = await avisos.count();
   await page.getByLabel('Pídele algo al asistente').fill(texto);
   await page.getByRole('button', { name: 'Enviar' }).click();
-  await expect(page.getByText(/^En espera\./).last()).toBeVisible();
+  await expect(avisos).toHaveCount(antes + 1);
   await page.getByRole('button', { name: 'Cerrar' }).click();
 }
 

@@ -4,6 +4,7 @@
 export * from './acceso';
 export * from './agente';
 export * from './asistente';
+export * from './dictado';
 export * from './agenda';
 export * from './integraciones';
 export * from './operaciones';

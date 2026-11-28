@@ -91,6 +91,13 @@
     "organizacion": "personal",
     "lista": true
   },
+  "dictado": {
+    "correo": "dictado-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "organizacion": "personal",
+    "lista": true
+  },
   "reunionesAdmin": {
     "correo": "admin@reuniones-movil.test",
     "rol": "gerente",

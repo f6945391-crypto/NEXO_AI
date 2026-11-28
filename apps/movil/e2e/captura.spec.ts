@@ -89,7 +89,7 @@ test.describe('movil.captura-propone-y-confirma', () => {
     const medir = () =>
       barra.evaluate((contorno) => {
         const caja = (e: Element) => e.getBoundingClientRect();
-        return { contorno: caja(contorno), campo: caja(contorno.querySelector('textarea')!), enviar: caja(contorno.querySelector('[role="button"]')!) };
+        return { contorno: caja(contorno), campo: caja(contorno.querySelector('textarea')!), enviar: caja(contorno.querySelector('[role="button"][aria-label="Enviar"]')!) };
       });
     const vacia = await medir();
     // Dentro del mismo contorno y a la derecha del campo

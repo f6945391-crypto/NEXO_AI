@@ -20,6 +20,9 @@ export default defineConfig({
     baseURL: `http://localhost:${PUERTO}`,
     channel: process.env.CI ? undefined : 'chrome',
     viewport: { width: 390, height: 844 },
+    // T-156 · REQ-CAP-27: un micrófono falso que Chromium da sin preguntar, para probar el dictado
+    launchOptions: { args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] },
+    permissions: ['microphone'],
   },
   webServer: [
     {

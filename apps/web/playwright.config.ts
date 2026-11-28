@@ -19,6 +19,9 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PUERTO_WEB}`,
     channel: process.env.CI ? undefined : 'chrome',
+    // T-155 · web.dictado: un micrófono falso que no pregunta, para grabar sin nadie delante. Las demás no lo usan
+    permissions: ['microphone'],
+    launchOptions: { args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] },
   },
   webServer: [
     {

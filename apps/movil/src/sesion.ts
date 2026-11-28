@@ -36,13 +36,15 @@ export function mensajeDeError(cuerpo: unknown, porDefecto = 'Algo no salió bie
 }
 
 export async function llamar(ruta: string, opciones: { metodo?: string; cuerpo?: unknown; token?: string } = {}): Promise<Respuesta> {
+  // T-156: un `FormData` (el audio del dictado) va tal cual; `fetch` pone el `Content-Type` con su separador
+  const multipart = opciones.cuerpo instanceof FormData;
   const respuesta = await fetch(`${API_URL}${ruta}`, {
     method: opciones.metodo ?? 'GET',
     headers: {
-      ...(opciones.cuerpo !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      ...(opciones.cuerpo !== undefined && !multipart ? { 'Content-Type': 'application/json' } : {}),
       ...(opciones.token ? { Authorization: `Bearer ${opciones.token}` } : {}),
     },
-    body: opciones.cuerpo !== undefined ? JSON.stringify(opciones.cuerpo) : undefined,
+    body: multipart ? (opciones.cuerpo as FormData) : opciones.cuerpo !== undefined ? JSON.stringify(opciones.cuerpo) : undefined,
   });
   const texto = await respuesta.text();
   return { estado: respuesta.status, cuerpo: texto ? (JSON.parse(texto) as unknown) : null };

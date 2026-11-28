@@ -261,6 +261,7 @@ a.boton {
 .lienzo__expandir:focus-visible,
 .barra-entrada textarea:focus-visible,
 .barra-entrada__enviar:focus-visible,
+.barra-entrada__hablar:focus-visible,
 .capa__cerrar:focus-visible {
   outline: 2px solid var(--marca-base);
   outline-offset: 2px;
@@ -439,6 +440,59 @@ a.boton {
   background: var(--borde-base);
   color: var(--texto-suave);
   cursor: default;
+}
+
+/* T-155 · REQ-CAP-27: «Hablar», a la izquierda de Enviar. Mientras graba, se ve que graba y pasa a «Detener» */
+.barra-entrada {
+  flex-wrap: wrap;
+}
+
+.barra-entrada__hablar {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-md);
+  background: var(--superficie-base);
+  color: var(--texto-fuerte);
+  cursor: pointer;
+}
+
+.barra-entrada__hablar--grabando {
+  border-color: var(--estado-error);
+  background: var(--estado-error-suave);
+  color: var(--estado-error);
+}
+
+.barra-entrada__hablar:disabled {
+  color: var(--texto-suave);
+  cursor: default;
+}
+
+/* El estado y el aviso del dictado ocupan una fila propia, encima del campo */
+.barra-entrada__estado,
+.barra-entrada__aviso {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: var(--tam-etiqueta);
+  line-height: 1.4;
+}
+
+.barra-entrada__estado {
+  color: var(--texto-suave);
+}
+
+.barra-entrada__estado--grabando {
+  color: var(--estado-error);
+  font-variant-numeric: tabular-nums;
+}
+
+.barra-entrada__aviso {
+  padding: var(--espaciado-12) var(--espaciado-16);
+  border-radius: var(--radio-md);
+  background: var(--estado-advertencia-suave);
+  color: var(--estado-advertencia);
 }
 
 /* T-034: lo que responde el asistente. Cada tipo se ve distinto (REQ-CAP-23) */

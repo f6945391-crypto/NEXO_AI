@@ -4,7 +4,8 @@ import { useEffect, useLayoutEffect, useRef, useState, useTransition, type FormE
 import type { ConversacionAsistente, DecisionAsistente, OperacionRespuesta, PropuestasDeReunion, TurnoAsistente } from '@nexoai/contratos';
 import { decidirEnAsistente, enviarAlAsistente, verAnteriores } from '../acciones';
 import { elementosDe, textoDelSeparador, type Elemento } from '../../lib/separador';
-import { IconoEnviar } from './iconos';
+import { aContinuacion, duracion, useDictado } from './dictado';
+import { IconoDetener, IconoEnviar, IconoMicrofono } from './iconos';
 import { ResumenDeBitacora } from './resumen-bitacora';
 import { TextoConNegrita } from './texto-con-negrita';
 
@@ -417,11 +418,28 @@ export function Conversacion({
     entrada.current?.focus();
   }, [pedido, entrada]);
 
+  // T-155 · REQ-CAP-27 · H-CAP-06: lo dictado va a continuación de lo escrito, con el foco y el cursor al final, y
+  // no se envía: la persona lo corrige y lo envía como cualquier texto
+  const cursorAlFinal = useRef(false);
+  const dictado = useDictado((texto) => {
+    cursorAlFinal.current = true;
+    setBorrador((escrito) => aContinuacion(escrito, texto));
+  });
+  useLayoutEffect(() => {
+    if (!cursorAlFinal.current || !entrada.current) return;
+    cursorAlFinal.current = false;
+    const campo = entrada.current;
+    campo.focus();
+    campo.setSelectionRange(campo.value.length, campo.value.length);
+    campo.scrollTop = campo.scrollHeight;
+  }, [borrador, entrada]);
+
   function enviar(evento?: FormEvent) {
     evento?.preventDefault();
     const texto = borrador.trim();
     if (!texto || ocupado) return;
     setError(null);
+    dictado.quitarAviso();
     setBorrador('');
     // Lo escrito se ve al instante, sin esperar al asistente (corrección del 29 de octubre de 2026)
     const provisional: TurnoAsistente = { id: crypto.randomUUID(), en: new Date().toISOString(), tipo: 'persona', texto };
@@ -515,6 +533,25 @@ export function Conversacion({
       </div>
 
       <form className="barra-entrada" onSubmit={enviar}>
+        {/* T-155 · REQ-CAP-27: mientras graba, el tiempo; al detener, «Transcribiendo…»; si algo falla, el texto fijo */}
+        {dictado.estado === 'grabando' && (
+          <p className="barra-entrada__estado barra-entrada__estado--grabando">
+            <span role="status" className="solo-lector">
+              Grabando…
+            </span>
+            <span aria-hidden="true">{`Grabando ${duracion(dictado.segundos)}`}</span>
+          </p>
+        )}
+        {dictado.estado === 'transcribiendo' && (
+          <p className="barra-entrada__estado" role="status">
+            Transcribiendo…
+          </p>
+        )}
+        {dictado.aviso && dictado.estado === 'inactivo' && (
+          <p className="barra-entrada__aviso" role="alert">
+            {dictado.aviso}
+          </p>
+        )}
         <label htmlFor="pedido" className="solo-lector">
           Pídele algo al asistente
         </label>
@@ -529,6 +566,16 @@ export function Conversacion({
             if (e.key === 'Enter' && !e.shiftKey) enviar(e);
           }}
         />
+        <button
+          type="button"
+          className={`barra-entrada__hablar${dictado.estado === 'grabando' ? ' barra-entrada__hablar--grabando' : ''}`}
+          aria-label={dictado.estado === 'grabando' ? 'Detener grabación' : 'Hablar'}
+          title={dictado.estado === 'grabando' ? 'Detener grabación' : 'Hablar'}
+          disabled={dictado.estado === 'pidiendo' || dictado.estado === 'transcribiendo'}
+          onClick={dictado.alternar}
+        >
+          {dictado.estado === 'grabando' ? <IconoDetener /> : <IconoMicrofono />}
+        </button>
         <button type="submit" className="barra-entrada__enviar" aria-label="Enviar" disabled={!borrador.trim() || ocupado}>
           <IconoEnviar />
         </button>

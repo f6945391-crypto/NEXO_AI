@@ -226,5 +226,12 @@
     "plan": "personal",
     "organizacion": "personal",
     "lista": true
+  },
+  "dictado": {
+    "correo": "dictado-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "organizacion": "personal",
+    "lista": true
   }
 }

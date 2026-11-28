@@ -31,7 +31,8 @@ import {
 const INCLUIR = {
   equipo: { select: { id: true, nombre: true } },
   convocante: { select: { id: true, correo: true } },
-  invitados: { select: { perfilId: true, opcional: true, direccion: true, perfil: { select: { correo: true, zonaHoraria: true } } } },
+  // Ordenados por correo: el orden de la base no es fijo, y la tarjeta y el detalle los nombran en este orden
+  invitados: { select: { perfilId: true, opcional: true, direccion: true, perfil: { select: { correo: true, zonaHoraria: true } } }, orderBy: { perfil: { correo: 'asc' } } },
 } as const;
 
 type FilaReunion = {

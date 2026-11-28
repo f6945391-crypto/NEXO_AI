@@ -50,6 +50,10 @@ export const CodigoError = z.enum([
   // 05-equipos · T-120 · REQ-CUN05-18
   'SIN_PLAN_EMPRESARIAL',
   'SIN_EQUIPO',
+  // 01-captura · T-154 · REQ-CAP-27: el dictado por voz
+  'AUDIO_NO_VALIDO',
+  'AUDIO_DEMASIADO_GRANDE',
+  'VOZ_NO_DISPONIBLE',
 ]);
 export type CodigoError = z.infer<typeof CodigoError>;
 

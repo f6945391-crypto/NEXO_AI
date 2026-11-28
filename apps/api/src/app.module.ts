@@ -1,6 +1,7 @@
 
 import { Module } from '@nestjs/common';
 import { CorreoModule } from './plataforma/correo/correo.module';
+import { DictadoModule } from './dictado/dictado.module';
 import { ActividadModule } from './actividad/actividad.module';
 import { AdministracionModule } from './administracion/administracion.module';
 import { AgendaModule } from './agenda/agenda.module';
@@ -23,6 +24,8 @@ import { TareasModule } from './tareas/tareas.module';
     IntegracionesModule,
     AgendaModule,
     AgenteModule,
+    // 01-captura · T-154 · REQ-CAP-27: el dictado por voz
+    DictadoModule,
     ActividadModule,
     AdministracionModule,
     TareasModule,

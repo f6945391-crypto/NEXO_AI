@@ -161,7 +161,7 @@ function devolverNegrita(texto: string): string {
 
 // T-153 · REQ-AGT-06: el modelo usa a veces espacios de Unicode (fino, sin separación, de cifra) que se ven como
 // huecos raros: «10 :00», «1 de diciembre». Pasan a ser espacios normales, y una hora queda pegada
-function normalizarEspacios(texto: string): string {
+export function normalizarEspacios(texto: string): string {
   return texto
     .replace(/[  -   　]/g, ' ')
     .replace(/[​-‍⁠﻿]/g, '')

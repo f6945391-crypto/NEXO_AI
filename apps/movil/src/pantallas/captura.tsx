@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleShee
 import { ConversacionAsistente, Perfil, RespuestaAsistente, type DecisionAsistente, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
 import { nombreDeZona } from '../agenda/dia';
 import { Aviso, Boton, ResumenDeBitacora } from '../componentes';
+import { juntar, reloj, useDictado } from '../dictado';
 import { conSesion, mensajeDeError, SIN_CONEXION } from '../sesion';
 import { elementosDe, textoDelSeparador, type Elemento } from '../separador';
 import { color, espaciado, tipografia } from '../tokens';
@@ -19,6 +20,8 @@ import { color, espaciado, tipografia } from '../tokens';
 // T-135 · 10-reuniones plan §10 · REQ-CUN06-01, 10: el turno `reunion` con las propuestas de horario; pulsar
 // una la propone el código (no pasa por el modelo) y vuelve la tarjeta «Convocar esta reunión». La tarjeta se
 // exporta para el detalle de una reunión en Agenda, que la usa igual.
+// T-156 · REQ-CAP-27 · plan de 07-agente §15.3: «Hablar» en la barra, a la izquierda de Enviar. Lo dictado va al
+// campo, a continuación de lo escrito, y no se envía (H-CAP-06): la persona lo corrige y lo manda.
 // Pulido · «Ver anteriores» visible: el botón se queda pegado arriba de la lista aunque se haga scroll,
 // mientras quede algo anterior (`stickyHeaderIndices`, que en Expo web es `position: sticky`).
 
@@ -391,6 +394,18 @@ export function CapaCaptura({
   const [error, setError] = useState<string | null>(null);
   // Al poner arriba lo anterior no se baja hasta el final: se queda donde se estaba leyendo
   const anclado = useRef(false);
+  const entrada = useRef<TextInput>(null);
+
+  // T-156: lo dictado, a continuación de lo escrito y con el foco en el campo para seguir escribiendo
+  const alDictar = useCallback((texto: string) => {
+    setBorrador((escrito) => juntar(escrito, texto));
+    entrada.current?.focus();
+  }, []);
+  const dictado = useDictado({ alTexto: alDictar, alSalir });
+  const { descartar: descartarDictado } = dictado;
+  useEffect(() => {
+    if (!visible) descartarDictado();
+  }, [visible, descartarDictado]);
 
   // Al abrir la capa: lo que se está pidiendo y lo anterior (dos tramos), y lo que espera confirmación
   const cargar = useCallback(async () => {
@@ -501,7 +516,9 @@ export function CapaCaptura({
     void hablar('/asistente/mensajes', { texto }, provisional.id);
   }
 
-  const puedeEnviar = !!borrador.trim() && !ocupado;
+  // Mientras graba o transcribe no se envía: lo dictado todavía tiene que llegar al campo
+  const puedeEnviar = !!borrador.trim() && !ocupado && dictado.fase === 'inactivo';
+  const grabando = dictado.fase === 'grabando';
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={alCerrar}>
@@ -581,10 +598,15 @@ export function CapaCaptura({
             </ScrollView>
           {ocupado && <Text style={estilos.suave}>Pensando…</Text>}
           {error && <Aviso texto={error} />}
+          {/* REQ-CAP-27: que graba y cuánto lleva, y después que transcribe; o por qué no se pudo */}
+          {grabando && <Text style={estilos.suave}>Grabando {reloj(dictado.segundos)}</Text>}
+          {dictado.fase === 'transcribiendo' && <Text style={estilos.suave}>Transcribiendo…</Text>}
+          {dictado.error && <Aviso texto={dictado.error} />}
 
           {/* H-CAP-02: una sola fila, con el botón de enviar dentro del mismo contorno */}
           <View style={[estilos.barra, enfocado && estilos.barraEnfocada]}>
             <TextInput
+              ref={entrada}
               accessibilityLabel="Pídele algo al asistente"
               placeholder="Pídele algo al asistente"
               placeholderTextColor={color.texto.suave}
@@ -592,6 +614,7 @@ export function CapaCaptura({
               onChangeText={(texto) => {
                 setBorrador(texto);
                 if (!texto) setAltoTexto(LINEA);
+                if (dictado.error) dictado.limpiarError();
               }}
               onContentSizeChange={(e) => setAltoTexto(Math.min(Math.max(e.nativeEvent.contentSize.height, LINEA), LINEA * LINEAS_MAXIMAS))}
               onSubmitEditing={enviar}
@@ -601,6 +624,26 @@ export function CapaCaptura({
               onBlur={() => setEnfocado(false)}
               style={[estilos.entrada, SIN_ANILLO_WEB, { height: altoTexto }]}
             />
+            {/* T-156: a la izquierda de Enviar y del mismo alto, para que la barra siga en una fila (H-CAP-02) */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={grabando ? 'Detener grabación' : 'Hablar'}
+              accessibilityState={{ disabled: !grabando && dictado.fase !== 'inactivo' }}
+              disabled={!grabando && dictado.fase !== 'inactivo'}
+              onPress={() => void (grabando ? dictado.detener() : dictado.hablar())}
+              hitSlop={espaciado[4]}
+              style={[estilos.hablar, grabando && estilos.hablarGrabando, !grabando && dictado.fase !== 'inactivo' && estilos.hablarApagado]}
+            >
+              {/* Un micrófono dibujado (sin librería de iconos); al grabar, el cuadrado de detener */}
+              {grabando ? (
+                <View style={estilos.detenerIcono} />
+              ) : (
+                <View style={estilos.microfono}>
+                  <View style={estilos.microfonoCapsula} />
+                  <View style={estilos.microfonoPie} />
+                </View>
+              )}
+            </Pressable>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Enviar"
@@ -668,5 +711,14 @@ const estilos = StyleSheet.create({
   // Tan alto como una línea del campo: la barra no cambia de alto por el botón
   enviar: { width: LINEA + espaciado[8] * 2, height: LINEA + espaciado[8] * 2, borderRadius: (LINEA + espaciado[8] * 2) / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: color.marca.base },
   enviarApagado: { backgroundColor: color.borde.fuerte },
+  // T-156: una píldora con texto del alto de Enviar; grabando, en el color de error, que es el aviso de «grabando»
+  // T-156: redondo y del mismo tamaño que Enviar, para que el campo no pierda ancho y la barra siga en una fila
+  hablar: { width: LINEA + espaciado[8] * 2, height: LINEA + espaciado[8] * 2, borderRadius: (LINEA + espaciado[8] * 2) / 2, borderWidth: 1, borderColor: color.marca.base, alignItems: 'center', justifyContent: 'center', backgroundColor: color.superficie.base },
+  microfono: { alignItems: 'center' },
+  microfonoCapsula: { width: 10, height: 15, borderRadius: 5, borderWidth: 2, borderColor: color.marca.base },
+  microfonoPie: { width: 2, height: 5, backgroundColor: color.marca.base },
+  detenerIcono: { width: 12, height: 12, borderRadius: 2, backgroundColor: color.texto.inverso },
+  hablarGrabando: { borderColor: color.estado.error, backgroundColor: color.estado.error },
+  hablarApagado: { opacity: 0.6 },
   enviarTexto: { fontSize: tipografia.subtitulo, fontWeight: '700', color: color.texto.inverso },
 });

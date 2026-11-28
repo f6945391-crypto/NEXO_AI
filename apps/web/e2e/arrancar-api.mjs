@@ -411,5 +411,8 @@ process.env.GOOGLE_REDIRECT_URI ||= `http://localhost:${process.env.PUERTO}/inte
 process.env.TOKENS_CLAVE_CIFRADO ||= Buffer.alloc(32, 7).toString('base64');
 // T-030: el asistente de las pruebas es el simulado con su guion, nunca el proveedor real del .env (H-AGT-13)
 process.env.MODELO_PROVEEDOR = 'simulado';
+// T-154: el dictado, con el transcriptor simulado (nunca un proveedor real en las pruebas)
+process.env.DICTADO_PROVEEDOR = 'simulado';
+delete process.env.DICTADO_CLAVE;
 delete process.env.MODELO_CLAVE;
 desdeApi('./dist/main.js');
