@@ -51,7 +51,8 @@ const seCruzaCon = (eventos: { titulo: string }[]) => `Se cruza con ${enLista(ev
 // vista, armado con los datos que trae la propia tarjeta y sin inventar nada.
 type Dato = { etiqueta: string; valor: string };
 // El compromiso o la tarea de que se habla, si la acción no lo nombra
-const NOMBRE = ['Título', 'Compromiso', 'Título nuevo', 'Tarea', 'Reunión'];
+// T-151 · D-REU-38: la fila de la reunión pasó de «Reunión» a «Tema»; «Reunión» queda para las ya propuestas
+const NOMBRE = ['Título', 'Compromiso', 'Título nuevo', 'Tarea', 'Tema', 'Reunión'];
 // T-128 · REQ-CUN03-21: el texto que se anotará en la bitácora tampoco se pliega (P-03, los datos exactos)
 const SIN_PLEGAR = ['Avance'];
 // T-135 · REQ-CUN06-10: a quién le llegará la invitación tampoco se pliega: es lo irreversible (P-03)
