@@ -16,6 +16,7 @@ import { EjecutorHerramientas } from './ejecutor-herramientas';
 import { AVISO_CONTENIDO_EXTERNO } from './contenido-externo';
 import type { EntornoHerramienta, ResultadoHerramienta } from './herramienta';
 import { armarLista, describirRango } from './lista-agenda';
+import { diasDelPeriodo } from './periodo';
 
 // T-031 · specs/07-agente/plan.md §5 · REQ-CUN01-01, 06, 08, 13. Las herramientas de agenda del agente.
 // **Ninguna escribe** (P-01, AD-09): consultan la réplica o proponen una Operación `agenda.*` con origen
@@ -75,7 +76,7 @@ export class HerramientasAgenda implements OnModuleInit {
   onModuleInit(): void {
     this.ejecutor.registrar({
       nombre: 'agenda.consultar',
-      descripcion: 'Lee los compromisos de la persona en un rango de días, opcionalmente entre dos horas. Úsala antes de modificar o cancelar, para saber el id.',
+      descripcion: 'Lee los compromisos de la persona en un período o un rango de días, opcionalmente entre dos horas. Úsala antes de modificar o cancelar, para saber el id.',
       esquema: ArgsConsultarAgenda,
       ejecutar: (contexto, args, entorno) => this.consultar(contexto, args, entorno),
     });
@@ -107,8 +108,11 @@ export class HerramientasAgenda implements OnModuleInit {
   private async consultar(contexto: ContextoSolicitud, args: ArgsConsultarAgenda, entorno: EntornoHerramienta): Promise<ResultadoHerramienta> {
     await this.exigirCalendario(contexto);
     const zona = entorno.referencia.zonaHoraria;
-    const desde = fecha(args.desde);
-    const hasta = fecha(args.hasta);
+    // T-157 · decisión 39: con un período, los días los pone el código
+    const rango = args.periodo ? diasDelPeriodo(args.periodo, entorno.referencia) : args.desde ? { desde: args.desde, hasta: args.hasta ?? args.desde } : null;
+    if (!rango) return conError('ARGUMENTOS_INVALIDOS', 'Pasa un período o el primer día del rango.', ['periodo']);
+    const desde = fecha(rango.desde);
+    const hasta = fecha(rango.hasta);
     const dias = Math.round((Date.UTC(hasta.anio, hasta.mes - 1, hasta.dia) - Date.UTC(desde.anio, desde.mes - 1, desde.dia)) / 86_400_000) + 1;
     if (dias < 1) return conError('ARGUMENTOS_INVALIDOS', 'El primer día del rango tiene que ser anterior o igual al último.', ['hasta']);
     if (dias > DIAS_MAXIMOS_CONSULTA) return conError('RANGO_DEMASIADO_LARGO', `Consulta como mucho ${DIAS_MAXIMOS_CONSULTA} días.`, ['hasta']);

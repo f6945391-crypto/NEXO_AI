@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import { Fecha, Hora } from './comunes';
+import { Fecha, Hora, Periodo } from './comunes';
+
+export { Periodo } from './comunes';
 import { OperacionRespuesta } from './operaciones';
 import { BitacoraTarea, CandidatasDeReferente, ListaTareas } from './tareas';
 import { PropuestasDeReunion } from './reuniones';
@@ -12,8 +14,10 @@ const Titulo = z.string().trim().min(1).max(200);
 
 export const ArgsConsultarAgenda = z
   .strictObject({
-    desde: Fecha.describe('Primer día del rango, AAAA-MM-DD'),
-    hasta: Fecha.describe('Último día del rango, incluido, AAAA-MM-DD'),
+    // T-157 · decisión 39: con un período, el código pone los días
+    periodo: Periodo.optional(),
+    desde: Fecha.optional().describe('Primer día del rango, AAAA-MM-DD, si no hay período'),
+    hasta: Fecha.optional().describe('Último día del rango, incluido, AAAA-MM-DD; sin él, el mismo día'),
     horaDesde: Hora.optional().describe('Solo desde esta hora, HH:mm; por ejemplo 12:00 para «por la tarde»'),
     horaHasta: Hora.optional().describe('Solo hasta esta hora, HH:mm'),
   })
@@ -77,6 +81,37 @@ export const ListaAgenda = z.strictObject({
 export type ListaAgenda = z.infer<typeof ListaAgenda>;
 
 // Lo que una herramienta deja para la interfaz, sin pasar por el modelo
+// T-157 · REQ-AGT-09 · decisión 38. Una frase con varias cosas: el modelo solo la separa en partes; el texto de cada
+// línea lo arma el código
+export const ClaseParte = z.enum(['consulta_agenda', 'consulta_tareas', 'compromiso', 'tarea', 'reunion', 'otra']);
+export type ClaseParte = z.infer<typeof ClaseParte>;
+
+export const ArgsDesglosar = z
+  .strictObject({
+    partes: z
+      .array(
+        z.strictObject({
+          clase: ClaseParte.describe('consulta_agenda (sus compromisos), consulta_tareas, compromiso (algo con día y hora, o un bloque de tiempo), tarea, reunion u otra'),
+          que: z.string().trim().min(1).max(120).describe('Lo pedido en pocas palabras, con las palabras de la persona; el título tal como lo dijo'),
+          periodo: Periodo.optional(),
+          fecha: Fecha.optional().describe('Solo si dijo el día'),
+          horaInicio: Hora.optional(),
+          horaFin: Hora.optional(),
+        }),
+      )
+      .min(2)
+      .max(6)
+      .describe('Cada cosa pedida, en el orden de la frase'),
+  })
+  .describe('Separa una frase que pide dos cosas o más');
+export type ArgsDesglosar = z.infer<typeof ArgsDesglosar>;
+
+export const Desglose = z.strictObject({
+  titulo: z.string(),
+  partes: z.array(z.strictObject({ clase: ClaseParte, texto: z.string(), falta: z.string().nullable() })).min(2),
+});
+export type Desglose = z.infer<typeof Desglose>;
+
 export const TurnoDeHerramienta = z.discriminatedUnion('tipo', [
   z.strictObject({ tipo: z.literal('agenda'), lista: ListaAgenda }),
   z.strictObject({ tipo: z.literal('propuesta'), operacion: OperacionRespuesta }),
@@ -90,5 +125,7 @@ export const TurnoDeHerramienta = z.discriminatedUnion('tipo', [
   z.strictObject({ tipo: z.literal('bitacora'), bitacora: BitacoraTarea }),
   // T-133 · REQ-CUN06-01: las propuestas de horario de una reunión, armadas por el código
   z.strictObject({ tipo: z.literal('reunion'), propuestas: PropuestasDeReunion }),
+  // T-157 · REQ-AGT-09: lo que entendió de una frase con varias cosas, armado por el código
+  z.strictObject({ tipo: z.literal('desglose'), desglose: Desglose }),
 ]);
 export type TurnoDeHerramienta = z.infer<typeof TurnoDeHerramienta>;

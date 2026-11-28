@@ -217,6 +217,21 @@ export async function verAnteriores(cursor: string): Promise<{ conversacion?: Co
   }
 }
 
+// T-159 · REQ-AGT-10: limpiar lo que se ve de la conversación; vuelve la conversación tal como queda
+export async function limpiarConversacion(): Promise<{ conversacion?: ConversacionAsistente; error?: string }> {
+  const token = await tokenDeAcceso();
+  try {
+    const limpieza = await llamarApi('/asistente/conversacion/limpiar', { metodo: 'POST', token });
+    if (limpieza.estado !== 204) return { error: mensajeDeError(limpieza.cuerpo, 'No se pudo limpiar la conversación.') };
+    const respuesta = await llamarApi('/asistente/conversacion?limite=3', { token });
+    const leida = ConversacionAsistente.safeParse(respuesta.cuerpo);
+    if (respuesta.estado !== 200 || !leida.success) return { error: 'No se pudo limpiar la conversación.' };
+    return { conversacion: leida.data };
+  } catch {
+    return { error: SIN_CONEXION };
+  }
+}
+
 // REQ-ACC-12: lo único que el usuario hace con su cuenta.
 export async function salir(): Promise<void> {
   const renovacion = (await cookies()).get(COOKIE_RENOVACION)?.value;

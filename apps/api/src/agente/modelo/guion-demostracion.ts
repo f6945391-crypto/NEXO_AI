@@ -13,6 +13,35 @@ const consulta = (franja: string, desde: string, hasta: string): ReglaGuion => (
 });
 
 export const GUION_DEMOSTRACION: ReglaGuion[] = [
+  // T-157 · REQ-AGT-09: una frase con varias cosas, como la de la prueba de Franco del 28 de noviembre de 2026. El
+  // simulado separa y pasa el período; la lista, los días y lo que falta los pone el código
+  {
+    si: '^qu[eé] tareas y compromisos tengo la semana siguiente,? y agrega un bloque de ([0-9]{1,2}) a ([0-9]{1,2}) que se llame (.+)$',
+    pasos: [
+      {
+        llamadas: [
+          {
+            nombre: 'asistente_desglosar',
+            argumentos: {
+              partes: [
+                { clase: 'consulta_tareas', que: 'tus tareas', periodo: 'semana_siguiente' },
+                { clase: 'consulta_agenda', que: 'tus compromisos', periodo: 'semana_siguiente' },
+                { clase: 'compromiso', que: '$3', horaInicio: '{hora:$1}', horaFin: '{tarde:$2}' },
+              ],
+            },
+          },
+          { nombre: 'tareas_consultar', argumentos: { periodo: 'semana_siguiente' } },
+          { nombre: 'agenda_consultar', argumentos: { periodo: 'semana_siguiente' } },
+          { nombre: 'agenda_registrar_evento', argumentos: { titulo: '$3', horaInicio: '{hora:$1}', horaFin: '{tarde:$2}' } },
+        ],
+      },
+      { texto: '' },
+    ],
+  },
+  {
+    si: '^el (lunes|martes|mi[eé]rcoles|jueves|viernes) el bloque de ([0-9]{1,2}) a ([0-9]{1,2}) que se llame (.+)$',
+    pasos: [{ llamadas: [{ nombre: 'agenda_registrar_evento', argumentos: { titulo: '$4', fecha: '{$1}', horaInicio: '{hora:$2}', horaFin: '{tarde:$3}' } }] }, { texto: '' }],
+  },
   // T-133 · 10-reuniones: van primero, para que «agéndame una reunión con…» no se lea como un compromiso.
   // El simulado solo pasa lo dicho; el grupo lo resuelve el código (REQ-CUN06-02)
   {

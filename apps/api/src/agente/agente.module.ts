@@ -12,6 +12,7 @@ import { CicloDeVidaAsistente } from './ciclo-de-vida';
 import { ProcesadorEnEspera } from './en-espera';
 import { EjecutorHerramientas } from './herramientas/ejecutor-herramientas';
 import { HerramientasAgenda } from './herramientas/herramientas-agenda';
+import { HerramientasAsistente } from './herramientas/herramientas-asistente';
 import { HerramientasEquipos } from './herramientas/herramientas-equipos';
 import { HerramientasReuniones } from './herramientas/herramientas-reuniones';
 import { HerramientasTareas } from './herramientas/herramientas-tareas';
@@ -60,6 +61,7 @@ export function crearProveedorModelo(entorno: NodeJS.ProcessEnv = process.env): 
     LlamadasAuditadas,
     EjecutorHerramientas,
     HerramientasAgenda,
+    HerramientasAsistente,
     HerramientasTareas,
     HerramientasEquipos,
     HerramientasReuniones,

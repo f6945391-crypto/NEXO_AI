@@ -87,10 +87,14 @@ export class TranscripcionService {
     const desde = consulta.antes ? await db.conversacionAgente.findFirst({ where: { id: consulta.antes, perfilId: contexto.perfilId } }) : null;
     if (consulta.antes && !desde) return { episodios: [], hayAnteriores: false, cursor: null };
 
+    // T-158 · REQ-AGT-10: lo cerrado antes de limpiar no se muestra; el episodio abierto se queda entero
+    const perfil = await db.perfilUsuario.findFirst({ where: { id: contexto.perfilId }, select: { conversacionLimpiadaEn: true } });
+    const limpiada = perfil?.conversacionLimpiadaEn ?? null;
     const filas = await db.conversacionAgente.findMany({
       where: {
         perfilId: contexto.perfilId,
         turnos: { some: {} },
+        ...(limpiada ? { NOT: { estado: 'cerrada', cerradaEn: { lte: limpiada } } } : {}),
         ...(desde ? { OR: [{ abiertaEn: { lt: desde.abiertaEn } }, { abiertaEn: desde.abiertaEn, id: { lt: desde.id } }] } : {}),
       },
       orderBy: [{ abiertaEn: 'desc' }, { id: 'desc' }],
@@ -109,13 +113,24 @@ export class TranscripcionService {
       }),
     ]);
 
+    // T-158 · decisión 41: del episodio abierto, lo de antes de limpiar no se ve, salvo la tarjeta que sigue sin decidir
+    const sinDecidir = limpiada
+      ? new Set((await db.operacion.findMany({ where: { perfilId: contexto.perfilId, conversacionId: { in: ids }, estado: 'propuesta' }, select: { id: true } })).map((o) => o.id))
+      : new Set<string>();
+    const visible = (turno: TurnoAsistente, en: Date) =>
+      !limpiada || en > limpiada || (turno.tipo === 'propuesta' && sinDecidir.has(turno.operacion.id));
     const episodios = pagina
       .map((e) => ({
         id: e.id,
         abiertoEn: e.abiertaEn.toISOString(),
         cierre: e.estado === 'cerrada' ? cierreDe(e.cerradaEn ?? e.ultimaActividadEn, operaciones.filter((o) => o.conversacionId === e.id)) : null,
-        turnos: turnos.filter((t) => t.conversacionId === e.id).map((t) => TurnoAsistente.parse(t.datos)),
+        turnos: turnos
+          .filter((t) => t.conversacionId === e.id)
+          .map((t) => ({ turno: TurnoAsistente.parse(t.datos), en: t.en }))
+          .filter(({ turno, en }) => visible(turno, en))
+          .map(({ turno }) => turno),
       }))
+      .filter((e) => e.turnos.length > 0)
       .reverse();
     return { episodios, hayAnteriores, cursor: hayAnteriores ? pagina.at(-1)!.id : null };
   }

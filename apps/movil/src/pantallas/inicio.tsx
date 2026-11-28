@@ -4,6 +4,7 @@ import { Perfil } from '@nexoai/contratos';
 import { Boton } from '../componentes';
 import type { Nivel } from './agenda';
 import { AutorizacionesEquipo } from './autorizaciones-equipo';
+import { LimpiarConversacion } from './limpiar-conversacion';
 import { CambioContrasena } from './cambio-contrasena';
 import { CapaCaptura } from './captura';
 import { FranjaEnEspera } from './en-espera';
@@ -177,6 +178,8 @@ export function Inicio({
               {/* T-146 · D-REU-36: la autorización para compartir la disponibilidad, con plan efectivo Empresarial y
                   algún equipo (REQ-CUN05-18) */}
               {perfil && perfil.planEfectivo === 'empresarial' && perfil.equipos > 0 && <AutorizacionesEquipo perfilId={perfil.perfilId} alSalir={alSalir} />}
+              {/* T-160 · REQ-AGT-10 */}
+              <LimpiarConversacion alSalir={alSalir} />
               <Boton texto="Cerrar sesión" alPulsar={alSalir} />
             </ScrollView>
           </View>

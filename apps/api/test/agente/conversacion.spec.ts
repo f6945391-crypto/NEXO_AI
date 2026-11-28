@@ -264,8 +264,9 @@ describe('T-032 · conversación con el asistente', () => {
       for (const texto of textos) expect(texto).not.toContain('"turnos"');
       expect(await prisma.turnoTranscripcion.count()).toBe(3);
       // B2 del plan de pruebas, medido tras confirmar (T-039): 7 777 bytes el 6 de noviembre de 2026 (5 546 con
-      // la propuesta abierta). La meta de menos de 2 KB no se alcanza: ver tasks.md, T-038 y T-039
-      expect(Buffer.byteLength(JSON.stringify(guardado), 'utf8')).toBeLessThan(8_000);
+      // la propuesta abierta). La meta de menos de 2 KB no se alcanza: ver tasks.md, T-038 y T-039. T-157 suma el
+      // canal `desglose` al estado: 8 152 bytes el 28 de noviembre de 2026
+      expect(Buffer.byteLength(JSON.stringify(guardado), 'utf8')).toBeLessThan(8_500);
     });
 
     it('«ver anteriores»: la página siguiente llega con el cursor, sin repetir episodios', async () => {

@@ -233,5 +233,17 @@
     "plan": "personal",
     "organizacion": "personal",
     "lista": true
+  },
+  "variasCosas": {
+    "correo": "varias-cosas-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "lista": true
+  },
+  "limpiarConversacion": {
+    "correo": "limpiar-conversacion-e2e@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "lista": true
   }
 }

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Fecha, Hora, Instante } from './comunes';
+import { Fecha, Hora, Instante, Periodo } from './comunes';
 import { ZonaHoraria } from './acceso';
 import { OperacionRespuesta } from './operaciones';
 
@@ -169,6 +169,8 @@ export type CargaAnotarAvance = z.infer<typeof CargaAnotarAvance>;
 export const ArgsConsultarTareas = z
   .strictObject({
     franja: FranjaTarea.nullable().optional().describe('Solo esa franja: con_fecha, sin_fecha o esperando'),
+    // T-157 · decisión 39 de 07-agente: con un período, el código pone los días
+    periodo: Periodo.nullable().optional(),
     desde: Fecha.nullable().optional().describe('Con un período («esta semana»): primer día, AAAA-MM-DD'),
     hasta: Fecha.nullable().optional().describe('Con un período: último día, incluido, AAAA-MM-DD'),
   })
@@ -182,6 +184,9 @@ export const ArgsRegistrarTarea = z.strictObject({
   horaLimite: Hora.optional().describe('Solo si dijo «antes de las…»'),
   deQuien: DeQuien.optional().describe('Si es algo que otra persona tiene que darle o hacer: su nombre, tal como lo dijo'),
   contexto: ContextoTarea.optional().describe('Solo si dijo con quién o para qué es («lo veo con Juan y Rosa»), con sus palabras'),
+  // T-157 · decisión 40 de 07-agente: con inicio, es un bloque de tiempo y el código lo pasa a la agenda
+  horaInicio: Hora.optional().describe('Solo si dijo a qué hora empieza: entonces es un compromiso'),
+  horaFin: Hora.optional().describe('Solo si dijo a qué hora termina'),
 });
 export type ArgsRegistrarTarea = z.infer<typeof ArgsRegistrarTarea>;
 

@@ -84,6 +84,9 @@ export const EstadoAsistente = Annotation.Root({
   // sin reiniciarlo en cada mensaje: lo que quede de antes no vale, porque la propuesta se lee de nuevo y tiene que
   // seguir sin decidir, y la oferta solo cuenta si su tarjeta es la que se espera
   abierta: reemplazar<{ id: string; oferta: Oferta | null } | null>(null),
+  // T-157 · REQ-AGT-09: la lista de una frase con varias cosas; cuántas terminan en una tarjeta y cuántas se
+  // decidieron. Mientras queden, decidir una tarjeta no cierra el episodio (plan §16.1)
+  desglose: reemplazar<{ acciones: number; decididas: number } | null>(null),
 });
 export type EstadoAsistente = typeof EstadoAsistente.State;
 
@@ -165,6 +168,8 @@ const ACEPTA = /^(?:si|sip|claro|dale|vale|ok|okey|de acuerdo|perfecto|bueno|ade
 const NIEGA = /^(?:no|nop|no gracias|mejor no|asi esta bien|dejalo asi|dejala asi|no dejala asi|no dejalo asi|solo la tarea|no solo la tarea)$/;
 // Lo que lee el modelo cuando la persona escribe con una propuesta abierta
 const SIGUE_ABIERTA = '(La propuesta sigue abierta, sin decidir.)';
+// T-157 · REQ-AGT-09: lo que lee el modelo tras decidirse una tarjeta, si la frase pedía más acciones
+export const SIGUE_LA_LISTA = '(Sigo con lo siguiente de la lista que pediste.)';
 
 // Errores cuyo mensaje ya es la respuesta: lo dice el código, sin otra vuelta del modelo
 const SE_DICEN_TAL_CUAL = new Set(['TAREA_SIN_HORARIO', 'TAREA_NO_ENCONTRADA', 'REUNION_ACLARAR', 'SOLO_CONVOCANTE', 'REUNION_NO_ENCONTRADA', 'REUNION_NO_PENDIENTE', 'REUNION_NO_AGENDADA', 'ES_REUNION']);
@@ -278,6 +283,7 @@ export function construirGrafo(
     let reunion: EstadoAsistente['reunion'] = null;
     let sinTarea: string | null = null;
     let oferta: Oferta | null = null;
+    let desglose: EstadoAsistente['desglose'] | undefined;
 
     for (const llamada of lista) {
       // Una acción a la vez: la persona decide sobre una tarjeta antes de ver otra
@@ -292,6 +298,12 @@ export function construirGrafo(
       if (turno.success) {
         const base = { id: randomUUID(), en: ahora() };
         if (turno.data.tipo === 'agenda') turnos.push({ ...base, tipo: 'agenda', lista: turno.data.lista });
+        // T-157 · REQ-AGT-09: lo que entendió, armado por el código; las acciones se cuentan para seguir con ellas
+        else if (turno.data.tipo === 'desglose') {
+          turnos.push({ ...base, tipo: 'desglose', desglose: turno.data.desglose });
+          const acciones = (r.paraModelo as { acciones?: number } | null)?.acciones ?? 0;
+          desglose = acciones > 1 ? { acciones, decididas: 0 } : null;
+        }
         else if (turno.data.tipo === 'tareas') turnos.push({ ...base, tipo: 'tareas', lista: turno.data.lista });
         // T-126 · REQ-CUN03-23: la bitácora es una lista, como la de tareas; no cierra el episodio
         else if (turno.data.tipo === 'bitacora') turnos.push({ ...base, tipo: 'bitacora', bitacora: turno.data.bitacora });
@@ -331,9 +343,10 @@ export function construirGrafo(
     // REQ-AGT-02: una tarea guardada en espera no necesita otra vuelta del modelo, y cierra el episodio (decisión 27)
     if (guardada && !pendiente) return con(turnos, { mensajes, cerrada: true, siguiente: 'fin' });
     // T-051 · REQ-CUN03-15: con varias candidatas no se propone nada; la persona elige sin pasar por el modelo
-    if (candidatas && !pendiente) return con(turnos, { mensajes, candidatas, siguiente: 'fin' });
+    const conDesglose = desglose !== undefined ? { desglose } : {};
+    if (candidatas && !pendiente) return con(turnos, { mensajes, candidatas, siguiente: 'fin', ...conDesglose });
     // T-133 · REQ-CUN06-01: con las propuestas a la vista, el turno termina; el texto lo escribió el código
-    if (reunion && !pendiente) return con(turnos, { mensajes, reunion, siguiente: 'fin' });
+    if (reunion && !pendiente) return con(turnos, { mensajes, reunion, siguiente: 'fin', ...conDesglose });
     // T-143 · REQ-AGT-07: un horario para una tarea propuesta; se explica y se ofrece el compromiso, y la tarjeta de
     // la tarea sigue esperando su decisión
     if (sinTarea && oferta && estado.abierta && !pendiente) {
@@ -347,7 +360,7 @@ export function construirGrafo(
     // Ninguna tarea encaja: se dice con las palabras del código, sin otra vuelta del modelo
     if (sinTarea && !pendiente) return con([...turnos, turnoTexto(sinTarea)], { mensajes: [...mensajes, deAsistente(sinTarea)], siguiente: 'fin' });
     const siguiente: Siguiente = pendiente ? 'esperar' : faltante ? 'preguntar' : 'interpretar';
-    return con(turnos, { mensajes, pendiente, faltante, siguiente });
+    return con(turnos, { mensajes, pendiente, faltante, siguiente, ...(desglose !== undefined ? { desglose } : {}) });
   }
 
   async function preguntar(estado: EstadoAsistente): Promise<Partial<EstadoAsistente>> {
@@ -421,17 +434,24 @@ export function construirGrafo(
         siguiente: 'esperar',
       });
     }
+    // T-157 · REQ-AGT-09: si la frase pedía más acciones, el episodio sigue y el modelo propone la siguiente
+    const lista = estado.desglose;
+    const sigue = !decision.caducada && !!lista && lista.decididas + 1 < lista.acciones;
+    const cierre = (turno: TurnoAsistente, texto: string): Partial<EstadoAsistente> =>
+      sigue && lista
+        ? con([turno], { mensajes: [deAsistente(`${texto} ${SIGUE_LA_LISTA}`)], pendiente: null, decision: null, vueltas: 0, desglose: { ...lista, decididas: lista.decididas + 1 }, siguiente: 'interpretar' })
+        : con([turno], { mensajes: [deAsistente(texto)], pendiente: null, decision: null, desglose: null, cerrada: true, siguiente: 'fin' });
     if (decision.tipo === 'descartada') {
       // T-041 · H-AG-08: la que descartó el trabajador a las 24 horas lo dice así
       const texto = decision.caducada ? 'Esta propuesta caducó; no se hizo nada.' : 'De acuerdo, no hice nada.';
-      return con([turnoTexto(texto)], { mensajes: [deAsistente(texto)], pendiente: null, decision: null, cerrada: true, siguiente: 'fin' });
+      return cierre(turnoTexto(texto), texto);
     }
     if (op.estado === 'ejecutada') {
       const texto = textoDelResultado(op, zona);
-      return con([{ ...base, tipo: 'resultado', texto, operacion: op }], { mensajes: [deAsistente(texto)], pendiente: null, decision: null, cerrada: true, siguiente: 'fin' });
+      return cierre({ ...base, tipo: 'resultado', texto, operacion: op }, texto);
     }
     const texto = `No se pudo hacer: ${op.error ?? 'el calendario rechazó la acción'}. No cambió nada.`;
-    return con([turnoFallo(texto)], { mensajes: [deAsistente(texto)], pendiente: null, decision: null, cerrada: true, siguiente: 'fin' });
+    return cierre(turnoFallo(texto), texto);
   }
 
   const ir = (estado: EstadoAsistente) => (estado.siguiente === 'esperar' ? 'esperar_decision' : estado.siguiente === 'fin' ? END : estado.siguiente);

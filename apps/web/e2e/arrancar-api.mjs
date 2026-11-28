@@ -102,7 +102,7 @@ const { calendarioDeDemostracion: calendario } = desdeApi('./dist/integraciones/
 // T-050: las cuentas de «en espera» no conectan el calendario: desde que las tareas existen, lo que queda en
 // espera en estas pruebas es un compromiso sin permiso de calendario
 const SIN_CALENDARIO = ['asistenteEspera', 'capturaEspera', 'enEspera'];
-for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial', 'agendaSemana', 'enEspera', 'historialLargo', 'semanaLlena', 'tareas', 'tareasVacio', 'tareasBitacora'].filter((c) => perfiles[c])) {
+for (const clave of ['agenda', 'agendaVacia', 'zona', 'asistente', 'asistenteEspera', 'captura', 'capturaEspera', 'historial', 'agendaSemana', 'enEspera', 'historialLargo', 'semanaLlena', 'tareas', 'tareasVacio', 'tareasBitacora', 'variasCosas', 'limpiarConversacion'].filter((c) => perfiles[c])) {
   const perfilId = perfiles[clave];
   await prisma.perfilUsuario.update({ where: { id: perfilId }, data: { debeCambiarContrasena: false, zonaHoraria: 'America/Lima' } });
   if (SIN_CALENDARIO.includes(clave)) continue;

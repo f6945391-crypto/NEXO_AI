@@ -67,6 +67,15 @@ export class AsistenteService {
     return { ...pagina, episodioAbierto: abierta?.id ?? null, pendiente };
   }
 
+  // T-158 · REQ-AGT-10 · decisión 41: desde ahora no se muestran los episodios ya cerrados. No es una Operación:
+  // no cambia nada fuera de la vista. Queda en la auditoría
+  async limpiar(contexto: ContextoSolicitud): Promise<void> {
+    const ahora = new Date();
+    const db = this.datos(contexto);
+    await db.perfilUsuario.updateMany({ where: { id: contexto.perfilId }, data: { conversacionLimpiadaEn: ahora } });
+    await db.eventoAuditoria.create({ data: { organizacionId: contexto.organizacionId, perfilId: contexto.perfilId, accion: 'conversacion.limpiada', detalle: { en: ahora.toISOString() } } });
+  }
+
   async enviar(contexto: ContextoSolicitud, texto: string): Promise<RespuestaAsistente> {
     let abierta = await this.abierta(contexto);
     // T-041: si pasó media hora sin actividad y no hay una propuesta esperando, ese episodio se cierra y el

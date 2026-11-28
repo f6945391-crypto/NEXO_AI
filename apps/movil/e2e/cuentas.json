@@ -98,6 +98,18 @@
     "organizacion": "personal",
     "lista": true
   },
+  "variasCosas": {
+    "correo": "varias-cosas-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "lista": true
+  },
+  "limpiarConversacion": {
+    "correo": "limpiar-conversacion-movil@nexoai.test",
+    "rol": "usuario_personal",
+    "plan": "personal",
+    "lista": true
+  },
   "reunionesAdmin": {
     "correo": "admin@reuniones-movil.test",
     "rol": "gerente",

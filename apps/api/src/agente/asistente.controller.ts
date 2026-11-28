@@ -27,6 +27,13 @@ export class AsistenteController {
     return this.asistente.conversacion(contexto, consulta);
   }
 
+  // T-158 · REQ-AGT-10: limpia lo que se ve, sin borrar nada ni tocar lo que recuerda el asistente
+  @Post('conversacion/limpiar')
+  @HttpCode(204)
+  async limpiar(@Contexto() contexto: ContextoSolicitud): Promise<void> {
+    await this.asistente.limpiar(contexto);
+  }
+
   @Post('mensajes')
   @HttpCode(200)
   enviar(@Contexto() contexto: ContextoSolicitud, @Body(new ValidarCon(MensajeAsistente)) cuerpo: MensajeAsistente): Promise<RespuestaAsistente> {

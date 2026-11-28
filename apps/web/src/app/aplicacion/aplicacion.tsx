@@ -11,6 +11,7 @@ import { Actividad } from './actividad';
 import { AgendaMes, AgendaSemana, ListaCompromisos } from './agenda';
 import { AutorizacionesEquipo } from './autorizaciones-equipo';
 import { CambioContrasena } from './cambio-contrasena';
+import { LimpiarConversacion } from './limpiar-conversacion';
 import { CambioZona } from './cambio-zona';
 import { FranjaEnEspera } from './en-espera';
 import { Conversacion } from './conversacion';
@@ -98,6 +99,8 @@ export function Aplicacion({
   const [corte, setCorte] = useState(0);
   const [expandido, setExpandido] = useState(false);
   const [ajustes, setAjustes] = useState(false);
+  // T-159 · REQ-AGT-10: tras limpiar, la conversación vuelve a montarse con lo que queda
+  const [conversacionLimpia, setConversacionLimpia] = useState<{ conversacion: ConversacionAsistente; vez: number } | null>(null);
   const [aviso, setAviso] = useState(resultadoGoogle ? (AVISO_GOOGLE[resultadoGoogle] ?? null) : null);
   const entrada = useRef<HTMLTextAreaElement>(null);
   const actual = SECCIONES[seccion];
@@ -227,7 +230,8 @@ export function Aplicacion({
 
       {!expandido && (
         <Conversacion
-          inicial={conversacion}
+          key={conversacionLimpia?.vez ?? 0}
+          inicial={conversacionLimpia?.conversacion ?? conversacion}
           ejemplos={ejemplos}
           zona={perfil?.zonaHoraria ?? undefined}
           entrada={entrada}
@@ -415,6 +419,7 @@ export function Aplicacion({
             {/* T-146 · D-REU-36: la autorización para compartir la disponibilidad, con plan efectivo Empresarial
                 y algún equipo (REQ-CUN05-18) */}
             {conEquipo && perfil && <AutorizacionesEquipo perfilId={perfil.perfilId} />}
+            <LimpiarConversacion alLimpiar={(c) => setConversacionLimpia((anterior) => ({ conversacion: c, vez: (anterior?.vez ?? 0) + 1 }))} />
             <form action={salir}>
               <button type="submit" className="boton">
                 Cerrar sesión

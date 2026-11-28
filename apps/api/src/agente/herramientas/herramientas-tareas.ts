@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import {
   AVANCES_EN_FICHA,
@@ -23,6 +24,7 @@ import { aContrato, type FilaAvance, type FilaTarea } from '../../tareas/tareas.
 import { AVISO_CONTENIDO_EXTERNO } from './contenido-externo';
 import { EjecutorHerramientas } from './ejecutor-herramientas';
 import { nombreParaModelo, type EntornoHerramienta, type Oferta, type ResultadoHerramienta } from './herramienta';
+import { diasDelPeriodo } from './periodo';
 
 // T-050, T-051 · specs/09-tareas-personales/plan.md §7.1 · REQ-CUN03-01, 02, 12, 14, 15, 16. Las herramientas
 // de tareas del agente. **Ninguna escribe** (P-01, AD-09): consultan o proponen una Operación `tareas.*` con
@@ -140,7 +142,7 @@ export class HerramientasTareas implements OnModuleInit {
     });
     this.ejecutor.registrar({
       nombre: 'tareas.registrar',
-      descripcion: 'Propone una tarea personal: algo que la persona tiene que hacer, o algo que espera de otra persona (deQuien). Sin fecha dicha, sin fecha: no la preguntes. No avisa ni escribe a nadie.',
+      descripcion: 'Propone una tarea personal: algo que la persona tiene que hacer, o algo que espera de otra persona (deQuien). Sin fecha dicha, sin fecha: no la preguntes. No avisa ni escribe a nadie. Un bloque de tiempo con hora de inicio no es una tarea: es un compromiso.',
       esquema: ArgsRegistrarTarea,
       ejecutar: (contexto, args, entorno) => this.registrar(contexto, args, entorno),
     });
@@ -178,8 +180,10 @@ export class HerramientasTareas implements OnModuleInit {
   }
 
   private async consultar(contexto: ContextoSolicitud, args: ArgsConsultarTareas, entorno: EntornoHerramienta): Promise<ResultadoHerramienta> {
-    const desde = args.desde;
-    const hasta = args.hasta ?? args.desde;
+    // T-157 · decisión 39: con un período, los días los pone el código
+    const periodo = args.periodo ? diasDelPeriodo(args.periodo, entorno.referencia) : null;
+    const desde = periodo?.desde ?? args.desde;
+    const hasta = periodo?.hasta ?? args.hasta ?? args.desde;
     if (desde && hasta && hasta < desde) return conError('ARGUMENTOS_INVALIDOS', 'El primer día del período tiene que ser anterior o igual al último.', ['hasta']);
     const respuesta = await this.consulta.listar(
       contexto,
@@ -218,6 +222,11 @@ export class HerramientasTareas implements OnModuleInit {
   }
 
   private async registrar(contexto: ContextoSolicitud, args: ArgsRegistrarTarea, entorno: EntornoHerramienta): Promise<ResultadoHerramienta> {
+    // T-157 · decisión 40: con hora de inicio es un bloque de tiempo, un compromiso. Se propone en la agenda por el
+    // ejecutor auditado; si falta el día, la agenda lo pregunta (REQ-CUN01-07)
+    if (args.horaInicio) return this.comoCompromiso(contexto, args, entorno);
+    // H-TP-09: «hasta las 7» sin inicio es una hora límite
+    if (args.horaFin && !args.horaLimite) args = { ...args, horaLimite: args.horaFin };
     // REQ-CUN03-02: solo se pregunta qué hay que hacer; sin fecha es una franja (H-TP-02)
     if (!args.texto) return conError('DATOS_FALTANTES', 'Falta qué hay que hacer.', ['texto']);
     // Una hora sin día sí falta: no se inventa el día
@@ -256,6 +265,18 @@ export class HerramientasTareas implements OnModuleInit {
     if (abierta.id === tareaId) return carga.data;
     const pendientes = await this.consulta.filas(contexto, 'pendientes', entorno.referencia.instante);
     return pendientes.some((f) => f.id === tareaId) ? null : carga.data;
+  }
+
+  private async comoCompromiso(contexto: ContextoSolicitud, args: ArgsRegistrarTarea, entorno: EntornoHerramienta): Promise<ResultadoHerramienta> {
+    const argumentos = {
+      ...(args.texto ? { titulo: args.texto.slice(0, 200) } : {}),
+      ...(args.fecha ? { fecha: args.fecha } : {}),
+      horaInicio: args.horaInicio,
+      ...(args.horaFin ? { horaFin: args.horaFin } : {}),
+    };
+    const { repetida: _repetida, ...r } = await this.ejecutor.ejecutar(contexto, entorno, { id: `bloque-${randomUUID()}`, nombre: nombreParaModelo('agenda.registrar_evento'), argumentos }, null);
+    const paraModelo = r.paraModelo && typeof r.paraModelo === 'object' ? r.paraModelo : {};
+    return { ...r, paraModelo: { ...paraModelo, nota: 'Con hora de inicio es un compromiso de la agenda, no una tarea: se propuso en la agenda.' } };
   }
 
   // T-143 · REQ-AGT-07 · H-TP-09: una tarea lleva fecha, no horario. El texto lo escribe el código; sobre una tarea

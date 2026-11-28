@@ -78,6 +78,8 @@ model PerfilUsuario {
   // REQ-ADM-12, 13 · specs/08-administracion/plan.md §3.2
   estado                EstadoCuenta @default(activa)
   estadoCambiadoEn      DateTime?    @map("estado_cambiado_en") @db.Timestamptz(3)
+  // T-158 · REQ-AGT-10: desde cuándo se muestra la conversación; lo cerrado antes no se ve, sin borrarse
+  conversacionLimpiadaEn DateTime?   @map("conversacion_limpiada_en") @db.Timestamptz(3)
   creadoEn              DateTime     @default(now()) @map("creado_en") @db.Timestamptz(3)
 
   organizacion        Organizacion                @relation(fields: [organizacionId], references: [id])

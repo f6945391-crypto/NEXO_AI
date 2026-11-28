@@ -155,6 +155,23 @@ function Turno({
           </p>
         </li>
       );
+    // T-159 · REQ-AGT-09: lo que entendió de una frase con varias cosas, armado por la API
+    case 'desglose':
+      return (
+        <li className="turno">
+          <section className="turno-agenda turno-desglose" aria-label="Lo que entendí">
+            <p className="turno-desglose__titulo">{turno.desglose.titulo}</p>
+            <ol className="turno-desglose__lista">
+              {turno.desglose.partes.map((parte, i) => (
+                <li key={i}>
+                  {parte.texto}
+                  {parte.falta && <span className="turno-desglose__falta"> · {parte.falta}</span>}
+                </li>
+              ))}
+            </ol>
+          </section>
+        </li>
+      );
     case 'agenda':
       return (
         <li className="turno">

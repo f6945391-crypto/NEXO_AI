@@ -230,6 +230,19 @@ function Turno({
           </Text>
         </View>
       );
+    // T-160 · REQ-AGT-09: lo que entendió de una frase con varias cosas, armado por la API
+    case 'desglose':
+      return (
+        <View accessibilityLabel="Lo que entendí" style={estilos.agenda}>
+          <Text style={[estilos.cuerpo, estilos.desgloseTitulo]}>{turno.desglose.titulo}</Text>
+          {turno.desglose.partes.map((parte, i) => (
+            <Text key={i} style={estilos.cuerpo}>
+              {i + 1}. {parte.texto}
+              {parte.falta ? <Text style={estilos.desgloseFalta}> · {parte.falta}</Text> : null}
+            </Text>
+          ))}
+        </View>
+      );
     case 'agenda':
       return (
         <View accessibilityLabel={turno.lista.rango} style={estilos.agenda}>
@@ -663,6 +676,8 @@ export function CapaCaptura({
 }
 
 const estilos = StyleSheet.create({
+  desgloseTitulo: { fontWeight: '600' },
+  desgloseFalta: { color: color.estado.advertencia, fontWeight: '600' },
   // H-CAP-03: la capa arranca donde empieza la cabecera de la sección y la tapa; detrás queda el antecedente
   velo: { flex: 1, paddingTop: espaciado[24], backgroundColor: color.velo.capa },
   hoja: { flex: 1, gap: espaciado[12], padding: espaciado[16], borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: color.superficie.base },

@@ -2320,3 +2320,21 @@ span.marca {
 .turno-reunion__todos {
   margin-top: var(--espaciado-8);
 }
+
+/* T-159 · REQ-AGT-09: lo que entendió de una frase con varias cosas */
+.turno-desglose__titulo {
+  margin: 0 0 var(--espaciado-8);
+  font-weight: 600;
+  color: var(--texto-fuerte);
+}
+.turno-desglose__lista {
+  margin: 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 4px;
+  line-height: 1.45;
+}
+.turno-desglose__falta {
+  color: var(--estado-advertencia);
+  font-weight: 600;
+}

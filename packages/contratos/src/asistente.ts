@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ListaAgenda, MotivoEspera } from './agente';
+import { Desglose, ListaAgenda, MotivoEspera } from './agente';
 import { OperacionRespuesta } from './operaciones';
 import { BitacoraTarea, CandidatasDeReferente, ListaTareas } from './tareas';
 import { PropuestasDeReunion } from './reuniones';
@@ -34,6 +34,8 @@ export const TurnoAsistente = z.discriminatedUnion('tipo', [
   z.strictObject({ ...base, tipo: z.literal('bitacora'), bitacora: BitacoraTarea }),
   // T-133 · REQ-CUN06-01: las propuestas de horario de una reunión; elegir una no pasa por el modelo
   z.strictObject({ ...base, tipo: z.literal('reunion'), propuestas: PropuestasDeReunion }),
+  // T-157 · REQ-AGT-09: lo que entendió de una frase con varias cosas
+  z.strictObject({ ...base, tipo: z.literal('desglose'), desglose: Desglose }),
 ]);
 export type TurnoAsistente = z.infer<typeof TurnoAsistente>;
 
