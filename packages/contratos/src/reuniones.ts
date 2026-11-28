@@ -110,6 +110,8 @@ export const ConvocarReunion = z.strictObject({
   inicio: Instante,
   // Los invitados que van como opcionales; sin indicar, los que ya tiene la reunión (REQ-CUN06-06, 09)
   opcionales: z.array(z.uuid()).optional(),
+  // T-152 · REQ-CUN06-22: la duración elegida en el detalle o con un rango del mapa; sin indicar, la de la reunión
+  duracionMinutos: Duracion.optional(),
 });
 export type ConvocarReunion = z.infer<typeof ConvocarReunion>;
 

@@ -2200,8 +2200,15 @@ span.marca {
   box-shadow: inset 0 0 0 2px var(--marca-base);
 }
 
+/* T-152 · REQ-CUN06-22: los huecos que cubre el horario elegido */
+.mapa__celda--en-rango {
+  color: #fff;
+  font-weight: 700;
+}
+
 .mapa__celda--elegida {
-  box-shadow: inset 0 0 0 3px var(--marca-fuerte);
+  /* T-152: el inicio del horario elegido, ya en azul, con un borde claro por dentro */
+  box-shadow: inset 0 0 0 2px var(--superficie-base);
   font-weight: 700;
 }
 

@@ -63,8 +63,8 @@ async function proponer(tipo: 'reunion.convocar' | 'reunion.cancelar', carga: un
 }
 
 // REQ-CUN06-10: «Confirmar horario» en el detalle propone convocar, con los opcionales marcados
-export async function proponerConvocar(reunionId: string, inicio: string, opcionales: string[]): Promise<Resultado<OperacionRespuesta>> {
-  const carga = ConvocarReunion.safeParse({ reunionId, inicio, opcionales });
+export async function proponerConvocar(reunionId: string, inicio: string, opcionales: string[], duracionMinutos?: number): Promise<Resultado<OperacionRespuesta>> {
+  const carga = ConvocarReunion.safeParse({ reunionId, inicio, opcionales, ...(duracionMinutos ? { duracionMinutos } : {}) });
   if (!carga.success) return { error: 'El horario elegido no es válido.' };
   return proponer('reunion.convocar', carga.data);
 }

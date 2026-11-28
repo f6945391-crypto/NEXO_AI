@@ -186,6 +186,13 @@
     "organizacion": "Reuniones Demo",
     "lista": true
   },
+  "reunionesRango": {
+    "correo": "rango@reuniones.test",
+    "rol": "gerente",
+    "plan": "empresarial",
+    "organizacion": "Reuniones Demo",
+    "lista": true
+  },
   "reunionesPablo": {
     "correo": "pablo@reuniones.test",
     "rol": "usuario_personal",

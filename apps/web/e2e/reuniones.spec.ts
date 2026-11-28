@@ -273,3 +273,42 @@ test.describe('web.consentimiento-en-ajustes', () => {
     });
   });
 });
+
+// T-152 · REQ-CUN06-22 · D-REU-39: en el mapa se elige un rango tocando el primer hueco y el último del mismo
+// día, de 30 minutos a 5 horas, y la tarjeta y el evento llevan esa duración. Sobre el equipo «Rango», aparte
+// del escenario de «Proyecto Alfa»
+test.describe('web.reuniones-rango', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('dos toques eligen el rango; más de 10 medias horas se rechaza; la tarjeta dice la duración', async ({ page }) => {
+    const dia = primerHabil();
+    await entrar(page, cuentas.reunionesRango.correo);
+    await abrirReuniones(page);
+    await page.getByLabel('Pídele algo al asistente').fill('reunión de planificación con el equipo Rango');
+    await page.getByRole('button', { name: 'Enviar' }).click();
+    await page.getByRole('button', { name: 'Planificación: Elegir horario' }).click();
+    const mapa = page.getByRole('grid', { name: 'Disponibilidad por media hora' });
+    await expect(mapa).toBeVisible();
+    const hueco = (desde: string, hasta: string) => mapa.getByRole('button', { name: new RegExp(`^${dia.nombre} · ${desde}–${hasta}:`) });
+
+    // De 12:00 a 13:30: cuatro medias horas, dos horas
+    await hueco('12:00', '12:30').click();
+    await hueco('13:30', '14:00').click();
+    await expect(page.getByText(new RegExp(`^Elegido: ${dia.nombre}, 12:00 – 14:00 · 2 h$`))).toBeVisible();
+    await expect(hueco('13:00', '13:30')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('combobox', { name: 'Duración' })).toHaveValue('120');
+
+    // Once medias horas no se toman, y el siguiente toque vuelve a ser un inicio
+    await hueco('08:00', '08:30').click();
+    await hueco('13:30', '14:00').click();
+    await expect(page.getByRole('alert').filter({ hasText: 'Como mucho 10 medias horas (5 horas)' })).toBeVisible();
+
+    // Un rango válido otra vez, y la tarjeta lleva su duración
+    await hueco('09:00', '09:30').click();
+    await hueco('09:30', '10:00').click();
+    await expect(page.getByText(new RegExp(`^Elegido: ${dia.nombre}, 09:00 – 10:00 · 1 h$`))).toBeVisible();
+    await page.getByRole('button', { name: 'Confirmar horario' }).click();
+    await expect(page.getByText('Convocar esta reunión')).toBeVisible();
+    await expect(page.getByText('1 hora', { exact: true })).toBeVisible();
+  });
+});

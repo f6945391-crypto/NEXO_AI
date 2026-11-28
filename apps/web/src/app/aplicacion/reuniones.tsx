@@ -11,7 +11,11 @@ import { descartarOperacion } from '../acciones';
 // (D-REU-09). Crear una reunión lo hace el asistente (R-42); aquí solo se elige, se confirma y se cancela, como
 // controles sobre algo que ya existe (DP-01). Las tarjetas las escribe la API; aquí solo se pintan.
 
-const DURACIONES = [30, 45, 60, 90, 120];
+// T-152 · REQ-CUN06-22 · D-REU-39: de 30 minutos a 5 horas, de 30 en 30 (10 huecos del mapa como mucho)
+const HUECO_MINUTOS = 30;
+const HUECOS_MAXIMOS = 10;
+const DURACIONES = Array.from({ length: HUECOS_MAXIMOS }, (_, i) => (i + 1) * HUECO_MINUTOS);
+export const AVISO_RANGO_MAXIMO = 'Como mucho 10 medias horas (5 horas)';
 // D-REU-20: desde 8 personas, la lista de invitados lleva buscador
 const CON_BUSCADOR = 8;
 
@@ -27,6 +31,15 @@ const sumarMinutos = (iso: string, minutos: number) => new Date(Date.parse(iso) 
 const nombreFecha = (fecha: string) => {
   const d = new Date(`${fecha}T12:00:00Z`);
   return { semana: mayuscula(formato('UTC', { weekday: 'short' }).format(d).replace('.', '')), numero: formato('UTC', { day: 'numeric' }).format(d) };
+};
+
+// El día de un instante en la zona de quien mira, para saber si dos huecos son del mismo día
+const diaEn = (iso: string, zona: string) => new Intl.DateTimeFormat('en-CA', { timeZone: zona }).format(new Date(iso));
+// «45 min», «1 h», «2 h 30 min»
+export const duracionCorta = (minutos: number) => {
+  const h = Math.floor(minutos / 60);
+  const m = minutos % 60;
+  return h === 0 ? `${m} min` : m === 0 ? `${h} h` : `${h} h ${m} min`;
 };
 
 const enLista = (nombres: string[]) => (nombres.length < 2 ? nombres.join('') : `${nombres.slice(0, -1).join(', ')} y ${nombres.at(-1)}`);
@@ -201,7 +214,8 @@ function Mapa({
   duracion,
   sugerido,
   elegido,
-  alElegir,
+  ancla,
+  alPulsar,
 }: {
   mapa: MapaReunion;
   nombres: Map<string, string>;
@@ -209,7 +223,9 @@ function Mapa({
   duracion: number;
   sugerido: string | null;
   elegido: string | null;
-  alElegir: (inicio: string) => void;
+  // T-152: el primer hueco tocado, a la espera del último
+  ancla: string | null;
+  alPulsar: (inicio: string) => void;
 }) {
   const [sobre, setSobre] = useState<string | null>(null);
   const n = mapa.personasConDatos.length;
@@ -239,7 +255,7 @@ function Mapa({
           {n}/{n} libres
         </span>
       </div>
-      <p className="ayuda">Pasa el cursor sobre una media hora para ver quién está libre. Tócala para elegir ese inicio.</p>
+      <p className="ayuda">Pasa el cursor sobre una media hora para ver quién está libre. Toca el primer hueco y después el último del mismo día para elegir el rango, de 30 minutos a 5 horas.</p>
       <div className="mapa__rejilla" role="grid" aria-label="Disponibilidad por media hora" style={{ gridTemplateColumns: `56px repeat(${mapa.dias.length}, minmax(0, 1fr))` }}>
         <div role="row" className="mapa__fila mapa__fila--cabecera">
           <span role="columnheader" className="mapa__esquina" />
@@ -267,19 +283,22 @@ function Mapa({
               const fuerte = intensidad >= 55;
               const id = `${d.fecha}-${fila}`;
               const esElegido = elegido === celda.inicio;
+              // T-152 · REQ-CUN06-22: los huecos que cubre el horario elegido
+              const enRango = elegido !== null && !esElegido && celda.inicio > elegido && Date.parse(celda.inicio) < Date.parse(elegido) + duracion * 60_000 && diaEn(celda.inicio, zona) === diaEn(elegido, zona);
               const esSugerido = sugerido === celda.inicio;
               const franja = `${diaSemana(celda.inicio, zona)} ${numeroDia(celda.inicio, zona)} · ${hora(celda.inicio, zona)}–${hora(sumarMinutos(celda.inicio, mapa.franjaMinutos), zona)}`;
               return (
                 <span key={d.fecha} role="gridcell" className="mapa__lugar" onMouseEnter={() => setSobre(id)} onMouseLeave={() => setSobre((s) => (s === id ? null : s))}>
                   <button
                     type="button"
-                    className={`mapa__celda${esSugerido ? ' mapa__celda--sugerida' : ''}${esElegido ? ' mapa__celda--elegida' : ''}${fuerte ? ' mapa__celda--fuerte' : ''}`}
-                    style={{ background: celda.libres.length === 0 ? undefined : `color-mix(in srgb, var(--estado-exito) ${intensidad}%, var(--superficie-base))` }}
+                    className={`mapa__celda${esSugerido ? ' mapa__celda--sugerida' : ''}${esElegido ? ' mapa__celda--elegida' : ''}${enRango ? ' mapa__celda--en-rango' : ''}${fuerte || esElegido || enRango ? ' mapa__celda--fuerte' : ''}`}
+                    // T-152: el horario elegido se pinta con el color de marca, para que se distinga del verde del mapa
+                    style={{ background: esElegido || enRango ? 'var(--marca-fuerte)' : celda.libres.length === 0 ? undefined : `color-mix(in srgb, var(--estado-exito) ${intensidad}%, var(--superficie-base))` }}
                     aria-label={`${franja}: ${celda.libres.length} de ${n} libres${esSugerido ? ', sugerido' : ''}`}
-                    aria-pressed={esElegido}
+                    aria-pressed={esElegido || enRango}
                     onFocus={() => setSobre(id)}
                     onBlur={() => setSobre((s) => (s === id ? null : s))}
-                    onClick={() => alElegir(celda.inicio)}
+                    onClick={() => alPulsar(celda.inicio)}
                   >
                     {celda.libres.length}/{n}
                   </button>
@@ -287,7 +306,11 @@ function Mapa({
                     <span className="mapa__detalle" role="tooltip">
                       <strong>{franja}</strong>
                       <span>{quien(celda)}</span>
-                      {duracion > mapa.franjaMinutos && <span className="mapa__detalle-nota">Al elegirla, la reunión dura {duracion} min</span>}
+                      <span className="mapa__detalle-nota">
+                        {ancla && diaEn(ancla, zona) === diaEn(celda.inicio, zona) && celda.inicio >= ancla
+                          ? `Hasta aquí: ${duracionCorta(Math.round((Date.parse(celda.inicio) - Date.parse(ancla)) / 60_000) + HUECO_MINUTOS)}`
+                          : `Desde aquí: ${duracionCorta(duracion)}. Toca otro hueco del mismo día para elegir hasta dónde`}
+                      </span>
                     </span>
                   )}
                 </span>
@@ -393,6 +416,9 @@ function Detalle({ id, zona, alVolver }: { id: string; zona: string; alVolver: (
   const [duracion, setDuracion] = useState<number | null>(null);
   const [opcionales, setOpcionales] = useState<Set<string> | null>(null);
   const [elegidoManual, setElegidoManual] = useState<string | null>(null);
+  // T-152 · REQ-CUN06-22: el primer hueco tocado en el mapa, a la espera del último, y el aviso del máximo
+  const [ancla, setAncla] = useState<string | null>(null);
+  const [avisoRango, setAvisoRango] = useState<string | null>(null);
   const [fase, setFase] = useState<Fase>({ paso: 'eligiendo' });
   const [cargando, enCarga] = useTransition();
   const [ocupado, enOperacion] = useTransition();
@@ -447,11 +473,31 @@ function Detalle({ id, zona, alVolver }: { id: string; zona: string; alVolver: (
     pedir({ duracionMinutos: minutos, opcionales: [...marcados] });
   }
 
+  // Primer toque: el inicio, con la duración que había. Segundo toque del mismo día, igual o posterior: el final
+  function pulsar(inicio: string) {
+    if (ancla && diaEn(ancla, zona) === diaEn(inicio, zona) && inicio >= ancla) {
+      const huecos = Math.round((Date.parse(inicio) - Date.parse(ancla)) / (HUECO_MINUTOS * 60_000)) + 1;
+      if (huecos > HUECOS_MAXIMOS) {
+        // No se toma: el siguiente toque vuelve a ser un inicio
+        setAncla(null);
+        return setAvisoRango(AVISO_RANGO_MAXIMO);
+      }
+      setElegidoManual(ancla);
+      setAncla(null);
+      setAvisoRango(null);
+      if (huecos * HUECO_MINUTOS !== duracionActual) cambiarDuracion(huecos * HUECO_MINUTOS);
+      return;
+    }
+    setElegidoManual(inicio);
+    setAncla(inicio);
+    setAvisoRango(null);
+  }
+
   function confirmarHorario() {
     if (!elegido) return;
     setError(null);
     enOperacion(async () => {
-      const r = await proponerConvocar(reunion.id, elegido, [...marcados]);
+      const r = await proponerConvocar(reunion.id, elegido, [...marcados], duracionActual);
       if (!r.datos) return setError(r.error);
       setFase({ paso: 'confirmando', operacion: r.datos, clase: 'convocar' });
     });
@@ -523,7 +569,7 @@ function Detalle({ id, zona, alVolver }: { id: string; zona: string; alVolver: (
             <select value={duracionActual} disabled={cargando} onChange={(e) => cambiarDuracion(Number(e.target.value))}>
               {[...new Set([...DURACIONES, duracionActual])].sort((a, b) => a - b).map((m) => (
                 <option key={m} value={m}>
-                  {m} min
+                  {duracionCorta(m)}
                 </option>
               ))}
             </select>
@@ -544,7 +590,10 @@ function Detalle({ id, zona, alVolver }: { id: string; zona: string; alVolver: (
               <ul className="propuestas-horario" aria-label="Horarios sugeridos">
                 {propuestas.map((p) => (
                   <li key={p.inicio}>
-                    <button type="button" className="boton boton--secundario propuesta-horario" aria-pressed={elegido === p.inicio} onClick={() => setElegidoManual(p.inicio)}>
+                    <button type="button" className="boton boton--secundario propuesta-horario" aria-pressed={elegido === p.inicio} onClick={() => {
+                        setElegidoManual(p.inicio);
+                        setAncla(null);
+                      }}>
                       {cuandoCorto(p.inicio, zona)}
                       <span className="propuesta-horario__libres">
                         {p.libres}/{p.de} libres
@@ -559,12 +608,17 @@ function Detalle({ id, zona, alVolver }: { id: string; zona: string; alVolver: (
               No hay un horario en que estén libres todos los obligatorios. Marca a alguien como opcional, acorta la duración o pídele al asistente otros días.
             </p>
           )}
-          {mapa && <Mapa mapa={mapa} nombres={nombres} zona={zona} duracion={duracionActual} sugerido={sugerido} elegido={elegido} alElegir={setElegidoManual} />}
+          {mapa && <Mapa mapa={mapa} nombres={nombres} zona={zona} duracion={duracionActual} sugerido={sugerido} elegido={elegido} ancla={ancla} alPulsar={pulsar} />}
+          {avisoRango && (
+            <p className="error" role="alert">
+              {avisoRango}
+            </p>
+          )}
           <p className="reunion-detalle__privacidad">Solo se muestran horas libres u ocupadas, sin títulos ni detalles</p>
           <div className="reunion-detalle__confirmar">
             {elegido && (
               <p className="ayuda" role="status">
-                Elegido: {cuandoCorto(elegido, zona)} – {hora(sumarMinutos(elegido, duracionActual), zona)}
+                Elegido: {cuandoCorto(elegido, zona)} – {hora(sumarMinutos(elegido, duracionActual), zona)} · {duracionCorta(duracionActual)}
               </p>
             )}
             <button type="button" className="boton reunion-detalle__boton" disabled={!elegido || ocupado || cargando} onClick={confirmarHorario}>

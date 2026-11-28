@@ -65,15 +65,17 @@ abstract class BaseReunion {
   }
 
   // El horario, los invitados con su dirección y quién de los obligatorios está ocupado
-  protected async revisar(contexto: ContextoSolicitud, reunionId: string, inicioIso: string, opcionales: string[] | undefined, forzar: boolean) {
+  protected async revisar(contexto: ContextoSolicitud, reunionId: string, inicioIso: string, opcionales: string[] | undefined, forzar: boolean, duracionMinutos?: number) {
     const fila = await this.reuniones.propia(contexto, reunionId);
     const inicio = new Date(inicioIso);
-    const fin = new Date(inicio.getTime() + fila.duracionMinutos * 60_000);
+    // T-152 · REQ-CUN06-22: la duración elegida al convocar manda sobre la de la petición
+    const duracion = duracionMinutos ?? fila.duracionMinutos;
+    const fin = new Date(inicio.getTime() + duracion * 60_000);
     const { convocante, invitados } = await this.reuniones.personas(contexto, fila, inicio, fin, { ...(opcionales ? { opcionales } : {}), forzar });
     const conDireccion = [];
     for (const i of invitados) conDireccion.push({ ...i, ...(await this.reuniones.direccion(contexto, i.perfilId, i.correo)) });
     const ocupados = this.reuniones.ocupadosEn([convocante, ...invitados], inicio, fin);
-    return { fila, inicio, fin, invitados: conDireccion, ocupados };
+    return { fila, inicio, fin, duracion, invitados: conDireccion, ocupados };
   }
 
   // Que la agenda de cada invitado muestre ya lo que Google les dejó (REQ-CUN06-13), sin esperar la pasada
@@ -113,7 +115,7 @@ export class ConvocarReunionOperacion extends BaseReunion implements EjecutorOpe
   }
 
   private async vista(contexto: ContextoSolicitud, carga: ConvocarReunion, forzar: boolean): Promise<VistaConfirmacion> {
-    const r = await this.revisar(contexto, carga.reunionId, carga.inicio, carga.opcionales, forzar);
+    const r = await this.revisar(contexto, carga.reunionId, carga.inicio, carga.opcionales, forzar, carga.duracionMinutos);
     if (r.fila.estado !== 'pendiente') throw errorApi(409, 'REUNION_NO_PENDIENTE', r.fila.estado === 'agendada' ? 'Esa reunión ya está agendada. Para cambiarle el horario, pide moverla.' : 'Esa reunión ya no está pendiente.');
     const zona = r.fila.zonaHoraria;
     const motivoNo = motivo(r.ocupados, r.fila.convocanteId, r.inicio);
@@ -124,7 +126,7 @@ export class ConvocarReunionOperacion extends BaseReunion implements EjecutorOpe
         { etiqueta: 'Equipo', valor: r.fila.equipo.nombre },
         { etiqueta: 'Cuándo', valor: `${fechaLarga(r.inicio, zona)}, ${horario(r.inicio, r.fin, zona)}` },
         { etiqueta: 'Zona horaria', valor: nombreDeZona(zona, r.inicio) },
-        { etiqueta: 'Duración', valor: duracionTexto(r.fila.duracionMinutos) },
+        { etiqueta: 'Duración', valor: duracionTexto(r.duracion) },
         ...datosInvitados(r.invitados, r.inicio, zona),
       ],
       irreversible: `Google enviará la invitación por correo a ${personas(r.invitados.length)}. Deshacerlo es cancelar la reunión, que también les avisa.`,
@@ -143,7 +145,7 @@ export class ConvocarReunionOperacion extends BaseReunion implements EjecutorOpe
     // H-AG-07: se vuelve a comprobar con los calendarios al día
     const vista = await this.vista(contexto, carga, true);
     if (!vista.confirmable) return { tipo: 'reproponer', vistaConfirmacion: vista };
-    const r = await this.revisar(contexto, carga.reunionId, carga.inicio, carga.opcionales, false);
+    const r = await this.revisar(contexto, carga.reunionId, carga.inicio, carga.opcionales, false, carga.duracionMinutos);
     const evento = await this.proveedor.crear(
       contexto,
       {
@@ -157,7 +159,7 @@ export class ConvocarReunionOperacion extends BaseReunion implements EjecutorOpe
     );
     await this.sincronizador.incorporar(contexto, evento);
     const db = this.prisma.deOrganizacion(contexto.organizacionId);
-    await db.reunion.update({ where: { id: r.fila.id }, data: { estado: 'agendada', inicio: evento.inicio, fin: evento.fin, googleEventoId: evento.id } });
+    await db.reunion.update({ where: { id: r.fila.id }, data: { estado: 'agendada', inicio: evento.inicio, fin: evento.fin, duracionMinutos: r.duracion, googleEventoId: evento.id } });
     for (const i of r.invitados) {
       await db.invitadoReunion.updateMany({ where: { reunionId: r.fila.id, perfilId: i.perfilId }, data: { opcional: i.opcional, direccion: i.direccion } });
     }

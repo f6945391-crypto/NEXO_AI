@@ -165,6 +165,14 @@ describe('agente.respuesta-en-texto-llano', () => {
     expect(esDegenerada('Tienes:\n1. 9:00 Daily\n2. 10:00 Dentista\n3. 12:00 Almuerzo\n4. 15:00 Revisión\n5. 17:00 Clase\n6. 19:00 Cena\n7. 20:00 Gym')).toBe(false);
   });
 
+  // T-153: la respuesta de la captura 07 de design/capturas/2026-11-28-nube/, con espacios finos de Unicode
+  it('los espacios de Unicode pasan a ser normales y las horas quedan pegadas: «10:00», no «10 :00»', () => {
+    const conFinos = 'Hoy tienes la exposición final de 10 :00 a 12 :00. El martes 1 de diciembre de 2026.';
+    expect(aTextoLlano(conFinos, nombres)).toBe('Hoy tienes la exposición final de 10:00 a 12:00. El martes 1 de diciembre de 2026.');
+    // «a las 3: luego» no es una hora y no se pega
+    expect(aTextoLlano('Llega a las 3: luego vemos', nombres)).toBe('Llega a las 3: luego vemos');
+  });
+
   it('un texto ya llano no cambia; «a las 3. Luego» no se parte', () => {
     const llano = 'Listo. Mañana tienes la reunión a las 3. Luego, el dentista a las 5.';
     expect(aTextoLlano(llano, nombres)).toBe(llano);

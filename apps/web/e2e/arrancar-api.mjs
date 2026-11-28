@@ -387,6 +387,16 @@ if (empresas['Reuniones Demo'] && perfiles.reunionesLider) {
   ]) {
     await prisma.miembroDeEquipo.create({ data: { organizacionId: demo, equipoId: alfa.id, perfilId: perfiles[clave], rolEnEquipo, estadoConsentimiento } });
   }
+  // T-152 · REQ-CUN06-22: un equipo aparte para elegir un rango en el mapa sin tocar el escenario de «Proyecto Alfa»
+  if (perfiles.reunionesRango) {
+    await prisma.consentimientoIntegracion.create({
+      data: { organizacionId: demo, perfilId: perfiles.reunionesRango, proveedor: 'google', alcance: 'calendario', estado: 'concedido' },
+    });
+    const rango = await prisma.equipo.create({ data: { organizacionId: demo, nombre: 'Rango' } });
+    for (const [clave, rolEnEquipo] of [['reunionesRango', 'responsable'], ['reunionesDiego', 'integrante']]) {
+      await prisma.miembroDeEquipo.create({ data: { organizacionId: demo, equipoId: rango.id, perfilId: perfiles[clave], rolEnEquipo, estadoConsentimiento: 'concedida' } });
+    }
+  }
 }
 await prisma.$disconnect();
 

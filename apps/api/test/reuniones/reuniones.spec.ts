@@ -327,6 +327,31 @@ describe('reuniones', () => {
     });
   });
 
+  // T-152 · REQ-CUN06-22 · D-REU-39: la duración elegida en el detalle o con un rango del mapa llega a la tarjeta
+  // y al evento; antes la tarjeta usaba siempre la duración de la petición
+  describe('reuniones.convocar-con-duracion', () => {
+    it('REQ-CUN06-22 · convocar con 2 horas: la tarjeta lo dice, el evento dura 2 horas y la reunión lo guarda', async () => {
+      const pendiente = de((await enviar('lider', 'reunión de planificación con el proyecto Alfa')).turnos, 'reunion')!.propuestas.reunion;
+      expect(pendiente.duracionMinutos).toBe(60);
+      const d = await detalle('lider', pendiente.id, { duracionMinutos: '120' });
+      const inicio = d.propuestas[0]!.inicio;
+      const tarjeta = await proponer('lider', 'reunion.convocar', { reunionId: pendiente.id, inicio, duracionMinutos: 120 });
+      expect(dato(tarjeta, 'Duración')).toBe('2 horas');
+      expect(dato(tarjeta, 'Cuándo')).toMatch(/– \d{2}:\d{2}$/);
+      expect((await confirmar('lider', tarjeta.id)).estado).toBe('ejecutada');
+      const agendada = (await reuniones('lider')).find((x) => x.id === pendiente.id)!;
+      expect(agendada).toMatchObject({ estado: 'agendada', duracionMinutos: 120 });
+      expect(Date.parse(agendada.fin!) - Date.parse(agendada.inicio!)).toBe(120 * 60_000);
+    });
+
+    it('sin duración en la carga, se usa la de la reunión', async () => {
+      const pendiente = de((await enviar('lider', 'reunión de revisión con el equipo Diseño')).turnos, 'reunion')!.propuestas.reunion;
+      const d = await detalle('lider', pendiente.id);
+      const tarjeta = await proponer('lider', 'reunion.convocar', { reunionId: pendiente.id, inicio: d.propuestas[0]!.inicio });
+      expect(dato(tarjeta, 'Duración')).toBe('1 hora');
+    });
+  });
+
   // T-138 · REQ-CUN06-13 v2 · P-REU-08, P-REU-10: lo que encontró la prueba con Google real (D-REU-34). Google no
   // pone la invitación en la lista del invitado hasta que responde; la Agenda la tiene igual, leída por su id
   describe('reuniones.invitacion-sin-responder', () => {
