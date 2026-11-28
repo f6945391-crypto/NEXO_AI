@@ -2197,7 +2197,9 @@ span.marca {
 }
 
 .mapa__celda--sugerida {
-  box-shadow: inset 0 0 0 2px var(--marca-base);
+  /* T-152: la sugerencia, con borde discontinuo, para no confundirla con lo elegido (en azul) */
+  outline: 2px dashed var(--marca-fuerte);
+  outline-offset: -3px;
 }
 
 /* T-152 · REQ-CUN06-22: los huecos que cubre el horario elegido */
@@ -2207,8 +2209,7 @@ span.marca {
 }
 
 .mapa__celda--elegida {
-  /* T-152: el inicio del horario elegido, ya en azul, con un borde claro por dentro */
-  box-shadow: inset 0 0 0 2px var(--superficie-base);
+  /* T-152: el inicio del horario elegido; todo el rango va en azul, sin marca aparte */
   font-weight: 700;
 }
 
