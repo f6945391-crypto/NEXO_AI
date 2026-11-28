@@ -125,10 +125,10 @@ describe('reuniones', () => {
 
   describe('agente.reuniones', () => {
     it('REQ-CUN06-01, 17 · «reunión con el proyecto Alfa» deja la reunión pendiente y propone 3 horarios sin tarjeta', async () => {
-      const r = await enviar('lider', 'reunión con el proyecto Alfa');
+      const r = await enviar('lider', 'reunión de planificación con el proyecto Alfa');
       expect(de(r.turnos, 'propuesta')).toBeUndefined();
       const turno = de(r.turnos, 'reunion')!;
-      expect(turno.propuestas.reunion).toMatchObject({ titulo: 'Reunión de Proyecto Alfa', estado: 'pendiente', invitados: 3 });
+      expect(turno.propuestas.reunion).toMatchObject({ titulo: 'Planificación', estado: 'pendiente', invitados: 3 });
       expect(turno.propuestas.texto).toBe(
         'Encontré 3 horarios en los que están libres los 3. Elige uno. No pude comprobar a Lucia: no autorizó compartir su disponibilidad o no tiene calendario.',
       );
@@ -168,7 +168,7 @@ describe('reuniones', () => {
       expect(tarjeta.vistaConfirmacion.irreversible).toBe('Google enviará la invitación por correo a 3 personas. Deshacerlo es cancelar la reunión, que también les avisa.');
 
       const hecho = await decidir('lider', { operacionId: tarjeta.id, decision: 'confirmar' });
-      expect(de(hecho.turnos, 'resultado')!.texto).toMatch(/^Listo: «Reunión de Proyecto Alfa» quedó agendada el .+ Google envía la invitación a 3 personas\.$/);
+      expect(de(hecho.turnos, 'resultado')!.texto).toMatch(/^Listo: «Planificación» quedó agendada el .+ Google envía la invitación a 3 personas\.$/);
       expect(hecho.cierre?.desenlace).toBe('convocada');
       expect(calendario.avisos).toEqual([{ tipo: 'crear', id: expect.any(String), avisar: true, invitados: ['ana.real@gmail.com', 'beto@reuniones.test', 'lucia@reuniones.test'] }]);
       googleEventoId = calendario.avisos[0]!.id;
@@ -185,7 +185,7 @@ describe('reuniones', () => {
 
     it('REQ-CUN06-13 · la invitada ve el compromiso en su agenda, como invitada', async () => {
       const eventos = (await http().get('/agenda/eventos').query({ desde: D(0, '00:00').toISOString(), hasta: D(0, '23:00').toISOString() }).set('Authorization', p.ana.autorizacion).expect(200)).body as { titulo: string; esOrganizador: boolean }[];
-      expect(eventos.find((e) => e.titulo === 'Reunión de Proyecto Alfa')).toMatchObject({ esOrganizador: false });
+      expect(eventos.find((e) => e.titulo === 'Planificación')).toMatchObject({ esOrganizador: false });
     });
 
     it('REQ-CUN06-21 · el compromiso de la reunión no se cancela desde la agenda', async () => {
@@ -205,7 +205,7 @@ describe('reuniones', () => {
       const r = await enviar('lider', `mueve la reunión de Proyecto Alfa al ${dia}`);
       const turno = de(r.turnos, 'reunion')!;
       expect(turno.propuestas.mover).toBe(true);
-      expect(turno.propuestas.texto).toMatch(/^Para mover «Reunión de Proyecto Alfa», encontré/);
+      expect(turno.propuestas.texto).toMatch(/^Para mover «Planificación», encontré/);
       const elegida = turno.propuestas.propuestas[0]!;
       expect(Date.parse(elegida.inicio)).toBe(D(2, '08:00').getTime());
       const tarjeta = de((await decidir('lider', { decision: 'horario', reunionId, inicio: elegida.inicio })).turnos, 'propuesta')!.operacion;
@@ -233,7 +233,7 @@ describe('reuniones', () => {
     });
 
     it('REQ-CUN06-06, 04 · «Beto si puede» lo deja opcional y no lo exige', async () => {
-      const r = await enviar('lider', 'reunión con Ana y Lucia, Beto si puede');
+      const r = await enviar('lider', 'reunión de planificación con Ana y Lucia, Beto si puede');
       const turno = de(r.turnos, 'reunion')!;
       const primera = turno.propuestas.propuestas[0]!;
       // Ana y el líder libres a las 10:00 del primer día, pero con Beto libre gana las 15:00
@@ -244,7 +244,7 @@ describe('reuniones', () => {
     });
 
     it('REQ-CUN06-11 · si un obligatorio se ocupa antes de confirmar, no se escribe nada', async () => {
-      const r = await enviar('lider', 'reunión con Ana y Beto');
+      const r = await enviar('lider', 'reunión de planificación con Ana y Beto');
       const turno = de(r.turnos, 'reunion')!;
       const id = turno.propuestas.reunion.id;
       const tarjeta = de((await decidir('lider', { decision: 'horario', reunionId: id, inicio: D(0, '15:00').toISOString() })).turnos, 'propuesta')!.operacion;
@@ -262,6 +262,8 @@ describe('reuniones', () => {
       expect(await texto('reunión con Ana mañana')).toBe('Ana está en 2 de tus equipos: «Proyecto Alfa» y «Diseño». ¿Con cuál es la reunión?');
       expect(await texto('reunión con Carlos')).toBe('No encuentro a Carlos en tus equipos.');
       expect(await texto('agenda una reunión')).toBe('¿Con quién es la reunión? Puedes decirme un equipo o los nombres de las personas.');
+      // T-151 · REQ-CUN06-03 v2: sin tema, se pregunta y no se crea nada
+      expect(await texto('reunión con el proyecto Alfa')).toBe('¿De qué va a tratar la reunión? Dímelo en pocas palabras, por ejemplo «revisar la estructura».');
     });
 
     it('REQ-CUN06-19 · con el Plan Personal no hay reuniones', async () => {
@@ -280,7 +282,7 @@ describe('reuniones', () => {
     });
 
     it('REQ-CUN06-17 · si se borra en Google, queda cancelada', async () => {
-      const r = await enviar('lider', 'reunión con el equipo Diseño');
+      const r = await enviar('lider', 'reunión de revisión con el equipo Diseño');
       const turno = de(r.turnos, 'reunion')!;
       const tarjeta = de((await decidir('lider', { decision: 'horario', reunionId: turno.propuestas.reunion.id, inicio: turno.propuestas.propuestas[0]!.inicio })).turnos, 'propuesta')!.operacion;
       await decidir('lider', { operacionId: tarjeta.id, decision: 'confirmar' });
@@ -294,16 +296,16 @@ describe('reuniones', () => {
   // T-137 · P-11, DP-01: sin asistente, pedir queda en espera; lo que ya existe se sigue usando
   describe('reuniones.sin-asistente', () => {
     it('REQ-CUN06-20 · lo pedido queda en espera sin crear reunión, y la pendiente se convoca desde el detalle', async () => {
-      const pendiente = de((await enviar('lider', 'reunión con el proyecto Alfa')).turnos, 'reunion')!.propuestas.reunion;
+      const pendiente = de((await enviar('lider', 'reunión de planificación con el proyecto Alfa')).turnos, 'reunion')!.propuestas.reunion;
       const antes = await prisma.reunion.count();
 
       simulado.caer();
       try {
-        const r = await enviar('lider', 'reunión con el equipo Diseño');
+        const r = await enviar('lider', 'reunión de revisión con el equipo Diseño');
         expect(de(r.turnos, 'en_espera')).toMatchObject({ motivo: 'asistente_no_disponible' });
         expect(de(r.turnos, 'reunion')).toBeUndefined();
         expect(await prisma.reunion.count()).toBe(antes);
-        expect(await prisma.operacion.findFirst({ where: { estado: 'en_espera', perfilId: p.lider.perfilId } })).toMatchObject({ solicitudOriginal: 'reunión con el equipo Diseño' });
+        expect(await prisma.operacion.findFirst({ where: { estado: 'en_espera', perfilId: p.lider.perfilId } })).toMatchObject({ solicitudOriginal: 'reunión de revisión con el equipo Diseño' });
 
         // La lista y el detalle no dependen del asistente; elegir y confirmar desde el detalle es un control directo
         expect((await reuniones('lider')).some((x) => x.id === pendiente.id)).toBe(true);
@@ -331,7 +333,7 @@ describe('reuniones', () => {
     it('REQ-CUN06-13 · la invitada ve la reunión en su Agenda aunque Google no la liste, y su cancelación', async () => {
       calendario.ocultarInvitaciones = true;
       try {
-        const turno = de((await enviar('lider', 'reunión con el equipo Diseño')).turnos, 'reunion')!;
+        const turno = de((await enviar('lider', 'reunión de revisión con el equipo Diseño')).turnos, 'reunion')!;
         const elegida = turno.propuestas.propuestas[0]!;
         const tarjeta = de((await decidir('lider', { decision: 'horario', reunionId: turno.propuestas.reunion.id, inicio: elegida.inicio })).turnos, 'propuesta')!.operacion;
         await decidir('lider', { operacionId: tarjeta.id, decision: 'confirmar' });
@@ -345,10 +347,10 @@ describe('reuniones', () => {
         // Su Agenda la muestra igual, a la hora de la reunión y como invitada
         const dia = { desde: new Date(reunion.inicio!.getTime() - 3_600_000).toISOString(), hasta: new Date(reunion.fin!.getTime() + 3_600_000).toISOString() };
         const eventos = (await http().get('/agenda/eventos').query(dia).set('Authorization', p.ana.autorizacion).expect(200)).body as { titulo: string; inicio: string; esOrganizador: boolean; estado: string }[];
-        expect(eventos.find((e) => e.titulo === 'Reunión de Diseño' && Date.parse(e.inicio) === reunion.inicio!.getTime())).toMatchObject({ esOrganizador: false, estado: 'confirmado' });
+        expect(eventos.find((e) => e.titulo === 'Revisión' && Date.parse(e.inicio) === reunion.inicio!.getTime())).toMatchObject({ esOrganizador: false, estado: 'confirmado' });
 
         // Y cuenta como ocupada al buscar otra reunión con ella
-        const otra = de((await enviar('lider', 'reunión con el equipo Diseño')).turnos, 'reunion')!;
+        const otra = de((await enviar('lider', 'reunión de revisión con el equipo Diseño')).turnos, 'reunion')!;
         expect(otra.propuestas.propuestas.some((x) => Date.parse(x.inicio) === reunion.inicio!.getTime())).toBe(false);
 
         // Una sincronización completa no la da por borrada

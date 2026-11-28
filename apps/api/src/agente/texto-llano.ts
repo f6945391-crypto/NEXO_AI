@@ -119,6 +119,28 @@ function ordenar(texto: string): string {
   );
 }
 
+// T-149 · REQ-AGT-08 · decisión 35. Una respuesta degenerada (el modelo entra en bucle y repite «...», «Sorry»)
+// no se muestra: se dice este texto fijo. Se mira el texto ya limpio. Cifras provisionales
+export const RESPUESTA_DEGENERADA = 'No pude armar bien la respuesta. ¿Me lo repites con otras palabras?';
+const LARGO_DEGENERADO = 2500;
+const REPETICIONES_DEGENERADAS = 4;
+const LINEAS_PARA_MIRAR = 8;
+
+export function esDegenerada(texto: string): boolean {
+  if (texto.length > LARGO_DEGENERADO) return true;
+  const lineas = texto.split('\n').map((l) => l.trim()).filter(Boolean);
+  const veces = new Map<string, number>();
+  for (const l of lineas) {
+    if (!/\p{L}/u.test(l)) continue;
+    const n = (veces.get(l) ?? 0) + 1;
+    if (n >= REPETICIONES_DEGENERADAS) return true;
+    veces.set(l, n);
+  }
+  if (lineas.length < LINEAS_PARA_MIRAR) return false;
+  const sinPalabras = lineas.filter((l) => !/\p{L}{3}/u.test(l)).length;
+  return sinPalabras * 2 >= lineas.length;
+}
+
 // T-148 · decisión 34: la negrita es la única marca que pasa. Mientras se limpia, cada par `**…**` (o `__…__`)
 // de una línea y con texto dentro queda entre dos caracteres de control que ninguna otra regla toca; al final
 // vuelve a ser `**…**`. Si al quitar un nombre interno la negrita queda vacía, desaparece.

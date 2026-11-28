@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EventoAgenda, TareaPersonal, VistaConfirmacion, type MotivoEspera } from '@nexoai/contratos';
+import { EventoAgenda, ReunionResumen, TareaPersonal, VistaConfirmacion, type MotivoEspera } from '@nexoai/contratos';
 import { enZona } from '../agenda/dominio/tiempo';
 import { fechaLarga, horario } from '../agenda/formato';
 import type { ContextoSolicitud } from '../identidad/contexto';
@@ -39,7 +39,7 @@ const MOTIVO_EN_NOTA: Readonly<Record<MotivoEspera, string>> = {
 
 export interface AccionDeNota {
   desenlace: string;
-  clase: 'compromiso' | 'tarea' | 'otra';
+  clase: 'compromiso' | 'tarea' | 'reunión' | 'otra';
   titulo: string | null;
   // Fecha y hora en la zona del perfil (P-05)
   cuando: string | null;
@@ -49,6 +49,8 @@ export interface AccionDeNota {
   tareaId: string | null;
   // El avance anotado en una tarea, con las palabras de la persona
   avance: string | null;
+  // T-150 · decisión 37: el equipo de una reunión
+  equipo: string | null;
   en: Date;
 }
 
@@ -90,7 +92,7 @@ export function accionDe(fila: FilaEjecutada, zona: string): AccionDeNota {
     desenlace: DESENLACE_EN_NOTA[fila.tipo] ?? DESENLACE_POR_TIPO[fila.tipo] ?? null,
     en: fila.ejecutadaEn ?? fila.creadaEn,
   };
-  const vacia = { titulo: null, cuando: null, fecha: null, eventoId: null, tareaId: null, avance: null };
+  const vacia = { titulo: null, cuando: null, fecha: null, eventoId: null, tareaId: null, avance: null, equipo: null };
   const evento = fila.tipo.startsWith('agenda.') ? EventoAgenda.safeParse(fila.resultado) : null;
   if (evento?.success) {
     const { id, titulo, inicio, fin, todoElDia } = evento.data;
@@ -120,13 +122,28 @@ export function accionDe(fila: FilaEjecutada, zona: string): AccionDeNota {
       avance: fila.tipo === 'tareas.anotar_avance' && typeof texto === 'string' ? cortar(texto) : null,
     };
   }
+  // T-150 · decisión 37: una reunión convocada, movida o cancelada, con su tema, su equipo y su hora
+  const reunion = fila.tipo.startsWith('reunion.') ? ReunionResumen.safeParse(fila.resultado) : null;
+  if (reunion?.success) {
+    const { titulo, equipo, inicio, fin } = reunion.data;
+    return {
+      ...vacia,
+      desenlace: base.desenlace ?? 'hecho',
+      en: base.en,
+      clase: 'reunión',
+      titulo: cortar(titulo),
+      equipo: cortar(equipo.nombre),
+      cuando: inicio && fin ? `${fechaLarga(new Date(inicio), zona)}, ${horario(new Date(inicio), new Date(fin), zona)}` : null,
+      fecha: inicio ? iso(new Date(inicio), zona) : null,
+    };
+  }
   const vista = VistaConfirmacion.safeParse(fila.vistaConfirmacion);
   return { ...vacia, desenlace: base.desenlace ?? (vista.success ? minuscula(vista.data.accion) : 'hecho'), en: base.en, clase: 'otra' };
 }
 
 function lineaDeAccion(a: AccionDeNota, ahora: Date): string {
   const partes = [a.desenlace];
-  if (a.titulo) partes.push(`${a.clase} «${a.titulo}»`);
+  if (a.titulo) partes.push(`${a.clase} «${a.titulo}»${a.equipo ? ` con el equipo «${a.equipo}»` : ''}`);
   if (a.cuando) partes.push(a.cuando);
   if (a.avance) partes.push(`avance «${a.avance}»`);
   if (a.fecha) partes.push(`fecha ${a.fecha}`);

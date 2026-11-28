@@ -9,7 +9,7 @@ import { GUION_DEMOSTRACION } from '../../src/agente/modelo/guion-demostracion';
 import { OPCIONES_LLAMADOR } from '../../src/agente/modelo/llamador-modelo';
 import { ModeloSimulado, type ReglaGuion } from '../../src/agente/modelo/modelo-simulado';
 import { PROVEEDOR_MODELO } from '../../src/agente/modelo/proveedor-modelo';
-import { aTextoLlano, type NombresInternos } from '../../src/agente/texto-llano';
+import { aTextoLlano, esDegenerada, RESPUESTA_DEGENERADA, type NombresInternos } from '../../src/agente/texto-llano';
 import { AppModule } from '../../src/app.module';
 import { crearOrganizacion } from '../../src/identidad/alta-cuentas';
 import { ProveedorCalendarioSimulado } from '../../src/integraciones/calendario/calendario-simulado';
@@ -30,7 +30,11 @@ const RESPUESTA_CON_FORMATO =
   '5. **Reabrir o descartar** – Si ya no es relevante (`tareas_reabrir`, `tareas_descartar`). ' +
   '6. **Anotar avances** – Para registrar cómo vas, usa `tareas.anotar_avance`.';
 
+// T-149 · REQ-AGT-08: la respuesta de la captura 03 de design/capturas/2026-11-28-nube/, recortada
+const DEGENERADA = ['Elegiste el horario martes 1 de diciembre de 202 2026, de 12:00 a 12:60 (  …  …  )', ...Array.from({ length: 40 }, (_, i) => ['...', 'Sorry', '…', 'The', 'Oops…'][i % 5]!), 'La reunión quedó agendada.'].join('\n\n');
+
 const GUION: ReglaGuion[] = [
+  { si: '^dime algo roto$', pasos: [{ texto: DEGENERADA }] },
   { si: '^dime c[oó]mo funciona la secci[oó]n tareas$', pasos: [{ texto: RESPUESTA_CON_FORMATO }] },
   { si: '^dime algo con t[ií]tulo$', pasos: [{ texto: '## Resumen\n\n* **Uno**: el `eventoId` 0b6e7d1c-3a52-4c1f-9a7e-2f0c5d9e8b11\n* _Dos_\n\n\n\n> Tres' }] },
 ];
@@ -142,6 +146,23 @@ describe('agente.respuesta-en-texto-llano', () => {
     expect(aTextoLlano('Usa **tareas_registrar** para anotar', nombres)).toBe('Para anotar');
     // La cursiva y los encabezados se siguen quitando
     expect(aTextoLlano('# Título\n*cursiva* y **negrita**', nombres)).toBe('Título\nCursiva y **negrita**');
+  });
+
+  it('una respuesta degenerada no se muestra ni se guarda: se dice el texto fijo (REQ-AGT-08)', async () => {
+    const r = await enviar('dime algo roto');
+    expect((r.turnos.at(-1) as { texto: string }).texto).toBe(RESPUESTA_DEGENERADA);
+    const leida = ConversacionAsistente.parse((await http().get('/asistente/conversacion').set('Authorization', autorizacion).expect(200)).body);
+    const textos = leida.episodios.flatMap((e) => e.turnos).filter((t) => t.tipo === 'texto').map((t) => (t as { texto: string }).texto);
+    expect(textos).toEqual([RESPUESTA_DEGENERADA]);
+  });
+
+  it('qué es degenerada: líneas repetidas, la mitad sin palabras o demasiado larga; una lista normal no (decisión 35)', () => {
+    expect(esDegenerada(aTextoLlano(DEGENERADA, nombres))).toBe(true);
+    expect(esDegenerada('Sí.\nSí.\nSí.\nSí.')).toBe(true);
+    expect(esDegenerada('x'.repeat(2501))).toBe(true);
+    expect(esDegenerada(aTextoLlano(RESPUESTA_CON_FORMATO, nombres))).toBe(false);
+    expect(esDegenerada('Listo: «Dentista» quedó el viernes 27, de 10:00 a 11:00.')).toBe(false);
+    expect(esDegenerada('Tienes:\n1. 9:00 Daily\n2. 10:00 Dentista\n3. 12:00 Almuerzo\n4. 15:00 Revisión\n5. 17:00 Clase\n6. 19:00 Cena\n7. 20:00 Gym')).toBe(false);
   });
 
   it('un texto ya llano no cambia; «a las 3. Luego» no se parte', () => {

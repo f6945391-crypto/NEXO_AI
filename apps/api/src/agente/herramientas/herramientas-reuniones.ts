@@ -22,6 +22,8 @@ import type { EntornoHerramienta, ResultadoHerramienta } from './herramienta';
 
 // REQ-CUN06-19 · REQ-CUN05-18: el texto fijo de sin acceso
 export const SIN_ACCESO_REUNIONES = 'Las reuniones son del Plan Empresarial y requieren pertenecer a un equipo.';
+// T-151 · REQ-CUN06-03 v2 · D-REU-38: una reunión nueva sin tema; el tema es su título
+export const PREGUNTA_TEMA = '¿De qué va a tratar la reunión? Dímelo en pocas palabras, por ejemplo «revisar la estructura».';
 export const SIN_HORARIO = 'No encontré un horario en el que estén libres todos. Puedo buscar en otros días, en otra franja o con alguien como opcional.';
 
 const aclarar = (mensaje: string): ResultadoHerramienta => ({ paraModelo: { error: { codigo: 'REUNION_ACLARAR', mensaje } } });
@@ -137,11 +139,13 @@ export class HerramientasReuniones implements OnModuleInit {
     } else {
       const grupo = await this.reuniones.resolverGrupo(contexto, args);
       if ('aclarar' in grupo) return aclarar(grupo.aclarar);
+      // T-151 · REQ-CUN06-03 v2: primero con quién, después de qué trata; sin tema no se crea nada
+      if (!args.tema) return aclarar(PREGUNTA_TEMA);
       const zona = await this.reuniones.zonaDe(contexto);
       const rango = this.reuniones.rango(zona, ahora, args.desde, args.hasta);
       reunionId = await this.reuniones.crearPendiente(contexto, {
         grupo,
-        titulo: args.tema ? capitalizar(args.tema) : `Reunión de ${grupo.equipo.nombre}`,
+        titulo: capitalizar(args.tema),
         duracionMinutos: args.duracionMinutos ?? 60,
         franja: args.franja ?? null,
         zona,

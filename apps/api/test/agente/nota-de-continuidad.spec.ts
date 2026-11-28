@@ -10,7 +10,7 @@ import { GUION_DEMOSTRACION } from '../../src/agente/modelo/guion-demostracion';
 import { OPCIONES_LLAMADOR } from '../../src/agente/modelo/llamador-modelo';
 import { ModeloSimulado } from '../../src/agente/modelo/modelo-simulado';
 import { PROVEEDOR_MODELO } from '../../src/agente/modelo/proveedor-modelo';
-import { ACCIONES_EN_NOTA, DIAS_EN_NOTA, ENCABEZADO_NOTA, NotaDeContinuidad } from '../../src/agente/nota-de-continuidad';
+import { ACCIONES_EN_NOTA, accionDe, DIAS_EN_NOTA, ENCABEZADO_NOTA, escribirNota, NotaDeContinuidad } from '../../src/agente/nota-de-continuidad';
 import { AppModule } from '../../src/app.module';
 import type { ContextoSolicitud } from '../../src/identidad/contexto';
 import { crearOrganizacion } from '../../src/identidad/alta-cuentas';
@@ -237,6 +237,40 @@ describe('agente.nota-de-continuidad', () => {
     const peso = conNota - sinNota;
     expect(peso).toBeGreaterThan(0);
     expect(peso).toBeLessThan(400);
+  });
+
+  // T-150 · decisión 37: una reunión convocada entra con su tema, su equipo y su hora, no como «otra»
+  it('una reunión convocada entra en la nota con su tema, su equipo y su día y hora', () => {
+    const ejecutadaEn = new Date('2026-11-28T06:16:00Z');
+    const accion = accionDe(
+      {
+        tipo: 'reunion.convocar',
+        carga: {},
+        resultado: {
+          id: randomUUID(),
+          titulo: 'Revisión',
+          equipo: { id: randomUUID(), nombre: 'Estructura de la presentación' },
+          estado: 'agendada',
+          inicio: '2026-12-01T17:00:00.000Z',
+          fin: '2026-12-01T18:00:00.000Z',
+          duracionMinutos: 60,
+          zonaHoraria: 'America/Lima',
+          rangoDesde: '2026-11-30',
+          rangoHasta: '2026-12-04',
+          franja: null,
+          convocante: { perfilId: randomUUID(), correo: 'yo@nexoai.test', nombre: 'Yo' },
+          soyConvocante: true,
+          invitados: 2,
+        },
+        vistaConfirmacion: null,
+        ejecutadaEn,
+        creadaEn: ejecutadaEn,
+      },
+      'America/Lima',
+    );
+    expect(accion).toMatchObject({ clase: 'reunión', desenlace: 'convocada', titulo: 'Revisión', equipo: 'Estructura de la presentación', fecha: '2026-12-01' });
+    const linea = escribirNota({ acciones: [accion], enEspera: [] }, new Date('2026-11-28T06:20:00Z'))!.split('\n').at(-1)!;
+    expect(linea).toMatch(/^- convocada · reunión «Revisión» con el equipo «Estructura de la presentación» · martes, 1 de diciembre de 2026, 12:00 – 13:00 · fecha 2026-12-01/);
   });
 
   it('sin acciones ni nada en espera no hay nota: no se gastan fichas', async () => {

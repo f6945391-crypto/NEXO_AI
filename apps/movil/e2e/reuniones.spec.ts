@@ -63,7 +63,7 @@ test.describe('movil.reuniones', () => {
 
   test('en la capa, las propuestas pulsables; elegir una muestra la tarjeta y confirmar la deja agendada (REQ-CUN06-10)', async () => {
     // El guion del modelo simulado no entiende la petición de «Crear reunión»: se nombra el equipo
-    await lider.getByLabel('Pídele algo al asistente').fill('Reunión con el equipo Proyecto Alfa');
+    await lider.getByLabel('Pídele algo al asistente').fill('Reunión de planificación con el equipo Proyecto Alfa');
     await enviar(lider);
     const turno = lider.getByLabel(/^Horarios para «/).last();
     await expect(turno).toBeVisible();
@@ -94,7 +94,7 @@ test.describe('movil.reuniones', () => {
 
   test('una pendiente va en ámbar; su detalle muestra las propuestas sin mapa y los invitados en una línea (REQ-CUN06-07, 09, 19)', async () => {
     await lider.getByRole('button', { name: 'Pedir algo al asistente' }).click();
-    await lider.getByLabel('Pídele algo al asistente').fill('reunión con Ana y Beto');
+    await lider.getByLabel('Pídele algo al asistente').fill('reunión de planificación con Ana y Beto');
     await enviar(lider);
     await expect(lider.getByLabel(/^Horarios para «/).last().getByRole('button', { name: HORARIO }).first()).toBeVisible();
     await cerrarCapa(lider);

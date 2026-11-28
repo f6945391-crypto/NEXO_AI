@@ -43,7 +43,9 @@ export function crearProveedorModelo(entorno: NodeJS.ProcessEnv = process.env): 
     const precios = entorno.MODELO_PRECIOS?.split(',').map((p) => Number(p.trim()));
     if (precios) registrarPrecio(modelo, precios[0]!, precios[1]!);
     // Ollama en el propio equipo no pide clave; los demás, sí
-    return new ModeloCompatibleOpenAI({ url, modelo, clave: entorno.MODELO_CLAVE?.trim() || null });
+    // T-149 · decisión 36: MODELO_PROVEEDORES=groq,cerebras, solo con OpenRouter
+    const proveedores = entorno.MODELO_PROVEEDORES?.split(',').map((p) => p.trim()).filter(Boolean);
+    return new ModeloCompatibleOpenAI({ url, modelo, clave: entorno.MODELO_CLAVE?.trim() || null, ...(proveedores?.length ? { proveedores } : {}) });
   }
   throw new Error(`MODELO_PROVEEDOR desconocido: ${elegido}. Ver .env.example`);
 }

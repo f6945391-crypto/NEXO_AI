@@ -16,6 +16,8 @@ export interface ConfiguracionCompatibleOpenAI {
   url: string;
   modelo: string;
   clave: string | null;
+  // T-149 · decisión 36: solo OpenRouter. El orden de proveedores que se le pide, con respaldo a los demás
+  proveedores?: string[];
 }
 
 // Lo que se envía y se recibe, solo lo que usamos
@@ -81,6 +83,7 @@ export class ModeloCompatibleOpenAI implements ProveedorModelo {
               }
             : {}),
           max_tokens: peticion.maxTokens,
+          ...(this.configuracion.proveedores?.length ? { provider: { order: this.configuracion.proveedores, allow_fallbacks: true } } : {}),
         }),
       });
     } catch {

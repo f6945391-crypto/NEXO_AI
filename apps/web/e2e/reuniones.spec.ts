@@ -40,7 +40,7 @@ function primerHabil(): { fecha: string; nombre: string } {
   }
 }
 
-const TITULO = 'Reunión de Proyecto Alfa';
+const TITULO = 'Planificación';
 
 test.describe('web.reuniones', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
@@ -76,7 +76,7 @@ test.describe('web.reuniones', () => {
 
     const horarios = page.getByRole('list', { name: `Horarios para ${TITULO}` });
     await test.step('la conversación muestra tres propuestas y la lista la muestra en ámbar', async () => {
-      await page.getByLabel('Pídele algo al asistente').fill('reunión con el proyecto Alfa');
+      await page.getByLabel('Pídele algo al asistente').fill('reunión de planificación con el proyecto Alfa');
       await page.getByRole('button', { name: 'Enviar' }).click();
       await expect(horarios.getByRole('button')).toHaveCount(3);
       // Todos libres el primer día: 11:00, 12:00 y 14:00 (los demás días Beto está de viaje)

@@ -207,6 +207,15 @@ describe('agente.contrato-del-proveedor', () => {
       expect((cuerpo.tools as unknown[])[0]).toMatchObject({ type: 'function', function: { name: 'agenda_consultar', parameters: { type: 'object' } } });
     });
 
+    // T-149 · decisión 36: el orden de proveedores de OpenRouter, solo si se configura
+    it('con MODELO_PROVEEDORES pide ese orden a OpenRouter con respaldo; sin la variable no manda nada', async () => {
+      await adaptador().responder(peticion('Hola'), new AbortController().signal);
+      expect(recibidas.at(-1)!.cuerpo).not.toHaveProperty('provider');
+      const conOrden = crearProveedorModelo({ MODELO_PROVEEDOR: 'compatible-openai', MODELO_URL: url, MODELO_NOMBRE: 'modelo-de-prueba', MODELO_PROVEEDORES: 'groq, cerebras' });
+      await conOrden.responder(peticion('Hola'), new AbortController().signal);
+      expect(recibidas.at(-1)!.cuerpo).toMatchObject({ provider: { order: ['groq', 'cerebras'], allow_fallbacks: true } });
+    });
+
     it('interpreta las llamadas a herramientas y los tokens, y devuelve el historial en el formato del proveedor', async () => {
       const r = await adaptador().responder(peticion('¿Qué tengo mañana?'), new AbortController().signal);
       expect(r).toMatchObject({ texto: null, llamadas: [{ id: 'call_1', nombre: 'agenda_consultar', argumentos: { desde: '2026-10-24' } }], uso: { tokensEntrada: 150, tokensSalida: 20 } });

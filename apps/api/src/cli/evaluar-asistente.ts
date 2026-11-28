@@ -114,6 +114,7 @@ const compromiso = (titulo: string, id: string, dia: FechaLocal, hora: number, d
   eventoId: id,
   tareaId: null,
   avance: null,
+  equipo: null,
   en: new Date(ahora.getTime() - haceMin * 60_000),
 });
 const tareaEnNota = (titulo: string, id: string, desenlace: string, haceMin: number): AccionDeNota => ({
@@ -125,6 +126,7 @@ const tareaEnNota = (titulo: string, id: string, desenlace: string, haceMin: num
   eventoId: null,
   tareaId: id,
   avance: null,
+  equipo: null,
   en: new Date(ahora.getTime() - haceMin * 60_000),
 });
 const nota = (acciones: AccionDeNota[]) => escribirNota({ acciones, enEspera: [] }, ahora) ?? undefined;

@@ -24,28 +24,28 @@ export const GUION_DEMOSTRACION: ReglaGuion[] = [
     pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { tema: '$1', equipo: '$2' } }] }, { texto: '' }],
   },
   {
-    si: `^(?:busca una hora|reuni[oó]n) con (.+?) el ${DIA} por la tarde$`,
-    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { personas: ['$1'], desde: '{$2}', hasta: '{$2}', franja: 'tarde' } }] }, { texto: '' }],
+    si: `^(?:busca una hora|reuni[oó]n)(?: de (.+?))? con (.+?) el ${DIA} por la tarde$`,
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { tema: '$1', personas: ['$2'], desde: '{$3}', hasta: '{$3}', franja: 'tarde' } }] }, { texto: '' }],
   },
   {
-    si: `^(?:busca una hora|reuni[oó]n) con (.+?) el ${DIA} por la mañana$`,
-    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { personas: ['$1'], desde: '{$2}', hasta: '{$2}', franja: 'manana' } }] }, { texto: '' }],
+    si: `^(?:busca una hora|reuni[oó]n)(?: de (.+?))? con (.+?) el ${DIA} por la mañana$`,
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { tema: '$1', personas: ['$2'], desde: '{$3}', hasta: '{$3}', franja: 'manana' } }] }, { texto: '' }],
   },
   {
-    si: '^(?:busca una hora|reuni[oó]n) con (.+?) y (.+?), (.+?) si puede$',
-    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { personas: ['$1', '$2', '$3'], opcionales: ['$3'] } }] }, { texto: '' }],
+    si: '^(?:busca una hora|reuni[oó]n)(?: de (.+?))? con (.+?) y (.+?), (.+?) si puede$',
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { tema: '$1', personas: ['$2', '$3', '$4'], opcionales: ['$4'] } }] }, { texto: '' }],
   },
   {
-    si: '^(?:busca una hora|reuni[oó]n) con (.+?) y (.+?)$',
-    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { personas: ['$1', '$2'] } }] }, { texto: '' }],
+    si: '^(?:busca una hora|reuni[oó]n)(?: de (.+?))? con (.+?) y (.+?)$',
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { tema: '$1', personas: ['$2', '$3'] } }] }, { texto: '' }],
   },
   {
-    si: `^(?:busca una hora|reuni[oó]n) con (.+?) ${DIA}$`,
-    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { personas: ['$1'], desde: '{$2}', hasta: '{$2}' } }] }, { texto: '' }],
+    si: `^(?:busca una hora|reuni[oó]n)(?: de (.+?))? con (.+?) ${DIA}$`,
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { tema: '$1', personas: ['$2'], desde: '{$3}', hasta: '{$3}' } }] }, { texto: '' }],
   },
   {
-    si: '^(?:busca una hora|reuni[oó]n) con (.+?)$',
-    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { personas: ['$1'] } }] }, { texto: '' }],
+    si: '^(?:busca una hora|reuni[oó]n)(?: de (.+?))? con (.+?)$',
+    pasos: [{ llamadas: [{ nombre: 'reuniones_proponer', argumentos: { tema: '$1', personas: ['$2'] } }] }, { texto: '' }],
   },
   {
     si: '^(?:agenda|organiza|coordina) una reuni[oó]n$',

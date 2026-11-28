@@ -120,7 +120,7 @@ export class ConvocarReunionOperacion extends BaseReunion implements EjecutorOpe
     return {
       accion: 'Convocar esta reunión',
       datos: [
-        { etiqueta: 'Reunión', valor: r.fila.titulo },
+        { etiqueta: 'Tema', valor: r.fila.titulo },
         { etiqueta: 'Equipo', valor: r.fila.equipo.nombre },
         { etiqueta: 'Cuándo', valor: `${fechaLarga(r.inicio, zona)}, ${horario(r.inicio, r.fin, zona)}` },
         { etiqueta: 'Zona horaria', valor: nombreDeZona(zona, r.inicio) },
@@ -196,7 +196,7 @@ export class MoverReunionOperacion extends BaseReunion implements EjecutorOperac
     return {
       accion: 'Mover esta reunión',
       datos: [
-        { etiqueta: 'Reunión', valor: r.fila.titulo },
+        { etiqueta: 'Tema', valor: r.fila.titulo },
         { etiqueta: 'Antes', valor: `${fechaLarga(r.fila.inicio, zona)}, ${horario(r.fila.inicio, r.fila.fin, zona)}` },
         { etiqueta: 'Ahora', valor: `${fechaLarga(r.inicio, zona)}, ${horario(r.inicio, r.fin, zona)}` },
         { etiqueta: 'Zona horaria', valor: nombreDeZona(zona, r.inicio) },
@@ -260,7 +260,7 @@ export class CancelarReunionOperacion extends BaseReunion implements EjecutorOpe
       return {
         accion: 'Cancelar esta reunión',
         datos: [
-          { etiqueta: 'Reunión', valor: fila.titulo },
+          { etiqueta: 'Tema', valor: fila.titulo },
           { etiqueta: 'Cuándo', valor: `${fechaLarga(fila.inicio, zona)}, ${horario(fila.inicio, fila.fin, zona)}` },
           { etiqueta: 'Zona horaria', valor: nombreDeZona(zona, fila.inicio) },
           { etiqueta: 'Invitados', valor: lista(fila.invitados.map((i) => nombreVisible(i.perfil.correo))) },
@@ -273,7 +273,7 @@ export class CancelarReunionOperacion extends BaseReunion implements EjecutorOpe
     return {
       accion: 'Cancelar esta reunión',
       datos: [
-        { etiqueta: 'Reunión', valor: fila.titulo },
+        { etiqueta: 'Tema', valor: fila.titulo },
         { etiqueta: 'Estado', valor: fila.estado === 'vencida' ? 'Venció sin horario' : 'Todavía sin horario' },
         { etiqueta: 'Aviso', valor: 'No se avisa a nadie: los invitados aún no la recibieron' },
       ],

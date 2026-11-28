@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { Logger } from '@nestjs/common';
 import { Annotation, END, interrupt, START, StateGraph } from '@langchain/langgraph';
 import { EventoAgenda, ReunionResumen, TareaPersonal, TurnoDeHerramienta, type OperacionRespuesta, type TurnoAsistente } from '@nexoai/contratos';
 import { fechaLarga, horario, nombreDeZona } from '../../agenda/formato';
@@ -8,11 +9,13 @@ import type { OperacionesService, PropuestaAbierta } from '../../operaciones/ope
 import type { EjecutorHerramientas } from '../herramientas/ejecutor-herramientas';
 import type { Oferta } from '../herramientas/herramienta';
 import { escribirPropuestaAbierta } from '../nota-de-continuidad';
-import { aTextoLlano, type NombresInternos } from '../texto-llano';
+import { aTextoLlano, esDegenerada, RESPUESTA_DEGENERADA, type NombresInternos } from '../texto-llano';
 import type { LlamadasAuditadas } from '../llamadas-auditadas';
 import { ModeloNoDisponible, type LlamadaHerramienta, type MensajeModelo } from '../modelo/proveedor-modelo';
 import { instrucciones } from './instrucciones';
 import type { PuntoControlConversacion } from './punto-control-prisma';
+
+const registro = new Logger('Asistente');
 
 // specs/07-agente/plan.md §4 · T-032. El grafo del asistente: interpreta con el modelo, ejecuta las
 // herramientas y, cuando una propone una Operación, **se interrumpe** hasta que la persona decide (P-03).
@@ -245,7 +248,12 @@ export function construirGrafo(
       return { mensajes: [mensaje], vueltas: estado.vueltas + 1, llamadas: { lista: llamadas, llamadaModeloId: r.llamadaModeloId }, siguiente: 'herramientas' };
     }
     // T-142 · REQ-AGT-06: texto llano, sin marcas ni nombres internos; también en lo que vuelve a leer el modelo
-    const dicho = texto ? llano(texto) : '';
+    let dicho = texto ? llano(texto) : '';
+    // T-149 · REQ-AGT-08: una respuesta degenerada no se muestra ni se guarda como dicha
+    if (dicho && esDegenerada(dicho)) {
+      registro.warn(`Respuesta degenerada descartada (${dicho.length} caracteres, ${dicho.split('\n').length} líneas)`);
+      dicho = RESPUESTA_DEGENERADA;
+    }
     return con(dicho ? [turnoTexto(dicho)] : [], { mensajes: [{ ...mensaje, texto: dicho || texto }], vueltas: estado.vueltas + 1, siguiente: 'fin' });
   }
 
